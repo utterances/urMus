@@ -191,7 +191,7 @@ backdrop:SetHeight(ScreenHeight());
 backdrop:SetAnchor("BOTTOMLEFT",0,0)
 backdrop:EnableInput(true)
 backdrop.texture=backdrop:Texture()
-backdrop.texture:SetTexture(0x11,0x44,0x99,0xff)
+backdrop.texture:SetTexture(0x11,0x22,0x44,0xff)
 backdrop:Handle("OnUpdate",UpdateMic)
 backdrop:Handle("OnDoubleTap",DoubleTap)
 backdrop:Show()
