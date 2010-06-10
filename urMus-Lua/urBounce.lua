@@ -10,7 +10,7 @@ local damping = 0.9
 damping = 0.9
 size = 48
 amount = 50
-active = 10
+active = 15
 mode = 0
 speed = 0.8
 threshold = 0.02
@@ -22,6 +22,39 @@ function UpdateBounce(self)
     if(self.active==false) then
         return
     end
+	
+	for x=1,amount do
+		other=ball[x]
+		if other.index<self.index and other.active==true then
+			local dx=self.x-other.x
+			local dy=self.y-other.y
+			local d=math.sqrt(dx*dx+dy*dy);
+			if d <= size then
+				local dvx=self.vx-other.vx
+				local dvy=self.vy-other.vy
+				if dvx*dx + dvy*dy < 0 then -- ball is moving toward each other
+					local fy=1.0e-10*math.abs(dy)
+					local sign
+					if math.abs(dx)<fy then
+						if dx<0 then
+							sign=-1
+						else
+							sign=1
+						end
+						dx=fy*sign
+					end
+					local a = dy/dx
+					local dvx2=-(dvx + a*dvy)/(1+a*a)
+					
+					self.vx = self.vx + dvx2 
+					self.vy = self.vy + a*dvx2 
+					other.vx = other.vx - dvx2 
+					other.vy = other.vy - a*dvx2
+				end
+			end
+		end
+	end
+	
     self.x = self.x + self.vx
     self.y = self.y + self.vy
     
@@ -147,8 +180,26 @@ function DoubleTap(self)
     end
 end
 
+
+
+_G["FBMic"]:SetPushLink(0,_G["FBVis"],0)
+
+backdrop = Region('Region','backdrop',UIParent)
+backdrop:SetLayer("TOOPTIP")
+backdrop:SetWidth(ScreenWidth());
+backdrop:SetHeight(ScreenHeight());
+backdrop:SetAnchor("BOTTOMLEFT",0,0)
+backdrop:EnableInput(true)
+backdrop.texture=backdrop:Texture()
+backdrop.texture:SetTexture(0x11,0x44,0x99,0xff)
+backdrop:Handle("OnUpdate",UpdateMic)
+backdrop:Handle("OnDoubleTap",DoubleTap)
+backdrop:Show()
+
+
 for x = 1,amount do
     ball[x] = Region('Region', 'ball', UIParent)
+	ball[x].index=x
     ball[x]:SetLayer("TOOLTIP")
     ball[x]:SetWidth(size)
     ball[x]:SetHeight(size)
@@ -177,18 +228,6 @@ for x = 1,amount do
     ball[x]:Handle("OnUpdate",UpdateBounce)
     ball[x]:Handle("OnAccelerate",AccelerateBall)
 end
-
-
-_G["FBMic"]:SetPushLink(0,_G["FBVis"],0)
-
-backdrop = Region('Region','backdrop',UIParent)
-backdrop:SetWidth(ScreenWidth());
-backdrop:SetHeight(ScreenHeight());
-backdrop:SetAnchor("BOTTOMLEFT",0,0)
-backdrop:EnableInput(true)
-backdrop:Handle("OnUpdate",UpdateMic)
-backdrop:Handle("OnDoubleTap",DoubleTap)
-
 
 local pagebutton=Region('region', 'pagebutton', UIParent);
 pagebutton:SetWidth(pagersize);
