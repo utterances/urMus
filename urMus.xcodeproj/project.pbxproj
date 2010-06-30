@@ -217,6 +217,8 @@
 		77FB9275111BA8C30078AAC5 /* UdpClientSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = 77FB926D111BA8C30078AAC5 /* UdpClientSocket.m */; };
 		77FB9276111BA8C30078AAC5 /* SandwichUpdateListener.m in Sources */ = {isa = PBXBuildFile; fileRef = 77FB926F111BA8C30078AAC5 /* SandwichUpdateListener.m */; };
 		77FB9277111BA8C30078AAC5 /* SandwichEventManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 77FB9272111BA8C30078AAC5 /* SandwichEventManager.m */; };
+		EA6DC0DD11DBCD7500E1E13E /* urTuner.lua in Sources */ = {isa = PBXBuildFile; fileRef = EA6DC0DC11DBCD7500E1E13E /* urTuner.lua */; };
+		EA6DC0E811DBCDEA00E1E13E /* urTuner.lua in Resources */ = {isa = PBXBuildFile; fileRef = EA6DC0DC11DBCD7500E1E13E /* urTuner.lua */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -557,6 +559,7 @@
 		77FB9272111BA8C30078AAC5 /* SandwichEventManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SandwichEventManager.m; path = Classes/Sandwich/SandwichEventManager.m; sourceTree = "<group>"; };
 		77FB9273111BA8C30078AAC5 /* SandwichEventManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SandwichEventManager.h; path = Classes/Sandwich/SandwichEventManager.h; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		EA6DC0DC11DBCD7500E1E13E /* urTuner.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urTuner.lua; path = "urMus-Lua/urTuner.lua"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -936,6 +939,7 @@
 		77B9FC5C1194AEF9006D5007 /* urMus-lua */ = {
 			isa = PBXGroup;
 			children = (
+				EA6DC0DC11DBCD7500E1E13E /* urTuner.lua */,
 				23D069EC1198FEEB0031847C /* urBlank.lua */,
 				77B9FC5D1194AF12006D5007 /* cloud */,
 				77B9FC651194AF12006D5007 /* underscore.lua */,
@@ -1118,6 +1122,7 @@
 				77B9FCAE1194AF51006D5007 /* urThumper.lua in Resources */,
 				77B9FCAF1194AF51006D5007 /* urTicTacToe.lua in Resources */,
 				77B9FCB01194AF51006D5007 /* urTiles.lua in Resources */,
+				EA6DC0E811DBCDEA00E1E13E /* urTuner.lua in Resources */,
 				77B9FCB11194AF51006D5007 /* urVisDemo.lua in Resources */,
 				77B9FCB21194AF51006D5007 /* urVisGraph.lua in Resources */,
 				77B9FCB31194AF51006D5007 /* urWidget.lua in Resources */,
@@ -1307,6 +1312,7 @@
 				23C5612A1192A56900758BB9 /* httpServer.c in Sources */,
 				77D9689E11A79AB900BD4F2D /* UIApplication+TVOut.m in Sources */,
 				771DC9B411B051BB00880F72 /* urBounce.lua in Sources */,
+				EA6DC0DD11DBCD7500E1E13E /* urTuner.lua in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
