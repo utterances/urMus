@@ -81,7 +81,7 @@ BOOL done;
 		mirrorView = [[UIImageView alloc] initWithFrame: [[UIScreen mainScreen] bounds]];
 
 		if ([UIApplication sharedApplication].statusBarOrientation != UIInterfaceOrientationPortrait) {
-			mirrorView.transform = CGAffineTransformRotate(mirrorView.transform, M_PI * 1.5);
+//			mirrorView.transform = CGAffineTransformRotate(mirrorView.transform, M_PI * 1.5);
 		}
 		mirrorView.center = vidView.center;
 		[vidView addSubview: mirrorView];
