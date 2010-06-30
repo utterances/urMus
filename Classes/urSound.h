@@ -290,6 +290,17 @@ struct Avg_Data
 	Avg_Data() { inpos = 0; outpos = 0; bufferlen = 0; }
 };
 
+struct Tuner_Data
+{
+	float lastout;
+	float avg;
+	long inpos;
+	long outpos;
+	float* buffer;
+	long bufferlen;
+	Tuner_Data() { inpos = 0; outpos = 0; bufferlen = 0; }
+};
+
 class ursSinkList
 {
 public:
@@ -412,6 +423,13 @@ double Avg_Tick(ursObject* gself);
 double Avg_Out(ursObject* gself);
 void Avg_In(ursObject* gself, double indata);
 void Avg_Len(ursObject* gself, double indata);
+
+void* Tuner_Constructor();
+void Tuner_Destructor(ursObject* gself);
+double Tuner_Tick(ursObject* gself);
+double Tuner_Out(ursObject* gself);
+void Tuner_In(ursObject* gself, double indata);
+
 
 void urs_SetupObjects();
 

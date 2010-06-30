@@ -36,6 +36,7 @@ pagefile = {
 "urVisGraph.lua",
 "urTicTacToe.lua",
 "urBounce.lua",
+"urTuner.lua",
 "urOsman.lua"
 }
 
