@@ -901,6 +901,13 @@ void urs_SetupObjects()
 	object->SetCouple(0,0);
 	urmanipulatorobjectlist.Append(object);
 	
+	object = new ursObject("Tuner", Tuner_Constructor, Tuner_Destructor,1,1);
+	object->AddOut("WaveForm", "TimeSeries", Tuner_Tick, Tuner_Out, NULL);
+	object->AddIn("In", "TimeSeries", Tuner_In);
+	object->SetCouple(0,0);
+	urmanipulatorobjectlist.Append(object);
+	
+	
 	urSoundAtoms_Setup();
 	
 	object = new ursObject("Oct", Oct_Constructor, Oct_Destructor,1,1);
@@ -1837,4 +1844,124 @@ void Avg_Len(ursObject* gself, double indata)
 {
 	Avg_Data* self = (Avg_Data*)gself->objectdata;
 	self->bufferlen = 1+255*norm2PositiveLinear(indata);
+}
+
+// FFT
+
+// fft function
+// v[] is composed of imaginary and real parts of the input:
+// [ imag[0], real[0], imag[1], real[1], .... ]
+// 
+
+static void FFT(float v[], int n) {
+	int        ip, k, length;
+	float      theta, pi = 3.1415926535897932384f;
+	float      wr, wi, ur, ui, tr, ti, tmp;
+	
+	if((n&(n-1))!=0) {
+		n |= n >> 1; n |= n >> 2; n |= n >> 4; n |= n >> 8; n |= n >> 16;
+		n=(n+1)>>1;
+	}
+	
+	for (int i=0, j=0; i < n-1; i++,j+=k) {
+		if (i<j) {
+			tmp = v[i*2]; v[i*2] = v[j*2]; v[j*2] = tmp;
+			tmp = v[i*2+1]; v[i*2+1] = v[j*2+1]; v[j*2+1] = tmp;
+		}
+		for(k=n/2;k<=j;k>>=1) j -= k;
+	}
+	for (int li=1; li<n; li*=2 ){
+		length = 2*li;
+		theta  = pi/li;
+		ur   = 1.0f;
+		ui   = 0.0f;
+		if ( li == 1 ) {
+			wr = -1.0f;
+			wi =  0.0f;
+		} else if ( li == 2 ) {
+			wr =  0.0f;
+			wi =  1.0f;
+		} else {
+			wr = cos(theta);
+			wi = sin(theta);
+		}
+		for (int j = 0; j < li; j++ ) {
+			for (int i = j; i < n; i += length ) {
+				ip=i+li;
+				tr=v[ip*2]*ur-v[ip*2+1]*ui;	ti=v[ip*2]*ui+v[ip*2+1]*ur;
+				v[ip*2]=v[i*2]-tr;			v[ip*2+1]=v[i*2+1]-ti;
+				v[i*2]+=tr;					v[i*2+1]+=ti;
+			}
+			ur = ur*wr - ui*wi;
+			ui = ui*wr + ur*wi;
+		}
+	}
+}
+
+void* Tuner_Constructor()
+{
+	Tuner_Data* self = new Tuner_Data;
+	self->bufferlen = 8192;//32;
+	self->buffer = new float[self->bufferlen*2];
+	for (int i=0; i < self->bufferlen*2; i++)
+		self->buffer[i] = 0.0;
+	self->inpos = 0;
+	return (void*)self;
+}
+
+void Tuner_Destructor(ursObject* gself)
+{
+	Tuner_Data* self = (Tuner_Data*)gself->objectdata;
+	delete [] self->buffer;
+	delete (Avg_Data*)self;
+}
+
+double Tuner_Tick(ursObject* gself)
+{
+	Tuner_Data* self = (Tuner_Data*)gself->objectdata;
+	return self->avg/self->bufferlen;
+}
+
+double Tuner_Out(ursObject* gself)
+{
+	Tuner_Data* self = (Tuner_Data*)gself->objectdata;
+	return self->avg/self->bufferlen;
+}
+
+void Tuner_In(ursObject* gself, double indata)
+{
+	Tuner_Data* self = (Tuner_Data*)gself->objectdata;
+	self->buffer[self->inpos++] = 0;
+	self->buffer[self->inpos++] = indata;
+	int maxfreq=-1;
+	float maxval=0;
+	float *buf=self->buffer;
+	float prevamp, amp=buf[0]*buf[0]+buf[1]*buf[1], nextamp=buf[2]*buf[2]+buf[3]*buf[3];
+	float maxprev, maxamp, maxnext;
+	if(self->inpos >= self->bufferlen*2) {
+		self->inpos = 0;
+		FFT(buf,self->bufferlen);
+		for(int i=2;i<self->bufferlen/2-1;i+=2) {
+			float *p=&buf[i];
+			prevamp=amp;
+			amp=nextamp;
+			nextamp=p[2]*p[2]+p[3]*p[3];
+			
+			if(prevamp+amp+nextamp > maxval) {
+				maxprev=prevamp;
+				maxamp=amp;
+				maxnext=nextamp;
+				maxval=prevamp+amp+nextamp;
+				maxfreq=i/2;
+			}
+		}
+		if(maxval<1.0e3) {
+			gself->CallAllPushOuts(-1.0);			
+			return;
+		}
+		double out = (maxprev*(maxfreq-1)+maxamp*maxfreq+maxnext*(maxfreq+1))/maxval;
+		double lg = log(out)/log(2.0)-0.358;
+		double mantissa = lg-(int)lg;
+		gself->CallAllPushOuts(mantissa);
+	}
 }
