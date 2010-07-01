@@ -208,6 +208,8 @@
 		77D61B4B10C80C170091DE81 /* Orange-Mono.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77D61B4310C80C170091DE81 /* Orange-Mono.wav */; };
 		77D61B4C10C80C170091DE81 /* Red-Mono.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77D61B4410C80C170091DE81 /* Red-Mono.wav */; };
 		77D9689E11A79AB900BD4F2D /* UIApplication+TVOut.m in Sources */ = {isa = PBXBuildFile; fileRef = 77D9689D11A79AB900BD4F2D /* UIApplication+TVOut.m */; };
+		77E7B87911DBD0D000398FBD /* urMetro.lua in Sources */ = {isa = PBXBuildFile; fileRef = 77E7B87811DBD0D000398FBD /* urMetro.lua */; };
+		77E7B88211DBD14300398FBD /* urMetro.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77E7B87811DBD0D000398FBD /* urMetro.lua */; };
 		77F01C10112508CB007FD520 /* paddle.png in Resources */ = {isa = PBXBuildFile; fileRef = 77F01C0C112508CB007FD520 /* paddle.png */; };
 		77F01C11112508CB007FD520 /* small-ball.png in Resources */ = {isa = PBXBuildFile; fileRef = 77F01C0D112508CB007FD520 /* small-ball.png */; };
 		77F01C12112508CB007FD520 /* ball.png in Resources */ = {isa = PBXBuildFile; fileRef = 77F01C0E112508CB007FD520 /* ball.png */; };
@@ -543,6 +545,7 @@
 		77D61B4310C80C170091DE81 /* Orange-Mono.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "Orange-Mono.wav"; path = "Sounds/Orange-Mono.wav"; sourceTree = "<group>"; };
 		77D61B4410C80C170091DE81 /* Red-Mono.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "Red-Mono.wav"; path = "Sounds/Red-Mono.wav"; sourceTree = "<group>"; };
 		77D9689D11A79AB900BD4F2D /* UIApplication+TVOut.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIApplication+TVOut.m"; sourceTree = "<group>"; };
+		77E7B87811DBD0D000398FBD /* urMetro.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urMetro.lua; path = "urMus-Lua/urMetro.lua"; sourceTree = "<group>"; };
 		77F01C0C112508CB007FD520 /* paddle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = paddle.png; path = Textures/paddle.png; sourceTree = "<group>"; };
 		77F01C0D112508CB007FD520 /* small-ball.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "small-ball.png"; path = "Textures/small-ball.png"; sourceTree = "<group>"; };
 		77F01C0E112508CB007FD520 /* ball.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = ball.png; path = Textures/ball.png; sourceTree = "<group>"; };
@@ -967,6 +970,7 @@
 				77B9FC7B1194AF12006D5007 /* urVisGraph.lua */,
 				77B9FC7C1194AF12006D5007 /* urWidget.lua */,
 				771DC9B311B051BB00880F72 /* urBounce.lua */,
+				77E7B87811DBD0D000398FBD /* urMetro.lua */,
 			);
 			name = "urMus-lua";
 			sourceTree = "<group>";
@@ -1099,6 +1103,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				77E7B88211DBD14300398FBD /* urMetro.lua in Resources */,
+				EA6DC0E811DBCDEA00E1E13E /* urTuner.lua in Resources */,
 				771DC9DC11B0523E00880F72 /* urBounce.lua in Resources */,
 				23D069FA1198FF330031847C /* urBlank.lua in Resources */,
 				77B9FC9C1194AF51006D5007 /* underscore.lua in Resources */,
@@ -1122,7 +1128,6 @@
 				77B9FCAE1194AF51006D5007 /* urThumper.lua in Resources */,
 				77B9FCAF1194AF51006D5007 /* urTicTacToe.lua in Resources */,
 				77B9FCB01194AF51006D5007 /* urTiles.lua in Resources */,
-				EA6DC0E811DBCDEA00E1E13E /* urTuner.lua in Resources */,
 				77B9FCB11194AF51006D5007 /* urVisDemo.lua in Resources */,
 				77B9FCB21194AF51006D5007 /* urVisGraph.lua in Resources */,
 				77B9FCB31194AF51006D5007 /* urWidget.lua in Resources */,
@@ -1190,6 +1195,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EA6DC0DD11DBCD7500E1E13E /* urTuner.lua in Sources */,
 				1D60589B0D05DD56006BFB54 /* main.m in Sources */,
 				1D3623260D0F684500981E51 /* urMusAppDelegate.mm in Sources */,
 				28FD14FE0DC6FC130079059D /* EAGLView.mm in Sources */,
@@ -1312,7 +1318,7 @@
 				23C5612A1192A56900758BB9 /* httpServer.c in Sources */,
 				77D9689E11A79AB900BD4F2D /* UIApplication+TVOut.m in Sources */,
 				771DC9B411B051BB00880F72 /* urBounce.lua in Sources */,
-				EA6DC0DD11DBCD7500E1E13E /* urTuner.lua in Sources */,
+				77E7B87911DBD0D000398FBD /* urMetro.lua in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1323,7 +1329,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_UNIVERSAL_IPHONE_OS)";
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
@@ -1345,7 +1351,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_UNIVERSAL_IPHONE_OS)";
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;

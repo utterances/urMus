@@ -1253,13 +1253,19 @@ int NumHitMatches(urAPI_Region_t* hitregion[], int max, int idx, int repeat)
 				if (numTaps == 2 && hitregion[t]->OnDoubleTap) 
 				{
 					callScript(hitregion[t]->OnDoubleTap, hitregion[t]);
+//					callScript(hitregion[t]->OnTouchUp, hitregion[t]);
 				}
 				else if (numTaps == 3 && false)
 				{
 					// Tripple Tap NYI
 				}
-				else
+				else if (numTaps == 1)
 					callScript(hitregion[t]->OnTouchDown, hitregion[t]);
+				else {
+					callScript(hitregion[t]->OnTouchDown, hitregion[t]);
+					callScript(hitregion[t]->OnTouchUp, hitregion[t]);
+				}
+
 			}
 		}
 		else
