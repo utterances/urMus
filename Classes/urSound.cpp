@@ -1919,13 +1919,13 @@ void Tuner_Destructor(ursObject* gself)
 double Tuner_Tick(ursObject* gself)
 {
 	Tuner_Data* self = (Tuner_Data*)gself->objectdata;
-	return self->avg/self->bufferlen;
+	return self->lastout;
 }
 
 double Tuner_Out(ursObject* gself)
 {
 	Tuner_Data* self = (Tuner_Data*)gself->objectdata;
-	return self->avg/self->bufferlen;
+	return self->lastout;
 }
 
 void Tuner_In(ursObject* gself, double indata)
@@ -1956,12 +1956,15 @@ void Tuner_In(ursObject* gself, double indata)
 			}
 		}
 		if(maxval<1.0e3) {
-			gself->CallAllPushOuts(-1.0);			
+			self->lastout=(0.0);			
 			return;
 		}
 		double out = (maxprev*(maxfreq-1)+maxamp*maxfreq+maxnext*(maxfreq+1))/maxval;
 		double lg = log(out)/log(2.0)-0.358;
 		double mantissa = lg-(int)lg;
-		gself->CallAllPushOuts(mantissa);
+		double moved=(mantissa+0.75);
+		moved=moved-(int)moved;
+		//gself->CallAllPushOuts(mantissa);
+		self->lastout=(0.29225+moved*12*0.01041);
 	}
 }
