@@ -1017,8 +1017,11 @@ UILineBreakMode tolinebreakmode(int wrap)
 						break;
 				}
 				
-				[t->textlabel->textlabelTex drawAtPoint:CGPointMake(t->left,
-																	  bottom) tile:true];
+				glPushMatrix();
+				glTranslatef(t->left+t->width/2, bottom+t->height/2, 0);
+				glRotatef(t->textlabel->rotation, 0.0f, 0.0f, 1.0f);
+				[t->textlabel->textlabelTex drawAtPoint:CGPointMake(-t->width/2, -t->height/2) tile:true];
+				glPopMatrix();
 				
 				// switch it back to GL_ONE for other types of images, rather than text because Texture2D uses CG to load, which premultiplies alpha
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

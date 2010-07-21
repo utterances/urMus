@@ -1845,6 +1845,7 @@ int region_TextLabel(lua_State* lua)
 	mytextlabel->textcolor[3] = 255.0;
 	mytextlabel->textheight = 12;
 	mytextlabel->wrap = WRAP_WORD;
+	mytextlabel->rotation = 0.0;
 	
 	mytextlabel->textlabelTex = nil;
 	
@@ -2739,6 +2740,12 @@ int textlabel_SetFormattedText(lua_State* lua)
 	return 0;
 }
 
+int textlabel_SetRotation(lua_State* lua)
+{
+	urAPI_TextLabel_t* t = checktextlabel(lua, 1);
+	t->rotation = luaL_checknumber(lua,2);
+	return 0;
+}
 
 static const struct luaL_reg textlabelfuncs [] =
 {
@@ -2766,6 +2773,7 @@ static const struct luaL_reg textlabelfuncs [] =
 	{"Wrap", textlabel_Wrap},
 	{"SetLabel", textlabel_SetLabel},
 	{"SetLabelHeight", textlabel_SetLabelHeight},
+	{"SetRotation", textlabel_SetRotation},
 	{NULL, NULL}
 };
 

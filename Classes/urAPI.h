@@ -58,7 +58,7 @@ typedef struct urAPI_TextLabel
 	float stringwidth;
 	int wrap;
 	bool updatestring;
-	
+	float rotation;
 	// Private
 	Texture2D		*textlabelTex;
 } urAPI_TextLabel_t;
