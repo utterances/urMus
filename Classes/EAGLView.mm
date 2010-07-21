@@ -907,16 +907,25 @@ UILineBreakMode tolinebreakmode(int wrap)
 				if(t->texture->backgroundTex)
 				{
 					glEnable(GL_TEXTURE_2D);
+
 					glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 					GLfloat  coordinates[] = {  t->texture->texcoords[0],          t->texture->texcoords[1],
 						t->texture->texcoords[2],  t->texture->texcoords[3],
 						t->texture->texcoords[4],              t->texture->texcoords[5],
 					t->texture->texcoords[6],  t->texture->texcoords[7]  };
-					
-					
-					
+
 					glTexCoordPointer(2, GL_FLOAT, 0, coordinates);
 					[t->texture->backgroundTex drawInRect:CGRectMake(t->left,t->bottom,t->width,t->height)];
+					
+					if(t->texture->isTiled)
+					{
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);					
+					}
+					else {
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);					
+					}
 					
 					glEnable(GL_BLEND);
 					glDisable(GL_ALPHA_TEST);

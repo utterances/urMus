@@ -29,6 +29,7 @@ function CreateorRecycleregion(ftype, name, parent)
 --		region = Region('region', 'backdrop', UIParent)
 		region.t = region:Texture("Ornament1.png")
 		region.t:SetBlendMode("BLEND")
+		region.t:SetTiling()
 	end
 	return region
 end
@@ -88,6 +89,7 @@ function TouchDown(self)
 	region:Handle("OnDoubleTap", RecycleSelf)
 	region.mode = rotatemode
 	region:Handle("OnUpdate", GatherVis)
+	region.t:SetTiling()
 	rotatemode = rotatemode + 1
 	if rotatemode > 4 then
 		rotatemode = 0

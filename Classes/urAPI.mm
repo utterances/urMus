@@ -1763,6 +1763,7 @@ int region_Texture(lua_State* lua)
 	}
 	mytexture->modifyRect = false;
 	mytexture->isDesaturated = false;
+	mytexture->isTiled = true;
 	mytexture->fill = false;
 //	mytexture->gradientOrientation = GRADIENT_ORIENTATION_VERTICAL; OBSOLETE
 	mytexture->gradientUL[0] = 255; // R
@@ -2185,8 +2186,13 @@ int texture_SetRotation(lua_State* lua)
 {
 	urAPI_Texture_t* t = checktexture(lua, 1);
 	float angle = luaL_checknumber(lua, 2);
-	float s = sin(angle);
-	float c = cos(angle);
+	float s = sqrt(2.0)/2.0*sin(angle);
+	float c = sqrt(2.0)/2.0*cos(angle);
+
+//	x = r*math.sin(angle+math.pi/4)
+//  y = r*math.cos(angle+math.pi/4)
+//    hand.t:SetTexCoord(.5-x,.5+y, .5+y,.5+x, .5-y,.5-x, .5+x,.5-y)
+//	r = math.sqrt(2)/2
 	
 	t->texcoords[0] = 0.5-s;
 	t->texcoords[1] = 0.5+c;
@@ -2198,6 +2204,14 @@ int texture_SetRotation(lua_State* lua)
 	t->texcoords[7] = 0.5-c;
 	return 0;
 }
+
+int texture_SetTiling(lua_State* lua)
+{
+	urAPI_Texture_t* t = checktexture(lua, 1);
+	t->isTiled = lua_toboolean(lua,2);
+	return 0;
+}
+
 int region_EnableClamping(lua_State* lua)
 {
 	urAPI_Region_t* region = checkregion(lua,1);
@@ -2805,6 +2819,7 @@ static const struct luaL_reg texturefuncs [] =
 	{"SetBrushSize", texture_SetBrushSize},
 	{"BrushSize", texture_BrushSize},
 	{"SetBrushColor", texture_SetBrushColor},
+	{"SetTiling", texture_SetTiling},
 	{NULL, NULL}
 };
 

@@ -73,6 +73,7 @@ typedef struct urAPI_Texture
 		char* texturepath;
 		bool modifyRect;
 		bool isDesaturated;
+		bool isTiled;
 		bool fill;
 		float gradientUL[4]; // RGBA
 		float gradientUR[4]; // RGBA
