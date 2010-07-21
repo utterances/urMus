@@ -1694,17 +1694,54 @@ int region_Texture(lua_State* lua)
 	const char* texturelayer;
 	int texturelayerindex=1;
 	
+	float r,g,b,a;
+	r = 255;
+	g = 255;
+	b = 255;
+	a = 255;
+	
 	if(lua_gettop(lua)<2 || lua_isnil(lua,2)) // this can legitimately be nil.
 		texturename = nil;
 	else
 	{
-		texturename = luaL_checkstring(lua,2);
-		if(lua_gettop(lua)==3 && !lua_isnil(lua,3)) // this should be set.
+		if(lua_isstring(lua,2) && lua_gettop(lua) <4)
 		{
-			texturelayer = luaL_checkstring(lua,3);
-			texturelayerindex = region_layer2index(texturelayer);
+			texturename = luaL_checkstring(lua,2);
+			if(lua_gettop(lua)==3 && !lua_isnil(lua,3)) // this should be set.
+			{
+				texturelayer = luaL_checkstring(lua,3);
+				texturelayerindex = region_layer2index(texturelayer);
+			}
+			// NYI arg3.. are inheritsFrom regions
 		}
-		// NYI arg3.. are inheritsFrom regions
+		else if(lua_isnumber(lua,2)) {
+			texturename = nil;
+			r = luaL_checknumber(lua, 2);
+			if(lua_gettop(lua)>2)
+			{
+				g = luaL_checknumber(lua,3);
+				if(lua_gettop(lua)>3)
+				{
+					b = luaL_checknumber(lua,4);
+					a = 255;
+					if(lua_gettop(lua)>4)
+						a = luaL_checknumber(lua,5);
+				}
+				else
+				{
+					g = r;
+					b = r;
+					a = g;
+				}
+			}
+			else {
+				g = r;
+				b = r;
+				a = 255;
+			}
+
+		}
+
 	}
 	urAPI_Texture_t* mytexture = (urAPI_Texture_t*)lua_newuserdata(lua, sizeof(urAPI_Texture_t));
 	mytexture->blendmode = BLEND_DISABLED;
@@ -1744,10 +1781,10 @@ int region_Texture(lua_State* lua)
 	mytexture->gradientBR[1] = 255; // G
 	mytexture->gradientBR[2] = 255; // B
 	mytexture->gradientBR[3] = 255; // A
-	mytexture->texturesolidcolor[0] = 255; // R for solid
-	mytexture->texturesolidcolor[1] = 255; // G
-	mytexture->texturesolidcolor[2] = 255; // B
-	mytexture->texturesolidcolor[3] = 255; // A
+	mytexture->texturesolidcolor[0] = r; // R for solid
+	mytexture->texturesolidcolor[1] = g; // G
+	mytexture->texturesolidcolor[2] = b; // B
+	mytexture->texturesolidcolor[3] = a; // A
 
 	mytexture->backgroundTex = NULL;
 	
