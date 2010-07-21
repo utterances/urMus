@@ -728,6 +728,8 @@ void instantiateTexture(urAPI_Region_t* t)
 		rectsize.width = t->width;
 		rectsize.height = t->height;
 		t->texture->backgroundTex = [[Texture2D alloc] initWithImage:textureimage rectsize:rectsize];
+		t->texture->width = [textureimage size].width;
+		t->texture->height = [textureimage size].height;
 	}
 	[texturepathstr release];	
 }

@@ -75,6 +75,8 @@ typedef struct urAPI_Texture
 		bool isDesaturated;
 		bool isTiled;
 		bool fill;
+		float width;
+		float height;
 		float gradientUL[4]; // RGBA
 		float gradientUR[4]; // RGBA
 		float gradientBL[4]; // RGB for 4 corner color magic

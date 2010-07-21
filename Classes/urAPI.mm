@@ -2424,6 +2424,20 @@ int texture_Clear(lua_State* lua)
 	return 0;
 }
 
+int texture_Width(lua_State* lua)
+{
+	urAPI_Texture_t* t = checktexture(lua, 1);
+	lua_pushnumber(lua, t->width);
+	return 1;
+}
+
+int texture_Height(lua_State* lua)
+{
+	urAPI_Texture_t* t = checktexture(lua, 1);
+	lua_pushnumber(lua, t->height);
+	return 1;
+}
+
 void ClearBrushTexture();
 
 int texture_ClearBrush(lua_State* lua)
@@ -2820,6 +2834,8 @@ static const struct luaL_reg texturefuncs [] =
 	{"BrushSize", texture_BrushSize},
 	{"SetBrushColor", texture_SetBrushColor},
 	{"SetTiling", texture_SetTiling},
+	{"Width", texture_Width},
+	{"Height", texture_Height},
 	{NULL, NULL}
 };
 
