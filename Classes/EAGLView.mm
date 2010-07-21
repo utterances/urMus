@@ -717,8 +717,11 @@ void instantiateTexture(urAPI_Region_t* t)
 {
 	texturepathstr = [[NSString alloc] initWithUTF8String:t->texture->texturepath];
 //	NSString *filePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:texturepathstr]; // Leak here, fix.
-	UIImage* textureimage = [UIImage imageNamed:texturepathstr];
-//	UIImage* textureimage = [UIImage imageWithContentsOfFile:filePath];
+//	UIImage* textureimage = [UIImage imageNamed:texturepathstr];
+	UIImage* textureimage = [UIImage imageWithContentsOfFile:texturepathstr];
+	if(textureimage==NULL)
+		textureimage = [UIImage imageNamed:texturepathstr];
+	
 	if(textureimage)
 	{
 		CGSize rectsize;

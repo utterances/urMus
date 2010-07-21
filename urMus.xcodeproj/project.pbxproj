@@ -78,6 +78,10 @@
 		77A326A01058A79900D0394E /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 77A3269F1058A79900D0394E /* AudioToolbox.framework */; };
 		77ABBE4A1125E4CC00EB080C /* Plick.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77ABBE491125E4CC00EB080C /* Plick.wav */; };
 		77AC7A6D1081C37A0071ECDE /* beatbox-mono.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77AC7A6C1081C37A0071ECDE /* beatbox-mono.wav */; };
+		77B1F11411E7B3F700E744F6 /* snare.aiff in Resources */ = {isa = PBXBuildFile; fileRef = 77B1F11311E7B3F700E744F6 /* snare.aiff */; };
+		77B1F11611E7B40100E744F6 /* hihatclosed.aiff in Resources */ = {isa = PBXBuildFile; fileRef = 77B1F11511E7B40100E744F6 /* hihatclosed.aiff */; };
+		77B1F11811E7B40800E744F6 /* bassdrumclosed2.aiff in Resources */ = {isa = PBXBuildFile; fileRef = 77B1F11711E7B40800E744F6 /* bassdrumclosed2.aiff */; };
+		77B1F11A11E7B42200E744F6 /* ride.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77B1F11911E7B42200E744F6 /* ride.wav */; };
 		77B3A84D114F056F0073CCCF /* TCPServer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 77B3A84C114F056F0073CCCF /* TCPServer.mm */; };
 		77B3D17D10C7196000D5FB4B /* MediaPlayer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 77B3D17C10C7196000D5FB4B /* MediaPlayer.framework */; };
 		77B56D5D10894E49008931AC /* SKINI-msg.h in Resources */ = {isa = PBXBuildFile; fileRef = 77B56CDD10894E48008931AC /* SKINI-msg.h */; };
@@ -329,6 +333,10 @@
 		77A3269F1058A79900D0394E /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		77ABBE491125E4CC00EB080C /* Plick.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = Plick.wav; path = Sounds/Plick.wav; sourceTree = "<group>"; };
 		77AC7A6C1081C37A0071ECDE /* beatbox-mono.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "beatbox-mono.wav"; path = "Sounds/beatbox-mono.wav"; sourceTree = "<group>"; };
+		77B1F11311E7B3F700E744F6 /* snare.aiff */ = {isa = PBXFileReference; lastKnownFileType = audio.aiff; name = snare.aiff; path = "../../../../My Sounds/Drum/Bad Robot Kit.dbkit/Sounds/snare.aiff"; sourceTree = SOURCE_ROOT; };
+		77B1F11511E7B40100E744F6 /* hihatclosed.aiff */ = {isa = PBXFileReference; lastKnownFileType = audio.aiff; name = hihatclosed.aiff; path = "../../../../My Sounds/Drum/Bad Robot Kit.dbkit/Sounds/hihatclosed.aiff"; sourceTree = SOURCE_ROOT; };
+		77B1F11711E7B40800E744F6 /* bassdrumclosed2.aiff */ = {isa = PBXFileReference; lastKnownFileType = audio.aiff; name = bassdrumclosed2.aiff; path = "../../../../My Sounds/Drum/Bad Robot Kit.dbkit/Sounds/bassdrumclosed2.aiff"; sourceTree = SOURCE_ROOT; };
+		77B1F11911E7B42200E744F6 /* ride.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = ride.wav; path = "../../../../My Sounds/Drum/Bad Robot Kit.dbkit/Sounds/ride.wav"; sourceTree = SOURCE_ROOT; };
 		77B3A84B114F056F0073CCCF /* TCPServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TCPServer.h; sourceTree = "<group>"; };
 		77B3A84C114F056F0073CCCF /* TCPServer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = TCPServer.mm; sourceTree = "<group>"; };
 		77B3D17C10C7196000D5FB4B /* MediaPlayer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MediaPlayer.framework; path = System/Library/Frameworks/MediaPlayer.framework; sourceTree = SDKROOT; };
@@ -1030,6 +1038,10 @@
 		77F043951123BC5100CB8C95 /* Sounds */ = {
 			isa = PBXGroup;
 			children = (
+				77B1F11911E7B42200E744F6 /* ride.wav */,
+				77B1F11711E7B40800E744F6 /* bassdrumclosed2.aiff */,
+				77B1F11511E7B40100E744F6 /* hihatclosed.aiff */,
+				77B1F11311E7B3F700E744F6 /* snare.aiff */,
 				77ABBE491125E4CC00EB080C /* Plick.wav */,
 				77AC7A6C1081C37A0071ECDE /* beatbox-mono.wav */,
 				773D287810CF32A10090E189 /* sleighbells.wav */,
@@ -1185,6 +1197,10 @@
 				77B9FC821194AF12006D5007 /* cloud_bg.jpg in Resources */,
 				77B9FCB71194AF8F006D5007 /* o-alpha.png in Resources */,
 				77B9FCB91194AFB8006D5007 /* x-alpha.png in Resources */,
+				77B1F11411E7B3F700E744F6 /* snare.aiff in Resources */,
+				77B1F11611E7B40100E744F6 /* hihatclosed.aiff in Resources */,
+				77B1F11811E7B40800E744F6 /* bassdrumclosed2.aiff in Resources */,
+				77B1F11A11E7B42200E744F6 /* ride.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

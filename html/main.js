@@ -76,8 +76,8 @@ $(document).ready(function() {
 
     // don't try to do doc at this point b/c although we can do directory
     // listing on it, it's a PIA to actual let the browser download them.
-    $(['root']).each(function(i, dirtype) {
-      $.post('/get_files',{dirtype: dirtype},function(json) {
+    $(['root','doc']).each(function(i, dirtype) {
+		$.post('/get_files',{dirtype: dirtype},function(json) {
         gallery_files.append('<p class="header">'+ucwords(dirtype)+':</p>');
         $.each(json, function(i, ele) {
           var path = '/'+ele, 

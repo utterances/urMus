@@ -2007,7 +2007,7 @@ int texture_SetGradientColor(lua_State* lua)
 		t->gradientBL[2] = minB;
 		t->gradientBL[3] = minA;
 		t->gradientUR[0] = maxR;
-		t->gradientUL[1] = maxG;
+		t->gradientUR[1] = maxG;
 		t->gradientUR[2] = maxB;
 		t->gradientUR[3] = maxA;
 		t->gradientBR[0] = maxR;

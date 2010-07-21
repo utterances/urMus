@@ -105,13 +105,13 @@ void rioInterruptionListener(void *inClientData, UInt32 inInterruption)
 	// Restart the stream after an interruption
 	if (inInterruption == kAudioSessionEndInterruption) {
 		// make sure we are again the active session
-		AudioSessionSetActive(true);
-		AudioOutputUnitStart(THIS->rioUnit);
+//		AudioSessionSetActive(true);
+//		AudioOutputUnitStart(THIS->rioUnit);
 	}
 	
 	// Stop the stream when interrupted
 	if (inInterruption == kAudioSessionBeginInterruption) {
-		AudioOutputUnitStop(THIS->rioUnit);
+//		AudioOutputUnitStop(THIS->rioUnit);
     }
 }
 
@@ -248,35 +248,94 @@ static OSStatus	PerformThru(
 	return err;
 }
 
+static char *FormatError(char *str, OSStatus error)
+{
+    // see if it appears to be a 4-char-code
+    *(UInt32 *)(str + 1) = CFSwapInt32HostToBig(error);
+    if (isprint(str[1]) && isprint(str[2]) && isprint(str[3]) && isprint(str[4])) {
+        str[0] = str[5] = '\'';
+        str[6] = '\0';
+    } else
+        // no, format it as an integer
+        sprintf(str, "%d", (int)error);
+    return str;
+}
+
+void inputAvailablePropertyListener (void                      *inClientData,
+                                     AudioSessionPropertyID    inID,
+                                     UInt32                    inDataSize,
+                                     const void                *inData) {
+    if ( inID = kAudioSessionProperty_AudioInputAvailable ) {
+        UInt32 *inputAvailable = (UInt32*)inData;
+        UInt32 sessionCategory;
+        if ( *inputAvailable ) {
+            // Set the audio session category for simultaneous play and record
+            sessionCategory = kAudioSessionCategory_PlayAndRecord;
+        } else {
+            // Just playback
+            sessionCategory = kAudioSessionCategory_MediaPlayback;
+			// make sure we are again the active session
+        }
+		
+        OSStatus status = AudioSessionSetProperty (kAudioSessionProperty_AudioCategory,
+                                                   sizeof (sessionCategory),
+                                                   &sessionCategory);    
+
+    }
+	CheckMic();
+}
+
 void initializeRIOAudioLayer() 
 {
 	// From AurioTouch
 	
+	OSStatus err;
+	
 	myRioData.inputProc.inputProc = PerformThru;
 	myRioData.inputProc.inputProcRefCon = &myRioData; // myRioData replaces self throughout
-	AudioSessionInitialize(NULL, NULL, rioInterruptionListener, &myRioData);
-	AudioSessionSetActive(true);
+	err = AudioSessionInitialize(NULL, NULL, rioInterruptionListener, &myRioData);
+	err = AudioSessionSetActive(true);
 	
+	OSStatus status;
+	
+	UInt32 inputAvailable=0;
+	UInt32 size = sizeof(inputAvailable);
+	AudioSessionGetProperty(kAudioSessionProperty_AudioInputAvailable, 
+							&size, 
+							&inputAvailable);
+
 	UInt32 audioCategory = kAudioSessionCategory_PlayAndRecord;
-	AudioSessionSetProperty(kAudioSessionProperty_AudioCategory, sizeof(audioCategory), &audioCategory);
-	AudioSessionAddPropertyListener(kAudioSessionProperty_AudioRouteChange, propListener, &myRioData);
+	if ( inputAvailable ) {
+		// Set the audio session category for simultaneous play and record
+		audioCategory = kAudioSessionCategory_PlayAndRecord;
+	} else {
+		// Just playback
+		audioCategory = kAudioSessionCategory_MediaPlayback;
+	}
+	
+	err = AudioSessionSetProperty(kAudioSessionProperty_AudioCategory, sizeof(audioCategory), &audioCategory);
+	err = AudioSessionAddPropertyListener(kAudioSessionProperty_AudioRouteChange, propListener, &myRioData);
 
 	Float32 preferredBufferSize = .005;
-	AudioSessionSetProperty(kAudioSessionProperty_PreferredHardwareIOBufferDuration, sizeof(preferredBufferSize), &preferredBufferSize);
+	err = AudioSessionSetProperty(kAudioSessionProperty_PreferredHardwareIOBufferDuration, sizeof(preferredBufferSize), &preferredBufferSize);
 
-	UInt32 size = sizeof(myRioData.hwSampleRate);
-	AudioSessionGetProperty(kAudioSessionProperty_CurrentHardwareSampleRate, &size, &myRioData.hwSampleRate);
+	size = sizeof(myRioData.hwSampleRate);
+	err = AudioSessionGetProperty(kAudioSessionProperty_CurrentHardwareSampleRate, &size, &myRioData.hwSampleRate);
 	memset (&(myRioData.thruFormat), 0, sizeof(AudioStreamBasicDescription));
-	SetupRemoteIO(&(myRioData.rioUnit), myRioData.inputProc, &(myRioData.thruFormat));	
+	err = SetupRemoteIO(&(myRioData.rioUnit), myRioData.inputProc, &(myRioData.thruFormat));	
 
 	UInt32 maxFPS;
 	size = sizeof(maxFPS);
-	AudioUnitGetProperty(myRioData.rioUnit, kAudioUnitProperty_MaximumFramesPerSlice, kAudioUnitScope_Global, 0, &maxFPS, &size);
-	AudioOutputUnitStart(myRioData.rioUnit);
-
+	err = AudioUnitGetProperty(myRioData.rioUnit, kAudioUnitProperty_MaximumFramesPerSlice, kAudioUnitScope_Global, 0, &maxFPS, &size);
+	err = AudioOutputUnitStart(myRioData.rioUnit);
+	
 	size = sizeof(myRioData.thruFormat);
-	AudioUnitGetProperty(myRioData.rioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 1, &myRioData.thruFormat, &size);
+	err = AudioUnitGetProperty(myRioData.rioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 1, &myRioData.thruFormat, &size);
 
+	// Listen for audio input availability
+	status = AudioSessionAddPropertyListener(kAudioSessionProperty_AudioInputAvailable,
+											 inputAvailablePropertyListener, 
+											 NULL);
 	CheckMic();
 }
 
@@ -306,12 +365,19 @@ void* LoadAudioFileData(const char *filename, UInt32 *outDataSize, UInt32*	outSa
 	AudioStreamBasicDescription		theOutputFormat;
 	
 	NSString *filename2 = [[NSString alloc] initWithUTF8String:filename]; // Leak here, fix.
-	NSString *filePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:filename2]; // Leak here, fix.
-	CFURLRef inFileURL = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, (CFStringRef)filePath, kCFURLPOSIXPathStyle, false); // Leak here, fix.
+//	NSString *filePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:filename2]; // Leak here, fix.
+	NSString *filePath = NULL;
+	CFURLRef inFileURL = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, (CFStringRef)filename2, kCFURLPOSIXPathStyle, false); // Leak here, fix.
 	// Open a file with ExtAudioFileOpen()
 	err = ExtAudioFileOpenURL(inFileURL, &extRef);
 	if(err) {
-	// NYI
+		filePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:filename2]; // Leak here, fix.
+		inFileURL = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, (CFStringRef)filePath, kCFURLPOSIXPathStyle, false); // Leak here, fix.
+		// Open a file with ExtAudioFileOpen()
+		err = ExtAudioFileOpenURL(inFileURL, &extRef);
+		if(err) {
+			// NYI
+		}
 	}
 
 	// Get the audio data format
@@ -377,7 +443,8 @@ void* LoadAudioFileData(const char *filename, UInt32 *outDataSize, UInt32*	outSa
 	
 Exit:
 	[filename2 release];
-	[filePath release];
+	if(filePath != NULL)
+		[filePath release];
 	// Dispose the ExtAudioFileRef, it is no longer needed
 	if (extRef) ExtAudioFileDispose(extRef);
 	return theData;
