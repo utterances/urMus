@@ -28,6 +28,13 @@ function CreateorRecycleregion(ftype, name, parent)
 		region = Region()
 --		region = Region('region', 'backdrop', UIParent)
 		region.t = region:Texture("Ornament1.png")
+		region.t:SetBrushColor(0,0,0,0)
+		region.t:SetBrushSize(3)
+		local p = 255
+		region.t:Line(1,p,p,p)
+		region.t:Line(p,1,p,p)
+		region.t:Line(1,p,1,1)
+		region.t:Line(p,1,1,1)
 		region.t:SetBlendMode("BLEND")
 		region.t:SetTiling()
 	end
