@@ -1911,11 +1911,34 @@ int region_TextLabel(lua_State* lua)
 	return 1;
 }
 
+#include <vector>
+#include <string>
+
+static std::vector<std::string> ur_log;
+
+void ur_Log(const char * str) {
+	ur_log.push_back(str);
+}
+
+char * ur_GetLog(int since, int *nlog) {
+	if(since<0) since=0;
+	std::string str="";
+	for(int i=since;i<ur_log.size();i++) {
+		str+=ur_log[i];
+		str+="\n";
+	}
+	char *result=(char *)malloc(str.length()+1);
+	strcpy(result, str.c_str());
+	*nlog=ur_log.size();
+	return result;
+}
+
 int l_DPrint(lua_State* lua)
 {
 	const char* str = luaL_checkstring(lua,1);
 	if(str!=nil)
 	{
+		ur_Log(str);
 		errorstr = [[NSString alloc] initWithCString:str ];
 		newerror = true;
 	}

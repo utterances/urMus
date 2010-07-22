@@ -159,6 +159,10 @@ $(document).ready(function() {
     var box=$(".CodeMirror-wrapping")
     box[0].style.height=(parseInt(box[0].style.height)+100)+"px";
   });
+				  
+  $('#open_log').click(function() {
+    window.open("/html/log.html","urMus Log","width=400,height=600,scrollbars=1,resizable=1,location=0");
+  });
           
   new AjaxUpload('file_upload', {
     action: '/upload_file',

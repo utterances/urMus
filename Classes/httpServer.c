@@ -10,6 +10,7 @@
 #include "lua.h"
 #include "lauxlib.h"
 #include "mongoose.h"
+
 #include <pthread.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -271,6 +272,24 @@ eval_script(struct mg_connection *conn,
   }
 }
 
+extern char * ur_GetLog(int since, int *nlog);	// to avoid messing up with objective-c code
+
+static void
+get_log(struct mg_connection *conn,
+		const struct mg_request_info *request_info,
+		void *user_data) 
+{
+	char *query=mg_get_var(conn,"since");
+	int since=(query==NULL)?0:atoi(query);
+	int nlog;
+	char *log=ur_GetLog(since,&nlog);	
+	mg_printf(conn, "HTTP/1.1 200 OK\r\n"
+			  "Content-Type: text/plain\r\n"
+			  "Pragma: %d\r\n\r\n"
+			  "%s", nlog, log);
+	free(log);
+}
+
 void 
 http_start(const char *web_root_, const char *doc_root_) 
 {
@@ -287,6 +306,7 @@ http_start(const char *web_root_, const char *doc_root_)
   mg_set_uri_callback(ctx, "/open_file", &open_file, NULL);
   mg_set_uri_callback(ctx, "/upload_file", &upload_file, NULL);
   mg_set_uri_callback(ctx, "/upload_script", &upload_script, NULL);
+  mg_set_uri_callback(ctx, "/getlog",&get_log,NULL);
 }
 
 void 
