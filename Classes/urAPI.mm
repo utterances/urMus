@@ -784,6 +784,8 @@ bool callScriptWith1String(int func_ref, urAPI_Region_t* region, const char* nam
 	
 	//		int func_ref = region->OnDragging;
 	// Call lua function by stored Reference
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
 	lua_pushstring(lua, name);
 	if(lua_pcall(lua,2,0,0) != 0)
 	{

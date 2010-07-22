@@ -2151,7 +2151,13 @@ notificationregion.textlabel:SetLabelHeight(48)
 notificationregion.textlabel:SetColor(255,255,255,190)
 
 local function NewConnection(self, name)
+--	DPrint("connect "..name)
 	ShowNotification("Connect: "..name)
+end
+
+local function LostConnection(self, name)
+--	DPrint("disconnect "..name)
+	ShowNotification("Disconnect: "..name)
 end
 
 notificationregion:Handle("OnNetConnect", NewConnection)
