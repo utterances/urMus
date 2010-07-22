@@ -694,7 +694,7 @@ void drawLineToTexture(urAPI_Texture_t *texture, float startx, float starty, flo
 
 // Clear a texture with a given RGB color
 
-void clearTexture(Texture2D* texture, float r, float g, float b)
+void clearTexture(Texture2D* texture, float r, float g, float b, float a)
 {
 	if(textureFrameBuffer == -1)
 		CreateFrameBuffer();
@@ -705,7 +705,7 @@ void clearTexture(Texture2D* texture, float r, float g, float b)
 	
 //	glBindFramebufferOES(GL_FRAMEBUFFER_OES, textureFrameBuffer);
 	
-	glClearColor(r, g, b, 1.0);
+	glClearColor(r, g, b, a);
 	glClear(GL_COLOR_BUFFER_BIT);
 	// unbind frame buffer
 	glBindFramebufferOES(GL_FRAMEBUFFER_OES, 0);

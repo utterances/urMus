@@ -14,13 +14,13 @@ function Paint(self)
 	self.texture:Line(lastx, lasty, x, lasty+1)
 	lasty = lasty + 1
 	if lasty > 480 then
-		self.texture:Clear(1,1,1)
+		self.texture:Clear(255,255,255)
 		lasty = 0
 	end
 end
 
 function Clear(self)
-	visgraphbackdropregion.texture:Clear(1,1,1)
+	visgraphbackdropregion.texture:Clear(255,255,255)
 end
 
 visgraphbackdropregion=Region('region', 'visgraphbackdropregion', UIParent)
@@ -44,7 +44,7 @@ visgraphbackdropregion:Show()
 --visgraphbackdropregion.tl:SetLabelHeight(30)
 --visgraphbackdropregion.tl:SetColor(0,0,255,255)
 
-visgraphbackdropregion.texture:Clear(1,1,1)
+visgraphbackdropregion.texture:Clear(255,255,255)
 visgraphbackdropregion.texture:ClearBrush()
 
 local pagebutton=Region('region', 'pagebutton', UIParent);

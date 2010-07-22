@@ -2401,7 +2401,7 @@ int texture_SetFill(lua_State* lua)
 	return 0;
 }
 
-void clearTexture(Texture2D* t, float r, float g, float b);
+void clearTexture(Texture2D* t, float r, float g, float b, float a);
 
 int texture_Clear(lua_State* lua)
 {
@@ -2409,18 +2409,24 @@ int texture_Clear(lua_State* lua)
 	float r = 0.0;
 	float g = 0.0;
 	float b = 0.0;
-	if(lua_gettop(lua)==4)
+	float a = 1.0;
+	if(lua_gettop(lua)>3)
 	{
-		r = luaL_checknumber(lua, 2);
-		g = luaL_checknumber(lua, 3);
-		b = luaL_checknumber(lua, 4);
-	}	
+		r = luaL_checknumber(lua, 2)/255.0;
+		g = luaL_checknumber(lua, 3)/255.0;
+		b = luaL_checknumber(lua, 4)/255.0;
+	}
+	if(lua_gettop(lua)==5)
+	{
+		a = luaL_checknumber(lua, 5)/255.0;
+	}
+	
 
 	if(t->backgroundTex == nil && t->texturepath != TEXTURE_SOLID)
 		instantiateTexture(t->region);
 
 	if(t->backgroundTex != nil)
-		clearTexture(t->backgroundTex,r,g,b);
+		clearTexture(t->backgroundTex,r,g,b,a);
 	return 0;
 }
 

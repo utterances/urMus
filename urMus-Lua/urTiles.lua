@@ -49,7 +49,7 @@ function BrushUp(self)
 end
 
 function Clear(self)
-	self.texture:Clear(1,1,1);
+	self.texture:Clear(255,255,255,128);
 end
 
 function ToggleMovable(self)
@@ -89,7 +89,7 @@ for y=1,2 do
 		tilebackdropregion[i].fingerposx, tilebackdropregion[i].fingerposy = InputPosition()
 		tilebackdropregion[i].fingerposx = tilebackdropregion[i].fingerposx*320.0/ScreenWidth() -- Converting texture to screen coordinates (requires for iPad as they mismatch there)
 		tilebackdropregion[i].fingerposy = tilebackdropregion[i].fingerposy*480.0/ScreenHeight()
-		tilebackdropregion[i].texture:Clear(1,1,1)
+		tilebackdropregion[i].texture:Clear(255,255,255,128)
 	end
 end
 --tilebackdropregion[i].texture:Clear(0.8,0.8,0.8);

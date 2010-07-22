@@ -38,7 +38,7 @@ function BrushUp(self)
 end
 
 function Clear(self)
-	smudgebackdropregion.texture:Clear(1,1,1);
+	smudgebackdropregion.texture:Clear(255,255,255,0);
 end
 
 smudgebackdropregion=Region('region', 'smudgebackdropregion', UIParent);
