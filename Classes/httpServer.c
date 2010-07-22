@@ -272,7 +272,7 @@ eval_script(struct mg_connection *conn,
   }
 }
 
-extern char * ur_GetLog(int since);	// to avoid messing up with objective-c code
+extern char * ur_GetLog(int since, int *nlog);	// to avoid messing up with objective-c code
 
 static void
 get_log(struct mg_connection *conn,
@@ -281,10 +281,12 @@ get_log(struct mg_connection *conn,
 {
 	char *query=mg_get_var(conn,"since");
 	int since=(query==NULL)?0:atoi(query);
-	char *log=ur_GetLog(since);	
+	int nlog;
+	char *log=ur_GetLog(since,&nlog);	
 	mg_printf(conn, "HTTP/1.1 200 OK\r\n"
-			  "Content-Type: text/plain\r\n\r\n"
-			  "%s", log);
+			  "Content-Type: text/plain\r\n"
+			  "Pragma: %d\r\n\r\n"
+			  "%s", nlog, log);
 	free(log);
 }
 
