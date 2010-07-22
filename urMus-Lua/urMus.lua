@@ -2150,6 +2150,13 @@ notificationregion.textlabel:SetLabel("Notifications")
 notificationregion.textlabel:SetLabelHeight(48)
 notificationregion.textlabel:SetColor(255,255,255,190)
 
+local function NewConnection(self, name)
+	ShowNotification("Connect: "..name)
+end
+
+notificationregion:Handle("OnNetConnect", NewConnection)
+notificationregion:Handle("OnNetDisconnect", LostConnection)
+
 StartAudio()
 ShowNotification("urMus") -- Shame on me, pointless eye candy.
 
