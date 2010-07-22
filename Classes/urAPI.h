@@ -169,6 +169,8 @@ typedef struct urAPI_Region
 		// All UR!
 		int OnAccelerate;
 		int OnNetIn;
+		int OnNetConnect;
+		int OnNetDisconnect;
 #ifdef SANDWICH_SUPPORT
 		int OnPressure;
 #endif
@@ -195,6 +197,8 @@ urAPI_Region_t* findRegionYScrolled(float x, float y, float dy);
 bool callAllOnUpdate(float time);
 bool callAllOnAccelerate(float x, float y, float z);
 bool callAllOnNetIn(float a);
+bool callAllOnNetConnect(const char* name);
+bool callAllOnNetDisconnect(const char* name);
 #ifdef SANDWICH_SUPPORT
 bool callAllOnPressure(float p);
 #endif
@@ -208,6 +212,7 @@ bool callScriptWith3Args(int func_ref, urAPI_Region_t* region ,float a, float b,
 bool callScriptWith2Args(int func_ref, urAPI_Region_t* region ,float a, float b);
 bool callScriptWith1Args(int func_ref, urAPI_Region_t* region ,float a);
 bool callScriptWith1Global(int func_ref, urAPI_Region_t* region, const char* globaldata);
+bool callScriptWith1String(int func_ref, urAPI_Region_t* region, const char* name);
 
 void addChild(urAPI_Region_t *parent, urAPI_Region_t *child);
 void removeChild(urAPI_Region_t *parent, urAPI_Region_t *child);

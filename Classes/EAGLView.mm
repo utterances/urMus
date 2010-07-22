@@ -1707,6 +1707,7 @@ void Net_Send(float data)
 			
 			if (_inReady && _outReady) {
 				// Connection established fully.
+				callAllOnNetConnect("test");
 			}
 			break;
 		}
@@ -1733,6 +1734,7 @@ void Net_Send(float data)
 			
 		case NSStreamEventEndEncountered:
 		{
+			callAllOnNetDisconnect("test");
 			// Connection ended.
 			
 			break;
@@ -1849,6 +1851,7 @@ void Net_Send(float data)
 		
 		[self openStreams];
 		while(not [_outStream hasSpaceAvailable]);
+		
 
 	}
 	// If moreComing is NO, it means that there are no more messages in the queue from the Bonjour daemon, so we should update the UI.

@@ -605,6 +605,27 @@ bool callAllOnNetIn(float a)
 		if(t->OnNetIn != 0)
 			callScriptWith1Args(t->OnNetIn,t,a);
 	}
+	return true;
+}
+
+bool callAllOnNetConnect(const char* name)
+{
+	for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
+	{
+		if(t->OnNetConnect != 0)
+			callScriptWith1String(t->OnNetConnect,t,name);
+	}
+	return true;	
+}
+
+bool callAllOnNetDisconnect(const char* name)
+{
+	for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
+	{
+		if(t->OnNetDisconnect != 0)
+			callScriptWith1String(t->OnNetDisconnect,t,name);
+	}
+	return true;		
 }
 
 #ifdef SANDWICH_SUPPORT
@@ -757,6 +778,26 @@ bool callScriptWith1Global(int func_ref, urAPI_Region_t* region, const char* glo
 	return true;
 }
 
+bool callScriptWith1String(int func_ref, urAPI_Region_t* region, const char* name)
+{
+	if(func_ref == 0) return false;
+	
+	//		int func_ref = region->OnDragging;
+	// Call lua function by stored Reference
+	lua_pushstring(lua, name);
+	if(lua_pcall(lua,2,0,0) != 0)
+	{
+		//<return Error>
+		const char* error = lua_tostring(lua, -1);
+		errorstr = [[NSString alloc] initWithCString:error ]; // DPrinting errors for now
+		newerror = true;
+		return false;
+	}
+	
+	// OK!
+	return true;
+}
+
 bool callScript(int func_ref, urAPI_Region_t* region)
 {
 	if(func_ref == 0) return false;
@@ -856,6 +897,16 @@ int region_Handle(lua_State* lua)
 			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnNetIn);
 			region->OnNetIn = 0;
 		}
+		else if(!strcmp(handler, "OnNetConnect"))
+		{
+			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnNetConnect);
+			region->OnNetConnect = 0;
+		}
+		else if(!strcmp(handler, "OnNetDisconnect"))
+		{
+			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnNetDisconnect);
+			region->OnNetDisconnect = 0;
+		}		
 #ifdef SANDWICH_SUPPORT
 		else if(!strcmp(handler, "OnPressure"))
 		{
@@ -960,6 +1011,10 @@ int region_Handle(lua_State* lua)
 				region->OnAccelerate = func_ref;
 			else if(!strcmp(handler, "OnNetIn"))
 				region->OnNetIn = func_ref;
+			else if(!strcmp(handler, "OnNetConnect"))
+				region->OnNetConnect = func_ref;
+			else if(!strcmp(handler, "OnNetDisconnect"))
+				region->OnNetDisconnect = func_ref;
 #ifdef SANDWICH_SUPPORT
 			else if(!strcmp(handler, "OnPressure"))
 				region->OnPressure = func_ref;
@@ -3061,6 +3116,8 @@ static int l_Region(lua_State *lua)
 	// All UR!
 	myregion->OnAccelerate = 0;
 	myregion->OnNetIn = 0;
+	myregion->OnNetConnect = 0;
+	myregion->OnNetDisconnect = 0;
 #ifdef SANDWICH_SUPPORT
 	myregion->OnPressure = 0;
 #endif
