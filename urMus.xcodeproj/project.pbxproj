@@ -61,7 +61,7 @@
 		7778B2080FED04AF00F491D3 /* lvm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7778B1E60FED04AF00F491D3 /* lvm.mm */; };
 		7778B2090FED04AF00F491D3 /* lzio.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7778B1E80FED04AF00F491D3 /* lzio.mm */; };
 		7778B20A0FED04AF00F491D3 /* print.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7778B1EA0FED04AF00F491D3 /* print.mm */; };
-		7778B2F90FED34FB00F491D3 /* urAPI.mm in Sources */ = {isa = PBXBuildFile; fileRef = 7778B2F80FED34FB00F491D3 /* urAPI.mm */; };
+		7778B2F90FED34FB00F491D3 /* urAPI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7778B2F80FED34FB00F491D3 /* urAPI.cpp */; };
 		777E0FC20FF19903005882D0 /* MachTimer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 777E0FC10FF19903005882D0 /* MachTimer.mm */; };
 		777E5AC91057F5EB007FD908 /* RIOAudioUnitLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 777E5AC81057F5EB007FD908 /* RIOAudioUnitLayer.mm */; };
 		778FB5220FEEE8F900F109A7 /* Texture2d.mm in Sources */ = {isa = PBXBuildFile; fileRef = 778FB5210FEEE8F900F109A7 /* Texture2d.mm */; };
@@ -153,7 +153,7 @@
 		77B56E8E10894FE7008931AC /* VoicForm.mm in Sources */ = {isa = PBXBuildFile; fileRef = 77B56E3810894FE7008931AC /* VoicForm.mm */; };
 		77B56E8F10894FE7008931AC /* Whistle.mm in Sources */ = {isa = PBXBuildFile; fileRef = 77B56E3910894FE7008931AC /* Whistle.mm */; };
 		77B56E9010894FE7008931AC /* Wurley.mm in Sources */ = {isa = PBXBuildFile; fileRef = 77B56E3A10894FE7008931AC /* Wurley.mm */; };
-		77B56EE6108954C4008931AC /* urSTK.mm in Sources */ = {isa = PBXBuildFile; fileRef = 77B56EE5108954C4008931AC /* urSTK.mm */; };
+		77B56EE6108954C4008931AC /* urSTK.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 77B56EE5108954C4008931AC /* urSTK.cpp */; };
 		77B6329610D152C200AACEE4 /* SleighBells.png in Resources */ = {isa = PBXBuildFile; fileRef = 77B6329510D152C200AACEE4 /* SleighBells.png */; };
 		77B9FC7D1194AF12006D5007 /* cloud-drop1.png in Resources */ = {isa = PBXBuildFile; fileRef = 77B9FC5E1194AF12006D5007 /* cloud-drop1.png */; };
 		77B9FC7E1194AF12006D5007 /* cloud-drop2.png in Resources */ = {isa = PBXBuildFile; fileRef = 77B9FC5F1194AF12006D5007 /* cloud-drop2.png */; };
@@ -309,7 +309,7 @@
 		7778B1E90FED04AF00F491D3 /* lzio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lzio.h; path = "Classes/lua-5.1.4/src/lzio.h"; sourceTree = "<group>"; };
 		7778B1EA0FED04AF00F491D3 /* print.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = print.mm; path = "Classes/lua-5.1.4/src/print.mm"; sourceTree = "<group>"; };
 		7778B2F70FED34FB00F491D3 /* urAPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = urAPI.h; sourceTree = "<group>"; };
-		7778B2F80FED34FB00F491D3 /* urAPI.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = urAPI.mm; sourceTree = "<group>"; };
+		7778B2F80FED34FB00F491D3 /* urAPI.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = urAPI.cpp; sourceTree = "<group>"; };
 		777E0FC00FF19903005882D0 /* MachTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachTimer.h; sourceTree = "<group>"; };
 		777E0FC10FF19903005882D0 /* MachTimer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MachTimer.mm; sourceTree = "<group>"; };
 		777E5AC71057F5EB007FD908 /* RIOAudioUnitLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RIOAudioUnitLayer.h; path = RIOAudioUnitLayer/RIOAudioUnitLayer.h; sourceTree = "<group>"; };
@@ -488,7 +488,7 @@
 		77B56E3910894FE7008931AC /* Whistle.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Whistle.mm; sourceTree = "<group>"; };
 		77B56E3A10894FE7008931AC /* Wurley.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Wurley.mm; sourceTree = "<group>"; };
 		77B56EE4108954C4008931AC /* urSTK.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = urSTK.h; sourceTree = "<group>"; };
-		77B56EE5108954C4008931AC /* urSTK.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = urSTK.mm; sourceTree = "<group>"; };
+		77B56EE5108954C4008931AC /* urSTK.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = urSTK.cpp; sourceTree = "<group>"; };
 		77B6329510D152C200AACEE4 /* SleighBells.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = SleighBells.png; path = Textures/SleighBells.png; sourceTree = "<group>"; };
 		77B9FC5E1194AF12006D5007 /* cloud-drop1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "cloud-drop1.png"; sourceTree = "<group>"; };
 		77B9FC5F1194AF12006D5007 /* cloud-drop2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "cloud-drop2.png"; sourceTree = "<group>"; };
@@ -597,7 +597,7 @@
 				1D3623240D0F684500981E51 /* urMusAppDelegate.h */,
 				1D3623250D0F684500981E51 /* urMusAppDelegate.mm */,
 				7778B2F70FED34FB00F491D3 /* urAPI.h */,
-				7778B2F80FED34FB00F491D3 /* urAPI.mm */,
+				7778B2F80FED34FB00F491D3 /* urAPI.cpp */,
 				778FB5200FEEE8F900F109A7 /* Texture2d.h */,
 				778FB5210FEEE8F900F109A7 /* Texture2d.mm */,
 				777E0FC00FF19903005882D0 /* MachTimer.h */,
@@ -605,7 +605,7 @@
 				77C492F8105CAA1300B2BA88 /* urSound.h */,
 				77C492F9105CAA1300B2BA88 /* urSound.cpp */,
 				77B56EE4108954C4008931AC /* urSTK.h */,
-				77B56EE5108954C4008931AC /* urSTK.mm */,
+				77B56EE5108954C4008931AC /* urSTK.cpp */,
 				771F1C3A109B7E10005069EC /* urSoundAtoms.h */,
 				771F1C3B109B7E10005069EC /* urSoundAtoms.mm */,
 				23C561281192A56900758BB9 /* httpServer.h */,
@@ -1230,7 +1230,7 @@
 				7778B2080FED04AF00F491D3 /* lvm.mm in Sources */,
 				7778B2090FED04AF00F491D3 /* lzio.mm in Sources */,
 				7778B20A0FED04AF00F491D3 /* print.mm in Sources */,
-				7778B2F90FED34FB00F491D3 /* urAPI.mm in Sources */,
+				7778B2F90FED34FB00F491D3 /* urAPI.cpp in Sources */,
 				778FB5220FEEE8F900F109A7 /* Texture2d.mm in Sources */,
 				777E0FC20FF19903005882D0 /* MachTimer.mm in Sources */,
 				777E5AC91057F5EB007FD908 /* RIOAudioUnitLayer.mm in Sources */,
@@ -1306,7 +1306,7 @@
 				77B56E8E10894FE7008931AC /* VoicForm.mm in Sources */,
 				77B56E8F10894FE7008931AC /* Whistle.mm in Sources */,
 				77B56E9010894FE7008931AC /* Wurley.mm in Sources */,
-				77B56EE6108954C4008931AC /* urSTK.mm in Sources */,
+				77B56EE6108954C4008931AC /* urSTK.cpp in Sources */,
 				771F1C3C109B7E10005069EC /* urSoundAtoms.mm in Sources */,
 				7743E38F10BB147D005F36BF /* lfs.mm in Sources */,
 				77FB9274111BA8C30078AAC5 /* UdpServerSocket.m in Sources */,
