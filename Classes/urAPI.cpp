@@ -1050,6 +1050,8 @@ int region_SetHeight(lua_State* lua)
 	urAPI_Region_t* region = checkregion(lua,1);
 	lua_Number height = luaL_checknumber(lua,2);
 	region->height=height;
+	if(region->textlabel!=NULL)
+		region->textlabel->updatestring = true;
 	region->update = true;
 	if(!layout(region)) // Change may not have had a layouting effect on parent, but still could affect children that are anchored to Y
 		layoutchildren(region);
@@ -1061,6 +1063,8 @@ int region_SetWidth(lua_State* lua)
 	urAPI_Region_t* region = checkregion(lua,1);
 	lua_Number width = luaL_checknumber(lua,2);
 	region->width=width;
+	if(region->textlabel!=NULL)
+		region->textlabel->updatestring = true;
 	region->update = true;
 	if(!layout(region)) // Change may not have had a layouting effect on parent, but still could affect children that are anchored to X
 		layoutchildren(region);
