@@ -1792,9 +1792,13 @@ int region_MoveToTop(lua_State* lua)
 	{
 		if(region->prev != nil) // Could be first region!
 			region->prev->next = region->next; // unlink!
+		else 
+			firstRegion[currentPage] = region->next;
+
 		region->next->prev = region->prev;
 		// and make last
 		lastRegion[currentPage]->next = region;
+		region->prev = lastRegion[currentPage];
 		region->next = nil;
 		lastRegion[currentPage] = region;
 	}

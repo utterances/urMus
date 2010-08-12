@@ -58,6 +58,7 @@ function ToggleMovable(self)
 		self.texture:SetBrushColor(random(0,255),random(0,255),random(0,255),random(5,50))
 		self.moving = nil
 	else
+		self:MoveToTop()
 		self:EnableMoving(true)
 		self.moving = true
 	end
