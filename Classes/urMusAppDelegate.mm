@@ -42,7 +42,7 @@
 EAGLView* g_glView;
 
 #define EARLY_LAUNCH
-extern NSString* errorstr;
+extern std::string errorstr;
 extern bool newerror;
 
 //------------------------------------------------------------------------------
@@ -163,7 +163,7 @@ extern bool newerror;
 	if(luaL_dofile(lua, filestr)!=0)
 	{
 		const char* error = lua_tostring(lua, -1);
-		errorstr = [[NSString alloc] initWithCString:error ]; // DPrinting errors for now
+		errorstr = error; // DPrinting errors for now
 		newerror = true;
 	}
 #endif	

@@ -263,7 +263,7 @@ float arg2coordy[MAX_FINGERS];
 // This is the texture to hold DPrint and lua error messages.
 Texture2D       *errorStrTex = nil;
 
-NSString *errorstr = @"";
+std::string errorstr = "";
 bool newerror = true;
 
 //#define LATE_LAUNCH
@@ -337,7 +337,7 @@ extern lua_State *lua;
 	if(luaL_dofile(lua, filestr)!=0)
 	{
 		const char* error = lua_tostring(lua, -1);
-		errorstr = [[NSString alloc] initWithCString:error ]; // DPrinting errors for now
+		errorstr = error; // DPrinting errors for now
 		newerror = true;
 	}
 #endif
@@ -1136,7 +1136,7 @@ UILineBreakMode tolinebreakmode(int wrap)
 	if (errorStrTex == nil)
 	{
 		newerror = false;
-		errorStrTex = [[Texture2D alloc] initWithString:errorstr
+		errorStrTex = [[Texture2D alloc] initWithString:[[NSString alloc] initWithCString:errorstr.c_str()]
 										 dimensions:CGSizeMake(SCREEN_WIDTH, 128) alignment:UITextAlignmentCenter
 										   fontName:@"Helvetica" fontSize:14 lineBreakMode:UILineBreakModeWordWrap ];
 	}
@@ -1144,7 +1144,7 @@ UILineBreakMode tolinebreakmode(int wrap)
 	{
 		[errorStrTex dealloc];
 		newerror = false;
-		errorStrTex = [[Texture2D alloc] initWithString:errorstr
+		errorStrTex = [[Texture2D alloc] initWithString:[[NSString alloc] initWithCString:errorstr.c_str()]
 										 dimensions:CGSizeMake(SCREEN_WIDTH, 128) alignment:UITextAlignmentCenter
 										   fontName:@"Helvetica" fontSize:14 lineBreakMode:UILineBreakModeWordWrap];
 	}
@@ -1576,8 +1576,9 @@ void onTouchDragEnd(int t,int touch, float posx, float posy)
 	NSUInteger numTouches = [touches count];
 
 #ifdef DEBUG_TOUCH
-	errorstr = @"Begin";
-	[errorstr stringByAppendingFormat:@": %d", numTouches];
+	char errorstrbuf[16];
+	sprintf(errorstrbuf,"Begin %d",numTouches);
+	errorstr = errorstrbuf;
 	newerror = true;
 #endif
 	
@@ -1640,10 +1641,10 @@ void onTouchDragEnd(int t,int touch, float posx, float posy)
 	
 	NSUInteger numTouches = [touches count];
 #ifdef DEBUG_TOUCH
-	errorstr = @"Move";
+	char errorstrbuf[16];
+	sprintf(errorstrbuf,"Move %d",numTouches);
+	errorstr = errorstrbuf;
 	newerror = true;
-	
-	[errorstr stringByAppendingFormat:@": %d", numTouches];
 #endif
 
 	
@@ -1714,7 +1715,7 @@ void onTouchDragEnd(int t,int touch, float posx, float posy)
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
 #ifdef DEBUG_TOUCH
-	errorstr = @"End";
+	errorstr = "End";
 	newerror = true;
 #endif
     for (UITouch *touch in touches) {
