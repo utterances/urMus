@@ -10,8 +10,8 @@ function Paint(self)
 	
 	x2 = x - self:Left()*320.0/ScreenWidth()
 	y2 = y - self:Bottom()*480.0/ScreenHeight()
-	x2 = 2*x2
-	y2 = 2*y2
+--	x2 = 2*x2
+--	y2 = 2*y2
 
 	if not self.moving and x >= self:Left()*320.0/ScreenWidth() and x < self:Right()*320.0/ScreenWidth() and y >= self:Bottom()*480.0/ScreenHeight() and y < self:Top()*480.0/ScreenHeight()  then
 		if x2 ~= self.fingerposx or y2 ~= self.fingerposy then
@@ -37,8 +37,8 @@ function BrushDown(self)
 
 			x2 = x1 - tilebackdropregion[i]:Left()*320.0/ScreenWidth()
 			y2 = y1 - tilebackdropregion[i]:Bottom()*480.0/ScreenHeight()
-			x2 = 2*x2
-			y2 = 2*y2
+--			x2 = 2*x2
+--			y2 = 2*y2
 			tilebackdropregion[i].fingerposx, tilebackdropregion[i].fingerposy = x2,y2
 		end
 	end
@@ -74,7 +74,9 @@ for y=1,2 do
 		tilebackdropregion[i]:SetAnchor('BOTTOMLEFT',(x-1)*ScreenWidth()/2,(y-1)*ScreenHeight()/2)
 		tilebackdropregion[i]:EnableClamping(true)
 		tilebackdropregion[i]:EnableMoving(false)
-		tilebackdropregion[i].texture = tilebackdropregion[i]:Texture("Default.png");
+--		tilebackdropregion[i].texture = tilebackdropregion[i]:Texture("Default.png");
+		tilebackdropregion[i].texture = tilebackdropregion[i]:Texture();
+		tilebackdropregion[i].texture:Clear(255,255,255,255);
 		tilebackdropregion[i].texture:SetGradientColor("TOP",255,255,255,255,255,255,255,255);
 		tilebackdropregion[i].texture:SetGradientColor("BOTTOM",255,255,255,255,255,255,255,255);
 		--tilebackdropregion[i].texture:SetBlendMode("BLEND")

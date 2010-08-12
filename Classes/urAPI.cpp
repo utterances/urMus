@@ -1804,6 +1804,7 @@ int region_MoveToTop(lua_State* lua)
 // ENDNEW!!
 
 void instantiateTexture(urAPI_Region_t* t);
+void instantiateAllTextures(urAPI_Region_t* t);
 
 char TEXTURE_SOLID[] = "Solid Texture";
 
@@ -1920,6 +1921,8 @@ int region_Texture(lua_State* lua)
 	luaL_getmetatable(lua, "URAPI.texture");
 	lua_setmetatable(lua, -2);
 
+//	instantiateAllTextures(mytexture->region);
+	
 	if(mytexture->backgroundTex == nil && mytexture->texturepath != TEXTURE_SOLID)
 	{
 		instantiateTexture(mytexture->region);
@@ -2164,7 +2167,7 @@ int texture_SetTexture(lua_State* lua)
 		strcpy(t->texturepath, texturename);
 		if(t->backgroundTex != NULL) [t->backgroundTex release]; // Antileak
 		t->backgroundTex = nil;
-    instantiateTexture(t->region);
+		instantiateTexture(t->region);
 	}
 	
 	return 0;
@@ -2480,6 +2483,7 @@ int texture_BlendMode(lua_State* lua)
 
 
 void drawLineToTexture(urAPI_Texture_t *texture, float startx, float starty, float endx, float endy);
+Texture2D* createBlankTexture(float width,float height);
 
 int texture_Line(lua_State* lua)
 {
@@ -2488,6 +2492,9 @@ int texture_Line(lua_State* lua)
 	float starty = luaL_checknumber(lua, 3);
 	float endx = luaL_checknumber(lua, 4);
 	float endy = luaL_checknumber(lua, 5);
+
+	if(t->backgroundTex == nil)// && t->texturepath != TEXTURE_SOLID)
+		instantiateAllTextures(t->region);
 
 	if(t->backgroundTex != nil)
 		drawLineToTexture(t, startx, starty, endx, endy);
@@ -2504,6 +2511,9 @@ int texture_Ellipse(lua_State* lua)
 	float w = luaL_checknumber(lua, 4);
 	float h = luaL_checknumber(lua, 5);
 	
+	if(t->backgroundTex == nil)// && t->texturepath != TEXTURE_SOLID)
+		instantiateAllTextures(t->region);
+
 	if(t->backgroundTex != nil)
 		drawEllipseToTexture(t, x, y, w, h);
 	return 0;
@@ -2523,6 +2533,9 @@ int texture_Quad(lua_State* lua)
 	float x4 = luaL_checknumber(lua, 8);
 	float y4 = luaL_checknumber(lua, 9);
 	
+	if(t->backgroundTex == nil)// && t->texturepath != TEXTURE_SOLID)
+		instantiateAllTextures(t->region);
+
 	if(t->backgroundTex != nil)
 		drawQuadToTexture(t, x1, y1, x2, y2, x3, y3, x4, y4);
 	return 0;
@@ -2536,6 +2549,9 @@ int texture_Rect(lua_State* lua)
 	float w = luaL_checknumber(lua, 4);
 	float h = luaL_checknumber(lua, 5);
 	
+	if(t->backgroundTex == nil)// && t->texturepath != TEXTURE_SOLID)
+		instantiateAllTextures(t->region);
+
 	if(t->backgroundTex != nil)
 		drawQuadToTexture(t, x, y, x+w, y, x+w, y+h, x, y+h);
 	return 0;
@@ -2570,8 +2586,8 @@ int texture_Clear(lua_State* lua)
 	}
 	
 
-	if(t->backgroundTex == nil && t->texturepath != TEXTURE_SOLID)
-		instantiateTexture(t->region);
+	if(t->backgroundTex == nil)// && t->texturepath != TEXTURE_SOLID)
+		instantiateAllTextures(t->region);
 
 	if(t->backgroundTex != nil)
 		clearTexture(t->backgroundTex,r,g,b,a);
@@ -2659,7 +2675,7 @@ int region_UseAsBrush(lua_State* lua)
 	urAPI_Region_t* t = checkregion(lua, 1);
 
 	if(t->texture->backgroundTex == nil && t->texture->texturepath != TEXTURE_SOLID)
-		instantiateTexture(t);
+		instantiateAllTextures(t);
 	SetBrushTexture(t->texture->backgroundTex);
 
 	return 0;
