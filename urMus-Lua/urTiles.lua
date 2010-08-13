@@ -13,7 +13,7 @@ function Paint(self)
 --	x2 = 2*x2
 --	y2 = 2*y2
 
-	if not self.moving and x >= self:Left()*320.0/ScreenWidth() and x < self:Right()*320.0/ScreenWidth() and y >= self:Bottom()*480.0/ScreenHeight() and y < self:Top()*480.0/ScreenHeight()  then
+	if not self.moving and x >= self:Left()*320.0/ScreenWidth()-32 and x < self:Right()*320.0/ScreenWidth()+32 and y >= self:Bottom()*480.0/ScreenHeight()-32 and y < self:Top()*480.0/ScreenHeight()+32  then
 		if x2 ~= self.fingerposx or y2 ~= self.fingerposy then
 --			brush1.t:SetBrushSize(32);
 --			self.texture:SetBrushColor(255,127,0,30)
@@ -26,6 +26,7 @@ function Paint(self)
 end
 
 function BrushDown(self)
+	self:MoveToTop()
 	dopaint = true
 	for y=1,2 do
 		for x=1,2 do
