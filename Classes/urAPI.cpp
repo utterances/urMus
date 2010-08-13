@@ -2068,7 +2068,7 @@ int l_InputPosition(lua_State* lua)
 
 int l_Time(lua_State* lua)
 {
-	lua_pushnumber(lua, [systimer elapsedSec]);
+	lua_pushnumber(lua, systimer->elapsedSec());
 	return 1;
 }
 
@@ -4053,6 +4053,6 @@ void l_setupAPI(lua_State *lua)
 	lua_rawseti(lua, -2, 2); // Can be extended to any number of channels here
 	lua_setglobal(lua,"urSoundData");
 #endif
-	systimer = [MachTimer alloc];
-	[systimer start];
+	systimer = new MachTimer();
+	systimer->start();
 }

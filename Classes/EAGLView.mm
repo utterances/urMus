@@ -316,8 +316,8 @@ extern lua_State *lua;
 	//Create and advertise networking and discover others
 	[self setup];
 	
-	mytimer = [MachTimer alloc];
-	[mytimer start];
+	mytimer = new MachTimer();
+	mytimer->start();
 	
 #ifdef LATE_LAUNCH
 	NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
@@ -843,8 +843,8 @@ UILineBreakMode tolinebreakmode(int wrap)
   
 	urs_PullVis(); // update vis data before we call events, this way we have a rate based pulling that is available in all events.
 	// Clock ourselves.
-	float elapsedtime = [mytimer elapsedSec];
-	[mytimer start];
+	float elapsedtime = mytimer->elapsedSec();
+	mytimer->start();
 	callAllOnUpdate(elapsedtime); // Call lua APIs OnUpdates when we render a new region. We do this first so that stuff can still be drawn for this region.
 	
 	CGRect  bounds = [self bounds];
