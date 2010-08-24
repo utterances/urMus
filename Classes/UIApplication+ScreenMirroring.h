@@ -25,6 +25,8 @@
 //  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 //  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#undef LINKPROJECTOR
+#ifdef LINKPROJECTOR
 #import <UIKit/UIKit.h>
 
 extern NSString * const UIApplicationDidSetupScreenMirroringNotification;
@@ -42,3 +44,4 @@ static const NSUInteger ScreenMirroringDefaultFramesPerSecond = 15;
 
 + (UIImage *)takeScreenshot:(UIView *)theView;
 @end
+#endif

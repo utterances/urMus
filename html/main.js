@@ -82,7 +82,7 @@ $(document).ready(function() {
         $.each(json, function(i, ele) {
           var path = '/'+ele, 
               m_img = "bmp|png|gif|jpg|jpeg",
-              m_snd = "mp3|wav",
+              m_snd = "mp3|wav|aif|aiff",
               li = $('<li class="resource">'+ele+'</li>');
           if (ele.match('\.('+m_img+')$')) {
             li.qtip({content:'<img src="'+path+'"/>'});

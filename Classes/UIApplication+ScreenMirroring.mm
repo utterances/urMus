@@ -27,6 +27,8 @@
 
 #import "UIApplication+ScreenMirroring.h"
 
+#ifdef LINKPROJECTOR
+
 #import <QuartzCore/QuartzCore.h>
 #import <CoreGraphics/CoreGraphics.h>
 
@@ -260,3 +262,4 @@ static UIImageView *mirroredImageView = nil;
 }
 
 @end
+#endif
