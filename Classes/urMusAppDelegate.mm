@@ -15,11 +15,11 @@
 
 // This enables video projector output. It's not official API hence not safe for app store.
 //#define PROJECTOR_VIDEO
-//#define NEW_PROJECTOR_VIDEO
+#define NEW_PROJECTOR_VIDEO
 //#define FINAL_PROJECTOR_VIDEO
 
 #ifdef NEW_PROJECTOR_VIDEO
-#import "UIApplication+ScreenMirroring.h"
+#import "TVOutManager.h"
 #endif
 
 #ifdef SANDWICH_SUPPORT
@@ -90,9 +90,11 @@ extern bool newerror;
 #endif
 
 #ifdef NEW_PROJECTOR_VIDEO
-//	[[UIApplication sharedApplication] setupScreenMirroringOfMainWindow:mainWindow framesPerSecond:20];
-//	[application setupScreenMirroringOfMainWindow:window framesPerSecond:20];
-	[application setupScreenMirroring];
+	[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(screenDidConnectNotification:) name: UIScreenDidConnectNotification object: nil];
+	[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(screenDidDisconnectNotification:) name: UIScreenDidDisconnectNotification object: nil];
+	[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(screenModeDidChangeNotification:) name: UIScreenModeDidChangeNotification object: nil];
+
+	[[TVOutManager sharedInstance] startTVOut];
 #endif
 	
 #ifdef FINAL_PROJECTOR_VIDEO
@@ -202,6 +204,23 @@ extern bool newerror;
 	[window release];
 	[glView release];
 	[super dealloc];
+}
+
+#pragma mark Notifications
+
+-(void) screenDidConnectNotification: (NSNotification*) notification
+{
+//	infoLabel.text = [NSString stringWithFormat: @"Screen connected: %@", [[notification object] description]];
+}
+
+-(void) screenDidDisconnectNotification: (NSNotification*) notification
+{
+//	infoLabel.text = [NSString stringWithFormat: @"Screen disconnected: %@", [[notification object] description]];
+}
+
+-(void) screenModeDidChangeNotification: (NSNotification*) notification
+{
+//	infoLabel.text = [NSString stringWithFormat: @"Screen mode changed: %@", [[notification object] description]];
 }
 
 @end
