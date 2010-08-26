@@ -136,7 +136,7 @@ function urScrollList:FreeScrollList()
 end
 
 -- Create a single scroll region and insert at given position (or end if nil)
-function urScrollList:CreatescrollRegion(text1, text2, text3, callback, color, icontexture, backdroptexture, position)
+function urScrollList:CreatescrollRegion(text1, text2, text3, callback, color, path, icontexture, backdroptexture, position)
 	local region
 	if not position then
 		position = #self.scrollRegions + 1
@@ -170,6 +170,7 @@ function urScrollList:CreatescrollRegion(text1, text2, text3, callback, color, i
 	
 	region.callback = callback
 	region.data = text1
+	region.data2 = path
 	region.color = color
 	if position == 1 then
 		region:SetAnchor("TOP", self.BackdropRegion, "TOP", 0, -scrollRegionGap) -- Anchor first one with backdrop
@@ -250,6 +251,6 @@ end
 function urScrollList.SelectscrollRegion(self)
 	if self.highlit then
 		SetPage(urScrollList.returnPage)
-		self.callback(self.data)
+		self.callback(self.data, self.data2)
 	end
 end

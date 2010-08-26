@@ -14,6 +14,8 @@ local sin = math.sin
 local cos = math.cos
 local ceil = math.ceil
 
+patchdir = "Patches"
+
 pagefile = {
 "urMus",
 "urPiano.lua",
@@ -265,10 +267,10 @@ end
 function SaveSettingFile(file)
 	CreateSettings()
 	local nfile = CreateSaveName()
-	os.rename(DocumentPath(file),DocumentPath(nfile))
+	os.rename(DocumentPath(patchdir.."/"..file),DocumentPath(patchdir.."/"..nfile))
 	file = nfile
-	io.open(DocumentPath(file), "w")
-	io.output(DocumentPath(file))
+	io.open(DocumentPath(patchdir.."/"..file), "w")
+	io.output(DocumentPath(patchdir.."/"..file))
 	save("settingdata", settingdata)
 	io.output():close()
 	ShowNotification("Saved")
@@ -277,7 +279,9 @@ end
 function SaveSettings()
 	local scrollentries = {}
 
-	for v in lfs.dir(DocumentPath("")) do
+	lfs.mkdir(DocumentPath(patchdir))
+
+	for v in lfs.dir(DocumentPath(patchdir)) do
 		if v ~= "." and v ~= ".." then
 			local entry = { v, lfs.attributes(v,"size"), lfs.attributes(v,"modification"), SaveSettingFile, {84,84,84,255}}
 			table.insert(scrollentries, entry)
@@ -292,9 +296,9 @@ end
 
 function LoadSettingFile(file)
 	-- This loads data
-	_, error = io.open(DocumentPath(file), "r")
+	_, error = io.open(DocumentPath(patchdir.."/"..file), "r")
 	if not error then
-		dofile(DocumentPath(file))
+		dofile(DocumentPath(patchdir.."/"..file))
 		ShowNotification("Loading")
 		return true
 	else
@@ -315,7 +319,7 @@ function LoadSettings()
 
 	local scrollentries = {}
 
-	for v in lfs.dir(DocumentPath("")) do
+	for v in lfs.dir(DocumentPath(patchdir)) do
 		if v ~= "." and v ~= ".." then
 			local entry = { v, lfs.attributes(v,"size"), lfs.attributes(v,"modification"), LoadAndActivateSettings, {84,84,84,255}}
 			table.insert(scrollentries, entry)
@@ -1947,10 +1951,14 @@ local phase = 1
 --musregion = Region('region', 'musregion', UIParent)
 --musregion:Handle("OnMicrophone", HandleMic)
 
-function LoadAndActivateInterface(file)
+function LoadAndActivateInterface(file,path)
 	if not pageloaded[file] then
 		SetPage(next_free_page)
-		dofile(SystemPath(file))
+		if not path then
+			dofile(SystemPath(file))
+		else
+			dofile(path.."/"..file)
+		end
 		pageloaded[file] = next_free_page
 		next_free_page = next_free_page + 1
 	elseif Page() ~= pageloaded[file] then
@@ -1984,6 +1992,13 @@ function FlipPage(self)
 		local entry = { v, nil, nil, LoadAndActivateInterface, {84,84,84,255}}
 		table.insert(scrollentries, entry)
 	end
+	for v in lfs.dir(DocumentPath("")) do
+		if v ~= "." and v ~= ".." and string.find(v,"%.lua$") then
+			local entry = { v, nil, nil, LoadAndActivateInterface, {84,84,84,255}, DocumentPath("")}
+			table.insert(scrollentries, entry)			
+		end
+	end
+	
 	urScrollList:OpenScrollListPage(scrollpage, "Interface", nil, nil, scrollentries)
 end
 
