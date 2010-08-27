@@ -319,6 +319,8 @@ function LoadSettings()
 
 	local scrollentries = {}
 
+	lfs.mkdir(DocumentPath(patchdir))
+
 	for v in lfs.dir(DocumentPath(patchdir)) do
 		if v ~= "." and v ~= ".." then
 			local entry = { v, lfs.attributes(v,"size"), lfs.attributes(v,"modification"), LoadAndActivateSettings, {84,84,84,255}}

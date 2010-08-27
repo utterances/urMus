@@ -85,8 +85,11 @@ $(document).ready(function() {
               m_snd = "mp3|wav|aif|aiff",
               li = $('<li class="resource">'+ele+'</li>');
           if (ele.match('\.('+m_img+')$')) {
-            li.qtip({content:'<img src="'+path+'"/>'});
-            gallery_files.append(li);
+//            li.qtip({content:'<img src="'+path+'"/>'});
+			   li.bind({
+					   click: function() { window.location = path; }
+					   });
+			   gallery_files.append(li);
           }
           else if (ele.match('\.('+m_snd+')$')) {
             li.bind({

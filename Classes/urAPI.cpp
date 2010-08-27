@@ -1817,6 +1817,26 @@ char TEXTURE_SOLID[] = "Solid Texture";
 #define GRADIENT_ORIENTATION_DOWNWARD 2
 #define GRADIENT_ORIENTATION_UPWARD 3
 
+void textureColorCopyToGradient(urAPI_Texture_t* mytexture)
+{
+	mytexture->gradientUL[0] = mytexture->texturesolidcolor[0]; // R
+	mytexture->gradientUL[1] = mytexture->texturesolidcolor[1]; // G
+	mytexture->gradientUL[2] = mytexture->texturesolidcolor[2]; // B
+	mytexture->gradientUL[3] = mytexture->texturesolidcolor[3]; // A
+	mytexture->gradientUR[0] = mytexture->texturesolidcolor[0]; // R
+	mytexture->gradientUR[1] = mytexture->texturesolidcolor[1]; // G
+	mytexture->gradientUR[2] = mytexture->texturesolidcolor[2]; // B
+	mytexture->gradientUR[3] = mytexture->texturesolidcolor[3]; // A
+	mytexture->gradientBL[0] = mytexture->texturesolidcolor[0]; // R
+	mytexture->gradientBL[1] = mytexture->texturesolidcolor[1]; // G
+	mytexture->gradientBL[2] = mytexture->texturesolidcolor[2]; // B
+	mytexture->gradientBL[3] = mytexture->texturesolidcolor[3]; // A
+	mytexture->gradientBR[0] = mytexture->texturesolidcolor[0]; // R
+	mytexture->gradientBR[1] = mytexture->texturesolidcolor[1]; // G
+	mytexture->gradientBR[2] = mytexture->texturesolidcolor[2]; // B
+	mytexture->gradientBR[3] = mytexture->texturesolidcolor[3]; // A
+}
+
 int region_Texture(lua_State* lua)
 {
 	urAPI_Region_t* region = checkregion(lua,1);
@@ -1896,27 +1916,12 @@ int region_Texture(lua_State* lua)
 	mytexture->isTiled = true;
 	mytexture->fill = false;
 //	mytexture->gradientOrientation = GRADIENT_ORIENTATION_VERTICAL; OBSOLETE
-	mytexture->gradientUL[0] = 255; // R
-	mytexture->gradientUL[1] = 255; // G
-	mytexture->gradientUL[2] = 255; // B
-	mytexture->gradientUL[3] = 255; // A
-	mytexture->gradientUR[0] = 255; // R
-	mytexture->gradientUR[1] = 255; // G
-	mytexture->gradientUR[2] = 255; // B
-	mytexture->gradientUR[3] = 255; // A
-	mytexture->gradientBL[0] = 255; // R
-	mytexture->gradientBL[1] = 255; // G
-	mytexture->gradientBL[2] = 255; // B
-	mytexture->gradientBL[3] = 255; // A
-	mytexture->gradientBR[0] = 255; // R
-	mytexture->gradientBR[1] = 255; // G
-	mytexture->gradientBR[2] = 255; // B
-	mytexture->gradientBR[3] = 255; // A
 	mytexture->texturesolidcolor[0] = r; // R for solid
 	mytexture->texturesolidcolor[1] = g; // G
 	mytexture->texturesolidcolor[2] = b; // B
 	mytexture->texturesolidcolor[3] = a; // A
-
+	textureColorCopyToGradient(mytexture);
+	
 	mytexture->backgroundTex = NULL;
 	
 	region->texture = mytexture; // HACK
@@ -2161,6 +2166,7 @@ int texture_SetTexture(lua_State* lua)
 			t->texturesolidcolor[3] = luaL_checknumber(lua, 5);
 		else
 			t->texturesolidcolor[3] = 255;
+		textureColorCopyToGradient(t);
 	}
 	else
 	{
@@ -2277,6 +2283,8 @@ int texture_SetSolidColor(lua_State* lua)
 	t->texturesolidcolor[1] = vertG;
 	t->texturesolidcolor[2] = vertB;
 	t->texturesolidcolor[3] = vertA;
+	textureColorCopyToGradient(t);
+
 	return 0;
 }
 

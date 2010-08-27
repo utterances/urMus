@@ -8,6 +8,9 @@
 // http://www.touchcentric.com/blog/
 
 
+#undef NOIPODTOUCH
+#ifdef NOIPODTOUCH
+
 #import <QuartzCore/QuartzCore.h>
 #import "TVOutManager.h"
 
@@ -270,3 +273,4 @@
 }
 
 @end
+#endif

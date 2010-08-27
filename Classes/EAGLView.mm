@@ -939,7 +939,7 @@ UILineBreakMode tolinebreakmode(int wrap)
 			float alpha = t->alpha;
 			if(t->texture!=NULL)
 			{
-				if(t->texture->texturepath == TEXTURE_SOLID)
+/*				if(t->texture->texturepath == TEXTURE_SOLID)
 				{
 					squareColors[0] = t->texture->texturesolidcolor[0];
 					squareColors[1] = t->texture->texturesolidcolor[1];
@@ -962,7 +962,7 @@ UILineBreakMode tolinebreakmode(int wrap)
 					squareColors[15] = t->texture->texturesolidcolor[3]*alpha;
 				}
 				else
-				{
+				{*/
 					squareColors[0] = t->texture->gradientBL[0];
 					squareColors[1] = t->texture->gradientBL[1];
 					squareColors[2] = t->texture->gradientBL[2];
@@ -982,7 +982,7 @@ UILineBreakMode tolinebreakmode(int wrap)
 					squareColors[13] = t->texture->gradientUR[1];
 					squareColors[14] = t->texture->gradientUR[2];
 					squareColors[15] = t->texture->gradientUR[3]*alpha;
-				}
+//				}
 				glColorPointer(4, GL_UNSIGNED_BYTE, 0, squareColors);
 				glEnableClientState(GL_COLOR_ARRAY);
 				
