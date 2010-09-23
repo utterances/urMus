@@ -493,6 +493,7 @@ void MaxS_In2(ursObject* gself, double indata);
 void urs_SetupObjects();
 
 void callAllAccelerateSources(double tilt_x, double tilt_y, double tilt_z);
+void callAllGyroSources(double rate_x, double rate_y, double rate_z);
 void callAllCompassSources(double heading_x, double heading_y, double heading_z, double heading_north);
 void callAllLocationSources(double latitude, double longitude);
 void callAllTouchSources(double touch_x, double touch_y, int idx);
@@ -536,6 +537,7 @@ extern ursObject* nopeobject;
 extern ursObject* sampleobject;
 
 extern ursObject* accelobject;
+extern ursObject* gyroobject;
 extern ursObject* compassobject;
 extern ursObject* locationobject;
 extern ursObject* touchobject;

@@ -286,6 +286,40 @@ extern lua_State *lua;
 	[self setMultipleTouchEnabled:YES];
 	self.multipleTouchEnabled = YES;
 
+	float version = [[[UIDevice currentDevice] systemVersion] floatValue];
+	
+	if (version >= 4.0)
+    {
+		// setup the gyroscope collection
+		motionManager = [[CMMotionManager alloc] init];
+		motionManager.gyroUpdateInterval = 1.0/60.0;
+		
+		if (motionManager.gyroAvailable) {
+			opQ = [[NSOperationQueue currentQueue] retain];
+			CMGyroHandler gyroHandler = ^ (CMGyroData *gyroData, NSError *error) {
+				CMRotationRate rotate = gyroData.rotationRate;
+				// handle rotation-rate data here......
+				float rate_x = rotate.x/7.0;//128.0;
+				float rate_y = rotate.y/7.0;//128.0;
+				float rate_z = rotate.z/7.0;//128.0;
+				
+	//			float heading_north = ([heading trueHeading]-180.0)/180.0;
+				
+				// lua API events
+				callAllOnRotRate(rate_x, rate_y, rate_z);
+				// UrSound pipeline
+				callAllGyroSources(rate_x, rate_y, rate_z);
+				
+			};
+			[motionManager startGyroUpdatesToQueue:[NSOperationQueue currentQueue]
+									   withHandler: gyroHandler];
+			
+		} else {
+	//        NSLog(@"No gyroscope on device.");
+			[motionManager release];
+		}
+    }
+	
 	// setup the location manager
 	self.locationManager = [[[CLLocationManager alloc] init] autorelease];
 	

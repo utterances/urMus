@@ -175,6 +175,7 @@ typedef struct urAPI_Region
 #ifdef SANDWICH_SUPPORT
 		int OnPressure;
 #endif
+		int OnRotation;
 		int OnHeading;
 		int OnLocation;
 		int OnMicrophone;
@@ -203,6 +204,7 @@ bool callAllOnNetDisconnect(const char* name);
 #ifdef SANDWICH_SUPPORT
 bool callAllOnPressure(float p);
 #endif
+bool callAllOnRotRate(float x, float y, float z);
 bool callAllOnHeading(float x, float y, float z, float north);
 bool callAllOnLocation(float latitude, float longitude);
 bool callAllOnMicrophone(SInt16* mic_buffer, UInt32 bufferlen);

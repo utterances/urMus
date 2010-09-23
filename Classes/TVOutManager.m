@@ -8,7 +8,7 @@
 // http://www.touchcentric.com/blog/
 
 
-#undef NOIPODTOUCH
+#define NOIPODTOUCH
 #ifdef NOIPODTOUCH
 
 #import <QuartzCore/QuartzCore.h>
@@ -56,9 +56,11 @@
 		[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(screenDidDisconnectNotification:) name: UIScreenDidDisconnectNotification object: nil];
 		[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(screenModeDidChangeNotification:) name: UIScreenModeDidChangeNotification object: nil];
 		
+#ifdef CHANGEORIENTATION
 		// catch orientation notifications
 		[[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
 		[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(deviceOrientationDidChange:) name: UIDeviceOrientationDidChangeNotification object: nil];		
+#endif CHANGEORIENTATION
     }
     return self;
 }

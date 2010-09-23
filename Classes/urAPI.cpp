@@ -578,12 +578,25 @@ bool callAllOnLocation(float latitude, float longitude)
 	return true;
 }
 
+
+
 bool callAllOnHeading(float x, float y, float z, float north)
 {
 	for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
 	{
 		if(t->OnHeading != 0)
 			callScriptWith4Args(t->OnHeading,t,x,y,z,north);
+	}	
+	return true;
+}
+
+
+bool callAllOnRotRate(float x, float y, float z)
+{
+	for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
+	{
+		if(t->OnRotation != 0)
+			callScriptWith3Args(t->OnRotation,t,x,y,z);
 	}	
 	return true;
 }
@@ -916,6 +929,11 @@ int region_Handle(lua_State* lua)
 			region->OnPressure = 0;
 		}
 #endif
+		else if(!strcmp(handler, "OnRotation"))
+		{
+			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnRotation);
+			region->OnRotation = 0;
+		}
 		else if(!strcmp(handler, "OnHeading"))
 		{
 			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnHeading);
@@ -1021,6 +1039,8 @@ int region_Handle(lua_State* lua)
 			else if(!strcmp(handler, "OnPressure"))
 				region->OnPressure = func_ref;
 #endif
+			else if(!strcmp(handler, "OnRotation"))
+				region->OnRotation = func_ref;
 			else if(!strcmp(handler, "OnHeading"))
 				region->OnHeading = func_ref;
 			else if(!strcmp(handler, "OnLocation"))
@@ -3251,6 +3271,7 @@ static int l_Region(lua_State *lua)
 	myregion->OnPressure = 0;
 #endif
 	myregion->OnHeading = 0;
+	myregion->OnRotation = 0;
 	myregion->OnLocation = 0;
 	myregion->OnMicrophone = 0;
 	myregion->OnHorizontalScroll = 0;

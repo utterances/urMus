@@ -11,6 +11,7 @@
 #import <OpenGLES/ES1/gl.h>
 #import <OpenGLES/ES1/glext.h>
 #import <CoreLocation/CoreLocation.h>
+#import <CoreMotion/CoreMotion.h>
 #include <string>
 
 #undef SANDWICH_SUPPORT
@@ -68,7 +69,8 @@ Note that setting the view non-opaque will only work if the EAGL surface has an 
     NSTimer *animationTimer;
     NSTimeInterval animationInterval;
 	CLLocationManager *locationManager;
-
+	CMMotionManager *motionManager;
+	NSOperationQueue *opQ;
 #ifdef USEUDP
 	AsyncUdpSocket		*_server;
 #else

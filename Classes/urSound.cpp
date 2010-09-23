@@ -229,6 +229,24 @@ void callAllAccelerateSources(double tilt_x, double tilt_y, double tilt_z)
 	}
 }
 
+void callAllGyroSources(double rate_x, double rate_y, double rate_z)
+{
+	double rate;
+	
+	for(int i=0; i<3; i++) // for all 3 dimensions
+	{
+		switch(i)
+		{
+			case 0 : rate = rate_x; break;
+			case 1 : rate = rate_y; break;
+			case 2 : rate = rate_z; break;
+		}
+		
+		gyroobject->CallAllPushOuts(rate, i);
+	}
+}
+
+
 void callAllCompassSources(double heading_x, double heading_y, double heading_z, double heading_north)
 {
 	double heading;
@@ -807,6 +825,7 @@ ursObject* sampleobject;
 ursObject* looprhythmobject;
 
 ursObject* accelobject;
+ursObject* gyroobject;
 ursObject* compassobject;
 ursObject* locationobject;
 ursObject* touchobject;
@@ -850,6 +869,11 @@ void urs_SetupObjects()
 	pushobject = new ursObject("Push", NULL, NULL, 0, 1); // An event based source ("bang" in PD parlance)
 	pushobject->AddOut("Out", "Event", NULL, NULL, NULL);
 	ursourceobjectlist.Append(pushobject);
+	gyroobject = new ursObject("RotRate", NULL, NULL, 0, 3, true);
+	gyroobject->AddOut("X", "TimeSeries", NULL, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
+	gyroobject->AddOut("Y", "TimeSeries", NULL, NULL, NULL); 
+	gyroobject->AddOut("Z", "TimeSeries", NULL, NULL, NULL); 
+	ursourceobjectlist.Append(gyroobject);
 	touchobject = new ursObject("Touch", NULL, NULL, 0, 20, true);
 	touchobject->AddOut("X1", "TimeSeries", NULL, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
 	touchobject->AddOut("Y1", "TimeSeries", NULL, NULL, NULL); 

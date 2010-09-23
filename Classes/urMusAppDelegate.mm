@@ -15,7 +15,7 @@
 
 // This enables video projector output. It's not official API hence not safe for app store.
 //#define PROJECTOR_VIDEO
-//#define NEW_PROJECTOR_VIDEO
+#define NEW_PROJECTOR_VIDEO
 //#define FINAL_PROJECTOR_VIDEO
 
 #ifdef NEW_PROJECTOR_VIDEO

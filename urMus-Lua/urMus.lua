@@ -40,7 +40,10 @@ pagefile = {
 "urBounce.lua",
 "urTuner.lua",
 "urMetro.lua",
-"urDistance.lua"
+"urDistance.lua",
+"urAnimExample.lua",
+"urAir.lua",
+"urWater.lua"
 }
 
 scrollpage = 29
