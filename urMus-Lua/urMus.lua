@@ -43,7 +43,8 @@ pagefile = {
 "urDistance.lua",
 "urAnimExample.lua",
 "urAir.lua",
-"urWater.lua"
+"urWater.lua",
+"urFire.lua"
 }
 
 scrollpage = 29

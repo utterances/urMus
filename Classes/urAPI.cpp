@@ -568,6 +568,27 @@ bool callAllOnPageLeft(float page)
 	return true;
 }
 
+#ifdef SOAR_SUPPORT
+void setfield (const char *index, int value) {
+	lua_pushstring(L, index);
+	lua_pushnumber(L, (double)value/MAX_COLOR);
+	lua_settable(L, -3);
+}
+
+bool callAllOnSoarOutput()
+{
+	lua_pushstring(lua, action);
+	lua_newtable(lua);               /* creates a table */
+	setfield(/*key here*/,/* value here*/ );        /* table.r = ct->r */
+
+	for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
+	{
+		if(t->OnSoarOuput != 0)
+			callScriptWith2StringTableArgs(t->OnSoarOutput,t); // Arguments are on stack. Table on stack in implied.
+}
+#endif
+						 
+						 
 bool callAllOnLocation(float latitude, float longitude)
 {
 	for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
@@ -577,8 +598,6 @@ bool callAllOnLocation(float latitude, float longitude)
 	}	
 	return true;
 }
-
-
 
 bool callAllOnHeading(float x, float y, float z, float north)
 {
@@ -747,6 +766,31 @@ bool callScriptWith2Args(int func_ref, urAPI_Region_t* region, float a, float b)
 	return true;
 }
 
+#ifdef SOAR_SUPPORT
+bool callScriptWith2ActionTableArgs(int func_ref, urAPI_Region_t* region)
+{
+	if(func_ref == 0) return false;
+	
+	// Call lua function by stored Reference
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
+	constuctSoarArgs();
+	lua_pushnumber(lua,a);
+	lua_pushnumber(lua,b);
+	if(lua_pcall(lua,3,0,0) != 0)
+	{
+		//<return Error>
+		const char* error = lua_tostring(lua, -1);
+		errorstr = error; // DPrinting errors for now
+		newerror = true;
+		return false;
+	}
+	
+	// OK!
+	return true;
+}
+#endif	
+	
 bool callScriptWith1Args(int func_ref, urAPI_Region_t* region, float a)
 {
 	if(func_ref == 0) return false;
@@ -929,6 +973,13 @@ int region_Handle(lua_State* lua)
 			region->OnPressure = 0;
 		}
 #endif
+#ifdef SOAR_SUPPORT
+		else if(!strcmp(handler, "OnSoarOutput"))
+		{
+			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnSoarOutput);
+			region->OnSoarOutput = 0;
+		}
+#endif
 		else if(!strcmp(handler, "OnRotation"))
 		{
 			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnRotation);
@@ -1038,6 +1089,10 @@ int region_Handle(lua_State* lua)
 #ifdef SANDWICH_SUPPORT
 			else if(!strcmp(handler, "OnPressure"))
 				region->OnPressure = func_ref;
+#endif
+#ifdef SOAR_SUPPORT
+			else if(!strcmp(handler, "OnSoarOuput"))
+				region->OnSoarOutput = func_ref;
 #endif
 			else if(!strcmp(handler, "OnRotation"))
 				region->OnRotation = func_ref;
@@ -3270,6 +3325,9 @@ static int l_Region(lua_State *lua)
 #ifdef SANDWICH_SUPPORT
 	myregion->OnPressure = 0;
 #endif
+#ifdef SOAR_SUPPORT
+	myregion->OnSoarOutput = 0;
+#endif
 	myregion->OnHeading = 0;
 	myregion->OnRotation = 0;
 	myregion->OnLocation = 0;
@@ -3900,6 +3958,63 @@ int l_SetPage(lua_State *lua)
 	return 0;
 }
 
+// SOAR support API
+
+#ifdef SOAR_SUPPORT
+int l_SoarCreateID(lua_State *lua)
+{
+	char *inid = luaL_checkstring(lua,1);
+	char *inlabel = luaL_checkstring(lua,2);
+	
+	char outid[] = "dummyid"; // THIS IS BAD AND NEEDS IMPLEMENTATIONS. Seals die.
+	float outtimetag = 1; // THIS IS VERY OFFENSIVE, PLEASE FIX.
+	// NATE: soar command here, create outid sting, outtimetag number
+	
+	lua_pushstring(lua, outid);
+	lua_pushnumber(lua, outtimetag);
+	
+	return 2;
+}
+
+int l_SoarDelete(lua_State *lua)
+{
+	int inid = luaL_checknumber(lua,1);
+
+	// NATE: soar command here
+	
+	return 0;
+}
+
+int l_SoarCreateConstant(lua_State *lua)
+{
+	char *inid = luaL_checkstring(lua,1);
+	char *inlabel = luaL_checkstring(lua,2);
+	float outtimetag = 1; // THIS IS VERY OFFENSIVE, PLEASE FIX.
+	
+	if(lua_isnumber(lua,3))
+	{
+		// NATE: soar command here, create outtimetag number
+	}
+	else if(lua_isstring(lua,3))
+	{
+		// NATE: soar command here, create outtimetag number
+	}
+	
+	lua_pushnumber(lua, outtimetag);
+	
+	return 1;
+}
+
+int l_SoarLoadRules(lua_State *lua)
+{
+	char *infile = luaL_checkstring(lua,1);
+	
+	// NATE: soar command here, create outtimetag number
+	
+	return 0;
+}
+#endif
+	
 //------------------------------------------------------------------------------
 // Register our API
 //------------------------------------------------------------------------------
@@ -4083,6 +4198,17 @@ void l_setupAPI(lua_State *lua)
 	lua_setglobal(lua, "Page");
 	lua_pushcfunction(lua, l_SetPage);
 	lua_setglobal(lua, "SetPage");
+	
+#ifdef SOAR_SUPPORT
+	lua_pushcfunction(lua, l_SoarCreateID);
+	lua_setglobal(lua,"SoarCreateID");
+	lua_pushcfunction(lua, l_SoarDelete);
+	lua_setglobal(lua,"SoarDelete");
+	lua_pushcfunction(lua, l_SoarCreateConstant);
+	lua_setglobal(lua,"SoarCreateConstant");
+	lua_pushcfunction(lua, l_SoarLoadRules);
+	lua_setglobal(lua,"SoarLoadRules");
+#endif	
 	
 	lua_pushcfunction(lua, l_FreeAllRegions);
 	lua_setglobal(lua, "FreeAllRegions");

@@ -15,8 +15,11 @@
 
 // This enables video projector output. It's not official API hence not safe for app store.
 //#define PROJECTOR_VIDEO
+//
 #define NEW_PROJECTOR_VIDEO
 //#define FINAL_PROJECTOR_VIDEO
+
+// Note: Also check ipod define in TvOutManager.mm
 
 #ifdef NEW_PROJECTOR_VIDEO
 #import "TVOutManager.h"

@@ -22,6 +22,17 @@
 		7700C06C104B2DA70025D43A /* rightarrow.png in Resources */ = {isa = PBXBuildFile; fileRef = 7700C06A104B2DA70025D43A /* rightarrow.png */; };
 		7706EBAD1044E0E200E7D656 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7706EBAC1044E0E200E7D656 /* CoreLocation.framework */; };
 		770FD84B10AB51CF004B0967 /* flatbutton-64.png in Resources */ = {isa = PBXBuildFile; fileRef = 770FD84A10AB51CF004B0967 /* flatbutton-64.png */; };
+		77104F341254315500205E0E /* OldMan10.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77104F291254315500205E0E /* OldMan10.wav */; };
+		77104F351254315500205E0E /* OldMan9.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77104F2A1254315500205E0E /* OldMan9.wav */; };
+		77104F361254315500205E0E /* OldMan8.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77104F2B1254315500205E0E /* OldMan8.wav */; };
+		77104F371254315500205E0E /* OldMan7.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77104F2C1254315500205E0E /* OldMan7.wav */; };
+		77104F381254315500205E0E /* OldMan6.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77104F2D1254315500205E0E /* OldMan6.wav */; };
+		77104F391254315500205E0E /* OldMan5.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77104F2E1254315500205E0E /* OldMan5.wav */; };
+		77104F3A1254315500205E0E /* OldMan4.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77104F2F1254315500205E0E /* OldMan4.wav */; };
+		77104F3B1254315500205E0E /* OldMan3.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77104F301254315500205E0E /* OldMan3.wav */; };
+		77104F3C1254315500205E0E /* OldMan1.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77104F311254315500205E0E /* OldMan1.wav */; };
+		77104F3D1254315500205E0E /* OldMan2.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77104F321254315500205E0E /* OldMan2.wav */; };
+		77104F3E1254315500205E0E /* WindLoop1.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77104F331254315500205E0E /* WindLoop1.wav */; };
 		771DC9B411B051BB00880F72 /* urBounce.lua in Sources */ = {isa = PBXBuildFile; fileRef = 771DC9B311B051BB00880F72 /* urBounce.lua */; };
 		771DC9DC11B0523E00880F72 /* urBounce.lua in Resources */ = {isa = PBXBuildFile; fileRef = 771DC9B311B051BB00880F72 /* urBounce.lua */; };
 		771F1C3C109B7E10005069EC /* urSoundAtoms.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 771F1C3B109B7E10005069EC /* urSoundAtoms.cpp */; };
@@ -33,6 +44,37 @@
 		773840C61243F79900632B02 /* urWater.lua in Sources */ = {isa = PBXBuildFile; fileRef = 773840C41243F79900632B02 /* urWater.lua */; };
 		773840C712440E0900632B02 /* urAir.lua in Resources */ = {isa = PBXBuildFile; fileRef = 773840C31243F79900632B02 /* urAir.lua */; };
 		773840C812440E0900632B02 /* urWater.lua in Resources */ = {isa = PBXBuildFile; fileRef = 773840C41243F79900632B02 /* urWater.lua */; };
+		773CF7C2125672BC007BC22E /* Bubbly.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7A3125672BC007BC22E /* Bubbly.wav */; };
+		773CF7C3125672BC007BC22E /* CrunchySlush.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7A4125672BC007BC22E /* CrunchySlush.wav */; };
+		773CF7C4125672BC007BC22E /* MidManB1.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7A5125672BC007BC22E /* MidManB1.wav */; };
+		773CF7C5125672BC007BC22E /* MidManB2.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7A6125672BC007BC22E /* MidManB2.wav */; };
+		773CF7C6125672BC007BC22E /* MidManR1.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7A7125672BC007BC22E /* MidManR1.wav */; };
+		773CF7C7125672BC007BC22E /* MidManR2.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7A8125672BC007BC22E /* MidManR2.wav */; };
+		773CF7C8125672BC007BC22E /* MidManR3.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7A9125672BC007BC22E /* MidManR3.wav */; };
+		773CF7C9125672BC007BC22E /* MidManR4.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7AA125672BC007BC22E /* MidManR4.wav */; };
+		773CF7CA125672BC007BC22E /* MidManR5.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7AB125672BC007BC22E /* MidManR5.wav */; };
+		773CF7CB125672BC007BC22E /* MidManR6.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7AC125672BC007BC22E /* MidManR6.wav */; };
+		773CF7CC125672BC007BC22E /* MidManR7.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7AD125672BC007BC22E /* MidManR7.wav */; };
+		773CF7CD125672BC007BC22E /* MidManR8.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7AE125672BC007BC22E /* MidManR8.wav */; };
+		773CF7CE125672BC007BC22E /* MidManR9.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7AF125672BC007BC22E /* MidManR9.wav */; };
+		773CF7CF125672BC007BC22E /* MidManR10.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7B0125672BC007BC22E /* MidManR10.wav */; };
+		773CF7D0125672BC007BC22E /* MidManR11.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7B1125672BC007BC22E /* MidManR11.wav */; };
+		773CF7D1125672BC007BC22E /* MidManR12.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7B2125672BC007BC22E /* MidManR12.wav */; };
+		773CF7D2125672BC007BC22E /* MidManR13.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7B3125672BC007BC22E /* MidManR13.wav */; };
+		773CF7D3125672BC007BC22E /* MidManR14.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7B4125672BC007BC22E /* MidManR14.wav */; };
+		773CF7D4125672BC007BC22E /* MidManR15.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7B5125672BC007BC22E /* MidManR15.wav */; };
+		773CF7D5125672BC007BC22E /* MidManS1.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7B6125672BC007BC22E /* MidManS1.wav */; };
+		773CF7D6125672BC007BC22E /* MidManS2.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7B7125672BC007BC22E /* MidManS2.wav */; };
+		773CF7D7125672BC007BC22E /* MidManS3.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7B8125672BC007BC22E /* MidManS3.wav */; };
+		773CF7D8125672BC007BC22E /* MidManS4.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7B9125672BC007BC22E /* MidManS4.wav */; };
+		773CF7D9125672BC007BC22E /* Running.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7BA125672BC007BC22E /* Running.wav */; };
+		773CF7DA125672BC007BC22E /* waves1.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7BB125672BC007BC22E /* waves1.wav */; };
+		773CF7DB125672BC007BC22E /* YoungGirl1.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7BC125672BC007BC22E /* YoungGirl1.wav */; };
+		773CF7DC125672BC007BC22E /* YoungGirl2.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7BD125672BC007BC22E /* YoungGirl2.wav */; };
+		773CF7DD125672BC007BC22E /* YoungGirl3.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7BE125672BC007BC22E /* YoungGirl3.wav */; };
+		773CF7DE125672BC007BC22E /* YoungGirl4.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7BF125672BC007BC22E /* YoungGirl4.wav */; };
+		773CF7DF125672BC007BC22E /* YoungGirl5.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7C0125672BC007BC22E /* YoungGirl5.wav */; };
+		773CF7E0125672BC007BC22E /* YoungGirl6.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773CF7C1125672BC007BC22E /* YoungGirl6.wav */; };
 		773D287910CF32A10090E189 /* sleighbells.wav in Resources */ = {isa = PBXBuildFile; fileRef = 773D287810CF32A10090E189 /* sleighbells.wav */; };
 		773FF2AD124AEB9F0089790C /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7753E13A124A9A3500B2BF05 /* CoreMotion.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		7743E38F10BB147D005F36BF /* lfs.c in Sources */ = {isa = PBXBuildFile; fileRef = 7743E38E10BB147D005F36BF /* lfs.c */; };
@@ -166,6 +208,8 @@
 		77B56E9010894FE7008931AC /* Wurley.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 77B56E3A10894FE7008931AC /* Wurley.cpp */; };
 		77B56EE6108954C4008931AC /* urSTK.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 77B56EE5108954C4008931AC /* urSTK.cpp */; };
 		77B6329610D152C200AACEE4 /* SleighBells.png in Resources */ = {isa = PBXBuildFile; fileRef = 77B6329510D152C200AACEE4 /* SleighBells.png */; };
+		77B766AC1254E22000274580 /* FireCrackle2.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77B766AA1254E22000274580 /* FireCrackle2.wav */; };
+		77B766AD1254E22000274580 /* FireCrackle.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77B766AB1254E22000274580 /* FireCrackle.wav */; };
 		77B9FC7D1194AF12006D5007 /* cloud-drop1.png in Resources */ = {isa = PBXBuildFile; fileRef = 77B9FC5E1194AF12006D5007 /* cloud-drop1.png */; };
 		77B9FC7E1194AF12006D5007 /* cloud-drop2.png in Resources */ = {isa = PBXBuildFile; fileRef = 77B9FC5F1194AF12006D5007 /* cloud-drop2.png */; };
 		77B9FC7F1194AF12006D5007 /* cloud-drop3.png in Resources */ = {isa = PBXBuildFile; fileRef = 77B9FC601194AF12006D5007 /* cloud-drop3.png */; };
@@ -198,6 +242,10 @@
 		77B9FCB31194AF51006D5007 /* urWidget.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77B9FC7C1194AF12006D5007 /* urWidget.lua */; };
 		77B9FCB71194AF8F006D5007 /* o-alpha.png in Resources */ = {isa = PBXBuildFile; fileRef = 77B9FCB61194AF8F006D5007 /* o-alpha.png */; };
 		77B9FCB91194AFB8006D5007 /* x-alpha.png in Resources */ = {isa = PBXBuildFile; fileRef = 77B9FCB81194AFB8006D5007 /* x-alpha.png */; };
+		77BD37B01252CD0D002BE9DA /* urFire.lua in Sources */ = {isa = PBXBuildFile; fileRef = 77BD37AF1252CD0D002BE9DA /* urFire.lua */; };
+		77BD37B51252CD1B002BE9DA /* urFire.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77BD37AF1252CD0D002BE9DA /* urFire.lua */; };
+		77BD37CB1252D2F9002BE9DA /* fire2.png in Resources */ = {isa = PBXBuildFile; fileRef = 77BD37C91252D2F9002BE9DA /* fire2.png */; };
+		77BD37CC1252D2F9002BE9DA /* fire1.png in Resources */ = {isa = PBXBuildFile; fileRef = 77BD37CA1252D2F9002BE9DA /* fire1.png */; };
 		77BFD215124AF81200ABFFD2 /* urMus-Intro_196.png in Resources */ = {isa = PBXBuildFile; fileRef = 77BFD1B4124AF81200ABFFD2 /* urMus-Intro_196.png */; };
 		77BFD216124AF81200ABFFD2 /* urMus-Intro_195.png in Resources */ = {isa = PBXBuildFile; fileRef = 77BFD1B5124AF81200ABFFD2 /* urMus-Intro_195.png */; };
 		77BFD217124AF81200ABFFD2 /* urMus-Intro_194.png in Resources */ = {isa = PBXBuildFile; fileRef = 77BFD1B6124AF81200ABFFD2 /* urMus-Intro_194.png */; };
@@ -360,6 +408,17 @@
 		7700C06A104B2DA70025D43A /* rightarrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = rightarrow.png; path = Textures/rightarrow.png; sourceTree = "<group>"; };
 		7706EBAC1044E0E200E7D656 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 		770FD84A10AB51CF004B0967 /* flatbutton-64.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "flatbutton-64.png"; path = "Textures/flatbutton-64.png"; sourceTree = "<group>"; };
+		77104F291254315500205E0E /* OldMan10.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = OldMan10.wav; path = Sounds/OldMan10.wav; sourceTree = "<group>"; };
+		77104F2A1254315500205E0E /* OldMan9.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = OldMan9.wav; path = Sounds/OldMan9.wav; sourceTree = "<group>"; };
+		77104F2B1254315500205E0E /* OldMan8.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = OldMan8.wav; path = Sounds/OldMan8.wav; sourceTree = "<group>"; };
+		77104F2C1254315500205E0E /* OldMan7.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = OldMan7.wav; path = Sounds/OldMan7.wav; sourceTree = "<group>"; };
+		77104F2D1254315500205E0E /* OldMan6.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = OldMan6.wav; path = Sounds/OldMan6.wav; sourceTree = "<group>"; };
+		77104F2E1254315500205E0E /* OldMan5.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = OldMan5.wav; path = Sounds/OldMan5.wav; sourceTree = "<group>"; };
+		77104F2F1254315500205E0E /* OldMan4.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = OldMan4.wav; path = Sounds/OldMan4.wav; sourceTree = "<group>"; };
+		77104F301254315500205E0E /* OldMan3.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = OldMan3.wav; path = Sounds/OldMan3.wav; sourceTree = "<group>"; };
+		77104F311254315500205E0E /* OldMan1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = OldMan1.wav; path = Sounds/OldMan1.wav; sourceTree = "<group>"; };
+		77104F321254315500205E0E /* OldMan2.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = OldMan2.wav; path = Sounds/OldMan2.wav; sourceTree = "<group>"; };
+		77104F331254315500205E0E /* WindLoop1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = WindLoop1.wav; path = Sounds/WindLoop1.wav; sourceTree = "<group>"; };
 		771DC9B311B051BB00880F72 /* urBounce.lua */ = {isa = PBXFileReference; fileEncoding = 12; lastKnownFileType = sourcecode.lua; name = urBounce.lua; path = "urMus-Lua/urBounce.lua"; sourceTree = "<group>"; };
 		771F1C3A109B7E10005069EC /* urSoundAtoms.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = urSoundAtoms.h; sourceTree = "<group>"; };
 		771F1C3B109B7E10005069EC /* urSoundAtoms.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = urSoundAtoms.cpp; sourceTree = "<group>"; };
@@ -368,6 +427,37 @@
 		7737230D120A1C9D003AEE57 /* urDistance.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urDistance.lua; path = "urMus-Lua/urDistance.lua"; sourceTree = "<group>"; };
 		773840C31243F79900632B02 /* urAir.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urAir.lua; path = "urMus-Lua/urAir.lua"; sourceTree = "<group>"; };
 		773840C41243F79900632B02 /* urWater.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urWater.lua; path = "urMus-Lua/urWater.lua"; sourceTree = "<group>"; };
+		773CF7A3125672BC007BC22E /* Bubbly.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = Bubbly.wav; path = Sounds/Bubbly.wav; sourceTree = "<group>"; };
+		773CF7A4125672BC007BC22E /* CrunchySlush.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = CrunchySlush.wav; path = Sounds/CrunchySlush.wav; sourceTree = "<group>"; };
+		773CF7A5125672BC007BC22E /* MidManB1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManB1.wav; path = Sounds/MidManB1.wav; sourceTree = "<group>"; };
+		773CF7A6125672BC007BC22E /* MidManB2.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManB2.wav; path = Sounds/MidManB2.wav; sourceTree = "<group>"; };
+		773CF7A7125672BC007BC22E /* MidManR1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManR1.wav; path = Sounds/MidManR1.wav; sourceTree = "<group>"; };
+		773CF7A8125672BC007BC22E /* MidManR2.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManR2.wav; path = Sounds/MidManR2.wav; sourceTree = "<group>"; };
+		773CF7A9125672BC007BC22E /* MidManR3.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManR3.wav; path = Sounds/MidManR3.wav; sourceTree = "<group>"; };
+		773CF7AA125672BC007BC22E /* MidManR4.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManR4.wav; path = Sounds/MidManR4.wav; sourceTree = "<group>"; };
+		773CF7AB125672BC007BC22E /* MidManR5.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManR5.wav; path = Sounds/MidManR5.wav; sourceTree = "<group>"; };
+		773CF7AC125672BC007BC22E /* MidManR6.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManR6.wav; path = Sounds/MidManR6.wav; sourceTree = "<group>"; };
+		773CF7AD125672BC007BC22E /* MidManR7.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManR7.wav; path = Sounds/MidManR7.wav; sourceTree = "<group>"; };
+		773CF7AE125672BC007BC22E /* MidManR8.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManR8.wav; path = Sounds/MidManR8.wav; sourceTree = "<group>"; };
+		773CF7AF125672BC007BC22E /* MidManR9.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManR9.wav; path = Sounds/MidManR9.wav; sourceTree = "<group>"; };
+		773CF7B0125672BC007BC22E /* MidManR10.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManR10.wav; path = Sounds/MidManR10.wav; sourceTree = "<group>"; };
+		773CF7B1125672BC007BC22E /* MidManR11.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManR11.wav; path = Sounds/MidManR11.wav; sourceTree = "<group>"; };
+		773CF7B2125672BC007BC22E /* MidManR12.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManR12.wav; path = Sounds/MidManR12.wav; sourceTree = "<group>"; };
+		773CF7B3125672BC007BC22E /* MidManR13.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManR13.wav; path = Sounds/MidManR13.wav; sourceTree = "<group>"; };
+		773CF7B4125672BC007BC22E /* MidManR14.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManR14.wav; path = Sounds/MidManR14.wav; sourceTree = "<group>"; };
+		773CF7B5125672BC007BC22E /* MidManR15.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManR15.wav; path = Sounds/MidManR15.wav; sourceTree = "<group>"; };
+		773CF7B6125672BC007BC22E /* MidManS1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManS1.wav; path = Sounds/MidManS1.wav; sourceTree = "<group>"; };
+		773CF7B7125672BC007BC22E /* MidManS2.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManS2.wav; path = Sounds/MidManS2.wav; sourceTree = "<group>"; };
+		773CF7B8125672BC007BC22E /* MidManS3.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManS3.wav; path = Sounds/MidManS3.wav; sourceTree = "<group>"; };
+		773CF7B9125672BC007BC22E /* MidManS4.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManS4.wav; path = Sounds/MidManS4.wav; sourceTree = "<group>"; };
+		773CF7BA125672BC007BC22E /* Running.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = Running.wav; path = Sounds/Running.wav; sourceTree = "<group>"; };
+		773CF7BB125672BC007BC22E /* waves1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = waves1.wav; path = Sounds/waves1.wav; sourceTree = "<group>"; };
+		773CF7BC125672BC007BC22E /* YoungGirl1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = YoungGirl1.wav; path = Sounds/YoungGirl1.wav; sourceTree = "<group>"; };
+		773CF7BD125672BC007BC22E /* YoungGirl2.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = YoungGirl2.wav; path = Sounds/YoungGirl2.wav; sourceTree = "<group>"; };
+		773CF7BE125672BC007BC22E /* YoungGirl3.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = YoungGirl3.wav; path = Sounds/YoungGirl3.wav; sourceTree = "<group>"; };
+		773CF7BF125672BC007BC22E /* YoungGirl4.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = YoungGirl4.wav; path = Sounds/YoungGirl4.wav; sourceTree = "<group>"; };
+		773CF7C0125672BC007BC22E /* YoungGirl5.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = YoungGirl5.wav; path = Sounds/YoungGirl5.wav; sourceTree = "<group>"; };
+		773CF7C1125672BC007BC22E /* YoungGirl6.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = YoungGirl6.wav; path = Sounds/YoungGirl6.wav; sourceTree = "<group>"; };
 		773D287810CF32A10090E189 /* sleighbells.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = sleighbells.wav; path = Sounds/sleighbells.wav; sourceTree = "<group>"; };
 		7743E38D10BB147D005F36BF /* lfs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lfs.h; path = "Classes/lua-5.1.4/src/lfs.h"; sourceTree = "<group>"; };
 		7743E38E10BB147D005F36BF /* lfs.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = lfs.c; path = "Classes/lua-5.1.4/src/lfs.c"; sourceTree = "<group>"; };
@@ -612,6 +702,8 @@
 		77B56EE4108954C4008931AC /* urSTK.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = urSTK.h; sourceTree = "<group>"; };
 		77B56EE5108954C4008931AC /* urSTK.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = urSTK.cpp; sourceTree = "<group>"; };
 		77B6329510D152C200AACEE4 /* SleighBells.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = SleighBells.png; path = Textures/SleighBells.png; sourceTree = "<group>"; };
+		77B766AA1254E22000274580 /* FireCrackle2.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = FireCrackle2.wav; path = Sounds/FireCrackle2.wav; sourceTree = "<group>"; };
+		77B766AB1254E22000274580 /* FireCrackle.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = FireCrackle.wav; path = Sounds/FireCrackle.wav; sourceTree = "<group>"; };
 		77B9FC5E1194AF12006D5007 /* cloud-drop1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "cloud-drop1.png"; sourceTree = "<group>"; };
 		77B9FC5F1194AF12006D5007 /* cloud-drop2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "cloud-drop2.png"; sourceTree = "<group>"; };
 		77B9FC601194AF12006D5007 /* cloud-drop3.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "cloud-drop3.png"; sourceTree = "<group>"; };
@@ -645,6 +737,9 @@
 		77B9FC7C1194AF12006D5007 /* urWidget.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urWidget.lua; path = "urMus-Lua/urWidget.lua"; sourceTree = "<group>"; };
 		77B9FCB61194AF8F006D5007 /* o-alpha.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "o-alpha.png"; path = "Textures/o-alpha.png"; sourceTree = "<group>"; };
 		77B9FCB81194AFB8006D5007 /* x-alpha.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "x-alpha.png"; path = "Textures/x-alpha.png"; sourceTree = "<group>"; };
+		77BD37AF1252CD0D002BE9DA /* urFire.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urFire.lua; path = "urMus-Lua/urFire.lua"; sourceTree = "<group>"; };
+		77BD37C91252D2F9002BE9DA /* fire2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = fire2.png; path = Textures/fire2.png; sourceTree = "<group>"; };
+		77BD37CA1252D2F9002BE9DA /* fire1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = fire1.png; path = Textures/fire1.png; sourceTree = "<group>"; };
 		77BFD1B4124AF81200ABFFD2 /* urMus-Intro_196.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "urMus-Intro_196.png"; sourceTree = "<group>"; };
 		77BFD1B5124AF81200ABFFD2 /* urMus-Intro_195.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "urMus-Intro_195.png"; sourceTree = "<group>"; };
 		77BFD1B6124AF81200ABFFD2 /* urMus-Intro_194.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "urMus-Intro_194.png"; sourceTree = "<group>"; };
@@ -1311,6 +1406,7 @@
 				771DC9B311B051BB00880F72 /* urBounce.lua */,
 				77E7B87811DBD0D000398FBD /* urMetro.lua */,
 				7737230D120A1C9D003AEE57 /* urDistance.lua */,
+				77BD37AF1252CD0D002BE9DA /* urFire.lua */,
 			);
 			name = "urMus-lua";
 			sourceTree = "<group>";
@@ -1333,6 +1429,8 @@
 		77F043941123BC3F00CB8C95 /* Textures */ = {
 			isa = PBXGroup;
 			children = (
+				77BD37C91252D2F9002BE9DA /* fire2.png */,
+				77BD37CA1252D2F9002BE9DA /* fire1.png */,
 				77F217AA12492FBD00BF0942 /* wavel24.png */,
 				77F217AB12492FBD00BF0942 /* wavel23.png */,
 				77F217AC12492FBD00BF0942 /* wavel22.png */,
@@ -1377,6 +1475,50 @@
 		77F043951123BC5100CB8C95 /* Sounds */ = {
 			isa = PBXGroup;
 			children = (
+				773CF7A3125672BC007BC22E /* Bubbly.wav */,
+				773CF7A4125672BC007BC22E /* CrunchySlush.wav */,
+				773CF7A5125672BC007BC22E /* MidManB1.wav */,
+				773CF7A6125672BC007BC22E /* MidManB2.wav */,
+				773CF7A7125672BC007BC22E /* MidManR1.wav */,
+				773CF7A8125672BC007BC22E /* MidManR2.wav */,
+				773CF7A9125672BC007BC22E /* MidManR3.wav */,
+				773CF7AA125672BC007BC22E /* MidManR4.wav */,
+				773CF7AB125672BC007BC22E /* MidManR5.wav */,
+				773CF7AC125672BC007BC22E /* MidManR6.wav */,
+				773CF7AD125672BC007BC22E /* MidManR7.wav */,
+				773CF7AE125672BC007BC22E /* MidManR8.wav */,
+				773CF7AF125672BC007BC22E /* MidManR9.wav */,
+				773CF7B0125672BC007BC22E /* MidManR10.wav */,
+				773CF7B1125672BC007BC22E /* MidManR11.wav */,
+				773CF7B2125672BC007BC22E /* MidManR12.wav */,
+				773CF7B3125672BC007BC22E /* MidManR13.wav */,
+				773CF7B4125672BC007BC22E /* MidManR14.wav */,
+				773CF7B5125672BC007BC22E /* MidManR15.wav */,
+				773CF7B6125672BC007BC22E /* MidManS1.wav */,
+				773CF7B7125672BC007BC22E /* MidManS2.wav */,
+				773CF7B8125672BC007BC22E /* MidManS3.wav */,
+				773CF7B9125672BC007BC22E /* MidManS4.wav */,
+				773CF7BA125672BC007BC22E /* Running.wav */,
+				773CF7BB125672BC007BC22E /* waves1.wav */,
+				773CF7BC125672BC007BC22E /* YoungGirl1.wav */,
+				773CF7BD125672BC007BC22E /* YoungGirl2.wav */,
+				773CF7BE125672BC007BC22E /* YoungGirl3.wav */,
+				773CF7BF125672BC007BC22E /* YoungGirl4.wav */,
+				773CF7C0125672BC007BC22E /* YoungGirl5.wav */,
+				773CF7C1125672BC007BC22E /* YoungGirl6.wav */,
+				77B766AA1254E22000274580 /* FireCrackle2.wav */,
+				77B766AB1254E22000274580 /* FireCrackle.wav */,
+				77104F291254315500205E0E /* OldMan10.wav */,
+				77104F2A1254315500205E0E /* OldMan9.wav */,
+				77104F2B1254315500205E0E /* OldMan8.wav */,
+				77104F2C1254315500205E0E /* OldMan7.wav */,
+				77104F2D1254315500205E0E /* OldMan6.wav */,
+				77104F2E1254315500205E0E /* OldMan5.wav */,
+				77104F2F1254315500205E0E /* OldMan4.wav */,
+				77104F301254315500205E0E /* OldMan3.wav */,
+				77104F311254315500205E0E /* OldMan1.wav */,
+				77104F321254315500205E0E /* OldMan2.wav */,
+				77104F331254315500205E0E /* WindLoop1.wav */,
 				7772FFF112498FD100FDA0C8 /* Character_1_Sample2.wav */,
 				7772FFF212498FD100FDA0C8 /* Character_1_Sample1.wav */,
 				77ABBE491125E4CC00EB080C /* Plick.wav */,
@@ -1459,6 +1601,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				77BD37B51252CD1B002BE9DA /* urFire.lua in Resources */,
 				773840C712440E0900632B02 /* urAir.lua in Resources */,
 				773840C812440E0900632B02 /* urWater.lua in Resources */,
 				7798DD791240246100238912 /* urAnimExample.lua in Resources */,
@@ -1650,6 +1793,52 @@
 				77BFD273124AF81200ABFFD2 /* urMus-Intro_103.png in Resources */,
 				77BFD274124AF81200ABFFD2 /* urMus-Intro_102.png in Resources */,
 				77BFD275124AF81200ABFFD2 /* urMus-Intro_101.png in Resources */,
+				77BD37CB1252D2F9002BE9DA /* fire2.png in Resources */,
+				77BD37CC1252D2F9002BE9DA /* fire1.png in Resources */,
+				77104F341254315500205E0E /* OldMan10.wav in Resources */,
+				77104F351254315500205E0E /* OldMan9.wav in Resources */,
+				77104F361254315500205E0E /* OldMan8.wav in Resources */,
+				77104F371254315500205E0E /* OldMan7.wav in Resources */,
+				77104F381254315500205E0E /* OldMan6.wav in Resources */,
+				77104F391254315500205E0E /* OldMan5.wav in Resources */,
+				77104F3A1254315500205E0E /* OldMan4.wav in Resources */,
+				77104F3B1254315500205E0E /* OldMan3.wav in Resources */,
+				77104F3C1254315500205E0E /* OldMan1.wav in Resources */,
+				77104F3D1254315500205E0E /* OldMan2.wav in Resources */,
+				77104F3E1254315500205E0E /* WindLoop1.wav in Resources */,
+				77B766AC1254E22000274580 /* FireCrackle2.wav in Resources */,
+				77B766AD1254E22000274580 /* FireCrackle.wav in Resources */,
+				773CF7C2125672BC007BC22E /* Bubbly.wav in Resources */,
+				773CF7C3125672BC007BC22E /* CrunchySlush.wav in Resources */,
+				773CF7C4125672BC007BC22E /* MidManB1.wav in Resources */,
+				773CF7C5125672BC007BC22E /* MidManB2.wav in Resources */,
+				773CF7C6125672BC007BC22E /* MidManR1.wav in Resources */,
+				773CF7C7125672BC007BC22E /* MidManR2.wav in Resources */,
+				773CF7C8125672BC007BC22E /* MidManR3.wav in Resources */,
+				773CF7C9125672BC007BC22E /* MidManR4.wav in Resources */,
+				773CF7CA125672BC007BC22E /* MidManR5.wav in Resources */,
+				773CF7CB125672BC007BC22E /* MidManR6.wav in Resources */,
+				773CF7CC125672BC007BC22E /* MidManR7.wav in Resources */,
+				773CF7CD125672BC007BC22E /* MidManR8.wav in Resources */,
+				773CF7CE125672BC007BC22E /* MidManR9.wav in Resources */,
+				773CF7CF125672BC007BC22E /* MidManR10.wav in Resources */,
+				773CF7D0125672BC007BC22E /* MidManR11.wav in Resources */,
+				773CF7D1125672BC007BC22E /* MidManR12.wav in Resources */,
+				773CF7D2125672BC007BC22E /* MidManR13.wav in Resources */,
+				773CF7D3125672BC007BC22E /* MidManR14.wav in Resources */,
+				773CF7D4125672BC007BC22E /* MidManR15.wav in Resources */,
+				773CF7D5125672BC007BC22E /* MidManS1.wav in Resources */,
+				773CF7D6125672BC007BC22E /* MidManS2.wav in Resources */,
+				773CF7D7125672BC007BC22E /* MidManS3.wav in Resources */,
+				773CF7D8125672BC007BC22E /* MidManS4.wav in Resources */,
+				773CF7D9125672BC007BC22E /* Running.wav in Resources */,
+				773CF7DA125672BC007BC22E /* waves1.wav in Resources */,
+				773CF7DB125672BC007BC22E /* YoungGirl1.wav in Resources */,
+				773CF7DC125672BC007BC22E /* YoungGirl2.wav in Resources */,
+				773CF7DD125672BC007BC22E /* YoungGirl3.wav in Resources */,
+				773CF7DE125672BC007BC22E /* YoungGirl4.wav in Resources */,
+				773CF7DF125672BC007BC22E /* YoungGirl5.wav in Resources */,
+				773CF7E0125672BC007BC22E /* YoungGirl6.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1789,6 +1978,7 @@
 				7798DD71124023BC00238912 /* urAnimExample.lua in Sources */,
 				773840C51243F79900632B02 /* urAir.lua in Sources */,
 				773840C61243F79900632B02 /* urWater.lua in Sources */,
+				77BD37B01252CD0D002BE9DA /* urFire.lua in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

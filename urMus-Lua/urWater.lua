@@ -5,14 +5,31 @@ FreeAllRegions()
 
 local pi = math.pi
 
+local rotfilter = {}
+rotfilter[1]=0
+rotfilter[2]=0
+rotfilter[3]=0
+rotfilter[4]=0
+
 function rotate(self,x,y,z)
-    self.t:SetRotation(-pi*y/2.5)
+	local sum = 0
+
+	for i=1,3 do
+		rotfilter[i+1]=rotfilter[i]
+		sum = sum + rotfilter[i+1]
+	end
+	sum = sum + rotfilter[1]
+	sum = sum/4
+	rotfilter[1]=x
+
+    self.t:SetRotation(2*pi-pi*sum)--/2.5)
+	DPrint(sum)
 --    self.t:SetSolidColor(255,255,255,255*(x+1.0)/2.0)
 --    self.t:SetGradientColor("HORIZONTAL", 255,255,255,255*(x+1.0)/2.0,255,255,255,255*(x+1.0)/2.0)
 end    
 
 function flow(self, elapsed)
-    self.t:SetTexCoord(0+self.pos,1+self.pos,0,1)
+--    self.t:SetTexCoord(0+self.pos,1+self.pos,0,1)
     self.pos = self.pos +self.speed % 1
 end
 

@@ -119,8 +119,17 @@ end
 if not uaSample then
 uaSample = FlowBox("object","Sample", _G["FBSample"])
 
-uaSample:AddFile("Character_1_Sample1.wav")
-uaSample:AddFile("Character_1_Sample2.wav")
+uaSample:AddFile("OldMan1.wav")
+uaSample:AddFile("OldMan2.wav")
+
+uaSample2 = FlowBox("object","Sample", _G["FBSample"])
+
+uaSample2:AddFile("OldMan3.wav")
+uaSample2:AddFile("OldMan4.wav")
+
+
+uaSample3 = FlowBox("object","Sample", _G["FBSample"])
+uaSample3:AddFile("WindLoop1.wav")
 
 uaPushA1 = FlowBox("object","PushA1", _G["FBPush"])
 uaPushA2 = FlowBox("object","PushA2", _G["FBPush"])
@@ -129,15 +138,17 @@ uaAvg = FlowBox("object", "Amp", _G["FBAvg"])
 uaSqr = FlowBox("object", "Sqr", _G["FBPGate"])
 
 dac = _G["FBDac"]
-mic = _G["FBMic"]
+--mic = _G["FBMic"]
 
 dac:SetPullLink(0, uaSample, 0)
+dac:SetPullLink(0, uaSample2, 0)
+dac:SetPullLink(0, uaSample3, 0)
 uaPushA1:SetPushLink(0,uaSample, 3)  -- Sample switcher
 uaPushA1:Push(0) -- AM wobble
 uaPushA2:SetPushLink(0,uaSample, 2) -- Reset pos
-uaAvg:SetPushLink(0, uaSqr, 0)
-uaSqr:SetPushLink(0, uaSample, 0)
-mic:SetPushLink(0, uaAvg, 0)
+--uaAvg:SetPushLink(0, uaSqr, 0)
+--uaSqr:SetPushLink(0, uaSample, 0)
+--mic:SetPushLink(0, uaAvg, 0)
 else
 dac:SetPullLink(0, uaSample, 0)
 end

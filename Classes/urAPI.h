@@ -175,6 +175,9 @@ typedef struct urAPI_Region
 #ifdef SANDWICH_SUPPORT
 		int OnPressure;
 #endif
+#ifdef SOAR_SUPPORT
+		int OnSoarOutput;
+#endif
 		int OnRotation;
 		int OnHeading;
 		int OnLocation;
