@@ -1458,7 +1458,7 @@ void Sample_SetSample(ursObject* gself, double insample)
 {
 	Sample_Data* self = (Sample_Data*)gself->objectdata;
 
-	self->activesample = (int)(insample*7.0-0.00001);
+	self->activesample = (int)(insample*(self->numsamples-1.0)-0.00001);
 	if(self->activesample < 0) self->activesample = 0;
 
 	self->position = self->position % self->len[self->activesample];
@@ -1749,7 +1749,7 @@ double LoopRhythm_Tick(ursObject* gself)
 		self->lastout = res;
 	}
 	return res;
-}
+} 
 
 double LoopRhythm_Out(ursObject* gself)
 {

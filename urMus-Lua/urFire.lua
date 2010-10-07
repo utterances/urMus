@@ -13,6 +13,8 @@ local threshold = 0.02*10
 local visout = 0.0
 local orientation
 
+local random = math.random
+
 local small
 if ScreenWidth() < 400 then
 	small = 0.5
@@ -115,6 +117,31 @@ function SpawnFire(self)
 	if currfire > maxfire then
 		currfire = 1
 	end
+	
+	if x< ScreenWidth()/2 then
+		if y < ScreenHeight()/2 then
+			uaPushA1:Push(random())
+			uaPushA2:Push(0) -- Start
+		else
+			uaPushB1:Push(random())
+			uaPushB2:Push(0) -- Start
+		end
+	else
+		if y < ScreenHeight()/2 then
+			uaPushC1:Push(random())
+			uaPushC2:Push(0) -- Start
+		else
+			rb:Handle("OnUpdate",Flicker)
+
+			uaPushD1:Push(random())
+			uaPushD2:Push(0) -- Start
+		end
+	end
+end
+
+function Flicker(self,elapsed)
+	self.t:SetGradientColor("TOP", random(200,255),0,0,random(40,80),random(200,255),0,0,random(40,80))
+	self.t:SetGradientColor("BOTTOM", random(200,255),0,0,random(40,80),random(200,255),0,0,random(40,80))
 end
 
 rb = Region()
@@ -129,4 +156,91 @@ rb:Handle("OnTouchDown",SpawnFire)
 rb:EnableInput(true)
 rb:Show()
 
+if not uaSample then
+uaSample = FlowBox("object","Sample", _G["FBSample"])
+
+uaSample:AddFile("MidManB1.wav")
+uaSample:AddFile("MidManB2.wav")
+
+uaSample2 = FlowBox("object","Sample", _G["FBSample"])
+
+--uaSample2:AddFile("MidManR1.wav")
+uaSample2:AddFile("MidManR2.wav")
+uaSample2:AddFile("MidManR3.wav")
+uaSample2:AddFile("MidManR4.wav")
+uaSample2:AddFile("MidManR5.wav")
+uaSample2:AddFile("MidManR6.wav")
+uaSample2:AddFile("MidManR7.wav")
+uaSample2:AddFile("MidManR8.wav")
+--uaSample2:AddFile("MidManR9.wav")
+--uaSample2:AddFile("MidManR10.wav")
+--uaSample2:AddFile("MidManR11.wav")
+--uaSample2:AddFile("MidManR12.wav")
+--uaSample2:AddFile("MidManR13.wav")
+--uaSample2:AddFile("MidManR14.wav")
+--uaSample2:AddFile("MidManR15.wav")
+
+uaSample3 = FlowBox("object","Sample", _G["FBSample"])
+uaSample3:AddFile("MidManS1.wav")
+uaSample3:AddFile("MidManS2.wav")
+uaSample3:AddFile("MidManS3.wav")
+uaSample3:AddFile("MidManS4.wav")
+
+uaSample4 = FlowBox("object","Sample", _G["FBSample"])
+uaSample4:AddFile("FireCrackle.wav")
+uaSample4:AddFile("FireCrackle2.wav")
+
+uaPushA1 = FlowBox("object","PushA1", _G["FBPush"])
+uaPushA2 = FlowBox("object","PushA2", _G["FBPush"])
+uaPushA3 = FlowBox("object","PushA3", _G["FBPush"])
+
+uaPushB1 = FlowBox("object","PushA1", _G["FBPush"])
+uaPushB2 = FlowBox("object","PushA2", _G["FBPush"])
+uaPushB3 = FlowBox("object","PushA3", _G["FBPush"])
+uaPushC1 = FlowBox("object","PushA1", _G["FBPush"])
+uaPushC2 = FlowBox("object","PushA2", _G["FBPush"])
+uaPushC3 = FlowBox("object","PushA3", _G["FBPush"])
+uaPushD1 = FlowBox("object","PushA1", _G["FBPush"])
+uaPushD2 = FlowBox("object","PushA2", _G["FBPush"])
+uaPushD3 = FlowBox("object","PushA3", _G["FBPush"])
+
+dac = _G["FBDac"]
+
+dac:SetPullLink(0, uaSample, 0)
+dac:SetPullLink(0, uaSample2, 0)
+dac:SetPullLink(0, uaSample3, 0)
+dac:SetPullLink(0, uaSample4, 0)
+uaPushA1:SetPushLink(0,uaSample, 3)  -- Sample switcher
+uaPushA1:Push(0) -- AM wobble
+uaPushA2:SetPushLink(0,uaSample, 2) -- Reset pos
+uaPushA2:Push(1) -- End
+uaPushA3:SetPushLink(0,uaSample, 4) -- Set loop
+uaPushA3:Push(-1)
+
+uaPushB1:SetPushLink(0,uaSample2, 3)  -- Sample switcher
+uaPushB1:Push(0) -- AM wobble
+uaPushB2:SetPushLink(0,uaSample2, 2) -- Reset pos
+uaPushB2:Push(1) -- End
+uaPushB3:SetPushLink(0,uaSample2, 4) -- Set loop
+uaPushB3:Push(-1)
+
+uaPushC1:SetPushLink(0,uaSample3, 3)  -- Sample switcher
+uaPushC1:Push(0) -- AM wobble
+uaPushC2:SetPushLink(0,uaSample3, 2) -- Reset pos
+uaPushC2:Push(1) -- End
+uaPushC3:SetPushLink(0,uaSample3, 4) -- Set loop
+uaPushC3:Push(-1)
+
+uaPushD1:SetPushLink(0,uaSample4, 3)  -- Sample switcher
+uaPushD1:Push(0) -- AM wobble
+uaPushD2:SetPushLink(0,uaSample4, 2) -- Reset pos
+uaPushD2:Push(1) -- End
+uaPushD3:SetPushLink(0,uaSample4, 4) -- Set loop
+uaPushD3:Push(-1)
+
+else
+dac:SetPullLink(0, uaSample, 0)
+end
+
 DPrint(" ")
+

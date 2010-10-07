@@ -66,7 +66,11 @@ urAPI_Region_t* findRegionHit(float x, float y)
 		   y >= t->bottom && y <= t->bottom+t->height && t->isTouchEnabled)
 			if(t->isClipping==false || (x >= t->clipleft && x <= t->clipleft+t->clipwidth &&
 										y >= t->clipbottom && y <= t->clipbottom+t->clipheight))
+			{
+				t->lastinputx = x - t->left;
+				t->lastinputy = y - t->bottom;
 				return t;
+			}
 	}
 	return nil;
 }
@@ -103,7 +107,7 @@ void callAllOnEnterLeaveRegions(int nr, float* x, float* y, float* ox, float* oy
 //				if(t->entered)
 //				{
 					t->entered = false;
-					callScript(t->OnLeave, t);
+					callScriptWith2Args(t->OnLeave, t,x[i]-t->left,y[i]-t->bottom);
 //				}
 //				else
 //				{
@@ -120,7 +124,7 @@ void callAllOnEnterLeaveRegions(int nr, float* x, float* y, float* ox, float* oy
 //				if(!t->entered)
 //				{
 					t->entered = true;
-					callScript(t->OnEnter, t);
+					callScriptWith2Args(t->OnEnter, t, x[i]-t->left, y[i]-t->bottom);
 //				}
 //				else
 //				{
@@ -178,6 +182,19 @@ urAPI_Region_t* findRegionYScrolled(float x, float y, float dy)
 									  y >= t->clipbottom && y <= t->clipbottom+t->clipheight))
 				return t;
 		}
+	}
+	return nil;
+}
+
+urAPI_Region_t* findRegionMoved(float x, float y, float dx, float dy)
+{
+	for(urAPI_Region_t* t=lastRegion[currentPage]; t != nil /* && t != firstRegion[currentPage]*/; t=t->prev)
+	{
+		if(x >= t->left && x <= t->left+t->width &&
+		   y >= t->bottom && y <= t->bottom+t->height && t->isTouchEnabled && t->OnMove != NULL)
+			if(t->isClipping==false || (x >= t->clipleft && x <= t->clipleft+t->clipwidth &&
+										y >= t->clipbottom && y <= t->clipbottom+t->clipheight))
+				return t;
 	}
 	return nil;
 }
@@ -697,6 +714,31 @@ bool callAllOnMicrophone(SInt32* mic_buffer, UInt32 bufferlen)
 	return true;
 }
 
+bool callScriptWith5Args(int func_ref, urAPI_Region_t* region, float a, float b, float c, float d, float e)
+{
+	if(func_ref == 0) return false;
+	
+	// Call lua function by stored Reference
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
+	lua_pushnumber(lua,a);
+	lua_pushnumber(lua,b);
+	lua_pushnumber(lua,c);
+	lua_pushnumber(lua,d);
+	lua_pushnumber(lua,e);
+	if(lua_pcall(lua,6,0,0) != 0)
+	{
+		// Error!!
+		const char* error = lua_tostring(lua, -1);
+		errorstr = error; // DPrinting errors for now
+		newerror = true;
+		return false;
+	}
+	
+	// OK!
+	return true;
+}
+
 bool callScriptWith4Args(int func_ref, urAPI_Region_t* region, float a, float b, float c, float d)
 {
 	if(func_ref == 0) return false;
@@ -1010,6 +1052,11 @@ int region_Handle(lua_State* lua)
 			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnVerticalScroll);
 			region->OnVerticalScroll = 0;
 		}
+		else if(!strcmp(handler, "OnMove"))
+		{
+			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnMove);
+			region->OnMove = 0;
+		}
 		else if(!strcmp(handler, "OnPageEntered"))
 		{
 			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnPageEntered);
@@ -1106,6 +1153,8 @@ int region_Handle(lua_State* lua)
 				region->OnHorizontalScroll = func_ref;
 			else if(!strcmp(handler, "OnVerticalScroll"))
 				region->OnVerticalScroll = func_ref;
+			else if(!strcmp(handler, "OnMove"))
+				region->OnMove = func_ref;
 			else if(!strcmp(handler, "OnPageEntered"))
 				region->OnPageEntered = func_ref;
 			else if(!strcmp(handler, "OnPageLeft"))
@@ -3334,6 +3383,7 @@ static int l_Region(lua_State *lua)
 	myregion->OnMicrophone = 0;
 	myregion->OnHorizontalScroll = 0;
 	myregion->OnVerticalScroll = 0;
+	myregion->OnMove = 0;
 	myregion->OnPageEntered = 0;
 	myregion->OnPageLeft = 0;
 	

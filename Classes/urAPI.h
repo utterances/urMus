@@ -149,6 +149,9 @@ typedef struct urAPI_Region
 		lua_Number ofsx;
 		lua_Number ofsy;
 		
+		float lastinputx;
+		float lastinputy;
+		
 		bool update;
 		
 		bool entered;
@@ -184,6 +187,7 @@ typedef struct urAPI_Region
 		int OnMicrophone;
 		int OnHorizontalScroll;
 		int OnVerticalScroll;
+		int OnMove;
 		int OnPageEntered;
 		int OnPageLeft;
 		
@@ -199,6 +203,7 @@ urAPI_Region_t* findRegionDraggable(float x, float y);
 urAPI_Region_t* findRegionHit(float x, float y);
 urAPI_Region_t* findRegionXScrolled(float x, float y, float dx);
 urAPI_Region_t* findRegionYScrolled(float x, float y, float dy);
+urAPI_Region_t* findRegionMoved(float x, float y, float dx, float dy);
 bool callAllOnUpdate(float time);
 bool callAllOnAccelerate(float x, float y, float z);
 bool callAllOnNetIn(float a);
@@ -213,6 +218,7 @@ bool callAllOnLocation(float latitude, float longitude);
 bool callAllOnMicrophone(SInt16* mic_buffer, UInt32 bufferlen);
 void callAllOnLeaveRegions(float x, float y);
 void callAllOnEnterLeaveRegions(int nr, float* x, float* y, float* ox, float* oy);
+bool callScriptWith5Args(int func_ref, urAPI_Region_t* region ,float a, float b, float c, float d, float e);
 bool callScriptWith4Args(int func_ref, urAPI_Region_t* region ,float a, float b, float c, float d);
 bool callScriptWith3Args(int func_ref, urAPI_Region_t* region ,float a, float b, float c);
 bool callScriptWith2Args(int func_ref, urAPI_Region_t* region ,float a, float b);

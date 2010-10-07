@@ -1413,6 +1413,8 @@ void onTouchDownParse(int t, int numTaps, float posx, float posy)
 		hitregion[t] = findRegionHit(posx, SCREEN_HEIGHT-posy);
 		if(hitregion[t]!=nil)
 		{
+			float x = hitregion[t]->lastinputx;
+			float y = hitregion[t]->lastinputy;
 			// A double tap.
 			if (numTaps == 2 && hitregion[t]->OnDoubleTap) 
 			{
@@ -1424,10 +1426,10 @@ void onTouchDownParse(int t, int numTaps, float posx, float posy)
 				// Tripple Tap NYI
 			}
 			else if (numTaps == 1)
-				callScript(hitregion[t]->OnTouchDown, hitregion[t]);
+				callScriptWith2Args(hitregion[t]->OnTouchDown, hitregion[t],x,y);
 			else {
-				callScript(hitregion[t]->OnTouchDown, hitregion[t]);
-				callScript(hitregion[t]->OnTouchUp, hitregion[t]);
+				callScriptWith2Args(hitregion[t]->OnTouchDown, hitregion[t],x,y);
+				callScriptWith2Args(hitregion[t]->OnTouchUp, hitregion[t],x,y);
 			}
 		}
 	}
@@ -1461,7 +1463,7 @@ void onTouchEnds(int numTaps, float oposx, float oposy, float posx, float posy)
 	urAPI_Region_t* hitregion = findRegionHit(posx, SCREEN_HEIGHT-posy);
 	if(hitregion && numTaps <= 1)
 	{
-		callScript(hitregion->OnTouchUp, hitregion);
+		callScriptWith2Args(hitregion->OnTouchUp, hitregion,hitregion->lastinputx,hitregion->lastinputy);
 		callAllOnLeaveRegions(posx, SCREEN_HEIGHT-posy);
 	}
 	else
@@ -1606,6 +1608,13 @@ void onTouchScrollUpdate(int t)
 	if(scrollregion != nil)
 	{
 		callScriptWith1Args(scrollregion->OnVerticalScroll, scrollregion, -cursorscrollspeedy[t]);
+	}
+	
+	scrollregion = findRegionMoved(cursorpositionx[t],SCREEN_HEIGHT-cursorpositiony[t],cursorscrollspeedx[t],-cursorscrollspeedy[t]);
+	
+	if(scrollregion != nil)
+	{
+		callScriptWith5Args(scrollregion->OnMove, scrollregion, cursorpositionx[t]-scrollregion->left-cursorscrollspeedx[t],SCREEN_HEIGHT-cursorpositiony[t]-scrollregion->bottom+cursorscrollspeedy[t], cursorscrollspeedx[t], -cursorscrollspeedy[t],t+1);
 	}
 }
 
