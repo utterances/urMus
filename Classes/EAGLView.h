@@ -12,6 +12,7 @@
 #import <OpenGLES/ES1/glext.h>
 #import <CoreLocation/CoreLocation.h>
 #import <CoreMotion/CoreMotion.h>
+#import "CaptureSessionManager.h"
 #include <string>
 
 #undef SANDWICH_SUPPORT
@@ -35,24 +36,26 @@ Note that setting the view non-opaque will only work if the EAGL surface has an 
 #import "TCPServer.h"
 #import <Foundation/NSNetServices.h>
 #endif
+#import <Foundation/Foundation.h>
 
 #define MAX_FINGERS 10
 
 #ifdef SANDWICH_SUPPORT
 #ifdef USEUDP
-@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate,SandwichUpdateDelegate, AsyncUdpSocketDelegate>
+@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate,SandwichUpdateDelegate, AsyncUdpSocketDelegate,CaptureSessionManagerDelegate>
 #else
-@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate,SandwichUpdateDelegate, TCPServerDelegate>
+@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate,SandwichUpdateDelegate, TCPServerDelegate,CaptureSessionManagerDelegate>
 #endif
 #else
 #ifdef USEUDP
-@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate, AsyncUdpSocketDelegate>
+@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate, AsyncUdpSocketDelegate,CaptureSessionManagerDelegate>
 #else
-@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate, TCPServerDelegate>
+@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate, TCPServerDelegate,CaptureSessionManagerDelegate>
 #endif
 #endif
 {
-    
+@public
+	NSNetService *netService;
 @private
     /* The pixel dimensions of the backbuffer */
     GLint backingWidth;
@@ -70,6 +73,7 @@ Note that setting the view non-opaque will only work if the EAGL surface has an 
     NSTimeInterval animationInterval;
 	CLLocationManager *locationManager;
 	CMMotionManager *motionManager;
+	CaptureSessionManager *captureManager;
 	NSOperationQueue *opQ;
 #ifdef USEUDP
 	AsyncUdpSocket		*_server;
@@ -93,22 +97,32 @@ Note that setting the view non-opaque will only work if the EAGL surface has an 
 	NSTimer *_timer;
 	BOOL _needsActivityIndicator;
 	BOOL _initialWaitOver;
+	GLuint	_cameraTexture;
 }
 
 @property (nonatomic, retain) CLLocationManager *locationManager;
 
 @property NSTimeInterval animationInterval;
+@property(nonatomic,retain) NSNetService* netService;
 
 - (void)startAnimation;
 - (void)stopAnimation;
 - (void)drawView;
 - (void)setFramePointer;
+- (void)processPixelBuffer: (CVImageBufferRef)pixelBuffer;
+
+- (void) advertiseService:(NSString *)name withID:(NSString *)nsid atPort:(int)port;
+
 
 #ifdef SANDWICH_SUPPORT
 // sandwich update Delegate functions
 - (void) rearTouchUpdate: (SandwichEventManager * ) sender;
 - (void) pressureUpdate: (SandwichEventManager * ) sender;
 #endif
+
+void Net_Advertise(const char* nsid, int port);
+void Net_Find(const char* nsid);
+
 
 @end
 

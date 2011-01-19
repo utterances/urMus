@@ -15,6 +15,9 @@
 #import "MachTimer.h"
 #import "urSound.h"
 #import "httpServer.h"
+#include <arpa/inet.h>
+
+#define SLEEPER
 
 #ifdef SANDWICH_SUPPORT
 static float pressure[4] = {0,0,0,0};
@@ -69,6 +72,8 @@ MachTimer* mytimer;
 @synthesize needsActivityIndicator = _needsActivityIndicator;
 @dynamic timer;
 @synthesize initialWaitOver = _initialWaitOver;
+@synthesize netService;
+
 
 
 // You must implement this method
@@ -347,8 +352,17 @@ extern lua_State *lua;
 		
     }
 	
+	// Initiate the camera initiation sequence. <-- Whoa.
+	captureManager = [[CaptureSessionManager alloc] init];
+	captureManager.delegate = self;
+	[captureManager addVideoInput];
+	[captureManager addVideoDataOutput];
+	[captureManager autoWhiteBalanceAndExposure:0];
+	//[captureManager addVideoPreviewLayer];
+	[captureManager.captureSession startRunning];
+
 	//Create and advertise networking and discover others
-	[self setup];
+//	[self setup];
 	
 	mytimer = new MachTimer();
 	mytimer->start();
@@ -376,6 +390,156 @@ extern lua_State *lua;
 	}
 #endif
 }
+
+#define BYTES_PER_PIXEL 4
+
+// Where the magic happens as far as image processing is concerned
+- (void)processPixelBuffer: (CVImageBufferRef)pixelBuffer {
+	
+	CVPixelBufferLockBaseAddress( pixelBuffer, 0 );
+	
+	int bufferHeight = CVPixelBufferGetHeight(pixelBuffer);
+	int bufferWidth = CVPixelBufferGetWidth(pixelBuffer);
+	int bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer);
+	unsigned char *rowBase = (unsigned char *)CVPixelBufferGetBaseAddress(pixelBuffer);
+	
+	
+	//	CGContextRef                    context;
+	//	CGColorSpaceRef	colorSpace;
+	//	CGAffineTransform               transform;
+	//	colorSpace = CGColorSpaceCreateDeviceRGB();
+	//	context = CGBitmapContextCreate(CVPixelBufferGetBaseAddress(pixelBuffer), bufferWidth, bufferHeight, 8, 4 * bufferWidth, colorSpace, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+	//	CGColorSpaceRelease(colorSpace);
+	//	CGContextClearRect(context, CGRectMake(0, 0, bufferWidth, bufferHeight));
+	//	//	CGContextTranslateCTM(context, 0, height - imageSize.height);
+	//	
+	//	if(!CGAffineTransformIsIdentity(transform))
+	//		CGContextConcatCTM(context, transform);
+	//	//	CGContextDrawImage(context, CGRectMake(0, 0, CGImageGetWidth(image), CGImageGetHeight(image)), image);
+	//	//Convert "RRRRRRRRRGGGGGGGGBBBBBBBBAAAAAAAA" to "RRRRRGGGGGGBBBBB"
+	//	//	if(pixelFormat == kTexture2DPixelFormat_RGB565) {
+	//	//		tempData = malloc(height * width * 2);
+	//	//		inPixel32 = (unsigned int*)data;
+	//	//		outPixel16 = (unsigned short*)tempData;
+	//	//		for(i = 0; i < width * height; ++i, ++inPixel32)
+	//	//			*outPixel16++ = ((((*inPixel32 >> 0) & 0xFF) >> 3) << 11) | ((((*inPixel32 >> 8) & 0xFF) >> 2) << 5) | ((((*inPixel32 >> 16) & 0xFF) >> 3) << 0);
+	//	//		free(data);
+	//	//		data = tempData;
+	//	//		
+	//	//	}
+	
+	
+	//TODO: Get the camera data in an OpenGL texture
+	// Delete the current texture if it exists
+	if (_cameraTexture) {
+		glDeleteTextures(1, &_cameraTexture);
+	}
+	
+	// Create a new texture
+	GLint	saveName;
+	glGenTextures(1, &_cameraTexture);
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &saveName);
+	glBindTexture(GL_TEXTURE_2D, _cameraTexture);
+	
+	// Set appropriate parameters for when the texture is resized
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	
+	// Put the image directly into the texture
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bufferWidth, bufferHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, CVPixelBufferGetBaseAddress(pixelBuffer));
+	glBindTexture(GL_TEXTURE_2D, saveName);
+	//glBindTexture(GL_TEXTURE_2D, _cameraTexture);
+	
+	// Draw it to the screen
+	
+	//[self newCameraTextureForDisplay:_cameraTexture];
+	
+	//CGContextRelease(context);
+	//	free(data);
+	
+	/////////////////
+	
+	// Color initializations
+	int64_t redTotal = 0;
+	int64_t greenTotal = 0;
+	int64_t blueTotal = 0;
+	double totalTotal = 0;
+	
+	// Mid-level vision initializations
+	int gradientX = 0;
+	int gradientY = 0;
+	double edginess = 0;
+	
+	// We don't look at every single pixel. Doing so would cause unneccesary load on the
+	//	system for such basic features. This MUST be a factor of both the bufferHeight
+	//	and bufferWidth.
+	int downSampleFactor = 8;
+	
+	// Parse the image from left to right, bottom to top.
+	for( int row = 0; row < bufferHeight; row += downSampleFactor ) {
+		for( int column = 0; column < bufferWidth; column += downSampleFactor ) {
+			
+			unsigned char *pixel = rowBase + (row * bytesPerRow) + (column * BYTES_PER_PIXEL);
+			
+			// Reassignment is done here both to cast the unsigned char into the 8-bit integer
+			//	as well as to remain compatible with helper functions above and to keep original
+			//	memory buffer in tact.
+			uint8_t pixelColor[3];
+			for (int j = 0; j < 3; j++)
+				pixelColor[j] = (uint8_t)pixel[j];
+			
+			//pixelColor now contains the BGR values of the current pixel
+			
+			blueTotal += pixelColor[0];
+			greenTotal += pixelColor[1];
+			redTotal += pixelColor[2];
+			
+			
+			// Ensure we are not at the boundaries of the image so we can use the Roberts edge detector
+			if (row < (bufferHeight-2*downSampleFactor) && column < (bufferWidth-2*downSampleFactor)) {
+				
+				// Access the other pixels in the neighborhood to calculate the gradient
+				unsigned char *pixel9 = rowBase + ((row+downSampleFactor) * bytesPerRow) + ((column+downSampleFactor) * BYTES_PER_PIXEL);
+				unsigned char *pixel8 = rowBase + ((row+downSampleFactor) * bytesPerRow) + (column * BYTES_PER_PIXEL);
+				unsigned char *pixel6 = rowBase + (row * bytesPerRow) + ((column+downSampleFactor) * BYTES_PER_PIXEL);
+				
+				//Average of pixel 9 minus the average of the current pixel
+				gradientX = (((uint8_t)pixel9[0]+(uint8_t)pixel9[1]+(uint8_t)pixel9[2])/3) - ((pixelColor[0]+pixelColor[1]+pixelColor[2])/3);
+				gradientY = (((uint8_t)pixel8[0]+(uint8_t)pixel8[1]+(uint8_t)pixel8[2])/3) - (((uint8_t)pixel6[0]+(uint8_t)pixel6[1]+(uint8_t)pixel6[2])/3);
+				edginess += pow(gradientX/255.0,2) + pow(gradientY/255.0,2);
+			}
+			
+			
+		}
+		
+	}
+	
+	// Normalize the sums into the 0 to 255 range 
+	blueTotal = blueTotal/((bufferWidth/downSampleFactor)*(bufferHeight/downSampleFactor));
+	greenTotal = greenTotal/((bufferWidth/downSampleFactor)*(bufferHeight/downSampleFactor));
+	redTotal = redTotal/((bufferWidth/downSampleFactor)*(bufferHeight/downSampleFactor));
+	
+	totalTotal = ((double)blueTotal+(double)greenTotal+(double)redTotal)/3;
+	
+	// Normalize the edginess between 0 and 1
+	edginess = log10(edginess)/log10(((bufferWidth/downSampleFactor)-1)*((bufferHeight/downSampleFactor)-1));
+	
+	// and then the 0 to 1 range
+	callAllCameraSources(totalTotal/255.0,blueTotal/255.0,greenTotal/255.0,redTotal/255.0, edginess);
+	
+	printf("The new red value is %f\n",redTotal/255.);
+	
+	CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
+}
+
+- (void)newCameraTextureForDisplay:(GLuint)texture {
+	
+	_cameraTexture = texture;
+	//TODO: Something with this texture
+}
+
 
 - (void)accelerometer:(UIAccelerometer *)accelerometer didAccelerate:(UIAcceleration *)acceleration
 {
@@ -424,6 +588,29 @@ extern lua_State *lua;
     }
 }
 
+static EAGLSharegroup* theSharegroup = nil;
+
+- (EAGLContext*)createContext
+{
+    EAGLContext* context = nil;
+	
+    if (theSharegroup)
+    {
+        context = [[EAGLContext alloc] 
+				   initWithAPI:kEAGLRenderingAPIOpenGLES1
+				   sharegroup:theSharegroup];
+    }
+    else
+    {
+        context = [[EAGLContext alloc]
+				   initWithAPI:kEAGLRenderingAPIOpenGLES1];
+        theSharegroup = context.sharegroup;
+    }
+	
+    return context;
+}
+
+
 //The GL view is stored in the nib file. When it's unarchived it's sent -initWithCoder:
 - (id)initWithCoder:(NSCoder*)coder {
     
@@ -435,7 +622,8 @@ extern lua_State *lua;
         eaglLayer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys:
                                         [NSNumber numberWithBool:YES], kEAGLDrawablePropertyRetainedBacking, kEAGLColorFormatRGBA8, kEAGLDrawablePropertyColorFormat, nil];
         
-        context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
+		context = [self createContext];
+		//       context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
         
         if (!context || ![EAGLContext setCurrentContext:context]) {
             [self release];
@@ -521,6 +709,29 @@ void SetupBrush()
 //		glEnable( GL_COLOR_MATERIAL );
 		// Multiply the texture colour by the material colour.
 //		glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
+/*		switch(t->texture->blendmode)
+		{
+			case BLEND_DISABLED:
+				glDisable(GL_BLEND);
+				break;
+			case BLEND_BLEND:
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				break;
+			case BLEND_ALPHAKEY:
+				// NYI
+				glAlphaFunc(GL_GEQUAL, 0.5f); // UR! This may be different
+				glEnable(GL_ALPHA_TEST);
+				break;
+			case BLEND_ADD:
+				glBlendFunc(GL_ONE, GL_ONE);
+				break;
+			case BLEND_MOD:
+				glBlendFunc(GL_DST_COLOR, GL_ZERO);
+				break;
+			case BLEND_SUB: // Experimental blend category. Can be changed wildly NYI marking this for revision.
+				glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
+				break;
+		}*/
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 //		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 		glEnable(GL_POINT_SPRITE_OES);
@@ -754,7 +965,8 @@ void drawLineToTexture(urAPI_Texture_t *texture, float startx, float starty, flo
 	
 	SetupBrush();
 
-	if(bgtexture==NULL)
+//	if(bgtexture==NULL)
+	if(brushtexture==NULL)
 	{
 		static GLfloat		vertexBuffer[4];
 		
@@ -1060,7 +1272,23 @@ UILineBreakMode tolinebreakmode(int wrap)
 					t->texture->texcoords[6],  t->texture->texcoords[7]  };
 
 					glTexCoordPointer(2, GL_FLOAT, 0, coordinates);
-					[t->texture->backgroundTex drawInRect:CGRectMake(t->left,t->bottom,t->width,t->height)];
+					if(t->texture->usecamera)
+					{
+						CGRect rect = CGRectMake(t->left,t->bottom,t->width,t->height);
+						GLfloat vertices[] = {  rect.origin.x,                                                  rect.origin.y,                                                  0.0,
+							rect.origin.x + rect.size.width,                rect.origin.y,                                                  0.0,
+							rect.origin.x,                                                  rect.origin.y + rect.size.height,               0.0,
+							rect.origin.x + rect.size.width,                rect.origin.y + rect.size.height,               0.0 };
+						
+						glBindTexture(GL_TEXTURE_2D, _cameraTexture);
+						glVertexPointer(3, GL_FLOAT, 0, vertices);
+						//	glTexCoordPointer(2, GL_FLOAT, 0, coordinates);
+						glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+					}
+					else
+					{
+						[t->texture->backgroundTex drawInRect:CGRectMake(t->left,t->bottom,t->width,t->height)];
+					}
 					
 					if(t->texture->isTiled)
 					{
@@ -1295,7 +1523,11 @@ UILineBreakMode tolinebreakmode(int wrap)
 //#define LATE_LAUNCH2
 #ifdef LATE_LAUNCH2
 	NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
+#ifndef SLEEPER
 	NSString *filePath = [resourcePath stringByAppendingPathComponent:@"urMus.lua"];
+#else
+	NSString *filePath = [resourcePath stringByAppendingPathComponent:@"urSleeperLaunch.lua"];
+#endif
 	NSArray *paths;
 	paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
 	NSString *documentPath;
@@ -1352,18 +1584,13 @@ UILineBreakMode tolinebreakmode(int wrap)
     }
 
     // Shut down networking
-	[_inStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
-	[_inStream release];
-	
-	[_outStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
-	[_outStream release];
-	
-	[_server release];
 	
 	[self stopCurrentResolve];
 	self.services = nil;
 	[self.netServiceBrowser stop];
 	self.netServiceBrowser = nil;
+	[self.netService removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
+	self.netService = nil;
 	[_searchingForServicesString release];
 	[_ownName release];
 	[_ownEntry release];
@@ -1429,7 +1656,7 @@ void onTouchDownParse(int t, int numTaps, float posx, float posy)
 				callScriptWith2Args(hitregion[t]->OnTouchDown, hitregion[t],x,y);
 			else {
 				callScriptWith2Args(hitregion[t]->OnTouchDown, hitregion[t],x,y);
-				callScriptWith2Args(hitregion[t]->OnTouchUp, hitregion[t],x,y);
+//				callScriptWith2Args(hitregion[t]->OnTouchUp, hitregion[t],x,y); // GESSL: Double Tap issue.
 			}
 		}
 	}
@@ -1461,10 +1688,11 @@ void onTouchMoveUpdate(int t, int t2, float oposx, float oposy, float posx, floa
 void onTouchEnds(int numTaps, float oposx, float oposy, float posx, float posy)
 {
 	urAPI_Region_t* hitregion = findRegionHit(posx, SCREEN_HEIGHT-posy);
-	if(hitregion && numTaps <= 1)
+	if(hitregion /* && numTaps <= 1 */) // GESSL: Double tab issue
 	{
 		callScriptWith2Args(hitregion->OnTouchUp, hitregion,hitregion->lastinputx,hitregion->lastinputy);
-		callAllOnLeaveRegions(posx, SCREEN_HEIGHT-posy);
+		//		callAllOnLeaveRegions(posx, SCREEN_HEIGHT-posy); // GESSL: Double tab issue
+
 	}
 	else
 	{
@@ -1900,197 +2128,60 @@ void onTouchDragEnd(int t,int touch, float posx, float posy)
 // http://developer.apple.com/networking/bonjour/faq.html
 #define kurNetIdentifier		@"urMus"
 
-- (void) setup {
-	[_server release];
-	_server = nil;
 
-#ifndef USEUDP
-	[_inStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-	[_inStream release];
-	_inStream = nil;
-	_inReady = NO;
-	
-	[_outStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-	[_outStream release];
-	_outStream = nil;
-	_outReady = NO;
-#endif
-	
-#ifdef USEUDP
-	_server = [[AsyncUdpSocket alloc] initWithDelegate:self];
-//	binded = [usocketS bindToPort:8080 error:&error];
-//	connected = [usocketS connectToHost:SERVER onPort:8080 error:&error];
-	
-#else
-	_server = [TCPServer new];
-	[_server setDelegate:self];
-	NSError *error;
-	if(_server == nil || ![_server start:&error]) {
-		return;
-	}
-#endif
-	
-	//Start advertising to clients, passing nil for the name to tell Bonjour to pick use default name
-#ifdef USEUDP
-	if(![_server enableBonjourWithDomain:@"local" applicationProtocol:[AsyncUdpSocket bonjourTypeFromIdentifier:kurNetIdentifier] name:nil]) {
-#else
-	if(![_server enableBonjourWithDomain:@"local" applicationProtocol:[TCPServer bonjourTypeFromIdentifier:kurNetIdentifier] name:nil]) {
-#endif
-		return;
-	}
-	
-//	self.gameName = nil;
-	[self setOwnName:nil];
-}
+#define kurNetTestID	@"_urMus._udp."
 
-// Holds the string that's displayed in the table view during service discovery.
-- (void)setOwnName:(NSString *)name {
-	if (_ownName != name) {
-		_ownName = [name copy];
-		
-		if (self.ownEntry)
-			[self.services addObject:self.ownEntry];
-		
-		NSNetService* service;
-		
-		for (service in self.services) {
-			if ([service.name isEqual:name]) {
-				self.ownEntry = service;
-				[_services removeObject:service];
-				break;
-			}
-		}
-		
-
-	}
-}
-
+// Interfacing with C of the lua API
 extern EAGLView* g_glView;
 
 void Net_Send(float data)
 {
 	int8_t idata = data*128;
-	[g_glView send:(int8_t)idata];
+	//	[g_glView send:(int8_t)idata];
 }
 
-- (void) send:(const int8_t)message
+void Net_Advertise(const char* nsid, int port)
 {
-	if (_outStream && [_outStream hasSpaceAvailable])
-		if([_outStream write:(const uint8_t *)&message maxLength:sizeof(const uint8_t)] == -1)
-			[self _showAlert:@"Failed sending data to peer"];
+	NSString *nsid2 =  [[NSString alloc] initWithUTF8String: nsid];
+	NSString *fullnsid = [NSString stringWithFormat:@"_%@urMus._udp.", nsid2];
+	[g_glView advertiseService:[[UIDevice currentDevice] name] withID:fullnsid atPort:port];
 }
 
-- (void) openStreams
+void Net_Find(const char* nsid)
 {
-	_inStream.delegate = self;
-	[_inStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-	[_inStream open];
-	_outStream.delegate = self;
-	[_outStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-	[_outStream open];
-	
+	NSString *nsid2 =  [[NSString alloc] initWithUTF8String: nsid];
+	NSString *fullnsid = [NSString stringWithFormat:@"_%@urMus._udp.", nsid2];
+	[g_glView searchForServicesOfType:fullnsid inDomain:@""];
 }
 
-- (void) stream:(NSStream *)stream handleEvent:(NSStreamEvent)eventCode
-{
-	switch(eventCode) {
-		case NSStreamEventOpenCompleted:
-		{
-			[_server release];
-			_server = nil;
-			
-			if (stream == _inStream)
-				_inReady = YES;
-			else
-				_outReady = YES;
-			
-			if (_inReady && _outReady) {
-				// Connection established fully.
-				callAllOnNetConnect("test");
-			}
-			break;
-		}
-		case NSStreamEventHasBytesAvailable:
-		{
-			if (stream == _inStream) {
-				uint8_t b;
-				unsigned int len = 0;
-				len = [_inStream read:&b maxLength:sizeof(uint8_t)];
-				if(!len) {
-					if ([stream streamStatus] != NSStreamStatusAtEnd)
-						int a = 0; // NYI error, failed to read data from peer.
-				} else {
-					callAllOnNetIn(((int8_t)b)/128.0);
-					callAllNetSingleTickSources((int8_t)b);
-				}
-			}
-			break;
-		}
-		case NSStreamEventErrorOccurred:
-		{
-			break;
-		}
-			
-		case NSStreamEventEndEncountered:
-		{
-			callAllOnNetDisconnect("test");
-			// Connection ended.
-			
-			break;
-		}
-	}
+- (void) advertiseService:(NSString *)name withID:(NSString *)nsid atPort:(int)port {
+	self.netService = [[NSNetService alloc] initWithDomain:@""
+											  type:nsid
+											  name:name
+											  port:port];
+	// Delegate is informed of status asynchronously
+
+	[self.netService scheduleInRunLoop:[NSRunLoop currentRunLoop]
+							   forMode:NSRunLoopCommonModes];
+	
+	[self.netService setDelegate:self];
+	[self.netService publish];
+	[self.netService retain];
 }
 
-#ifdef USEUDP
-- (void) serverDidEnableBonjour:(AsyncUdpSocket *)server withName:(NSString *)string
-#else
-- (void) serverDidEnableBonjour:(TCPServer *)server withName:(NSString *)string
-#endif
-{
-	[self setOwnName:string];
+- (void) setup {
+	
+	[self advertiseService:[[UIDevice currentDevice] name] withID:kurNetTestID atPort:8888];
 
-#ifdef USEUDP
-	[self searchForServicesOfType:[AsyncUdpSocket bonjourTypeFromIdentifier:kurNetIdentifier] inDomain:@"local"];
-#else
-	[self searchForServicesOfType:[TCPServer bonjourTypeFromIdentifier:kurNetIdentifier] inDomain:@"local"];
-#endif
+	[self searchForServicesOfType:@"_urMus._udp." inDomain:@""];
 }
-
-#ifdef USEUDP
-- (void)didAcceptConnectionForServer:(AsyncUdpSocket *)server inputStream:(NSInputStream *)istr outputStream:(NSOutputStream *)ostr
-#else
-- (void)didAcceptConnectionForServer:(TCPServer *)server inputStream:(NSInputStream *)istr outputStream:(NSOutputStream *)ostr
-#endif
-{
-	if (_inStream || _outStream || server != _server)
-		return;
 	
-	[_server release];
-	_server = nil;
-	
-	_inStream = istr;
-	[_inStream retain];
-	_outStream = ostr;
-	[_outStream retain];
-	
-	[self openStreams];
-	while(not [_outStream hasSpaceAvailable]); // Waiting for the stream to fully establish. Not elegant but alas.
-}
-
-- (void)stopCurrentResolve {
-	
-	self.needsActivityIndicator = NO;
-	
-	[self.currentResolve stop];
-	self.currentResolve = nil;
-}
 
 // Creates an NSNetServiceBrowser that searches for services of a particular type in a particular domain.
 // If a service is currently being resolved, stop resolving it and stop the service browser from
 // discovering other services.
 - (BOOL)searchForServicesOfType:(NSString *)type inDomain:(NSString *)domain {
 	
-	[self stopCurrentResolve];
 	[self.netServiceBrowser stop];
 	[self.services removeAllObjects];
 	
@@ -2108,69 +2199,58 @@ void Net_Send(float data)
 	return YES;
 }
 
-- (NSString *)ownName {
-	return _ownName;
-}
-
 - (void)netServiceBrowser:(NSNetServiceBrowser *)netServiceBrowser didRemoveService:(NSNetService *)service moreComing:(BOOL)moreComing {
 	// If a service went away, stop resolving it if it's currently being resolved,
 	// remove it from the list and update the table view if no more events are queued.
-	
-	if (self.currentResolve && [service isEqual:self.currentResolve]) {
-		[self stopCurrentResolve];
-	}
+
+	callAllOnNetDisconnect([[service name] UTF8String]);
 	[self.services removeObject:service];
-	if (self.ownEntry == service)
-		self.ownEntry = nil;
-	
-	// If moreComing is NO, it means that there are no more messages in the queue from the Bonjour daemon, so we should update the UI.
-	// When moreComing is set, we don't update the UI so that it doesn't 'flash'.
-	if (!moreComing) {
-	}
 }	
 
 - (void)netServiceBrowser:(NSNetServiceBrowser *)netServiceBrowser didFindService:(NSNetService *)service moreComing:(BOOL)moreComing {
 	// If a service came online, add it to the list and update the table view if no more events are queued.
-	NSString* temp = [service.name copy];	
-	if ([service.name isEqual:self.ownName])
-		self.ownEntry = service;
-	else if([service.name compare:self.ownName] == NSOrderedAscending)
-	{
-		[self.services addObject:service];
-	
-		
-		
-		if (_inStream || _outStream)
-			return;
-		// note the following method returns _inStream and _outStream with a retain count that the caller must eventually release
-		if (![service getInputStream:&_inStream outputStream:&_outStream]) {
-			[self _showAlert:@"Failed connecting to server"];
-			return;
-		}
-		
-		[self openStreams];
-		while(not [_outStream hasSpaceAvailable]);
-		
-
-	}
-	// If moreComing is NO, it means that there are no more messages in the queue from the Bonjour daemon, so we should update the UI.
-	// When moreComing is set, we don't update the UI so that it doesn't 'flash'.
-	if (!moreComing) {
-	}
+	[service setDelegate:self];
+	[service resolveWithTimeout:10];
+	 NSString* temp = [service.name copy];	
+	[service retain];
 }	
 
 // This should never be called, since we resolve with a timeout of 0.0, which means indefinite
 - (void)netService:(NSNetService *)sender didNotResolve:(NSDictionary *)errorDict {
-	[self stopCurrentResolve];
+//	[self stopCurrentResolve];
+	int a;
 }
 
+- (NSString *)getStringFromAddressData:(NSData *)dataIn {
+	struct sockaddr_in  *socketAddress = nil;
+	NSString            *ipString = nil;
+	
+	socketAddress = (struct sockaddr_in *)[dataIn bytes];
+	ipString = [NSString stringWithFormat: @"%s",
+				inet_ntoa(socketAddress->sin_addr)];  ///problem here
+	return ipString;
+}
+	
+	
 - (void)netServiceDidResolveAddress:(NSNetService *)service {
-	assert(service == self.currentResolve);
-	
+	int cnt = [[service addresses] count];
+	for (int i = 0; i < [[service addresses] count]; i++)
+	{
+		if ([service.name isEqual:[[UIDevice currentDevice] name]]) {
+			self.ownEntry = service;
+			[_services removeObject:service];
+		}
+		else
+		{
+			NSString* ipaddress = [self getStringFromAddressData:[[service addresses] objectAtIndex:i]];
+			if (![ipaddress isEqual:@"0.0.0.0"])
+			{
+				callAllOnNetConnect([ipaddress UTF8String]);
+				[self.services addObject:service];
+			}
+		}
+	}
 	[service retain];
-	[self stopCurrentResolve];
-	
-	[service release];
 }
 
 @end

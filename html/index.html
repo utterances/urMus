@@ -30,24 +30,26 @@
         <input type="file" autocomplete="off" name="file" id="file_upload">
       </div>
     </p>
-    <p>
-      <button type="button" id="open_gallery">Open img/sound gallery &rarr;</button>
-      <button type="button" id="open_file">Open file &rarr;</button>
-      <button type="button" id="save_file" disabled="disabled">Save file</button>
+<p>
       <button type="button" id="run_file">Run!</button>
       <button type="button" id="reindent">Reindent</button>
       <button type="button" id="extend_box">Extend Box</button>
       <button type="button" id="open_log">Open Log</button>
+
+</p>
+    <div class="border">
+      <textarea spellcheck="false" autocomplete="off" id="big_code" class="code" name="code"></textarea>
+    </div>
+    <p>
+      <button type="button" id="open_gallery">Open img/sound gallery &rarr;</button>
+      <button type="button" id="open_file">Open file &rarr;</button>
+      <button type="button" id="save_file" disabled="disabled">Save file</button>
     </p>
     <div id="file_list" style="display: none">
       <ul id="files" class="listing"></ul>      
     </div>
     <div id="gallery_list" style="display: none">
       <ul id="gallery_files" class="listing"></ul>      
-    </div>
-
-    <div class="border">
-      <textarea spellcheck="false" autocomplete="off" id="big_code" class="code" name="code"></textarea>
     </div>
     <div id="jquery_jplayer"></div>
   </body>

@@ -12,17 +12,25 @@
 #include "RIOAudioUnitLayer.h"
 #include "lfs.h"
 #include "httpServer.h"
+#import <QuartzCore/QuartzCore.h>
+
+//#define SLEEPER
 
 // This enables video projector output. It's not official API hence not safe for app store.
 //#define PROJECTOR_VIDEO
 //
-#define NEW_PROJECTOR_VIDEO
+//#define NEW_PROJECTOR_VIDEO
 //#define FINAL_PROJECTOR_VIDEO
+//#define BL_PROJECTOR_VIDEO
 
 // Note: Also check ipod define in TvOutManager.mm
 
 #ifdef NEW_PROJECTOR_VIDEO
 #import "TVOutManager.h"
+#endif
+
+#ifdef BL_PROJECTOR_VIDEO
+//#import "BLVideoOut.h"
 #endif
 
 #ifdef SANDWICH_SUPPORT
@@ -33,11 +41,12 @@
 
 @synthesize window;
 @synthesize glView;
+@synthesize repeatingTimer;
 
 #ifdef FINAL_PROJECTOR_VIDEO
 //@synthesize deviceWindow;
 @synthesize externalWindow;
-@synthesize glView2;
+//@synthesize glView2;
 #endif
 
 
@@ -53,7 +62,7 @@ extern bool newerror;
 //------------------------------------------------------------------------------
 
 #ifdef FINAL_PROJECTOR_VIDEO
-- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+/*- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
 	UIScreenMode *desiredMode = [screenModes objectAtIndex:buttonIndex];
 //	[self log:[NSString stringWithFormat:@"Setting mode: %@", desiredMode]];
@@ -76,7 +85,45 @@ extern bool newerror;
 	externalWindow.hidden = NO;
 	[externalWindow makeKeyAndVisible];
 }
+*/
+
+- (void)screenDidConnect:(NSNotification*)notification
+{
+	externalScreen = [notification object];
+	NSLog(@"Screen %@ has connected", externalScreen);
+	
+	NSArray* availableModes = externalScreen.availableModes;
+	UIScreenMode* screenMode = nil;
+	
+	for (int sm = 0; sm < availableModes.count; ++sm)
+	{
+		screenMode = [availableModes objectAtIndex:sm];
+		
+		if (screenMode.size.width != 0 && screenMode.size.height != 0)
+		{
+			// This mode looks like something!
+			externalScreen.currentMode = screenMode;
+		}
+	}		
+}
+
+- (void) screenDidChange:(NSNotification*)notification
+{
+	externalScreen = [notification object];
+	NSLog(@"Screen %@ has changed resolution", externalScreen);
+	
+	const CGSize screenSize = externalScreen.currentMode.size;
+	CGRect windowFrame = CGRectMake(0, 0, screenSize.width, screenSize.height);
+	UIWindow* window = [[UIWindow alloc] initWithFrame:windowFrame];
+	
+	window.screen = externalScreen;
+	[window makeKeyAndVisible];
+	
+}
 #endif
+
+extern int SCREEN_WIDTH;
+extern int SCREEN_HEIGHT;
 
 - (void)applicationDidFinishLaunching:(UIApplication *)application {
     
@@ -105,6 +152,27 @@ extern bool newerror;
 	if ([[UIScreen screens] count] > 1) {
 //		[self log:@"Found an external screen."];
 		
+		for (int s = 0; s < [[UIScreen screens] count]; ++s)
+		{
+			UIScreen* screen = [[UIScreen screens] objectAtIndex:s];
+			if (screen != UIScreen.mainScreen)
+			{
+				NSLog(@"external screen %@ detected.", screen);
+				externalScreen = screen;
+			}
+		}
+		
+		[[NSNotificationCenter defaultCenter] 
+		 addObserver:self
+		 selector:@selector(screenDidConnect:)
+		 name:UIScreenDidConnectNotification object:nil];
+		
+		[[NSNotificationCenter defaultCenter] 
+		 addObserver:self
+		 selector:@selector(screenDidChange:)
+		 name:UIScreenModeDidChangeNotification object:nil];
+		
+		
 		// Internal display is 0, external is 1.
 		externalScreen = [[[UIScreen screens] objectAtIndex:1] retain];
 //		[self log:[NSString stringWithFormat:@"External screen: %@", externalScreen]];
@@ -129,6 +197,15 @@ extern bool newerror;
 	}
 #endif
 	
+#ifdef BL_PROJECTOR_VIDEO
+	[BLVideoOut sharedVideoOut].delegate = self;
+	if ([BLVideoOut sharedVideoOut].extScreenActive == YES)
+	{
+		[glView removeFromSuperview];
+		[[BLVideoOut sharedVideoOut].extWindow addSubview:glView];
+	}
+#endif
+	
 #ifdef SANDWICH_SUPPORT
 	// init SandwichUpdateListener
 //	NSLog(@"Delegate: Starting Listener...");
@@ -147,10 +224,41 @@ extern bool newerror;
 	
 	[glView startAnimation];
 	[glView drawView];
-
+//#ifdef BL_PROJECTOR_VIDEO
+//	if ([BLVideoOut sharedVideoOut].canProvideVideoOut == YES)
+//	{
+//		[glView2 startAnimation];
+//		[glView2 drawView];
+//	}
+//#endif
 #ifdef EARLY_LAUNCH
 	NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
+#ifndef SLEEPER
+#ifdef BL_PROJECTOR_VIDEO
+	NSString *filePath;
+	if ([BLVideoOut sharedVideoOut].extScreenActive == YES)
+	{
+	filePath = [resourcePath stringByAppendingPathComponent:@"urBall-display.lua"];
+	glView.transform = CGAffineTransformRotate(glView.transform, M_PI * 1.5);
+	CGRect screendimensions;
+	screendimensions = [[BLVideoOut sharedVideoOut].extWindow bounds];
+	float NSCREEN_WIDTH = screendimensions.size.width;
+	float NSCREEN_HEIGHT = screendimensions.size.height;
+	glView.transform = CGAffineTransformScale(glView.transform, NSCREEN_HEIGHT/(float)SCREEN_HEIGHT, NSCREEN_WIDTH/(float)SCREEN_WIDTH);
+	
+	}
+	else
+		
+	{
+		filePath = [resourcePath stringByAppendingPathComponent:@"urMus.lua"];
+	}
+#else
 	NSString *filePath = [resourcePath stringByAppendingPathComponent:@"urMus.lua"];
+#endif
+	
+#else
+	NSString *filePath = [resourcePath stringByAppendingPathComponent:@"urSleeperLaunch.lua"];
+#endif
 	NSArray *paths;
 	paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
 	NSString *documentPath;
@@ -207,6 +315,9 @@ extern bool newerror;
 	[window release];
 	[glView release];
 	[super dealloc];
+#ifdef BL_PROJECTOR_VIDEO
+	[BLVideoOut shutdown];
+#endif
 }
 
 #pragma mark Notifications
@@ -225,5 +336,84 @@ extern bool newerror;
 {
 //	infoLabel.text = [NSString stringWithFormat: @"Screen mode changed: %@", [[notification object] description]];
 }
+
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+	UIScreenMode *desiredMode = [screenModes objectAtIndex:buttonIndex];
+	externalScreen.currentMode = desiredMode;
+	externalWindow.screen = externalScreen;
+	
+	[screenModes release];
+	[externalScreen release];
+	
+	CGRect rect = CGRectZero;
+	rect.size = desiredMode.size;
+	externalWindow.frame = rect;
+	externalWindow.clipsToBounds = YES;
+	
+	externalWindow.hidden = NO;
+	[externalWindow makeKeyAndVisible];
+	
+	externalVC = [[ExternalDisplayViewController alloc] initWithNibName:@"ExternalDisplayViewController" bundle:nil];
+	CGRect frame = [externalScreen applicationFrame];
+	switch(externalVC.interfaceOrientation){
+		case UIInterfaceOrientationPortrait:
+		case UIInterfaceOrientationPortraitUpsideDown:
+			[externalVC.view setFrame:frame];
+			break;
+		case UIInterfaceOrientationLandscapeLeft:
+		case UIInterfaceOrientationLandscapeRight:
+			[externalVC.view setFrame:CGRectMake(frame.origin.x, frame.origin.y, frame.size.height, frame.size.width)];
+			break;
+	}
+	
+	[externalWindow addSubview:externalVC.view];
+	NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:0.25
+													  target:self selector:@selector(takeCapture:)
+													userInfo:nil repeats:YES];
+	self.repeatingTimer = timer;
+}
+
+- (void) takeCapture:(NSTimer*)theTimer{
+	UIView *mainView = [window.subviews objectAtIndex:0];
+	
+	if (mainView) {
+		UIGraphicsBeginImageContext(mainView.frame.size);
+		[mainView.layer renderInContext:UIGraphicsGetCurrentContext()];
+		UIImage *viewImage = UIGraphicsGetImageFromCurrentImageContext();
+		
+		[externalVC.imgView setImage:viewImage];
+		UIGraphicsEndImageContext();
+	}
+	
+}
+
+#ifdef BL_PROJECTOR_VIDEO
+#pragma mark -
+#pragma mark Video out stuff
+																						  
+																						  
+																						  
+-(void)screenDidConnect:(NSArray*)screens toWindow:(UIWindow*)_window 
+{	
+	[_window setBackgroundColor:[UIColor yellowColor]];
+}
+																						  
+																						  
+-(void)screenDidDisconnect:(NSArray*)screens fromWindow:(UIWindow*)_window 
+{
+}
+																						  
+// let's just cycle the color here, to show something happening.
+float hue = 0;
+-(void)displayLink:(CADisplayLink*)dispLink forWindow:(UIWindow*)_window 
+{
+//	hue += 0.01;
+//	if( hue>1.0) hue=0.0;
+//	UIColor * bgColor = [UIColor colorWithHue:hue saturation:1.0 brightness:1.0 alpha:1.0];
+//	[_window setBackgroundColor:bgColor];
+}
+#endif																							  
+
 
 @end

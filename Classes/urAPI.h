@@ -12,6 +12,7 @@
 #include "lauxlib.h"
 #include "lualib.h"
 #include "urSound.h"
+#include "mo_net.h"
 
 #import "Texture2d.h"
 
@@ -83,6 +84,7 @@ typedef struct urAPI_Texture
 		float gradientBR[4]; // RGB for 4 corner color magic		
 		float texturesolidcolor[4]; // for solid
 		float texturebrushcolor[4]; // for brushes
+		int usecamera;
 		// Private
 		Texture2D	*backgroundTex;
 		urAPI_Region_t *region;
@@ -175,6 +177,7 @@ typedef struct urAPI_Region
 		int OnNetIn;
 		int OnNetConnect;
 		int OnNetDisconnect;
+		int OnOSCMessage;
 #ifdef SANDWICH_SUPPORT
 		int OnPressure;
 #endif
@@ -209,6 +212,7 @@ bool callAllOnAccelerate(float x, float y, float z);
 bool callAllOnNetIn(float a);
 bool callAllOnNetConnect(const char* name);
 bool callAllOnNetDisconnect(const char* name);
+bool callAllOnOSCMessage(float num);
 #ifdef SANDWICH_SUPPORT
 bool callAllOnPressure(float p);
 #endif
@@ -218,6 +222,7 @@ bool callAllOnLocation(float latitude, float longitude);
 bool callAllOnMicrophone(SInt16* mic_buffer, UInt32 bufferlen);
 void callAllOnLeaveRegions(float x, float y);
 void callAllOnEnterLeaveRegions(int nr, float* x, float* y, float* ox, float* oy);
+bool callScriptWithOscArgs(int func_ref, urAPI_Region_t* region, osc::ReceivedMessageArgumentStream & s);
 bool callScriptWith5Args(int func_ref, urAPI_Region_t* region ,float a, float b, float c, float d, float e);
 bool callScriptWith4Args(int func_ref, urAPI_Region_t* region ,float a, float b, float c, float d);
 bool callScriptWith3Args(int func_ref, urAPI_Region_t* region ,float a, float b, float c);

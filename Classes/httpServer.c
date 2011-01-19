@@ -118,6 +118,16 @@ upload_script(struct mg_connection *conn,
   (void) write_file(conn, file_name, buf, strlen(buf));
 }
 
+// gessl this service function fixes the bug for byte-uploads.
+char* mmemmem(char* str1, long len1, char* str2, long len2)
+{
+	for(long i=0; i<len1-len2; i++)
+	{
+		if(!memcmp(str1+i,str2,len2)) return str1+i;
+	}
+	return NULL;
+}
+
 /*
  * Uploads a generic file intercepted by a form <input type="file">. This is an
  * awful hack trying to implement RFC 1867 http://www.ietf.org/rfc/rfc1867.txt
@@ -143,8 +153,9 @@ upload_file(struct mg_connection *conn,
   cur = strstr(cur, "\r\n\r\n") + 4; // find the beginning of data
   
   // find end of file contents
-  end = strstr(cur, post_header);
-  
+//  end = strstr(cur, post_header);
+  end = mmemmem(cur, request_info->post_data_len - header_size, post_header, header_size);
+	
   data_size = end - cur;
   
   (void) write_file(conn, file_name, cur, data_size);

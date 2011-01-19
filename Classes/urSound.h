@@ -220,7 +220,7 @@ struct Sample_Data
 	SInt32 position;
 	double realposition;
 	UInt32 numsamples;
-	UInt32 len[8];
+	UInt32* len;//[8];
 	double rate;
 	double amp;
 	Sample_Data() { playing = true; loop = true; position = 0; realposition = 0.0; rate = 1.0; }
@@ -492,6 +492,7 @@ void MaxS_In2(ursObject* gself, double indata);
 
 void urs_SetupObjects();
 
+void callAllCameraSources(double brightness, double blueTotal, double greenTotal, double redTotal, double edginess);
 void callAllAccelerateSources(double tilt_x, double tilt_y, double tilt_z);
 void callAllGyroSources(double rate_x, double rate_y, double rate_z);
 void callAllCompassSources(double heading_x, double heading_y, double heading_z, double heading_north);
@@ -536,6 +537,7 @@ extern ursObject* sinobject;
 extern ursObject* nopeobject;
 extern ursObject* sampleobject;
 
+extern ursObject* cameraObject;
 extern ursObject* accelobject;
 extern ursObject* gyroobject;
 extern ursObject* compassobject;

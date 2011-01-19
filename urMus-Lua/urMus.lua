@@ -38,15 +38,28 @@ pagefile = {
 "urTicTacToe.lua",
 "urVisDemo.lua",
 "urVisGraph.lua",
+"urCameraDemo.lua",
 "urTiles.lua",
 "urTiles2.lua",
 "urTuner.lua",
 "urMetro.lua",
 "urDistance.lua",
 "urAnimExample.lua",
+"urNetTest.lua",
 "urAir.lua",
 "urWater.lua",
-"urFire.lua"
+"urFire.lua",
+"urColorOrgan.lua",
+"urMrNoisy.lua",
+"urCircleOfWater.lua",
+"urBall-Master-player2.lua",
+"urBall-player1.lua",
+"urBall-player3.lua",
+"urBall-player4.lua",
+"urBall-display.lua",
+"urChroma.lua",
+"urJamSession.lua",
+"urFeedback.lua",
 }
 
 scrollpage = 29
@@ -2185,6 +2198,9 @@ end
 notificationregion:Handle("OnNetConnect", NewConnection)
 notificationregion:Handle("OnNetDisconnect", LostConnection)
 
+--StartNetAdvertise("",8888)
+--StartNetDiscovery("")
+
 StartAudio()
 ShowNotification("urMus") -- Shame on me, pointless eye candy.
 
@@ -2197,3 +2213,15 @@ local host,port = HTTPServer()
 if host and port then -- Only advertise the web server if it is launched
 	DPrint("http://"..host..":"..port.."/")
 end
+
+
+--function gotOSC(self, num)
+--	DPrint("OSC: ".. num)
+--end
+
+--notificationregion:Handle("OnOSCMessage",gotOSC)
+
+--SetOSCPort(8888)
+--StartOSCListener()
+--SendOSCMessage(host,8888,"/urMus/numbers",0.45)
+--SendOSCMessage("192.168.1.66",8888,"/urMus/numbers",0.70)

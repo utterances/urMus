@@ -212,6 +212,16 @@ double urs_PullActivePullSinks()
 #define URS_SOURCELISTSTARTSIZE 10
 
 
+void callAllCameraSources(double brightness, double blueTotal, double greenTotal, double redTotal, double edginess)
+{
+	cameraObject->CallAllPushOuts(brightness,1);
+	cameraObject->CallAllPushOuts(blueTotal,2);
+	cameraObject->CallAllPushOuts(greenTotal,3);
+	cameraObject->CallAllPushOuts(redTotal,4);
+	cameraObject->CallAllPushOuts(edginess,5);	
+}
+
+
 void callAllAccelerateSources(double tilt_x, double tilt_y, double tilt_z)
 {
 	double tilt;
@@ -824,6 +834,7 @@ ursObject* nopeobject;
 ursObject* sampleobject;
 ursObject* looprhythmobject;
 
+ursObject* cameraObject;
 ursObject* accelobject;
 ursObject* gyroobject;
 ursObject* compassobject;
@@ -850,6 +861,13 @@ void urs_SetupObjects()
 	accelobject->AddOut("Y", "TimeSeries", NULL, NULL, NULL); 
 	accelobject->AddOut("Z", "TimeSeries", NULL, NULL, NULL); 
 	ursourceobjectlist.Append(accelobject);
+	cameraObject = new ursObject("Cam",NULL,NULL,0,5,true);
+	cameraObject->AddOut("Bright","TimeSeries",NULL,NULL,NULL);
+	cameraObject->AddOut("Blue","TimeSeries",NULL,NULL,NULL);
+	cameraObject->AddOut("Green","TimeSeries",NULL,NULL,NULL);
+	cameraObject->AddOut("Red","TimeSeries",NULL,NULL,NULL);
+	cameraObject->AddOut("Edge","TimeSeries",NULL,NULL,NULL);
+	ursourceobjectlist.Append(cameraObject);
 	compassobject = new ursObject("Compass", NULL, NULL, 0, 4, true);
 	compassobject->AddOut("X", "TimeSeries", NULL, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
 	compassobject->AddOut("Y", "TimeSeries", NULL, NULL, NULL); 
@@ -1377,15 +1395,22 @@ void Sample_AddFile(ursObject* gself, const char* filename)
 {
 	Sample_Data* self = (Sample_Data*)gself->objectdata;
 	UInt32 frate;
-
+	
 	self->numsamples = self->numsamples+1;
 	if(self->numsamples == 1)
+	{
 		self->samplebuffer = (SInt16**)malloc(sizeof(SInt16*));
+		self->len = (UInt32*)malloc(sizeof(UInt32));
+	}
 	else
+	{
 		self->samplebuffer = (SInt16**)realloc(self->samplebuffer, sizeof(SInt16*)*self->numsamples);
+		self->len = (UInt32*)realloc(self->len,sizeof(UInt32)*self->numsamples);
+	}
 	self->samplebuffer[self->numsamples-1] = (SInt16*)LoadAudioFileData(filename, &self->len[self->numsamples-1], &frate);
 	self->len[self->numsamples-1] = self->len[self->numsamples-1]-1;
-	self->rate = 48000.0/frate;
+//	self->rate = 48000.0/frate;
+	self->rate = 1.0;
 }
 
 void Sample_Destructor(ursObject* gself)
@@ -1402,7 +1427,11 @@ double Sample_Tick(ursObject* gself)
 	if(self->playing && self->numsamples > 0)
 	{
 		int t = self->activesample;
-		out = self->amp*self->samplebuffer[self->activesample][self->position]/32767.0;
+		if(self->samplebuffer[self->activesample]!=NULL)
+			out = self->amp*self->samplebuffer[self->activesample][self->position]/32767.0;
+		else
+			out = 0;
+
 		self->realposition = self->realposition + self->rate;
 		self->position = (SInt32)self->realposition;
 		if(self->loop)
@@ -1458,7 +1487,8 @@ void Sample_SetSample(ursObject* gself, double insample)
 {
 	Sample_Data* self = (Sample_Data*)gself->objectdata;
 
-	self->activesample = (int)(insample*(self->numsamples-1.0)-0.00001);
+	self->activesample = (int)(insample*(self->numsamples-0.5));
+	if(self->activesample > self->numsamples - 1) self->activesample = self->numsamples - 1;
 	if(self->activesample < 0) self->activesample = 0;
 
 	self->position = self->position % self->len[self->activesample];

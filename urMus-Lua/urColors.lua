@@ -21,7 +21,7 @@ local function ColorScrollEnds(self)
 		self:SetAnchor('BOTTOMLEFT', UIParent, 'BOTTOMLEFT', self:Left()-left+ScreenWidth() ,self:Bottom())
 	end
 	
-	local sample = math.abs(self:Left()/ScreenWidth()) + 1
+	local sample = math.abs(self:Left()/ScreenWidth()) -- + 1
 	
 	if sample ~= self.sample then
 		

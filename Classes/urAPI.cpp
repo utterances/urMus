@@ -677,6 +677,27 @@ bool callAllOnNetDisconnect(const char* name)
 	return true;		
 }
 
+//bool callAllOnOSCMessage(float num)
+bool callAllOnOSCMessage(osc::ReceivedMessageArgumentStream & argument_stream)
+{
+	for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
+	{
+		if(t->OnOSCMessage != 0)
+			callScriptWithOscArgs(t->OnOSCMessage,t,argument_stream);
+	}
+	return true;		
+}
+
+bool callAllOnOSCString(const char* str)
+{
+	for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
+	{
+		if(t->OnOSCMessage != 0)
+			callScriptWith1String(t->OnOSCMessage,t,str);
+	}
+	return true;		
+}
+	
 #ifdef SANDWICH_SUPPORT
 bool callAllOnPressure(float p)
 {
@@ -714,6 +735,34 @@ bool callAllOnMicrophone(SInt32* mic_buffer, UInt32 bufferlen)
 	return true;
 }
 
+bool callScriptWithOscArgs(int func_ref, urAPI_Region_t* region, osc::ReceivedMessageArgumentStream & s)
+{
+	if(func_ref == 0) return false;
+	
+	// Call lua function by stored Reference
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
+	int len = 0;
+	while(!s.Eos())
+	{
+		float num;
+		s >> num;
+		lua_pushnumber(lua,num);
+		len = len+1;
+	}
+	if(lua_pcall(lua,len+1,0,0) != 0)
+	{
+		// Error!!
+		const char* error = lua_tostring(lua, -1);
+		errorstr = error; // DPrinting errors for now
+		newerror = true;
+		return false;
+	}
+	
+	// OK!
+	return true;
+}
+	
 bool callScriptWith5Args(int func_ref, urAPI_Region_t* region, float a, float b, float c, float d, float e)
 {
 	if(func_ref == 0) return false;
@@ -1008,6 +1057,11 @@ int region_Handle(lua_State* lua)
 			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnNetDisconnect);
 			region->OnNetDisconnect = 0;
 		}		
+		else if(!strcmp(handler, "OnOSCMessage"))
+		{
+			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnOSCMessage);
+			region->OnOSCMessage = 0;
+		}		
 #ifdef SANDWICH_SUPPORT
 		else if(!strcmp(handler, "OnPressure"))
 		{
@@ -1133,6 +1187,8 @@ int region_Handle(lua_State* lua)
 				region->OnNetConnect = func_ref;
 			else if(!strcmp(handler, "OnNetDisconnect"))
 				region->OnNetDisconnect = func_ref;
+			else if(!strcmp(handler, "OnOSCMessage"))
+				region->OnOSCMessage = func_ref;
 #ifdef SANDWICH_SUPPORT
 			else if(!strcmp(handler, "OnPressure"))
 				region->OnPressure = func_ref;
@@ -2047,6 +2103,7 @@ int region_Texture(lua_State* lua)
 	textureColorCopyToGradient(mytexture);
 	
 	mytexture->backgroundTex = NULL;
+	mytexture->usecamera = 0;
 	
 	region->texture = mytexture; // HACK
 	mytexture->region = region;
@@ -2248,7 +2305,106 @@ int l_HTTPServer(lua_State *lua)
 		return 0;
 	}
 }
+	
+MoNet myoscnet;
+	
+void oscCallBack(osc::ReceivedMessageArgumentStream & argument_stream, void * data)
+{
+	float num;
+//	argument_stream >> num;
+	callAllOnOSCMessage(argument_stream);
+}	
+	
+void oscCallBack2(osc::ReceivedMessageArgumentStream & argument_stream, void * data)
+{
+	const char *str;
+	argument_stream >> str;
+	callAllOnOSCString(str);
+}	
 
+int l_StartOSCListener(lua_State *lua)
+{
+	myoscnet.addAddressCallback("/urMus/numbers",oscCallBack);
+	myoscnet.addAddressCallback("/urMus/text",oscCallBack2);
+	myoscnet.startListening();
+	lua_pushstring(lua, myoscnet.getMyIPaddress().c_str());
+	lua_pushnumber(lua, myoscnet.getListeningPort());
+	return 2;
+}
+
+int l_StopOSCListener(lua_State *lua)
+{
+	myoscnet.stopListening();
+	return 0;
+}
+	
+int l_SetOSCPort(lua_State *lua)
+{
+	int port = luaL_checknumber(lua,1);
+	myoscnet.setListeningPort(port);
+	return 0;
+}
+
+int l_OSCPort(lua_State *lua)
+{
+	lua_pushnumber(lua, myoscnet.getListeningPort());
+	return 1;
+}
+
+int l_IPAddress(lua_State *lua)
+{
+	lua_pushstring(lua, myoscnet.getMyIPaddress().c_str());
+	return 1;
+}
+	
+//char  types[1] = {'f'};
+char types[255];
+	
+int l_SendOSCMessage(lua_State *lua)
+{
+	const char* ip = luaL_checkstring(lua,1);
+	int port = luaL_checknumber(lua,2);
+	const char* pattern = luaL_checkstring(lua,3);
+
+	myoscnet.startSendStream(ip,port);
+	myoscnet.startSendMessage(pattern);
+	
+	int len = 1;
+	while (lua_isnoneornil(lua,len+3)==0)
+	{
+		if(lua_isnumber(lua, len+3)==1)
+		{
+			myoscnet.addSendFloat(luaL_checknumber(lua,len+3));
+		}
+		else if(lua_isstring(lua, len+3)==1)
+		{
+			myoscnet.addSendString(luaL_checkstring(lua,len+3));
+		}
+		// TODO: handle OSC-blob type, defined in the OSC specs
+		len = len +1;
+	}
+	
+	myoscnet.endSendMessage();
+	myoscnet.closeSendStream();
+		
+	return 0;
+}
+	
+int l_NetAdvertise(lua_State* lua)
+{
+	const char* nsid = luaL_checkstring(lua, 1);
+	int port = luaL_checknumber(lua, 2);
+	
+	Net_Advertise(nsid, port);
+}
+
+int l_NetFind(lua_State* lua)
+{
+	const char* nsid = luaL_checkstring(lua, 1);
+	
+	Net_Find(nsid);
+}
+	
 static int audio_initialized = false;
 
 int l_StartAudio(lua_State* lua)
@@ -2473,6 +2629,7 @@ int texture_SetRotation(lua_State* lua)
 {
 	urAPI_Texture_t* t = checktexture(lua, 1);
 	float angle = luaL_checknumber(lua, 2);
+	angle = angle + 3.1415926/4.0;
 	float s = sqrt(2.0)/2.0*sin(angle);
 	float c = sqrt(2.0)/2.0*cos(angle);
 
@@ -2804,6 +2961,13 @@ int texture_BrushSize(lua_State* lua)
 	return 1;
 }
 
+int texture_UseCamera(lua_State* lua)
+{
+	urAPI_Texture_t* t = checktexture(lua, 1);
+	t->usecamera = 1;
+	return 0;
+}
+	
 void SetBrushTexture(Texture2D* t);
 
 int region_UseAsBrush(lua_State* lua)
@@ -3149,6 +3313,7 @@ static const struct luaL_reg texturefuncs [] =
 	{"SetTiling", texture_SetTiling},
 	{"Width", texture_Width},
 	{"Height", texture_Height},
+	{"UseCamera", texture_UseCamera},
 //	{"__gc",       texture_gc},
 	{NULL, NULL}
 };
@@ -3206,6 +3371,12 @@ static const struct luaL_reg regionfuncs [] =
 	{"EnableClipping", region_EnableClipping},
 	{"SetClipRegion", region_SetClipRegion},
 	{"ClipRegion", region_ClipRegion},
+#ifdef SOAR_SUPPORT
+	{"SoarCreateID", l_SoarCreateID},
+	{"SoarDelete", l_SoarDelete},
+	{"SoarCreateConstant", l_SoarCreateConstant},
+	{"SoarLoadRules", l_SoarLoadRules},
+#endif
 	{"__gc",       region_gc},
 	{NULL, NULL}
 };
@@ -3371,6 +3542,7 @@ static int l_Region(lua_State *lua)
 	myregion->OnNetIn = 0;
 	myregion->OnNetConnect = 0;
 	myregion->OnNetDisconnect = 0;
+	myregion->OnOSCMessage = 0;
 #ifdef SANDWICH_SUPPORT
 	myregion->OnPressure = 0;
 #endif
@@ -4013,8 +4185,9 @@ int l_SetPage(lua_State *lua)
 #ifdef SOAR_SUPPORT
 int l_SoarCreateID(lua_State *lua)
 {
-	char *inid = luaL_checkstring(lua,1);
-	char *inlabel = luaL_checkstring(lua,2);
+	urAPI_Region_t* region = checkregion(lua,1);
+	char *inid = luaL_checkstring(lua,2);
+	char *inlabel = luaL_checkstring(lua,3);
 	
 	char outid[] = "dummyid"; // THIS IS BAD AND NEEDS IMPLEMENTATIONS. Seals die.
 	float outtimetag = 1; // THIS IS VERY OFFENSIVE, PLEASE FIX.
@@ -4071,8 +4244,8 @@ int l_SoarLoadRules(lua_State *lua)
 
 void l_setupAPI(lua_State *lua)
 {
-	CGRect screendimensions = [[UIScreen mainScreen] bounds];
-    
+	CGRect screendimensions;
+	screendimensions = [[UIScreen mainScreen] bounds];
 	SCREEN_WIDTH = screendimensions.size.width;
 	SCREEN_HEIGHT = screendimensions.size.height;
 	// Set global userdata
@@ -4210,7 +4383,25 @@ void l_setupAPI(lua_State *lua)
 	lua_pushcfunction(lua,l_HTTPServer);
 	lua_setglobal(lua,"HTTPServer");
 
+	// OSC
+	lua_pushcfunction(lua, l_StartOSCListener);
+	lua_setglobal(lua,"StartOSCListener");
+	lua_pushcfunction(lua, l_StopOSCListener);
+	lua_setglobal(lua,"StopOSCListener");
+	lua_pushcfunction(lua, l_SetOSCPort);
+	lua_setglobal(lua,"SetOSCPort");
+	lua_pushcfunction(lua, l_OSCPort);
+	lua_setglobal(lua,"OSCPort");
+	lua_pushcfunction(lua, l_IPAddress);
+	lua_setglobal(lua,"IPAdress");
+	lua_pushcfunction(lua, l_SendOSCMessage);
+	lua_setglobal(lua,"SendOSCMessage");
 
+	// Bonjour Net discovery
+	lua_pushcfunction(lua, l_NetAdvertise);
+	lua_setglobal(lua,"StartNetAdvertise");
+	lua_pushcfunction(lua, l_NetFind);
+	lua_setglobal(lua,"StartNetDiscovery");
 	
 	// UR!
 	lua_pushcfunction(lua, l_setanimspeed);
@@ -4249,7 +4440,7 @@ void l_setupAPI(lua_State *lua)
 	lua_pushcfunction(lua, l_SetPage);
 	lua_setglobal(lua, "SetPage");
 	
-#ifdef SOAR_SUPPORT
+#ifdef SOAR_SUPPORT_OLD
 	lua_pushcfunction(lua, l_SoarCreateID);
 	lua_setglobal(lua,"SoarCreateID");
 	lua_pushcfunction(lua, l_SoarDelete);
@@ -4262,7 +4453,7 @@ void l_setupAPI(lua_State *lua)
 	
 	lua_pushcfunction(lua, l_FreeAllRegions);
 	lua_setglobal(lua, "FreeAllRegions");
-	
+
 	// Initialize the global mic buffer table
 #ifdef MIC_ARRAY
 	lua_newtable(lua);
