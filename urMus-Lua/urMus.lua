@@ -101,6 +101,20 @@ local protocellwidth = 64 -- 78 --ScreenWidth()/5
 local maxrow = 0
 local currentrow = 1
 
+function PrintLocks()
+	local str = ""
+
+	for row =1,maxrow do
+		for col = 1,3 do
+			if celllock and celllock[row] and celllock[row][col] and celllock[row][col].fbtype then
+				str = str ..celllock[row][col].fbtype.." "
+			end
+		end
+		str = str .. "\n"
+	end
+	DPrint(str)
+end
+
 -- Notification Information Overlay
 
 function FadeNotification(self, elapsed)
@@ -475,6 +489,7 @@ function ClearSetup()
 	for row = maxrow,4,-1 do
 		RemoveRow(row)
 	end
+--	PrintLocks()
 	maxrow = minrow
 	ShowNotification("Cleared")
 end
@@ -897,6 +912,8 @@ function LockCursor(self)
 		self.docked = true
 	end
 	
+--	if activelock then DPrint(activelock.fbtype.." "..fbtype.." "..activelock.row.." "..activelock.column) end
+	
 	if activelock and activelock.fbtype == fbtype and not activelock.locked then
 		activelock.locked = true
 		local col = activelock.column
@@ -1028,10 +1045,12 @@ function RecycleCell(row, col)
 	celllock[row][col]:Handle("OnEnter",nil)
 	celllock[row][col]:Handle("OnLeave",nil)
 	celllock[row][col]:Hide()
+	celllock[row][col]:SetAnchor("BOTTOMLEFT",ScreenWidth(),ScreenHeight())
 	celllock[row][col]:EnableInput(false)
 	cellbackdrop[row][col]:SetParent(UIParent)
 	cellbackdrop[row][col]:Hide()
 	cellbackdrop[row][col]:EnableInput(false)
+	cellbackdrop[row][col]:SetAnchor("BOTTOMLEFT",ScreenWidth(),ScreenHeight())
 	table.insert(recyclecellbackdrop, cellbackdrop[row][col])
 	table.remove(cellbackdrop[row], col)
 	table.insert(recyclecelllock, celllock[row][col])
@@ -1365,12 +1384,12 @@ function RemoveRow(row)
 	
 	backdropanchor[row]:Hide()
 	backdropanchor[row]:EnableInput(false)
---	for col=1,mincol do
---		celllock[row][col]:Hide()
---		celllock[row][col]:EnableInput(false)
---		cellbackdrop[row][col]:Hide()
---		cellbackdrop[row][col]:EnableInput(false)
---	end
+	for col=1,mincol do
+		celllock[row][col]:Hide()
+		celllock[row][col]:EnableInput(false)
+		cellbackdrop[row][col]:Hide()
+		cellbackdrop[row][col]:EnableInput(false)
+	end
 
 	for col = backdropanchor[row].count,1,-1 do
 		RecycleCell(row, col)

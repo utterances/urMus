@@ -360,7 +360,7 @@ extern lua_State *lua;
 	[captureManager autoWhiteBalanceAndExposure:0];
 	//[captureManager addVideoPreviewLayer];
 	[captureManager.captureSession startRunning];
-
+	
 	//Create and advertise networking and discover others
 //	[self setup];
 	
