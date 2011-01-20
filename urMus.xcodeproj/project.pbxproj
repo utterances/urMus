@@ -594,7 +594,7 @@
 		23C56099119295E200758BB9 /* mongoose.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mongoose.c; sourceTree = "<group>"; };
 		23C561281192A56900758BB9 /* httpServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = httpServer.h; sourceTree = "<group>"; };
 		23C561291192A56900758BB9 /* httpServer.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; path = httpServer.c; sourceTree = "<group>"; };
-		23D069EC1198FEEB0031847C /* urBlank.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urBlank.lua; path = "urMus-Lua/urBlank.lua"; sourceTree = "<group>"; };
+		23D069EC1198FEEB0031847C /* urBlank.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urBlank.lua; path = "urMus-Lua/urBlank.lua"; sourceTree = "<group>"; };
 		28FD14FC0DC6FC130079059D /* EAGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLView.h; sourceTree = "<group>"; };
 		28FD14FD0DC6FC130079059D /* EAGLView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = EAGLView.mm; sourceTree = "<group>"; };
 		28FD14FF0DC6FC520079059D /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
@@ -616,7 +616,7 @@
 		77104F311254315500205E0E /* OldMan1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = OldMan1.wav; path = Sounds/OldMan1.wav; sourceTree = "<group>"; };
 		77104F321254315500205E0E /* OldMan2.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = OldMan2.wav; path = Sounds/OldMan2.wav; sourceTree = "<group>"; };
 		77104F331254315500205E0E /* WindLoop1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = WindLoop1.wav; path = Sounds/WindLoop1.wav; sourceTree = "<group>"; };
-		771DC9B311B051BB00880F72 /* urBounce.lua */ = {isa = PBXFileReference; fileEncoding = 12; lastKnownFileType = text; name = urBounce.lua; path = "urMus-Lua/urBounce.lua"; sourceTree = "<group>"; };
+		771DC9B311B051BB00880F72 /* urBounce.lua */ = {isa = PBXFileReference; fileEncoding = 12; lastKnownFileType = sourcecode.lua; name = urBounce.lua; path = "urMus-Lua/urBounce.lua"; sourceTree = "<group>"; };
 		771E886A12B01051009FB590 /* FlipsideViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FlipsideViewController.m; sourceTree = "<group>"; };
 		771E886B12B01051009FB590 /* FlipsideViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FlipsideViewController.h; sourceTree = "<group>"; };
 		771F1C3A109B7E10005069EC /* urSoundAtoms.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = urSoundAtoms.h; sourceTree = "<group>"; };
@@ -637,9 +637,9 @@
 		772DC2F812A7DF4B00CFFCAD /* door_open.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = door_open.png; path = Textures/door_open.png; sourceTree = "<group>"; };
 		772DC2F912A7DF4B00CFFCAD /* wht_footprints.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = wht_footprints.png; path = Textures/wht_footprints.png; sourceTree = "<group>"; };
 		772DC2FA12A7DF4B00CFFCAD /* blk_footprints.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = blk_footprints.png; path = Textures/blk_footprints.png; sourceTree = "<group>"; };
-		7737230D120A1C9D003AEE57 /* urDistance.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urDistance.lua; path = "urMus-Lua/urDistance.lua"; sourceTree = "<group>"; };
-		773840C31243F79900632B02 /* urAir.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urAir.lua; path = "urMus-Lua/urAir.lua"; sourceTree = "<group>"; };
-		773840C41243F79900632B02 /* urWater.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urWater.lua; path = "urMus-Lua/urWater.lua"; sourceTree = "<group>"; };
+		7737230D120A1C9D003AEE57 /* urDistance.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urDistance.lua; path = "urMus-Lua/urDistance.lua"; sourceTree = "<group>"; };
+		773840C31243F79900632B02 /* urAir.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urAir.lua; path = "urMus-Lua/urAir.lua"; sourceTree = "<group>"; };
+		773840C41243F79900632B02 /* urWater.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urWater.lua; path = "urMus-Lua/urWater.lua"; sourceTree = "<group>"; };
 		773CF7A3125672BC007BC22E /* Bubbly.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = Bubbly.wav; path = Sounds/Bubbly.wav; sourceTree = "<group>"; };
 		773CF7A4125672BC007BC22E /* CrunchySlush.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = CrunchySlush.wav; path = Sounds/CrunchySlush.wav; sourceTree = "<group>"; };
 		773CF7A5125672BC007BC22E /* MidManB1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = MidManB1.wav; path = Sounds/MidManB1.wav; sourceTree = "<group>"; };
@@ -744,7 +744,7 @@
 		778D80001275CCD500C161E1 /* smoke1 copy.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "smoke1 copy.png"; path = "Textures/smoke1 copy.png"; sourceTree = "<group>"; };
 		778DBDA712B07DA200069B82 /* BLVideoOut.m */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = BLVideoOut.m; sourceTree = "<group>"; };
 		778DBDA812B07DA200069B82 /* BLVideoOut.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = BLVideoOut.h; sourceTree = "<group>"; };
-		778DBF3512B08FED00069B82 /* urBall-display.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "urBall-display.lua"; path = "urMus-Lua/urBall-display.lua"; sourceTree = "<group>"; };
+		778DBF3512B08FED00069B82 /* urBall-display.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = "urBall-display.lua"; path = "urMus-Lua/urBall-display.lua"; sourceTree = "<group>"; };
 		778F140E128A114F0010253D /* mo_def.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mo_def.h; path = "Classes/mopho-api/mo_def.h"; sourceTree = "<group>"; };
 		778F140F128A114F0010253D /* mo_net.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mo_net.h; path = "Classes/mopho-api/mo_net.h"; sourceTree = "<group>"; };
 		778F1410128A114F0010253D /* mo_net.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = mo_net.mm; path = "Classes/mopho-api/mo_net.mm"; sourceTree = "<group>"; };
@@ -770,30 +770,30 @@
 		778F1428128A114F0010253D /* OscReceivedElements.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OscReceivedElements.h; sourceTree = "<group>"; };
 		778F1429128A114F0010253D /* OscTypes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OscTypes.cpp; sourceTree = "<group>"; };
 		778F142A128A114F0010253D /* OscTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OscTypes.h; sourceTree = "<group>"; };
-		778F14E9128A517F0010253D /* urNetTest.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urNetTest.lua; path = "urMus-Lua/urNetTest.lua"; sourceTree = "<group>"; };
+		778F14E9128A517F0010253D /* urNetTest.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urNetTest.lua; path = "urMus-Lua/urNetTest.lua"; sourceTree = "<group>"; };
 		778FB5200FEEE8F900F109A7 /* Texture2d.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Texture2d.h; sourceTree = "<group>"; };
 		778FB5210FEEE8F900F109A7 /* Texture2d.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Texture2d.mm; sourceTree = "<group>"; };
 		778FB5340FEEEB7800F109A7 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = /System/Library/Frameworks/QuartzCore.framework; sourceTree = "<absolute>"; };
 		778FB5F70FEEEDEA00F109A7 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		7798AC2D1273892500E3CE29 /* OldMan1-girlinfluence.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "OldMan1-girlinfluence.wav"; path = "Sounds/OldMan1-girlinfluence.wav"; sourceTree = "<group>"; };
 		7798AC2E1273892500E3CE29 /* OldMan1-low.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "OldMan1-low.wav"; path = "Sounds/OldMan1-low.wav"; sourceTree = "<group>"; };
-		7798DD70124023BC00238912 /* urAnimExample.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urAnimExample.lua; path = "urMus-Lua/urAnimExample.lua"; sourceTree = "<group>"; };
+		7798DD70124023BC00238912 /* urAnimExample.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urAnimExample.lua; path = "urMus-Lua/urAnimExample.lua"; sourceTree = "<group>"; };
 		779AD4A0104A3B2C007040BF /* button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = button.png; path = Textures/button.png; sourceTree = "<group>"; };
 		779AD4A1104A3B2C007040BF /* doublearrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = doublearrow.png; path = Textures/doublearrow.png; sourceTree = "<group>"; };
 		779AD4A2104A3B2C007040BF /* downarrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = downarrow.png; path = Textures/downarrow.png; sourceTree = "<group>"; };
-		779F0AD212762FD2007AD44D /* urSleeperLaunch.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urSleeperLaunch.lua; path = "urMus-Lua/urSleeperLaunch.lua"; sourceTree = "<group>"; };
+		779F0AD212762FD2007AD44D /* urSleeperLaunch.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urSleeperLaunch.lua; path = "urMus-Lua/urSleeperLaunch.lua"; sourceTree = "<group>"; };
 		77A1A6D510ABC5C8004A7C47 /* pitcher.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = pitcher.png; path = Textures/pitcher.png; sourceTree = "<group>"; };
 		77A1A6D610ABC5C8004A7C47 /* pitchwheel.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = pitchwheel.png; path = Textures/pitchwheel.png; sourceTree = "<group>"; };
 		77A1A6D710ABC5C8004A7C47 /* thumper.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = thumper.png; path = Textures/thumper.png; sourceTree = "<group>"; };
 		77A1A6DB10ABD49D004A7C47 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
 		77A3269F1058A79900D0394E /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
-		77A37401125E3CA900153905 /* urTiles2.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urTiles2.lua; path = "urMus-Lua/urTiles2.lua"; sourceTree = "<group>"; };
-		77A37402125E3CA900153905 /* urPaint.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urPaint.lua; path = "urMus-Lua/urPaint.lua"; sourceTree = "<group>"; };
-		77A6CCCC12A71CB500BE5901 /* urColorOrgan.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urColorOrgan.lua; path = "urMus-Lua/urColorOrgan.lua"; sourceTree = "<group>"; };
-		77A6CCCD12A71CB500BE5901 /* urMrNoisy.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urMrNoisy.lua; path = "urMus-Lua/urMrNoisy.lua"; sourceTree = "<group>"; };
-		77A6CCD112A71CB500BE5901 /* urChroma.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urChroma.lua; path = "urMus-Lua/urChroma.lua"; sourceTree = "<group>"; };
-		77A6CCD212A71CB500BE5901 /* urJamSession.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urJamSession.lua; path = "urMus-Lua/urJamSession.lua"; sourceTree = "<group>"; };
-		77A6CCD312A71CB500BE5901 /* urFeedback.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urFeedback.lua; path = "urMus-Lua/urFeedback.lua"; sourceTree = "<group>"; };
+		77A37401125E3CA900153905 /* urTiles2.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urTiles2.lua; path = "urMus-Lua/urTiles2.lua"; sourceTree = "<group>"; };
+		77A37402125E3CA900153905 /* urPaint.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urPaint.lua; path = "urMus-Lua/urPaint.lua"; sourceTree = "<group>"; };
+		77A6CCCC12A71CB500BE5901 /* urColorOrgan.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urColorOrgan.lua; path = "urMus-Lua/urColorOrgan.lua"; sourceTree = "<group>"; };
+		77A6CCCD12A71CB500BE5901 /* urMrNoisy.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urMrNoisy.lua; path = "urMus-Lua/urMrNoisy.lua"; sourceTree = "<group>"; };
+		77A6CCD112A71CB500BE5901 /* urChroma.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urChroma.lua; path = "urMus-Lua/urChroma.lua"; sourceTree = "<group>"; };
+		77A6CCD212A71CB500BE5901 /* urJamSession.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urJamSession.lua; path = "urMus-Lua/urJamSession.lua"; sourceTree = "<group>"; };
+		77A6CCD312A71CB500BE5901 /* urFeedback.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urFeedback.lua; path = "urMus-Lua/urFeedback.lua"; sourceTree = "<group>"; };
 		77A6CCDC12A71CC900BE5901 /* wE4.aif */ = {isa = PBXFileReference; lastKnownFileType = file; name = wE4.aif; path = Sounds/wE4.aif; sourceTree = "<group>"; };
 		77A6CCDD12A71CC900BE5901 /* wEb4.aif */ = {isa = PBXFileReference; lastKnownFileType = file; name = wEb4.aif; path = Sounds/wEb4.aif; sourceTree = "<group>"; };
 		77A6CCDE12A71CC900BE5901 /* wD4.aif */ = {isa = PBXFileReference; lastKnownFileType = file; name = wD4.aif; path = Sounds/wD4.aif; sourceTree = "<group>"; };
@@ -852,7 +852,7 @@
 		77AC7A6C1081C37A0071ECDE /* beatbox-mono.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "beatbox-mono.wav"; path = "Sounds/beatbox-mono.wav"; sourceTree = "<group>"; };
 		77B3001012E63BD300F119FE /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		77B3001212E63BD300F119FE /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
-		77B3019612E645DE00F119FE /* urCameraDemo.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urCameraDemo.lua; path = "urMus-Lua/urCameraDemo.lua"; sourceTree = "<group>"; };
+		77B3019612E645DE00F119FE /* urCameraDemo.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urCameraDemo.lua; path = "urMus-Lua/urCameraDemo.lua"; sourceTree = "<group>"; };
 		77B3A84B114F056F0073CCCF /* TCPServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TCPServer.h; sourceTree = "<group>"; };
 		77B3A84C114F056F0073CCCF /* TCPServer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = TCPServer.mm; sourceTree = "<group>"; };
 		77B3D17C10C7196000D5FB4B /* MediaPlayer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MediaPlayer.framework; path = System/Library/Frameworks/MediaPlayer.framework; sourceTree = SDKROOT; };
@@ -1023,7 +1023,6 @@
 		77B6329510D152C200AACEE4 /* SleighBells.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = SleighBells.png; path = Textures/SleighBells.png; sourceTree = "<group>"; };
 		77B766AA1254E22000274580 /* FireCrackle2.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = FireCrackle2.wav; path = Sounds/FireCrackle2.wav; sourceTree = "<group>"; };
 		77B766AB1254E22000274580 /* FireCrackle.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = FireCrackle.wav; path = Sounds/FireCrackle.wav; sourceTree = "<group>"; };
-<<<<<<< HEAD
 		77B9FC651194AF12006D5007 /* underscore.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = underscore.lua; path = "urMus-Lua/underscore.lua"; sourceTree = "<group>"; };
 		77B9FC661194AF12006D5007 /* urAnimate.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urAnimate.lua; path = "urMus-Lua/urAnimate.lua"; sourceTree = "<group>"; };
 		77B9FC671194AF12006D5007 /* urClockSeq.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urClockSeq.lua; path = "urMus-Lua/urClockSeq.lua"; sourceTree = "<group>"; };
@@ -1048,32 +1047,6 @@
 		77B9FC7A1194AF12006D5007 /* urVisDemo.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urVisDemo.lua; path = "urMus-Lua/urVisDemo.lua"; sourceTree = "<group>"; };
 		77B9FC7B1194AF12006D5007 /* urVisGraph.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urVisGraph.lua; path = "urMus-Lua/urVisGraph.lua"; sourceTree = "<group>"; };
 		77B9FC7C1194AF12006D5007 /* urWidget.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urWidget.lua; path = "urMus-Lua/urWidget.lua"; sourceTree = "<group>"; };
-=======
-		77B9FC651194AF12006D5007 /* underscore.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = underscore.lua; path = "urMus-Lua/underscore.lua"; sourceTree = "<group>"; };
-		77B9FC661194AF12006D5007 /* urAnimate.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urAnimate.lua; path = "urMus-Lua/urAnimate.lua"; sourceTree = "<group>"; };
-		77B9FC671194AF12006D5007 /* urClockSeq.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urClockSeq.lua; path = "urMus-Lua/urClockSeq.lua"; sourceTree = "<group>"; };
-		77B9FC681194AF12006D5007 /* urClouds.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urClouds.lua; path = "urMus-Lua/urClouds.lua"; sourceTree = "<group>"; };
-		77B9FC691194AF12006D5007 /* urColors.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urColors.lua; path = "urMus-Lua/urColors.lua"; sourceTree = "<group>"; };
-		77B9FC6A1194AF12006D5007 /* urFlute.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urFlute.lua; path = "urMus-Lua/urFlute.lua"; sourceTree = "<group>"; };
-		77B9FC6B1194AF12006D5007 /* urHelpers.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urHelpers.lua; path = "urMus-Lua/urHelpers.lua"; sourceTree = "<group>"; };
-		77B9FC6C1194AF12006D5007 /* urMus.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urMus.lua; path = "urMus-Lua/urMus.lua"; sourceTree = "<group>"; };
-		77B9FC6D1194AF12006D5007 /* urPads.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urPads.lua; path = "urMus-Lua/urPads.lua"; sourceTree = "<group>"; };
-		77B9FC6E1194AF12006D5007 /* urPiano.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urPiano.lua; path = "urMus-Lua/urPiano.lua"; sourceTree = "<group>"; };
-		77B9FC6F1194AF12006D5007 /* urPitcher.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urPitcher.lua; path = "urMus-Lua/urPitcher.lua"; sourceTree = "<group>"; };
-		77B9FC701194AF12006D5007 /* urPitchWheel.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urPitchWheel.lua; path = "urMus-Lua/urPitchWheel.lua"; sourceTree = "<group>"; };
-		77B9FC711194AF12006D5007 /* urPlayground.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urPlayground.lua; path = "urMus-Lua/urPlayground.lua"; sourceTree = "<group>"; };
-		77B9FC721194AF12006D5007 /* urPong.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urPong.lua; path = "urMus-Lua/urPong.lua"; sourceTree = "<group>"; };
-		77B9FC731194AF12006D5007 /* urRecorder.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urRecorder.lua; path = "urMus-Lua/urRecorder.lua"; sourceTree = "<group>"; };
-		77B9FC741194AF12006D5007 /* urScrollList.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urScrollList.lua; path = "urMus-Lua/urScrollList.lua"; sourceTree = "<group>"; };
-		77B9FC751194AF12006D5007 /* urSleigh.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urSleigh.lua; path = "urMus-Lua/urSleigh.lua"; sourceTree = "<group>"; };
-		77B9FC761194AF12006D5007 /* urSmudge.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urSmudge.lua; path = "urMus-Lua/urSmudge.lua"; sourceTree = "<group>"; };
-		77B9FC771194AF12006D5007 /* urThumper.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urThumper.lua; path = "urMus-Lua/urThumper.lua"; sourceTree = "<group>"; };
-		77B9FC781194AF12006D5007 /* urTicTacToe.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urTicTacToe.lua; path = "urMus-Lua/urTicTacToe.lua"; sourceTree = "<group>"; };
-		77B9FC791194AF12006D5007 /* urTiles.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urTiles.lua; path = "urMus-Lua/urTiles.lua"; sourceTree = "<group>"; };
-		77B9FC7A1194AF12006D5007 /* urVisDemo.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urVisDemo.lua; path = "urMus-Lua/urVisDemo.lua"; sourceTree = "<group>"; };
-		77B9FC7B1194AF12006D5007 /* urVisGraph.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urVisGraph.lua; path = "urMus-Lua/urVisGraph.lua"; sourceTree = "<group>"; };
-		77B9FC7C1194AF12006D5007 /* urWidget.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urWidget.lua; path = "urMus-Lua/urWidget.lua"; sourceTree = "<group>"; };
->>>>>>> 4d410845dc9dc63457538d4842979abf6fd2f9c8
 		77B9FCB61194AF8F006D5007 /* o-alpha.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "o-alpha.png"; path = "Textures/o-alpha.png"; sourceTree = "<group>"; };
 		77B9FCB81194AFB8006D5007 /* x-alpha.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "x-alpha.png"; path = "Textures/x-alpha.png"; sourceTree = "<group>"; };
 		77BC5B5312AAFF47002FD60B /* door_close_quiet.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = door_close_quiet.png; path = Textures/door_close_quiet.png; sourceTree = "<group>"; };
@@ -1112,7 +1085,7 @@
 		77BC5BA612AB0F8C002FD60B /* walking_heavy.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = walking_heavy.wav; path = Sounds/walking_heavy.wav; sourceTree = "<group>"; };
 		77BC5BA712AB0F8C002FD60B /* walking_soft.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = walking_soft.wav; path = Sounds/walking_soft.wav; sourceTree = "<group>"; };
 		77BC5BA812AB0F8C002FD60B /* whispers.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = whispers.wav; path = Sounds/whispers.wav; sourceTree = "<group>"; };
-		77BD37AF1252CD0D002BE9DA /* urFire.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urFire.lua; path = "urMus-Lua/urFire.lua"; sourceTree = "<group>"; };
+		77BD37AF1252CD0D002BE9DA /* urFire.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urFire.lua; path = "urMus-Lua/urFire.lua"; sourceTree = "<group>"; };
 		77BD37C91252D2F9002BE9DA /* fire2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = fire2.png; path = Textures/fire2.png; sourceTree = "<group>"; };
 		77BD37CA1252D2F9002BE9DA /* fire1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = fire1.png; path = Textures/fire1.png; sourceTree = "<group>"; };
 		77BF2BCB12A967BC002C0024 /* FunkyLoop.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = FunkyLoop.wav; path = Sounds/FunkyLoop.wav; sourceTree = "<group>"; };
@@ -1237,7 +1210,7 @@
 		77C71D8812A7F5F000CAE2C7 /* fPiano2f2.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = fPiano2f2.wav; path = Sounds/fPiano2f2.wav; sourceTree = "<group>"; };
 		77C71D8912A7F5F000CAE2C7 /* fPianof2.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = fPianof2.wav; path = Sounds/fPianof2.wav; sourceTree = "<group>"; };
 		77C71D8A12A7F5F000CAE2C7 /* gflatPiano2f2.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = gflatPiano2f2.wav; path = Sounds/gflatPiano2f2.wav; sourceTree = "<group>"; };
-		77C71DA112A7F78300CAE2C7 /* urCircleOfWater.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urCircleOfWater.lua; path = "urMus-Lua/urCircleOfWater.lua"; sourceTree = "<group>"; };
+		77C71DA112A7F78300CAE2C7 /* urCircleOfWater.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urCircleOfWater.lua; path = "urMus-Lua/urCircleOfWater.lua"; sourceTree = "<group>"; };
 		77C7ECB012259E6000303F02 /* TVOutManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TVOutManager.h; sourceTree = "<group>"; };
 		77C7ECB112259E6000303F02 /* TVOutManager.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = TVOutManager.mm; sourceTree = "<group>"; };
 		77CAA54A12A84CD300194390 /* trickle3.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = trickle3.wav; path = Sounds/trickle3.wav; sourceTree = "<group>"; };
@@ -1271,10 +1244,10 @@
 		77D5A6A112AEB0BD0010BCC6 /* 2FBass1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = 2FBass1.wav; path = Sounds/2FBass1.wav; sourceTree = "<group>"; };
 		77D5A6A212AEB0BD0010BCC6 /* 1EbBass1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = 1EbBass1.wav; path = Sounds/1EbBass1.wav; sourceTree = "<group>"; };
 		77D5A6A312AEB0BD0010BCC6 /* 0DbBass1.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = 0DbBass1.wav; path = Sounds/0DbBass1.wav; sourceTree = "<group>"; };
-		77D5A77A12AEC9820010BCC6 /* urBall-player4.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "urBall-player4.lua"; path = "urMus-Lua/urBall-player4.lua"; sourceTree = "<group>"; };
-		77D5A77B12AEC9820010BCC6 /* urBall-player3.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "urBall-player3.lua"; path = "urMus-Lua/urBall-player3.lua"; sourceTree = "<group>"; };
-		77D5A77C12AEC9820010BCC6 /* urBall-player1.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "urBall-player1.lua"; path = "urMus-Lua/urBall-player1.lua"; sourceTree = "<group>"; };
-		77D5A77D12AEC9820010BCC6 /* urBall-Master-player2.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "urBall-Master-player2.lua"; path = "urMus-Lua/urBall-Master-player2.lua"; sourceTree = "<group>"; };
+		77D5A77A12AEC9820010BCC6 /* urBall-player4.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = "urBall-player4.lua"; path = "urMus-Lua/urBall-player4.lua"; sourceTree = "<group>"; };
+		77D5A77B12AEC9820010BCC6 /* urBall-player3.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = "urBall-player3.lua"; path = "urMus-Lua/urBall-player3.lua"; sourceTree = "<group>"; };
+		77D5A77C12AEC9820010BCC6 /* urBall-player1.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = "urBall-player1.lua"; path = "urMus-Lua/urBall-player1.lua"; sourceTree = "<group>"; };
+		77D5A77D12AEC9820010BCC6 /* urBall-Master-player2.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = "urBall-Master-player2.lua"; path = "urMus-Lua/urBall-Master-player2.lua"; sourceTree = "<group>"; };
 		77D61B3D10C80C170091DE81 /* Green-Mono.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "Green-Mono.wav"; path = "Sounds/Green-Mono.wav"; sourceTree = "<group>"; };
 		77D61B3E10C80C170091DE81 /* Blue-Mono.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "Blue-Mono.wav"; path = "Sounds/Blue-Mono.wav"; sourceTree = "<group>"; };
 		77D61B3F10C80C170091DE81 /* Cyan-Mono.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "Cyan-Mono.wav"; path = "Sounds/Cyan-Mono.wav"; sourceTree = "<group>"; };
@@ -1285,7 +1258,7 @@
 		77D61B4410C80C170091DE81 /* Red-Mono.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "Red-Mono.wav"; path = "Sounds/Red-Mono.wav"; sourceTree = "<group>"; };
 		77D9689D11A79AB900BD4F2D /* UIApplication+TVOut.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIApplication+TVOut.m"; sourceTree = "<group>"; };
 		77DEFB5612930C2200110BA1 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
-		77E7B87811DBD0D000398FBD /* urMetro.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urMetro.lua; path = "urMus-Lua/urMetro.lua"; sourceTree = "<group>"; };
+		77E7B87811DBD0D000398FBD /* urMetro.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urMetro.lua; path = "urMus-Lua/urMetro.lua"; sourceTree = "<group>"; };
 		77F01C0C112508CB007FD520 /* paddle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = paddle.png; path = Textures/paddle.png; sourceTree = "<group>"; };
 		77F01C0D112508CB007FD520 /* small-ball.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "small-ball.png"; path = "Textures/small-ball.png"; sourceTree = "<group>"; };
 		77F01C0E112508CB007FD520 /* ball.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = ball.png; path = Textures/ball.png; sourceTree = "<group>"; };
@@ -1308,7 +1281,7 @@
 		77FB9272111BA8C30078AAC5 /* SandwichEventManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SandwichEventManager.m; path = Classes/Sandwich/SandwichEventManager.m; sourceTree = "<group>"; };
 		77FB9273111BA8C30078AAC5 /* SandwichEventManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SandwichEventManager.h; path = Classes/Sandwich/SandwichEventManager.h; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		EA6DC0DC11DBCD7500E1E13E /* urTuner.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urTuner.lua; path = "urMus-Lua/urTuner.lua"; sourceTree = "<group>"; };
+		EA6DC0DC11DBCD7500E1E13E /* urTuner.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urTuner.lua; path = "urMus-Lua/urTuner.lua"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
