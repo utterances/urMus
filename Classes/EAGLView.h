@@ -101,7 +101,7 @@ Note that setting the view non-opaque will only work if the EAGL surface has an 
 }
 
 @property (nonatomic, retain) CLLocationManager *locationManager;
-
+@property (nonatomic, retain) EAGLContext *context;
 @property NSTimeInterval animationInterval;
 @property(nonatomic,retain) NSNetService* netService;
 
@@ -109,7 +109,9 @@ Note that setting the view non-opaque will only work if the EAGL surface has an 
 - (void)stopAnimation;
 - (void)drawView;
 - (void)setFramePointer;
-- (void)processPixelBuffer: (CVImageBufferRef)pixelBuffer;
+//- (void)processPixelBuffer: (CVImageBufferRef)pixelBuffer;
+//- (void)newFrame:(GLuint)frame;
+- (void)newCameraTextureForDisplay:(GLuint)frame;
 
 - (void) advertiseService:(NSString *)name withID:(NSString *)nsid atPort:(int)port;
 

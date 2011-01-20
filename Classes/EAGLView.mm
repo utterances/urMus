@@ -36,7 +36,7 @@ MachTimer* mytimer;
 // A class extension to declare private methods
 @interface EAGLView ()
 
-@property (nonatomic, retain) EAGLContext *context;
+//@property (nonatomic, retain) EAGLContext *context;
 @property (nonatomic, assign) NSTimer *animationTimer;
 
 @property (nonatomic, retain, readwrite) NSNetService *ownEntry;
@@ -358,7 +358,6 @@ extern lua_State *lua;
 	[captureManager addVideoInput];
 	[captureManager addVideoDataOutput];
 	[captureManager autoWhiteBalanceAndExposure:0];
-	//[captureManager addVideoPreviewLayer];
 	[captureManager.captureSession startRunning];
 	
 	//Create and advertise networking and discover others
@@ -391,153 +390,13 @@ extern lua_State *lua;
 #endif
 }
 
-#define BYTES_PER_PIXEL 4
 
-// Where the magic happens as far as image processing is concerned
-- (void)processPixelBuffer: (CVImageBufferRef)pixelBuffer {
-	
-	CVPixelBufferLockBaseAddress( pixelBuffer, 0 );
-	
-	int bufferHeight = CVPixelBufferGetHeight(pixelBuffer);
-	int bufferWidth = CVPixelBufferGetWidth(pixelBuffer);
-	int bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer);
-	unsigned char *rowBase = (unsigned char *)CVPixelBufferGetBaseAddress(pixelBuffer);
-	
-	
-	//	CGContextRef                    context;
-	//	CGColorSpaceRef	colorSpace;
-	//	CGAffineTransform               transform;
-	//	colorSpace = CGColorSpaceCreateDeviceRGB();
-	//	context = CGBitmapContextCreate(CVPixelBufferGetBaseAddress(pixelBuffer), bufferWidth, bufferHeight, 8, 4 * bufferWidth, colorSpace, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
-	//	CGColorSpaceRelease(colorSpace);
-	//	CGContextClearRect(context, CGRectMake(0, 0, bufferWidth, bufferHeight));
-	//	//	CGContextTranslateCTM(context, 0, height - imageSize.height);
-	//	
-	//	if(!CGAffineTransformIsIdentity(transform))
-	//		CGContextConcatCTM(context, transform);
-	//	//	CGContextDrawImage(context, CGRectMake(0, 0, CGImageGetWidth(image), CGImageGetHeight(image)), image);
-	//	//Convert "RRRRRRRRRGGGGGGGGBBBBBBBBAAAAAAAA" to "RRRRRGGGGGGBBBBB"
-	//	//	if(pixelFormat == kTexture2DPixelFormat_RGB565) {
-	//	//		tempData = malloc(height * width * 2);
-	//	//		inPixel32 = (unsigned int*)data;
-	//	//		outPixel16 = (unsigned short*)tempData;
-	//	//		for(i = 0; i < width * height; ++i, ++inPixel32)
-	//	//			*outPixel16++ = ((((*inPixel32 >> 0) & 0xFF) >> 3) << 11) | ((((*inPixel32 >> 8) & 0xFF) >> 2) << 5) | ((((*inPixel32 >> 16) & 0xFF) >> 3) << 0);
-	//	//		free(data);
-	//	//		data = tempData;
-	//	//		
-	//	//	}
-	
-	
-	//TODO: Get the camera data in an OpenGL texture
-	// Delete the current texture if it exists
-	if (_cameraTexture) {
-		glDeleteTextures(1, &_cameraTexture);
-	}
-	
-	// Create a new texture
-	GLint	saveName;
-	glGenTextures(1, &_cameraTexture);
-	glGetIntegerv(GL_TEXTURE_BINDING_2D, &saveName);
-	glBindTexture(GL_TEXTURE_2D, _cameraTexture);
-	
-	// Set appropriate parameters for when the texture is resized
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	
-	// Put the image directly into the texture
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bufferWidth, bufferHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, CVPixelBufferGetBaseAddress(pixelBuffer));
-	glBindTexture(GL_TEXTURE_2D, saveName);
-	//glBindTexture(GL_TEXTURE_2D, _cameraTexture);
-	
-	// Draw it to the screen
-	
-	//[self newCameraTextureForDisplay:_cameraTexture];
-	
-	//CGContextRelease(context);
-	//	free(data);
-	
-	/////////////////
-	
-	// Color initializations
-	int64_t redTotal = 0;
-	int64_t greenTotal = 0;
-	int64_t blueTotal = 0;
-	double totalTotal = 0;
-	
-	// Mid-level vision initializations
-	int gradientX = 0;
-	int gradientY = 0;
-	double edginess = 0;
-	
-	// We don't look at every single pixel. Doing so would cause unneccesary load on the
-	//	system for such basic features. This MUST be a factor of both the bufferHeight
-	//	and bufferWidth.
-	int downSampleFactor = 8;
-	
-	// Parse the image from left to right, bottom to top.
-	for( int row = 0; row < bufferHeight; row += downSampleFactor ) {
-		for( int column = 0; column < bufferWidth; column += downSampleFactor ) {
-			
-			unsigned char *pixel = rowBase + (row * bytesPerRow) + (column * BYTES_PER_PIXEL);
-			
-			// Reassignment is done here both to cast the unsigned char into the 8-bit integer
-			//	as well as to remain compatible with helper functions above and to keep original
-			//	memory buffer in tact.
-			uint8_t pixelColor[3];
-			for (int j = 0; j < 3; j++)
-				pixelColor[j] = (uint8_t)pixel[j];
-			
-			//pixelColor now contains the BGR values of the current pixel
-			
-			blueTotal += pixelColor[0];
-			greenTotal += pixelColor[1];
-			redTotal += pixelColor[2];
-			
-			
-			// Ensure we are not at the boundaries of the image so we can use the Roberts edge detector
-			if (row < (bufferHeight-2*downSampleFactor) && column < (bufferWidth-2*downSampleFactor)) {
-				
-				// Access the other pixels in the neighborhood to calculate the gradient
-				unsigned char *pixel9 = rowBase + ((row+downSampleFactor) * bytesPerRow) + ((column+downSampleFactor) * BYTES_PER_PIXEL);
-				unsigned char *pixel8 = rowBase + ((row+downSampleFactor) * bytesPerRow) + (column * BYTES_PER_PIXEL);
-				unsigned char *pixel6 = rowBase + (row * bytesPerRow) + ((column+downSampleFactor) * BYTES_PER_PIXEL);
-				
-				//Average of pixel 9 minus the average of the current pixel
-				gradientX = (((uint8_t)pixel9[0]+(uint8_t)pixel9[1]+(uint8_t)pixel9[2])/3) - ((pixelColor[0]+pixelColor[1]+pixelColor[2])/3);
-				gradientY = (((uint8_t)pixel8[0]+(uint8_t)pixel8[1]+(uint8_t)pixel8[2])/3) - (((uint8_t)pixel6[0]+(uint8_t)pixel6[1]+(uint8_t)pixel6[2])/3);
-				edginess += pow(gradientX/255.0,2) + pow(gradientY/255.0,2);
-			}
-			
-			
-		}
-		
-	}
-	
-	// Normalize the sums into the 0 to 255 range 
-	blueTotal = blueTotal/((bufferWidth/downSampleFactor)*(bufferHeight/downSampleFactor));
-	greenTotal = greenTotal/((bufferWidth/downSampleFactor)*(bufferHeight/downSampleFactor));
-	redTotal = redTotal/((bufferWidth/downSampleFactor)*(bufferHeight/downSampleFactor));
-	
-	totalTotal = ((double)blueTotal+(double)greenTotal+(double)redTotal)/3;
-	
-	// Normalize the edginess between 0 and 1
-	edginess = log10(edginess)/log10(((bufferWidth/downSampleFactor)-1)*((bufferHeight/downSampleFactor)-1));
-	
-	// and then the 0 to 1 range
-	callAllCameraSources(totalTotal/255.0,blueTotal/255.0,greenTotal/255.0,redTotal/255.0, edginess);
-	
-	printf("The new red value is %f\n",redTotal/255.);
-	
-	CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
-}
+#define TEST_CAMERA
 
 - (void)newCameraTextureForDisplay:(GLuint)texture {
-	
+
 	_cameraTexture = texture;
-	//TODO: Something with this texture
+	
 }
 
 
@@ -592,7 +451,7 @@ static EAGLSharegroup* theSharegroup = nil;
 
 - (EAGLContext*)createContext
 {
-    EAGLContext* context = nil;
+    //EAGLContext* context = nil;
 	
     if (theSharegroup)
     {
