@@ -98,7 +98,7 @@ CreateRegionAt(ScreenWidth()*3/4,ScreenWidth()*3/4)
 CreateRegionAt(ScreenWidth()/4,ScreenWidth()*5/4)
 CreateRegionAt(ScreenWidth()*3/4,ScreenWidth()*5/4)
 
-
+if pagersize then
 local pagebutton=Region()
 --local pagebutton=Region('region', 'pagebutton', UIParent)
 pagebutton:SetWidth(pagersize)
@@ -117,4 +117,4 @@ pagebutton.texture:SetTexCoord(0,1.0,0,1.0)
 pagebutton:EnableInput(true)
 pagebutton:Show()
 --pagebutton:Handle("OnPageEntered", nil)
-
+end
