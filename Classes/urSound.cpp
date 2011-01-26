@@ -71,6 +71,7 @@ ursSinkList urActiveDrainTickSinkList;
 ursSinkList urActiveDrainArraySinkList;
 ursSinkList urActiveNetTickSinkList;
 
+ursSinkList urActiveFlashTickSinkList;
 
 ursSinkList urActiveAudioFrameSinkList;
 
@@ -177,6 +178,12 @@ double urs_PullActiveVisSinks()
 {
 	double res = visindata + urs_PullActiveSingleTickSinks(urActiveVisTickSinkList);
 //	visindata = 0.0;
+	return res;
+}
+
+double urs_PullActiveFlashSinks()
+{
+	double res = urs_PullActiveSingleTickSinks(urActiveVisTickSinkList);
 	return res;
 }
 

@@ -239,7 +239,8 @@ extern int SCREEN_HEIGHT;
 	NSString *filePath;
 	if ([BLVideoOut sharedVideoOut].extScreenActive == YES)
 	{
-	filePath = [resourcePath stringByAppendingPathComponent:@"urMus.lua"];
+//	filePath = [resourcePath stringByAppendingPathComponent:@"urMus.lua"];
+	filePath = [resourcePath stringByAppendingPathComponent:@"urCameraDemo.lua"];
 #ifdef BL_PERFORMANCE
 	filePath = [resourcePath stringByAppendingPathComponent:@"urBall-display.lua"];
 #endif

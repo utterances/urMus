@@ -267,7 +267,6 @@
     return [self cameraWithPosition:AVCaptureDevicePositionBack];
 }
 
-//TODO: Make Lua API
 - (void)toggleCameraSelection
 {
     @synchronized(self){
@@ -401,6 +400,7 @@
 
 - (void) toggleTorch 
 {
+//	float res = urs_PullActiveFlashSinks();
 	AVCaptureDevice *device = [[self videoInput] device];
 	NSError *error;
 	if([device isTorchModeSupported:AVCaptureTorchModeOn] && [device torchMode] == AVCaptureTorchModeOff) {

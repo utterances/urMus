@@ -4194,6 +4194,14 @@ int l_SetActiveCamera(lua_State *lua)
 	return 0;
 }
 
+int l_SetTorchFlashFrequency(lua_State *lua)
+{
+	double freq = luaL_checknumber(lua,1);
+	[g_glView->captureManager setTorchToggleFrequency:freq];
+
+	return 0;
+}
+	
 // SOAR support API
 
 #ifdef SOAR_SUPPORT
@@ -4467,6 +4475,8 @@ void l_setupAPI(lua_State *lua)
 	
 	lua_pushcfunction(lua, l_SetActiveCamera);
 	lua_setglobal(lua, "SetActiveCamera");
+	lua_pushcfunction(lua, l_SetTorchFlashFrequency);
+	lua_setglobal(lua, "SetTorchFlashFrequency");
 	
 	lua_pushcfunction(lua, l_FreeAllRegions);
 	lua_setglobal(lua, "FreeAllRegions");

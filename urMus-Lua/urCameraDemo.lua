@@ -47,7 +47,7 @@ end
 
 local random = math.random
 
-function TouchDown(self)
+function CreateRegionAt(x,y)
 	local region = CreateorRecycleregion('region', 'backdrop', UIParent)
 	TextureCol(region.t,255,255,255,255)
 	region.t:UseCamera()
@@ -64,9 +64,13 @@ function TouchDown(self)
 	region:Handle("OnDoubleTap", RecycleSelf)
 	region:Handle("OnUpdate", GatherVis)
 	region.t:SetTiling()
-	local x,y = InputPosition()
 	region:SetAnchor("CENTER",x,y)
 	table.insert(regions, region)
+end
+
+function TouchDown(self)
+	local x,y = InputPosition()
+	CreateRegionAt(x,y)
 end
 
 local cam = 1
@@ -85,6 +89,15 @@ backdrop:SetAnchor('BOTTOMLEFT',0,0)
 backdrop:Handle("OnTouchDown", TouchDown)
 
 backdrop:EnableInput(true)
+
+--SetActiveCamera(2)
+CreateRegionAt(ScreenWidth()/4,ScreenWidth()/4)
+CreateRegionAt(ScreenWidth()*3/4,ScreenWidth()/4)
+CreateRegionAt(ScreenWidth()/4,ScreenWidth()*3/4)
+CreateRegionAt(ScreenWidth()*3/4,ScreenWidth()*3/4)
+CreateRegionAt(ScreenWidth()/4,ScreenWidth()*5/4)
+CreateRegionAt(ScreenWidth()*3/4,ScreenWidth()*5/4)
+
 
 local pagebutton=Region()
 --local pagebutton=Region('region', 'pagebutton', UIParent)
