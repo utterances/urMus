@@ -2,6 +2,8 @@
 //  CaptureSessionManager.h
 //  CaptureSessionManager
 //
+//	Portions of this file were based on sample code from WWDC 2010
+//
 //  Created by Pat O'Keefe on 10/4/10.
 //  Copyright 2010 Pat O'Keefe. All rights reserved.
 //
@@ -25,8 +27,11 @@
 	AVCaptureSession *captureSession;
 	AVCaptureVideoPreviewLayer *previewLayer;
 	AVCaptureConnection *videoConnection;
+	AVCaptureDeviceInput *videoInput;
 	
 	AVCaptureDevice *videoDevice;
+	
+	NSTimer *myTimer;
 	
 }
 
@@ -34,10 +39,12 @@
 - (void) addVideoDataOutput;
 - (void) autoWhiteBalanceAndExposure:(int)setting;
 - (void) newFrameForDisplay;
+- (void)toggleCameraSelection;
 
 @property(nonatomic, assign) id<CaptureSessionManagerDelegate> delegate;
 @property (retain) AVCaptureVideoPreviewLayer *previewLayer;
 @property (retain) AVCaptureSession *captureSession;
+@property (retain) AVCaptureDeviceInput *videoInput;
 @property (readwrite) float selectedFeatureValue;
 
 @end

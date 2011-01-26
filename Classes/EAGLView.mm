@@ -18,6 +18,7 @@
 #include <arpa/inet.h>
 
 #define SLEEPER
+#define USECAMERA
 
 #ifdef SANDWICH_SUPPORT
 static float pressure[4] = {0,0,0,0};
@@ -74,6 +75,7 @@ MachTimer* mytimer;
 @synthesize initialWaitOver = _initialWaitOver;
 @synthesize netService;
 
+@synthesize captureManager;
 
 
 // You must implement this method
@@ -352,6 +354,7 @@ extern lua_State *lua;
 		
     }
 	
+#ifdef USECAMERA
 	// Initiate the camera initiation sequence. <-- Whoa.
 	captureManager = [[CaptureSessionManager alloc] init];
 	captureManager.delegate = self;
@@ -359,7 +362,7 @@ extern lua_State *lua;
 	[captureManager addVideoDataOutput];
 	[captureManager autoWhiteBalanceAndExposure:0];
 	[captureManager.captureSession startRunning];
-	
+#endif	
 	//Create and advertise networking and discover others
 //	[self setup];
 	

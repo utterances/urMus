@@ -4179,6 +4179,20 @@ int l_SetPage(lua_State *lua)
 	}
 	return 0;
 }
+	
+int currentCamera = 1;
+	
+int l_SetActiveCamera(lua_State *lua)
+{
+	int cam = luaL_checknumber(lua,1);
+	
+	if(currentCamera != cam)
+	{
+		[g_glView->captureManager toggleCameraSelection];
+	}
+	
+	return 0;
+}
 
 // SOAR support API
 
@@ -4450,6 +4464,9 @@ void l_setupAPI(lua_State *lua)
 	lua_pushcfunction(lua, l_SoarLoadRules);
 	lua_setglobal(lua,"SoarLoadRules");
 #endif	
+	
+	lua_pushcfunction(lua, l_SetActiveCamera);
+	lua_setglobal(lua, "SetActiveCamera");
 	
 	lua_pushcfunction(lua, l_FreeAllRegions);
 	lua_setglobal(lua, "FreeAllRegions");

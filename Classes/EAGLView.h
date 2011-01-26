@@ -56,6 +56,7 @@ Note that setting the view non-opaque will only work if the EAGL surface has an 
 {
 @public
 	NSNetService *netService;
+	CaptureSessionManager *captureManager;
 @private
     /* The pixel dimensions of the backbuffer */
     GLint backingWidth;
@@ -73,7 +74,6 @@ Note that setting the view non-opaque will only work if the EAGL surface has an 
     NSTimeInterval animationInterval;
 	CLLocationManager *locationManager;
 	CMMotionManager *motionManager;
-	CaptureSessionManager *captureManager;
 	NSOperationQueue *opQ;
 #ifdef USEUDP
 	AsyncUdpSocket		*_server;
@@ -104,6 +104,7 @@ Note that setting the view non-opaque will only work if the EAGL surface has an 
 @property (nonatomic, retain) EAGLContext *context;
 @property NSTimeInterval animationInterval;
 @property(nonatomic,retain) NSNetService* netService;
+@property(retain) CaptureSessionManager *captureManager;
 
 - (void)startAnimation;
 - (void)stopAnimation;

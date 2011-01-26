@@ -69,12 +69,21 @@ function TouchDown(self)
 	table.insert(regions, region)
 end
 
+local cam = 1
+
+function SwitchCamera(self)
+	DPrint(cam)
+	if cam == 1 then cam = 2 else cam = 1 end
+	SetActiveCamera(cam)
+end
+
 local backdrop = Region()
 backdrop:SetWidth(ScreenWidth())
 backdrop:SetHeight(ScreenHeight())
 backdrop:SetLayer("BACKGROUND")
 backdrop:SetAnchor('BOTTOMLEFT',0,0)
 backdrop:Handle("OnTouchDown", TouchDown)
+
 backdrop:EnableInput(true)
 
 local pagebutton=Region()
@@ -85,7 +94,8 @@ pagebutton:SetLayer("TOOLTIP")
 pagebutton:SetAnchor('BOTTOMLEFT',ScreenWidth()-pagersize-4,ScreenHeight()-pagersize-4) 
 pagebutton:EnableClamping(true)
 --pagebutton:Handle("OnDoubleTap", FlipPage)
-pagebutton:Handle("OnTouchDown", FlipPage)
+pagebutton:Handle("OnDoubleTap", FlipPage)
+pagebutton:Handle("OnTouchDown", SwitchCamera)
 pagebutton.texture = pagebutton:Texture("circlebutton-16.png")
 pagebutton.texture:SetGradientColor("TOP",255,255,255,255,255,255,255,255)
 pagebutton.texture:SetGradientColor("BOTTOM",255,255,255,255,255,255,255,255)

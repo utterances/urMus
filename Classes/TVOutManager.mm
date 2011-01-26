@@ -8,7 +8,7 @@
 // http://www.touchcentric.com/blog/
 
 
-#define NOIPODTOUCH
+//#define NOIPODTOUCH
 #ifdef NOIPODTOUCH
 
 

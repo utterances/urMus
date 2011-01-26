@@ -21,7 +21,7 @@
 //
 //#define NEW_PROJECTOR_VIDEO
 //#define FINAL_PROJECTOR_VIDEO
-//#define BL_PROJECTOR_VIDEO
+#define BL_PROJECTOR_VIDEO
 
 // Note: Also check ipod define in TvOutManager.mm
 
@@ -121,6 +121,7 @@ extern bool newerror;
 	
 }
 #endif
+
 
 extern int SCREEN_WIDTH;
 extern int SCREEN_HEIGHT;
@@ -238,13 +239,16 @@ extern int SCREEN_HEIGHT;
 	NSString *filePath;
 	if ([BLVideoOut sharedVideoOut].extScreenActive == YES)
 	{
+	filePath = [resourcePath stringByAppendingPathComponent:@"urMus.lua"];
+#ifdef BL_PERFORMANCE
 	filePath = [resourcePath stringByAppendingPathComponent:@"urBall-display.lua"];
-	glView.transform = CGAffineTransformRotate(glView.transform, M_PI * 1.5);
+#endif
+//	glView.transform = CGAffineTransformRotate(glView.transform, M_PI * 1.5);
 	CGRect screendimensions;
-	screendimensions = [[BLVideoOut sharedVideoOut].extWindow bounds];
-	float NSCREEN_WIDTH = screendimensions.size.width;
-	float NSCREEN_HEIGHT = screendimensions.size.height;
-	glView.transform = CGAffineTransformScale(glView.transform, NSCREEN_HEIGHT/(float)SCREEN_HEIGHT, NSCREEN_WIDTH/(float)SCREEN_WIDTH);
+//	screendimensions = [[BLVideoOut sharedVideoOut].extWindow bounds];
+//	float NSCREEN_WIDTH = screendimensions.size.width;
+//	float NSCREEN_HEIGHT = screendimensions.size.height;
+//	glView.transform = CGAffineTransformScale(glView.transform, NSCREEN_HEIGHT/(float)SCREEN_HEIGHT, NSCREEN_WIDTH/(float)SCREEN_WIDTH);
 	
 	}
 	else

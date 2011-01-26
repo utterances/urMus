@@ -2,6 +2,8 @@
 //  CaptureSessionManager.m
 //  CaptureSessionManager
 //
+//	Portions of this file were based on sample code from WWDC 2010
+//
 //  Created by Pat O'Keefe on 10/4/10.
 //  Copyright 2010 Pat O'Keefe. All rights reserved.
 //
@@ -11,8 +13,8 @@
 #import "urSound.h"
 #include <math.h>
 
-#define SCREEN_WIDTH 320
-#define SCREEN_HEIGHT 460
+#define BYTES_PER_PIXEL 4
+
 
 @implementation CaptureSessionManager
 
@@ -20,42 +22,10 @@
 @synthesize previewLayer;
 @synthesize selectedFeatureValue;
 @synthesize delegate;
+@synthesize videoInput;
 
 
 #pragma mark Pixelbuffer Processing
-
-// Strange attempt to "remove" luminance. Currently unused
-static inline void normalize( const uint8_t colorIn[], uint8_t colorOut[] ) {
-
-	// Find the sum of all three channels
-	int sum = 0;
-	for (int i = 0; i < 3; i++)
-		sum += colorIn[i] / 3;
-
-	// Divide each by the sum
-	for (int j = 0; j < 3; j++)
-		colorOut[j] = (float) ((colorIn[j] / (float) sum) * 255);
-}
-
-
-// Euclidean distance
-static inline int distance(uint8_t a[], uint8_t b[], int length) {
-
-	int sum = 0;
-
-	for (int i = 0; i < length; i++)
-		sum += (a[i] - b[i]) * (a[i] - b[i]);
-	
-	return sqrt(sum);
-}
-
-
-static inline BOOL match(uint8_t pixelColor[], uint8_t referenceColor[], unsigned int threshold) {
-
-	return (distance(pixelColor, referenceColor, 3) > threshold) ? NO : YES;
-}
-
-#define BYTES_PER_PIXEL 4
 
 - (void)processPixelBuffer: (CVImageBufferRef)pixelBuffer {
 	
@@ -177,7 +147,7 @@ static inline BOOL match(uint8_t pixelColor[], uint8_t referenceColor[], unsigne
 	
 }
 
-#pragma mark SampleBufferDelegate
+#pragma mark SampleBufferDelegate Methods
 
 
 - (EAGLContext*)createContext
@@ -229,10 +199,10 @@ static inline BOOL match(uint8_t pixelColor[], uint8_t referenceColor[], unsigne
 	if ( videoDevice ) {
 
 		NSError *error;
-		AVCaptureDeviceInput *videoIn = [AVCaptureDeviceInput deviceInputWithDevice:videoDevice error:&error];
+		videoInput = [AVCaptureDeviceInput deviceInputWithDevice:videoDevice error:&error];
 		if ( !error ) {
-			if ([self.captureSession canAddInput:videoIn])
-				[self.captureSession addInput:videoIn];
+			if ([self.captureSession canAddInput:videoInput])
+				[self.captureSession addInput:videoInput];
 			else
 				NSLog(@"Couldn't add video input");		
 		}
@@ -244,6 +214,103 @@ static inline BOOL match(uint8_t pixelColor[], uint8_t referenceColor[], unsigne
 		NSLog(@"Couldn't create video capture device");
 }
 
+- (void) addVideoDataOutput {
+	
+	AVCaptureVideoDataOutput *videoOut = [[AVCaptureVideoDataOutput alloc] init];
+	[videoOut setAlwaysDiscardsLateVideoFrames:YES];
+	[videoOut setVideoSettings:[NSDictionary dictionaryWithObject:[NSNumber numberWithInt:kCVPixelFormatType_32BGRA] forKey:(id)kCVPixelBufferPixelFormatTypeKey]]; // BGRA is necessary for manual preview
+	
+	// Set up a 15 FPS rate
+	CMTime durTime;
+	durTime.value = 1; 
+	durTime.timescale = 15;
+	durTime.flags = 0;
+	durTime.epoch = 0;
+	
+	[videoOut setMinFrameDuration:durTime];
+	dispatch_queue_t my_queue = dispatch_queue_create("com.urMus.subsystem.taskCV", NULL);
+	[videoOut setSampleBufferDelegate:self queue:my_queue];
+	//[videoOut setSampleBufferDelegate:self queue:dispatch_get_main_queue()];
+	
+	if ([self.captureSession canAddOutput:videoOut])
+		[self.captureSession addOutput:videoOut];
+	else
+		NSLog(@"Couldn't add video output");
+	[videoOut release];
+}
+
+#pragma mark CameraToggle Methods
+
+- (BOOL) hasMultipleCameras
+{
+    return [[AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo] count] > 1 ? YES : NO;
+}
+
+- (AVCaptureDevice *) cameraWithPosition:(AVCaptureDevicePosition) position
+{
+    NSArray *devices = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo];
+    for (AVCaptureDevice *device in devices) {
+        if ([device position] == position) {
+            return device;
+        }
+    }
+    return nil;
+}
+
+- (AVCaptureDevice *) frontFacingCamera
+{
+    return [self cameraWithPosition:AVCaptureDevicePositionFront];
+}
+
+- (AVCaptureDevice *) backFacingCamera
+{
+    return [self cameraWithPosition:AVCaptureDevicePositionBack];
+}
+
+//TODO: Make Lua API
+- (void)toggleCameraSelection
+{
+    @synchronized(self){
+	// If there's nothing to toggle, don't toggle
+    if ([self hasMultipleCameras]) {
+        NSError *error;
+        AVCaptureDeviceInput *videoInputLocal = [self videoInput];
+        AVCaptureDeviceInput *newVideoInput;
+        AVCaptureDevicePosition position = [[videoInputLocal device] position];
+        if (position == AVCaptureDevicePositionBack) {
+            newVideoInput = [[AVCaptureDeviceInput alloc] initWithDevice:[self frontFacingCamera] error:&error];
+        } else if (position == AVCaptureDevicePositionFront) {
+            newVideoInput = [[AVCaptureDeviceInput alloc] initWithDevice:[self backFacingCamera] error:&error];
+        } else {
+            NSLog(@"We must have a prototype device!");
+        }
+
+        if(newVideoInput)
+        {
+	        AVCaptureSession *captureSessionLocal = [self captureSession];
+	        if (newVideoInput != nil) {
+	            [captureSessionLocal beginConfiguration];
+	            [captureSessionLocal removeInput:videoInputLocal];
+	            if ([captureSessionLocal canAddInput:newVideoInput]) {
+	                [captureSessionLocal addInput:newVideoInput];
+	                [self setVideoInput:newVideoInput];
+	            } else {
+	                [captureSessionLocal addInput:videoInputLocal];
+	            }
+	            [captureSessionLocal commitConfiguration];
+	            [newVideoInput release];
+	        } else if (error) {
+				NSLog(@"Problem toggling the camera.");
+	        }
+        	
+        }
+    }
+    }
+}
+
+#pragma mark AWB and Exposure Method
+
+//TODO: Create Lua API for this
 - (void)autoWhiteBalanceAndExposure:(int)setting {
 
 	NSLog(@"Locking or Unlocking the AWB and Exposure");
@@ -306,30 +373,74 @@ static inline BOOL match(uint8_t pixelColor[], uint8_t referenceColor[], unsigne
 
 }
 
-- (void) addVideoDataOutput {
-	
-	AVCaptureVideoDataOutput *videoOut = [[AVCaptureVideoDataOutput alloc] init];
-	[videoOut setAlwaysDiscardsLateVideoFrames:YES];
-	[videoOut setVideoSettings:[NSDictionary dictionaryWithObject:[NSNumber numberWithInt:kCVPixelFormatType_32BGRA] forKey:(id)kCVPixelBufferPixelFormatTypeKey]]; // BGRA is necessary for manual preview
-	
-	// Set up a 15 FPS rate
-	CMTime durTime;
-	durTime.value = 1; 
-	durTime.timescale = 15;
-	durTime.flags = 0;
-	durTime.epoch = 0;
-	
-	[videoOut setMinFrameDuration:durTime];
-	dispatch_queue_t my_queue = dispatch_queue_create("com.urMus.subsystem.taskCV", NULL);
-	[videoOut setSampleBufferDelegate:self queue:my_queue];
-	//[videoOut setSampleBufferDelegate:self queue:dispatch_get_main_queue()];
+#pragma mark Torch Methods
 
-	if ([self.captureSession canAddOutput:videoOut])
-		[self.captureSession addOutput:videoOut];
-	else
-		NSLog(@"Couldn't add video output");
-	[videoOut release];
+- (BOOL) hasTorch
+{
+    return [[[self videoInput] device] hasTorch];
 }
+
+- (AVCaptureTorchMode) torchMode
+{
+    return [[[self videoInput] device] torchMode];
+}
+
+- (void) setTorchMode:(AVCaptureTorchMode)torchMode
+{
+    AVCaptureDevice *device = [[self videoInput] device];
+    if ([device isTorchModeSupported:torchMode] && [device torchMode] != torchMode) {
+        NSError *error;
+        if ([device lockForConfiguration:&error]) {
+            [device setTorchMode:torchMode];
+            [device unlockForConfiguration];
+        } else {
+            [self acquiringDeviceLockFailedWithError:error];
+        }
+    }
+}
+
+- (void) toggleTorch 
+{
+	AVCaptureDevice *device = [[self videoInput] device];
+	NSError *error;
+	if([device isTorchModeSupported:AVCaptureTorchModeOn] && [device torchMode] == AVCaptureTorchModeOff) {
+		
+        if ([device lockForConfiguration:&error]) {
+            [device setTorchMode:AVCaptureTorchModeOn];
+            [device unlockForConfiguration];
+        } else {
+            [self acquiringDeviceLockFailedWithError:error];
+        }
+		
+	} else if ([device isTorchModeSupported:AVCaptureTorchModeOff] && [device torchMode] == AVCaptureTorchModeOn) {
+		
+        if ([device lockForConfiguration:&error]) {
+            [device setTorchMode:AVCaptureTorchModeOff];
+            [device unlockForConfiguration];
+        } else {
+            [self acquiringDeviceLockFailedWithError:error];
+        }
+		
+	}
+	
+}
+
+//TODO: Create Lua API
+- (void) setTorchToggleFrequency:(float)freq
+{
+	
+	if(!myTimer) {
+		myTimer = [NSTimer scheduledTimerWithTimeInterval:freq target:self selector:@selector(toggleTorch) userInfo:nil repeats:YES];
+	} else {
+		
+		[myTimer invalidate];
+		myTimer = [NSTimer scheduledTimerWithTimeInterval:freq target:self selector:@selector(toggleTorch) userInfo:nil repeats:YES];
+		
+	}
+	
+}
+
+
 
 
 - (id) init {
@@ -339,9 +450,6 @@ static inline BOOL match(uint8_t pixelColor[], uint8_t referenceColor[], unsigne
 		NSLog(@"Initializing camera");
 		self.captureSession = [[AVCaptureSession alloc] init];
 		self.captureSession.sessionPreset = AVCaptureSessionPreset640x480;
-
-	
-
 		
 	}
 	
