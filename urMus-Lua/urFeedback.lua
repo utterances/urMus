@@ -43,7 +43,7 @@ r1:EnableInput(true)
 r1.tl = r1:TextLabel()
 r1.tl:SetLabel("Filter")
 r1.tl:SetFont("Arial")
-r1.tl:SetLabelHeight(18)
+r1.tl:SetFontHeight(18)
 
 r2 = Region()
 r2:SetWidth(w/4)
@@ -56,7 +56,7 @@ r2:EnableInput(true)
 r2.tl = r2:TextLabel()
 r2.tl:SetLabel("PShift")
 r2.tl:SetFont("Arial")
-r2.tl:SetLabelHeight(18)
+r2.tl:SetFontHeight(18)
 
 
 --Sound Shtuff Section

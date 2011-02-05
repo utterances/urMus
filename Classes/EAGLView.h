@@ -85,6 +85,9 @@ Note that setting the view non-opaque will only work if the EAGL surface has an 
 	BOOL				_inReady;
 	BOOL				_outReady;
 	
+	int	max_displays;
+	int current_display;
+	
 @private
 //	id<EAGLViewDelegate> _delegate;
 	NSString *_searchingForServicesString;

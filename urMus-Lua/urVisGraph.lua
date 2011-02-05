@@ -41,7 +41,7 @@ visgraphbackdropregion:Show()
 --visgraphbackdropregion.tl = visgraphbackdropregion:TextLabel()
 --visgraphbackdropregion.tl:SetFont("Trebuchet MS")
 --visgraphbackdropregion.tl:SetHorizontalAlign("LEFT")
---visgraphbackdropregion.tl:SetLabelHeight(30)
+--visgraphbackdropregion.tl:SetFontHeight(30)
 --visgraphbackdropregion.tl:SetColor(0,0,255,255)
 
 visgraphbackdropregion.texture:Clear(255,255,255)

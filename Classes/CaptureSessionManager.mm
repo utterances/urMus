@@ -24,6 +24,8 @@
 @synthesize delegate;
 @synthesize videoInput;
 
+double lastframe = 0;
+
 
 #pragma mark Pixelbuffer Processing
 
@@ -175,7 +177,6 @@
 	}
 	
 	[self processPixelBuffer:pixelBuffer];
-	
 }
 
 
@@ -195,11 +196,11 @@
 
 - (void) addVideoInput {
 	
-	videoDevice = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];	
+	AVCaptureDevice *videoDevice = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];	
 	if ( videoDevice ) {
 
 		NSError *error;
-		videoInput = [AVCaptureDeviceInput deviceInputWithDevice:videoDevice error:&error];
+		videoInput = [[AVCaptureDeviceInput alloc] initWithDevice:videoDevice error:&error];
 		if ( !error ) {
 			if ([self.captureSession canAddInput:videoInput])
 				[self.captureSession addInput:videoInput];
@@ -223,7 +224,7 @@
 	// Set up a 15 FPS rate
 	CMTime durTime;
 	durTime.value = 1; 
-	durTime.timescale = 15;
+	durTime.timescale = 30;
 	durTime.flags = 0;
 	durTime.epoch = 0;
 	
@@ -267,9 +268,12 @@
     return [self cameraWithPosition:AVCaptureDevicePositionBack];
 }
 
+
 - (void)toggleCameraSelection
 {
-    @synchronized(self){
+	
+	NSLog(@"Changing the camera selection");
+
 	// If there's nothing to toggle, don't toggle
     if ([self hasMultipleCameras]) {
         NSError *error;
@@ -284,27 +288,28 @@
             NSLog(@"We must have a prototype device!");
         }
 
-        if(newVideoInput)
-        {
-	        AVCaptureSession *captureSessionLocal = [self captureSession];
-	        if (newVideoInput != nil) {
-	            [captureSessionLocal beginConfiguration];
-	            [captureSessionLocal removeInput:videoInputLocal];
-	            if ([captureSessionLocal canAddInput:newVideoInput]) {
-	                [captureSessionLocal addInput:newVideoInput];
-	                [self setVideoInput:newVideoInput];
-	            } else {
-	                [captureSessionLocal addInput:videoInputLocal];
-	            }
-	            [captureSessionLocal commitConfiguration];
-	            [newVideoInput release];
-	        } else if (error) {
-				NSLog(@"Problem toggling the camera.");
-	        }
-        	
-        }
+		AVCaptureSession *captureSessionLocal = [self captureSession];
+		if (newVideoInput != nil) {
+			[captureSessionLocal beginConfiguration];
+			[captureSessionLocal removeInput:videoInputLocal];
+			if ([captureSessionLocal canAddInput:newVideoInput]) {
+				[captureSessionLocal addInput:newVideoInput];
+				//[self setVideoInput:newVideoInput];
+				self.videoInput = newVideoInput;
+			} else {
+				[captureSessionLocal addInput:videoInputLocal];
+			}
+
+			[captureSessionLocal commitConfiguration];
+			
+			[newVideoInput release];
+		} else if (error) {
+			NSLog(@"Problem toggling the camera.");
+		}
+		
+        
     }
-    }
+		
 }
 
 #pragma mark AWB and Exposure Method
@@ -316,12 +321,14 @@
 	
 	NSError *error;
 	
+	AVCaptureDevice *device = [[self videoInput] device];
+	
 	if (setting == 0) {
 		// Lock the exposure
-		if ([videoDevice isExposureModeSupported:AVCaptureExposureModeLocked]) {
-			if ([videoDevice lockForConfiguration:&error]) {
-				[videoDevice setExposureMode:AVCaptureExposureModeLocked];
-				[videoDevice unlockForConfiguration];
+		if ([device isExposureModeSupported:AVCaptureExposureModeLocked]) {
+			if ([device lockForConfiguration:&error]) {
+				[device setExposureMode:AVCaptureExposureModeLocked];
+				[device unlockForConfiguration];
 			} else {
 				
 				[self acquiringDeviceLockFailedWithError:error];
@@ -330,10 +337,10 @@
 		}
 		
 		//Lock the AWB
-		if ([videoDevice isWhiteBalanceModeSupported:AVCaptureWhiteBalanceModeLocked]) {
-			if ([videoDevice lockForConfiguration:&error]) {
-				[videoDevice setWhiteBalanceMode:AVCaptureWhiteBalanceModeLocked];
-				[videoDevice unlockForConfiguration];
+		if ([device isWhiteBalanceModeSupported:AVCaptureWhiteBalanceModeLocked]) {
+			if ([device lockForConfiguration:&error]) {
+				[device setWhiteBalanceMode:AVCaptureWhiteBalanceModeLocked];
+				[device unlockForConfiguration];
 			} else {
 				
 				[self acquiringDeviceLockFailedWithError:error];
@@ -344,11 +351,11 @@
 	} else {
 		
 		// Unlock the exposure
-		if ([videoDevice isExposureModeSupported:AVCaptureExposureModeAutoExpose]) {
-			if ([videoDevice lockForConfiguration:&error]) {
-				[videoDevice setExposureMode:AVCaptureExposureModeAutoExpose];
+		if ([device isExposureModeSupported:AVCaptureExposureModeAutoExpose]) {
+			if ([device lockForConfiguration:&error]) {
+				[device setExposureMode:AVCaptureExposureModeAutoExpose];
 
-				[videoDevice unlockForConfiguration];
+				[device unlockForConfiguration];
 			} else {
 				
 				[self acquiringDeviceLockFailedWithError:error];
@@ -357,10 +364,10 @@
 		}
 		
 		//Unlock the AWB
-		if ([videoDevice isWhiteBalanceModeSupported:AVCaptureWhiteBalanceModeAutoWhiteBalance]) {
-			if ([videoDevice lockForConfiguration:&error]) {
-				[videoDevice setWhiteBalanceMode:AVCaptureWhiteBalanceModeAutoWhiteBalance];
-				[videoDevice unlockForConfiguration];
+		if ([device isWhiteBalanceModeSupported:AVCaptureWhiteBalanceModeAutoWhiteBalance]) {
+			if ([device lockForConfiguration:&error]) {
+				[device setWhiteBalanceMode:AVCaptureWhiteBalanceModeAutoWhiteBalance];
+				[device unlockForConfiguration];
 			} else {
 				
 				[self acquiringDeviceLockFailedWithError:error];
@@ -400,7 +407,6 @@
 
 - (void) toggleTorch 
 {
-//	float res = urs_PullActiveFlashSinks();
 	AVCaptureDevice *device = [[self videoInput] device];
 	NSError *error;
 	if([device isTorchModeSupported:AVCaptureTorchModeOn] && [device torchMode] == AVCaptureTorchModeOff) {
@@ -450,7 +456,7 @@
 		NSLog(@"Initializing camera");
 		self.captureSession = [[AVCaptureSession alloc] init];
 		self.captureSession.sessionPreset = AVCaptureSessionPreset640x480;
-		
+		//[self setTorchToggleFrequency:.5];
 	}
 	
 	return self;

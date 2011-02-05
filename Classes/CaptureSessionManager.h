@@ -29,7 +29,10 @@
 	AVCaptureConnection *videoConnection;
 	AVCaptureDeviceInput *videoInput;
 	
-	AVCaptureDevice *videoDevice;
+	AVCaptureDeviceInput *frontCamera;
+	AVCaptureDeviceInput *backCamera;
+	
+
 	
 	NSTimer *myTimer;
 	
@@ -39,7 +42,7 @@
 - (void) addVideoDataOutput;
 - (void) autoWhiteBalanceAndExposure:(int)setting;
 - (void) newFrameForDisplay;
-- (void)toggleCameraSelection;
+- (void) toggleCameraSelection;
 
 @property(nonatomic, assign) id<CaptureSessionManagerDelegate> delegate;
 @property (retain) AVCaptureVideoPreviewLayer *previewLayer;

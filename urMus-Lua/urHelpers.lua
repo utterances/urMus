@@ -128,7 +128,7 @@ function MakeRegion(opts)
     r.tl = r:TextLabel();
     r.tl:SetFont(l['font'] or "Trebuchet MS")
     r.tl:SetHorizontalAlign(l['align'] or "LEFT"); 
-    r.tl:SetLabelHeight(fsize)
+    r.tl:SetFontHeight(fsize)
     r.tl:SetWrap(l['wrap'] or 'WORD')
     r.tl:SetLabel(text) 
     

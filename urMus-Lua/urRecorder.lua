@@ -158,7 +158,7 @@ for ix = 1, buttoncols do
 		newbutton.tl:SetLabel(padcenterlabels[ix + (iy-1)*buttoncols])
 		newbutton.tl:SetFont("Trebuchet MS")
 		newbutton.tl:SetHorizontalAlign("CENTER")
-		newbutton.tl:SetLabelHeight(24)
+		newbutton.tl:SetFontHeight(24)
 		newbutton.tl:SetColor(0,0,0,255)
 		newbutton.index = ix + (iy-1)*buttoncols
 		buttons[iy][ix] = newbutton
@@ -170,7 +170,7 @@ for ix = 1, buttoncols do
 		newannotation1.tl:SetLabel("Pad "..ix + (iy-1)*buttoncols)
 		newannotation1.tl:SetFont("Trebuchet MS")
 		newannotation1.tl:SetHorizontalAlign("LEFT")
-		newannotation1.tl:SetLabelHeight(10)
+		newannotation1.tl:SetFontHeight(10)
 		newannotation1.tl:SetColor(255,255,255,255)
 		newannotation1:Show()
 		newannotation2 = Region('region','annotation2'..ix..":"..iy,UIParent)
@@ -181,7 +181,7 @@ for ix = 1, buttoncols do
 		newannotation2.tl:SetLabel(""..ix + (iy-1)*buttoncols)
 		newannotation2.tl:SetFont("Trebuchet MS")
 		newannotation2.tl:SetHorizontalAlign("RIGHT")
-		newannotation2.tl:SetLabelHeight(10)
+		newannotation2.tl:SetFontHeight(10)
 		newannotation2.tl:SetColor(0,255,0,255)
 		newannotation2:Show()
 		newannotation3 = Region('region','annotation3'..ix..":"..iy,UIParent)
@@ -192,7 +192,7 @@ for ix = 1, buttoncols do
 		newannotation3.tl:SetLabel(padlabels[ix + (iy-1)*buttoncols])
 		newannotation3.tl:SetFont("Trebuchet MS")
 		newannotation3.tl:SetHorizontalAlign("RIGHT")
-		newannotation3.tl:SetLabelHeight(10)
+		newannotation3.tl:SetFontHeight(10)
 		newannotation3.tl:SetColor(255,255,0,255)
 		newannotation3:Show()
 		

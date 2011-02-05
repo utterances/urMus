@@ -153,6 +153,7 @@ extern int SCREEN_HEIGHT;
 	if ([[UIScreen screens] count] > 1) {
 //		[self log:@"Found an external screen."];
 		
+		glView->current_display = 0;
 		for (int s = 0; s < [[UIScreen screens] count]; ++s)
 		{
 			UIScreen* screen = [[UIScreen screens] objectAtIndex:s];
@@ -160,8 +161,12 @@ extern int SCREEN_HEIGHT;
 			{
 				NSLog(@"external screen %@ detected.", screen);
 				externalScreen = screen;
+				glView->current_display = s;
 			}
 		}
+		
+		glView->max_displays = [[UIScreen screens] count];
+		glView->current_display = 0;
 		
 		[[NSNotificationCenter defaultCenter] 
 		 addObserver:self

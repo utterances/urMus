@@ -58,12 +58,12 @@ OTHER DEALINGS IN THE SOFTWARE.
 //	1 = update every frame
 //	2 = update every second (every other) frame
 //	etc.
-#define kBLVideoOutFrameInterval		(2)
+#define kBLVideoOutFrameInterval		(1)
 
 // kVideoPreferLowRes - prefer a low res on the external display
 //	#define = Configure for the smallest available resolution on the external
 //  #undef = Configure for the largest available res on the extneral
-#undef kVideoPreferLowRes
+#define kVideoPreferLowRes
 
 
 @interface BLVideoOut : NSObject 

@@ -47,6 +47,20 @@ end
 
 local random = math.random
 
+local minfps = 100
+local maxfps = 0
+local meanfps = 0
+
+
+function ShowFPS(self,elapsed)
+	local fps = 1.0/elapsed
+	if minfps > fps then minfps = fps end
+	if maxfps < fps then maxfps = fps end
+	meanfps = meanfps*24/25 + fps/25.0
+	local str = "Current: "..fps.."\nMean: "..meanfps.."\nMin: "..minfps.."\nMax: "..maxfps
+	DPrint(str)
+end
+
 function CreateRegionAt(x,y)
 	local region = CreateorRecycleregion('region', 'backdrop', UIParent)
 	TextureCol(region.t,255,255,255,255)
@@ -64,6 +78,9 @@ function CreateRegionAt(x,y)
 	region:Handle("OnDoubleTap", RecycleSelf)
 	region:Handle("OnUpdate", GatherVis)
 	region.t:SetTiling()
+--	region.t:SetGradientColor("TOP",random(0,255),random(0,255),random(0,255),255,random(0,255),random(0,255),random(0,255),255)
+--	region.t:SetGradientColor("BOTTOM", random(0,255),random(0,255),random(0,255),255,random(0,255),random(0,255),random(0,255),255)
+	region.t:SetRotation(random()*2.0*pi)
 	region:SetAnchor("CENTER",x,y)
 	table.insert(regions, region)
 end
@@ -98,7 +115,13 @@ CreateRegionAt(ScreenWidth()*3/4,ScreenWidth()*3/4)
 CreateRegionAt(ScreenWidth()/4,ScreenWidth()*5/4)
 CreateRegionAt(ScreenWidth()*3/4,ScreenWidth()*5/4)
 
-if pagersize then
+function Flashy(self,x,y,z)
+	SetTorchFlashFrequency((x+1)*15)
+end
+
+if not pagersize then
+pagersize = 32
+end
 local pagebutton=Region()
 --local pagebutton=Region('region', 'pagebutton', UIParent)
 pagebutton:SetWidth(pagersize)
@@ -109,6 +132,8 @@ pagebutton:EnableClamping(true)
 --pagebutton:Handle("OnDoubleTap", FlipPage)
 pagebutton:Handle("OnDoubleTap", FlipPage)
 pagebutton:Handle("OnTouchDown", SwitchCamera)
+pagebutton:Handle("OnUpdate", ShowFPS)
+pagebutton:Handle("OnAccelerate", Flashy)
 pagebutton.texture = pagebutton:Texture("circlebutton-16.png")
 pagebutton.texture:SetGradientColor("TOP",255,255,255,255,255,255,255,255)
 pagebutton.texture:SetGradientColor("BOTTOM",255,255,255,255,255,255,255,255)
@@ -117,4 +142,4 @@ pagebutton.texture:SetTexCoord(0,1.0,0,1.0)
 pagebutton:EnableInput(true)
 pagebutton:Show()
 --pagebutton:Handle("OnPageEntered", nil)
-end
+

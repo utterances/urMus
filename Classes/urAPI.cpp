@@ -2656,6 +2656,13 @@ int texture_SetTiling(lua_State* lua)
 	return 0;
 }
 
+int texture_Tiling(lua_State* lua)
+{
+	urAPI_Texture_t* t = checktexture(lua, 1);
+	lua_pushboolean(lua, t->isTiled);
+	return 1;
+}
+	
 int region_EnableClamping(lua_State* lua)
 {
 	urAPI_Region_t* region = checkregion(lua,1);
@@ -3195,13 +3202,20 @@ int textlabel_Width(lua_State* lua)
 	return 1;
 }
 
-int textlabel_SetLabelHeight(lua_State* lua)
+int textlabel_SetFontHeight(lua_State* lua)
 {
 	urAPI_TextLabel_t* t = checktextlabel(lua, 1);
 	t->textheight = luaL_checknumber(lua,2);
 	return 0;
 }
 
+int textlabel_FontHeight(lua_State* lua)
+{
+	urAPI_TextLabel_t* t = checktextlabel(lua, 1);
+	lua_pushnumber(lua, t->textheight);
+	return 1;
+}
+	
 int textlabel_Label(lua_State* lua)
 {
 	urAPI_TextLabel_t* t = checktextlabel(lua, 1);
@@ -3245,6 +3259,13 @@ int textlabel_SetRotation(lua_State* lua)
 	return 0;
 }
 
+int textlabel_Rotation(lua_State* lua)
+{
+	urAPI_TextLabel_t* t = checktextlabel(lua, 1);
+	lua_pushnumber(lua, t->rotation);
+	return 1;
+}
+	
 static const struct luaL_reg textlabelfuncs [] =
 {
 	{"Font", textlabel_Font},
@@ -3270,8 +3291,10 @@ static const struct luaL_reg textlabelfuncs [] =
 	{"SetWrap", textlabel_SetWrap},
 	{"Wrap", textlabel_Wrap},
 	{"SetLabel", textlabel_SetLabel},
-	{"SetLabelHeight", textlabel_SetLabelHeight},
+	{"SetFontHeight", textlabel_SetFontHeight},
+	{"FontHeight", textlabel_FontHeight},
 	{"SetRotation", textlabel_SetRotation},
+	{"Rotation", textlabel_Rotation},
 	{NULL, NULL}
 };
 
@@ -3311,6 +3334,7 @@ static const struct luaL_reg texturefuncs [] =
 	{"BrushSize", texture_BrushSize},
 	{"SetBrushColor", texture_SetBrushColor},
 	{"SetTiling", texture_SetTiling},
+	{"Tiling", texture_Tiling},
 	{"Width", texture_Width},
 	{"Height", texture_Height},
 	{"UseCamera", texture_UseCamera},
@@ -4179,6 +4203,35 @@ int l_SetPage(lua_State *lua)
 	}
 	return 0;
 }
+
+#ifdef DISPLAY_CONTROL
+int l_NumDisplays(lua_State *lua)
+{
+	lua_pushnumber(lua, g_glView->max_displays);
+	return 1;
+}
+
+int l_Display(lua_State *lua)
+{
+	lua_pushnumber(lua, g_glView->current_display+1);
+	return 1;
+}
+
+int l_SetDisplay(lua_State *lua)
+{
+	int num = luaL_checknumber(lua,1);
+	if(num >= 1 and num <= g_glView->max_displays)
+	{
+		setDisplay(num);
+	}
+	else
+	{
+		// Error!!
+		luaL_error(lua, "Invalid display number: %d",num);
+	}
+	return 0;
+}
+#endif
 	
 int currentCamera = 1;
 	
@@ -4192,6 +4245,12 @@ int l_SetActiveCamera(lua_State *lua)
 	}
 	
 	return 0;
+}
+	
+int l_ActiveCamera(lua_State *lua)
+{
+	lua_pushnumber(lua, currentCamera);
+	return 1;
 }
 
 int l_SetTorchFlashFrequency(lua_State *lua)
@@ -4415,7 +4474,7 @@ void l_setupAPI(lua_State *lua)
 	lua_pushcfunction(lua, l_OSCPort);
 	lua_setglobal(lua,"OSCPort");
 	lua_pushcfunction(lua, l_IPAddress);
-	lua_setglobal(lua,"IPAdress");
+	lua_setglobal(lua,"IPAddSendress");
 	lua_pushcfunction(lua, l_SendOSCMessage);
 	lua_setglobal(lua,"SendOSCMessage");
 
@@ -4473,8 +4532,19 @@ void l_setupAPI(lua_State *lua)
 	lua_setglobal(lua,"SoarLoadRules");
 #endif	
 	
+#ifdef DISPLAY_CONTROL
+	lua_pushcfunction(lua, l_NumDisplays);
+	lua_setglobal(lua, "NumDisplays");
+	lua_pushcfunction(lua, l_Display);
+	lua_setglobal(lua, "Display");
+	lua_pushcfunction(lua, l_SetDisplay);
+	lua_setglobal(lua, "SetDisplay");
+#endif
+	
 	lua_pushcfunction(lua, l_SetActiveCamera);
 	lua_setglobal(lua, "SetActiveCamera");
+	lua_pushcfunction(lua, l_ActiveCamera);
+	lua_setglobal(lua, "ActiveCamera");
 	lua_pushcfunction(lua, l_SetTorchFlashFrequency);
 	lua_setglobal(lua, "SetTorchFlashFrequency");
 	

@@ -967,6 +967,39 @@ UILineBreakMode tolinebreakmode(int wrap)
 	return UILineBreakModeWordWrap;
 }
 
+#ifdef DISPLAY_CONTROL
+
+void setDisplay(int s)
+{
+	UIScreen* screen = [[UIScreen screens] objectAtIndex:s];
+	if (screen != UIScreen.mainScreen)
+	{
+		NSLog(@"external screen %@ detected.", screen);
+		externalScreen = screen;
+		glView->current_display = s;
+	}
+	else {
+		glView->current_display = 0;
+		externalScreen = NULL;
+	}
+	[BLVideoOut sharedVideoOut].delegate = self;
+	if ([BLVideoOut sharedVideoOut].extScreenActive == YES)
+	{
+		[glView removeFromSuperview];
+		[[BLVideoOut sharedVideoOut].extWindow addSubview:glView];
+	}
+	else {
+		CGRect windowFrame = CGRectMake(0, 0, screenSize.width, screenSize.height);
+		UIWindow* window = [[UIWindow alloc] initWithFrame:windowFrame];
+		
+		window.screen = externalScreen;
+		[glView removeFromSuperview];
+		[window addSubview:glView];
+		[window makeKeyAndVisible];
+	}
+}
+#endif
+
 - (void)drawView {
   
   // eval http buffer
