@@ -205,6 +205,30 @@ open_file(struct mg_connection *conn,
   fclose(fp);
 }
 
+/*
+ * Structure used by mg_stat() function. Uses 64 bit file length.
+ */
+
+
+void
+open_media(struct mg_connection *conn,
+		  const struct mg_request_info *request_info,
+		  void *user_data)
+{
+	char abs_path[PATH_MAX];
+
+	struct mg_request_info *ri = &conn->request_info;
+	char *uri = ri->uri;
+	
+	sprintf(abs_path, "%s/%s", doc_root, uri+strlen("/Documents")); 
+	
+	struct mgstat		st;
+	
+
+	send_file(conn, abs_path, &st);
+}
+
+
 static void
 get_files(struct mg_connection *conn,
        const struct mg_request_info *request_info,
@@ -315,6 +339,7 @@ http_start(const char *web_root_, const char *doc_root_)
   mg_set_uri_callback(ctx, "/eval", &eval_script, NULL);  
   mg_set_uri_callback(ctx, "/get_files", &get_files, NULL);
   mg_set_uri_callback(ctx, "/open_file", &open_file, NULL);
+  mg_set_uri_callback(ctx, "/Documents*", &open_media, NULL);
   mg_set_uri_callback(ctx, "/upload_file", &upload_file, NULL);
   mg_set_uri_callback(ctx, "/upload_script", &upload_script, NULL);
   mg_set_uri_callback(ctx, "/getlog",&get_log,NULL);

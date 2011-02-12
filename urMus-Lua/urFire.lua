@@ -235,6 +235,8 @@ local currwait = 0
 local scriptpos = 0
 local sscript = {{4,0,1,0,0},{4,1,1,0,0},{4,0,1,0,0},{4,1,1,0,0},{4,0,1,1,1},{4,1,1,1,1},{4,0,1,1,1},{4,1,1,1,1},{4,0,1,0,0},{4,1,1,0,0},{4,0,1,0,0},{4,1,1,0,0},{4,0,1,1,1},{4,1,1,1,1},{4,0,1,1,1},{4,1,1,1,1}}
 
+local currframe = 1
+
 function Flicker(self,elapsed)
 	self.t:SetGradientColor("TOP", random(200,255),0,0,random(40,80),random(200,255),0,0,random(40,80))
 	self.t:SetGradientColor("BOTTOM", random(200,255),0,0,random(40,80),random(200,255),0,0,random(40,80))
@@ -271,6 +273,8 @@ function Flicker(self,elapsed)
 			currwait = currwait - elapsed
 		end
 	end
+	WriteScreenshot("Frame"..currframe)
+	currframe = currframe + 1
 end
 
 rb = Region()

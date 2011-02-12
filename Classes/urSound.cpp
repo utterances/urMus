@@ -461,6 +461,8 @@ void ursObject::AddIn(const char* inname, const char* insemantics, void (*func)(
 
 void ursObject::CallAllPushOuts(double indata, int idx)
 {
+	if(this == NULL) return;
+	
 	if(this->firstpushout[idx]!=NULL)
 	{
 		ursObject* inobject;

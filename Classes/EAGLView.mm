@@ -1000,6 +1000,69 @@ void setDisplay(int s)
 }
 #endif
 
+#ifdef SAVEFRAMES
+-(void) saveImageToFile:(UIImage*)image filename:(const char*)fname
+{
+	NSString *file = [[NSString alloc] initWithUTF8String:fname];
+	// Create paths to output images
+	NSString  *pngPath = [NSHomeDirectory() stringByAppendingPathComponent:file];
+//	NSString  *jpgPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/Test.jpg"];
+	
+	// Write a UIImage to JPEG with minimum compression (best quality)
+	// The value 'image' must be a UIImage object
+	// The value '1.0' represents image compression quality as value from 0.0 to 1.0
+//	[UIImageJPEGRepresentation(image, 1.0) writeToFile:jpgPath atomically:YES];
+	
+	// Write image to PNG
+	[UIImagePNGRepresentation(image) writeToFile:pngPath atomically:YES];
+	
+	// Let's check to see if files were successfully written...
+	
+	// Create file manager
+//	NSError *error;
+//	NSFileManager *fileMgr = [NSFileManager defaultManager];
+	
+	// Point to Document directory
+//	NSString *documentsDirectory = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+	
+	// Write out the contents of home directory to console
+//	NSLog(@"Documents directory: %@", [fileMgr contentsOfDirectoryAtPath:documentsDirectory error:&error]);
+}
+
+-(UIImage *) saveImageFromGLView
+{
+    NSInteger myDataLength = 320 * 480 * 4;
+    // allocate array and read pixels into it.
+    GLubyte *buffer = (GLubyte *) malloc(myDataLength);
+    glReadPixels(0, 0, 320, 480, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+    // gl renders "upside down" so swap top to bottom into new array.
+    // there's gotta be a better way, but this works.
+    GLubyte *buffer2 = (GLubyte *) malloc(myDataLength);
+    for(int y = 0; y <480; y++)
+    {
+        for(int x = 0; x <320 * 4; x++)
+        {
+            buffer2[(479 - y) * 320 * 4 + x] = buffer[y * 4 * 320 + x];
+        }
+    }
+    // make data provider with data.
+    CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, buffer2, myDataLength, NULL);
+    // prep the ingredients
+    int bitsPerComponent = 8;
+    int bitsPerPixel = 32;
+    int bytesPerRow = 4 * 320;
+    CGColorSpaceRef colorSpaceRef = CGColorSpaceCreateDeviceRGB();
+    CGBitmapInfo bitmapInfo = kCGBitmapByteOrderDefault;
+    CGColorRenderingIntent renderingIntent = kCGRenderingIntentDefault;
+    // make the cgimage
+    CGImageRef imageRef = CGImageCreate(320, 480, bitsPerComponent, bitsPerPixel, bytesPerRow, colorSpaceRef, bitmapInfo, provider, NULL, NO, renderingIntent);
+    // then make the uiimage from that
+    UIImage *myImage = [UIImage imageWithCGImage:imageRef];
+    return myImage;
+}
+#endif
+
+
 - (void)drawView {
   
   // eval http buffer
@@ -1352,7 +1415,9 @@ void setDisplay(int s)
 	
     glBindRenderbufferOES(GL_RENDERBUFFER_OES, viewRenderbuffer);
     [context presentRenderbuffer:GL_RENDERBUFFER_OES];
+	
 }
+
 
 - (void)layoutSubviews {
     [EAGLContext setCurrentContext:context];

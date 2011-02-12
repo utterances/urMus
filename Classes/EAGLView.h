@@ -16,6 +16,7 @@
 #include <string>
 
 #undef SANDWICH_SUPPORT
+#define SAVEFRAMES
 
 #ifdef SANDWICH_SUPPORT
 #import "UdpServerSocket.h"
@@ -116,6 +117,11 @@ Note that setting the view non-opaque will only work if the EAGL surface has an 
 //- (void)processPixelBuffer: (CVImageBufferRef)pixelBuffer;
 //- (void)newFrame:(GLuint)frame;
 - (void)newCameraTextureForDisplay:(GLuint)frame;
+
+#ifdef SAVEFRAMES
+-(void) saveImageToFile:(UIImage*)image filename:(const char*)fname;
+-(UIImage *) saveImageFromGLView;
+#endif
 
 - (void) advertiseService:(NSString *)name withID:(NSString *)nsid atPort:(int)port;
 

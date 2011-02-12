@@ -4319,6 +4319,13 @@ int l_SoarLoadRules(lua_State *lua)
 }
 #endif
 	
+int l_WriteScreenshot(lua_State *lua)
+{
+	const char *infile = luaL_checkstring(lua,1);
+	UIImage* img = [g_glView saveImageFromGLView];
+	[g_glView saveImageToFile:img filename:infile];
+}
+	
 //------------------------------------------------------------------------------
 // Register our API
 //------------------------------------------------------------------------------
@@ -4547,6 +4554,9 @@ void l_setupAPI(lua_State *lua)
 	lua_setglobal(lua, "ActiveCamera");
 	lua_pushcfunction(lua, l_SetTorchFlashFrequency);
 	lua_setglobal(lua, "SetTorchFlashFrequency");
+	
+	lua_pushcfunction(lua, l_WriteScreenshot);
+	lua_setglobal(lua, "WriteScreenshot");
 	
 	lua_pushcfunction(lua, l_FreeAllRegions);
 	lua_setglobal(lua, "FreeAllRegions");

@@ -4,6 +4,13 @@ function ucwords(str) {
     });
 }
 
+function pathselect(dirtype) {
+	if(dirtype == "root")
+		return "";
+	else
+		return "/Documents";
+}
+
 $(document).ready(function() {
   var files = $('#files'), 
       gallery_files = $('#gallery_files'),
@@ -85,9 +92,12 @@ $(document).ready(function() {
               m_snd = "mp3|wav|aif|aiff",
               li = $('<li class="resource">'+ele+'</li>');
           if (ele.match('\.('+m_img+')$')) {
+			  
 //            li.qtip({content:'<img src="'+path+'"/>'});
 			   li.bind({
-					   click: function() { window.location = path; }
+					   click: function() { window.location = pathselect(dirtype)+path; }
+//					   var fname = $(this).html();
+//					   $.get('/open_media',{file:fname, dirtype:dirtype}, function(script) {script;}); }
 					   });
 			   gallery_files.append(li);
           }
