@@ -55,6 +55,8 @@
 		772DC30A12A7DF4B00CFFCAD /* blk_footprints.png in Resources */ = {isa = PBXBuildFile; fileRef = 772DC2FA12A7DF4B00CFFCAD /* blk_footprints.png */; };
 		7732723F125E3FF000627FB1 /* urTiles2.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77A37401125E3CA900153905 /* urTiles2.lua */; };
 		77327240125E3FF000627FB1 /* urPaint.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77A37402125E3CA900153905 /* urPaint.lua */; };
+		7736102B13183CB5009D779F /* urTurn.lua in Sources */ = {isa = PBXBuildFile; fileRef = 7736102A13183CB5009D779F /* urTurn.lua */; };
+		7736103713183CBE009D779F /* urTurn.lua in Resources */ = {isa = PBXBuildFile; fileRef = 7736102A13183CB5009D779F /* urTurn.lua */; };
 		7737230E120A1C9D003AEE57 /* urDistance.lua in Sources */ = {isa = PBXBuildFile; fileRef = 7737230D120A1C9D003AEE57 /* urDistance.lua */; };
 		7737230F120A1CA6003AEE57 /* urDistance.lua in Resources */ = {isa = PBXBuildFile; fileRef = 7737230D120A1C9D003AEE57 /* urDistance.lua */; };
 		773840C51243F79900632B02 /* urAir.lua in Sources */ = {isa = PBXBuildFile; fileRef = 773840C31243F79900632B02 /* urAir.lua */; };
@@ -638,6 +640,7 @@
 		772DC2F812A7DF4B00CFFCAD /* door_open.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = door_open.png; path = Textures/door_open.png; sourceTree = "<group>"; };
 		772DC2F912A7DF4B00CFFCAD /* wht_footprints.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = wht_footprints.png; path = Textures/wht_footprints.png; sourceTree = "<group>"; };
 		772DC2FA12A7DF4B00CFFCAD /* blk_footprints.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = blk_footprints.png; path = Textures/blk_footprints.png; sourceTree = "<group>"; };
+		7736102A13183CB5009D779F /* urTurn.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urTurn.lua; path = "urMus-Lua/urTurn.lua"; sourceTree = "<group>"; };
 		7737230D120A1C9D003AEE57 /* urDistance.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urDistance.lua; path = "urMus-Lua/urDistance.lua"; sourceTree = "<group>"; };
 		773840C31243F79900632B02 /* urAir.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urAir.lua; path = "urMus-Lua/urAir.lua"; sourceTree = "<group>"; };
 		773840C41243F79900632B02 /* urWater.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urWater.lua; path = "urMus-Lua/urWater.lua"; sourceTree = "<group>"; };
@@ -1854,6 +1857,7 @@
 		77B9FC5C1194AEF9006D5007 /* urMus-lua */ = {
 			isa = PBXGroup;
 			children = (
+				7736102A13183CB5009D779F /* urTurn.lua */,
 				77B3019612E645DE00F119FE /* urCameraDemo.lua */,
 				778DBF3512B08FED00069B82 /* urBall-display.lua */,
 				77C71DA112A7F78300CAE2C7 /* urCircleOfWater.lua */,
@@ -2236,6 +2240,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7736103713183CBE009D779F /* urTurn.lua in Resources */,
 				77B3019C12E6465900F119FE /* urCameraDemo.lua in Resources */,
 				778DBF3712B08FFE00069B82 /* urBall-display.lua in Resources */,
 				77D5A79D12AECB380010BCC6 /* urBall-player4.lua in Resources */,
@@ -2809,6 +2814,7 @@
 				77B3FF8612E63A1D00F119FE /* CaptureSessionManager.mm in Sources */,
 				77B3019712E645DE00F119FE /* urCameraDemo.lua in Sources */,
 				77E37C2B1306D28100E44393 /* jqueryFileTree.js in Sources */,
+				7736102B13183CB5009D779F /* urTurn.lua in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

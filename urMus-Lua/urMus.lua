@@ -44,6 +44,7 @@ pagefile = {
 "urCameraDemo.lua",
 "urTiles.lua",
 "urTiles2.lua",
+"urTurn.lua",
 "urTuner.lua",
 "urMetro.lua",
 "urDistance.lua",
