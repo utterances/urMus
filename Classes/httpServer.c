@@ -224,7 +224,7 @@ open_media(struct mg_connection *conn,
 	
 	struct mgstat		st;
 	
-
+	mg_stat(abs_path, &st);
 	send_file(conn, abs_path, &st);
 }
 

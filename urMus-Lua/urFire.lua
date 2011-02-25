@@ -235,7 +235,11 @@ local currwait = 0
 local scriptpos = 0
 local sscript = {{4,0,1,0,0},{4,1,1,0,0},{4,0,1,0,0},{4,1,1,0,0},{4,0,1,1,1},{4,1,1,1,1},{4,0,1,1,1},{4,1,1,1,1},{4,0,1,0,0},{4,1,1,0,0},{4,0,1,0,0},{4,1,1,0,0},{4,0,1,1,1},{4,1,1,1,1},{4,0,1,1,1},{4,1,1,1,1}}
 
-local currframe = 1
+local currframe = 0
+local maxframe = 60
+local finishedframe = 0
+
+local timestamp = 0.0
 
 function Flicker(self,elapsed)
 	self.t:SetGradientColor("TOP", random(200,255),0,0,random(40,80),random(200,255),0,0,random(40,80))
@@ -246,8 +250,8 @@ function Flicker(self,elapsed)
 				scripted = false
 			else
 				scriptpos = scriptpos + 1
-				DPrint(scriptpos)
-				currwait = sscript[scriptpos][1]
+--				DPrint(scriptpos)
+				currwait = sscript[scriptpos][1]/2
 				if sscript[scriptpos][2] > 0 then
 					scriptx = random(ScreenWidth()/8.0,3*ScreenWidth()/8.0)
 					scripty = random(ScreenHeight()/8.0,3*ScreenHeight()/8.0)
@@ -270,10 +274,23 @@ function Flicker(self,elapsed)
 				end
 			end
 		else
-			currwait = currwait - elapsed
+			currwait = currwait - 1/30 --elapsed
 		end
 	end
-	WriteScreenshot("Frame"..currframe)
+	if currframe == 0 then
+		StartMovieMaking("Movie.mov")
+	end
+	if currframe > 0 and scripted then
+--		DPrint(currframe .. "/" .. maxframe)
+--	local fstr = string.format("%04d", currframe)
+
+--	WriteScreenshot("Frame"..fstr..".png")
+	AddScreenshot(timestamp)
+	timestamp = timestamp + 1.0/60.0
+	elseif finishedframe ~= currframe then
+		finishedframe = currframe
+		FinishMovieMaking()
+	end
 	currframe = currframe + 1
 end
 
@@ -349,14 +366,18 @@ uaPushD5 = FlowBox("object","PushA4", _G["FBPush"])
 
 dac = _G["FBDac"]
 
+local playaudio = false
+
 --dac:SetPullLink(0,uaPitShift, 0)
 --uaPitShift:SetPullLink(0, uaSample, 0)
+if playaudio then
 dac:SetPullLink(0, uaSample, 0)
 dac:SetPullLink(0, uaSample2, 0)
 --dac:SetPullLink(0,uaPitShift3, 0)
 --uaPitShift:SetPullLink(0, uaSample3, 0)
 dac:SetPullLink(0, uaSample3, 0)
 dac:SetPullLink(0, uaSample4, 0)
+end
 uaPushA1:SetPushLink(0,uaSample, 3)  -- Sample switcher
 uaPushA1:Push(0) -- AM wobble
 uaPushA2:SetPushLink(0,uaSample, 2) -- Reset pos

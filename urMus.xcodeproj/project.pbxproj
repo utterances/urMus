@@ -562,6 +562,7 @@
 		77D61B4C10C80C170091DE81 /* Red-Mono.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77D61B4410C80C170091DE81 /* Red-Mono.wav */; };
 		77D9689E11A79AB900BD4F2D /* UIApplication+TVOut.m in Sources */ = {isa = PBXBuildFile; fileRef = 77D9689D11A79AB900BD4F2D /* UIApplication+TVOut.m */; };
 		77DEFB5712930C2200110BA1 /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = 77DEFB5612930C2200110BA1 /* Default.png */; };
+		77E37C2B1306D28100E44393 /* jqueryFileTree.js in Sources */ = {isa = PBXBuildFile; fileRef = 77E37C2A1306D28100E44393 /* jqueryFileTree.js */; };
 		77E7B87911DBD0D000398FBD /* urMetro.lua in Sources */ = {isa = PBXBuildFile; fileRef = 77E7B87811DBD0D000398FBD /* urMetro.lua */; };
 		77E7B88211DBD14300398FBD /* urMetro.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77E7B87811DBD0D000398FBD /* urMetro.lua */; };
 		77F01C10112508CB007FD520 /* paddle.png in Resources */ = {isa = PBXBuildFile; fileRef = 77F01C0C112508CB007FD520 /* paddle.png */; };
@@ -1258,6 +1259,7 @@
 		77D61B4410C80C170091DE81 /* Red-Mono.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "Red-Mono.wav"; path = "Sounds/Red-Mono.wav"; sourceTree = "<group>"; };
 		77D9689D11A79AB900BD4F2D /* UIApplication+TVOut.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIApplication+TVOut.m"; sourceTree = "<group>"; };
 		77DEFB5612930C2200110BA1 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
+		77E37C2A1306D28100E44393 /* jqueryFileTree.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = jqueryFileTree.js; path = html/js/jqueryFileTree.js; sourceTree = "<group>"; };
 		77E7B87811DBD0D000398FBD /* urMetro.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urMetro.lua; path = "urMus-Lua/urMetro.lua"; sourceTree = "<group>"; };
 		77F01C0C112508CB007FD520 /* paddle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = paddle.png; path = Textures/paddle.png; sourceTree = "<group>"; };
 		77F01C0D112508CB007FD520 /* small-ball.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "small-ball.png"; path = "Textures/small-ball.png"; sourceTree = "<group>"; };
@@ -1359,6 +1361,7 @@
 		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
 			isa = PBXGroup;
 			children = (
+				77E37C2A1306D28100E44393 /* jqueryFileTree.js */,
 				778F140C128A11350010253D /* mopho-api */,
 				77B9FC5C1194AEF9006D5007 /* urMus-lua */,
 				23C56095119295D200758BB9 /* html */,
@@ -2805,6 +2808,7 @@
 				778DBF3612B08FED00069B82 /* urBall-display.lua in Sources */,
 				77B3FF8612E63A1D00F119FE /* CaptureSessionManager.mm in Sources */,
 				77B3019712E645DE00F119FE /* urCameraDemo.lua in Sources */,
+				77E37C2B1306D28100E44393 /* jqueryFileTree.js in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2865,7 +2869,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Georg Essl (Q4K2DQJWQ3)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
@@ -2876,7 +2880,7 @@
 					"-all_load",
 				);
 				PREBINDING = NO;
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "531F300A-1F03-4F71-8FA0-195F1A448619";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

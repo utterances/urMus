@@ -1105,7 +1105,7 @@ set_non_blocking_mode(struct mg_connection *conn, SOCKET sock)
 
 #else
 
-static int
+int
 mg_stat(const char *path, struct mgstat *stp)
 {
 	struct stat	st;

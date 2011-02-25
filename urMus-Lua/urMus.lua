@@ -18,6 +18,9 @@ patchdir = "Patches"
 
 pagefile = {
 "urMus",
+--"urAir.lua",
+--"urWater.lua",
+--"urFire.lua",
 "urPiano.lua",
 "urFlute.lua",
 "urPitcher.lua",
@@ -46,9 +49,6 @@ pagefile = {
 "urDistance.lua",
 "urAnimExample.lua",
 "urNetTest.lua",
-"urAir.lua",
-"urWater.lua",
-"urFire.lua",
 "urColorOrgan.lua",
 "urMrNoisy.lua",
 "urCircleOfWater.lua",

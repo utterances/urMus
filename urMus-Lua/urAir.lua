@@ -174,11 +174,11 @@ local sy = -1
 function AccelerateBall(self,x,y,z)
 
 	if scripted then
-		DPrint("OK")
+--		DPrint("OK")
 		y = sy
 		x = sx
 	else
-		DPrint("NO")
+--		DPrint("NO")
 		self.vx = self.vx + x
 		self.vy = self.vy + y
 	end
@@ -187,9 +187,11 @@ end
 
 local waited = 5
 
+local currframe = 0
+
 function UpdateMic(self,elapsed)
 	if scripted then
-		waited = waited - elapsed
+		waited = waited - 1/30.0 -- elapsed
 		if waited < -2 then
 			waited = 5
 		end
@@ -201,6 +203,17 @@ function UpdateMic(self,elapsed)
 		end
 	else
 		visout=_G["FBVis"]:Get()
+	end
+
+--	DPrint(currframe)
+
+	if currframe > 0 and currframe < 601 then
+		local fstr = string.format("%04d", currframe)
+
+		WriteScreenshot("Frame"..fstr..".png")
+		currframe = currframe + 1
+	elseif currframe > -1 and currframe <= 0 then
+		currframe = currframe + 1
 	end
 end
 
@@ -319,7 +332,7 @@ for i =1,maxr do
     r[i]:SetWidth(128*small)
     r[i]:SetHeight(128*small)
     r[i].x = ScreenWidth()/2.0
-    r[i].y = ScreenHeight()/(1.0+i)
+    r[i].y = -600 -- ScreenHeight()/(1.0+i)
     r[i].active = true
     r[i]:SetAnchor("BOTTOMLEFT",r[i].x,r[i].y)
     r[i].t = r[i]:Texture()

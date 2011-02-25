@@ -447,5 +447,6 @@ Exit:
 		[filePath release];
 	// Dispose the ExtAudioFileRef, it is no longer needed
 	if (extRef) ExtAudioFileDispose(extRef);
+	
 	return theData;
 }

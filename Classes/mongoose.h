@@ -486,6 +486,8 @@ crypto_sw[1].ptr)(x)
 		uint64_t	num_bytes_sent;	/* Total bytes sent to client	*/
 	};
 	
+	int
+	mg_stat(const char *path, struct mgstat *stp);
 	void
 	send_file(struct mg_connection *conn, const char *path, struct mgstat *stp);
 	

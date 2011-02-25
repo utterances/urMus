@@ -56,6 +56,7 @@ local rotfilterx = {}
 local rotfiltery = {}
 local maxfilt
 local downsampamount = 7
+
 if ScreenWidth() > 641 then
 	maxfilt = 50
 else
@@ -92,10 +93,33 @@ end
 
 local downsample = 0
 
+local pendt = 0
+local scripted = true
+
+if scripted then
+	downsampamount = 0
+	maxfilt = 1
+end
+
+function scriptedrotate(self, elapsed)
+	rotate(self,1,0)
+end
+
 function rotate(self,x,y,z)
 
 	x = -x
 	y = -y
+	
+	if scripted then
+--		if self == r[1] then
+			y = 0.4*sin(2*pi*1/60.0*pendt/4.0)
+			pendt = pendt+1
+			x = math.sqrt(1-y*y)
+--		else
+--			return
+--		end
+	end
+	
 	if downsample < 0 then
 	downsample = downsampamount
 	local sumx = 0
@@ -132,6 +156,8 @@ function rotate(self,x,y,z)
 	SetWaterGain(((1.0-x)*0.7+0.3))
 end    
 
+local currframe = 1
+
 function flow(self, elapsed)
 
 --	DPrint(elapsed)
@@ -154,6 +180,17 @@ function flow(self, elapsed)
 
 --    self.t:SetTexCoord(0+self.pos,1+self.pos,0,1)
     self.pos = (self.pos +self.speed*((wateramp-0.2)*10)) % 1
+	
+	if self == r[2]  and currframe < 601 then
+		local fstr = string.format("%04d", currframe)
+
+		WriteScreenshot("Frame"..fstr..".png")
+		currframe = currframe + 1
+	end
+	if currframe == 601 then
+		DPrint("DONE")
+		scripted = false
+	end
 end
 
 r = {}
@@ -168,7 +205,9 @@ for i =1,4 do
 --    r[i].t:SetTexture(DocumentPath("wavel2"..i..".png"))
     r[i].t:SetTexture("wavel2"..i..".png")
     r[i].t:SetSolidColor(255,255,255,255)
+	if not scripted then
     r[i]:Handle("OnAccelerate",rotate)
+	end
     r[i]:Show()
     r[i].t:SetBlendMode("BLEND")
     r[i].t:SetTiling(true)
@@ -267,6 +306,9 @@ rb.t:SetBlendMode("BLEND")
 rb:Handle("OnTouchDown",SlushWater)
 rb:Handle("OnDoubleTap",StopSamples)
 rb:Handle("OnMove",Slide)
+if scripted then
+	rb:Handle("OnUpdate",scriptedrotate)
+end
 rb:EnableInput(true)
 rb:Show()
 

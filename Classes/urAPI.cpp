@@ -28,6 +28,7 @@ lua_State *lua;
 
 // Hardcoded for now... lazy me
 #define MAX_PAGES 30
+#define MAX_PATCHES 30
 
 int currentPage;
 urAPI_Region_t* firstRegion[MAX_PAGES] = {nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil};
@@ -37,6 +38,10 @@ int numRegions[MAX_PAGES] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 urAPI_Region_t* UIParent = nil;
 
 ursAPI_FlowBox_t* FBNope = nil;
+
+int currentPatch = 0;
+ursAPI_FlowBox_t** firstFlowbox[MAX_PATCHES] = {nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil};
+int numFlowBoxes[MAX_PATCHES] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 MachTimer* systimer;
 
@@ -2971,7 +2976,10 @@ int texture_BrushSize(lua_State* lua)
 int texture_UseCamera(lua_State* lua)
 {
 	urAPI_Texture_t* t = checktexture(lua, 1);
+	if(t->backgroundTex == nil)
+		instantiateAllTextures(t->region);
 	t->usecamera = 1;
+	t->isTiled = false; // Camera textures cannot be tiled
 	return 0;
 }
 	
@@ -3715,6 +3723,14 @@ int flowbox_IsPulled(lua_State *lua)
 		return 0;
 }
 
+	
+/* UNFINISHED void removeAllPushLinks(ursAPI_FlowBox_t* fb)
+{
+	for
+	fb->object->RemovePushOut(outindex, &target->object->ins[inindex]);
+}	
+	*/
+	
 int flowbox_RemovePushLink(lua_State *lua)
 {
 	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
@@ -3950,16 +3966,57 @@ static const struct luaL_reg flowboxfuncs [] =
 {NULL, NULL}
 };
 
+static int addToPatch(ursAPI_FlowBox_t* flowbox)
+{
+	if(firstFlowbox[currentPatch] == NULL)
+	{
+		firstFlowbox[currentPatch] = (ursAPI_FlowBox_t**)malloc(sizeof(ursAPI_FlowBox_t**));
+		numFlowBoxes[currentPatch]++;
+		firstFlowbox[currentPatch][0]=flowbox;
+	}
+	else {
+		numFlowBoxes[currentPatch]++;
+		firstFlowbox[currentPatch] = (ursAPI_FlowBox_t**)realloc(firstFlowbox[currentPatch],sizeof(ursAPI_FlowBox_t**)*numFlowBoxes[currentPatch]);
+		firstFlowbox[currentPatch][numFlowBoxes[currentPatch]-1] = flowbox;
+	}
+}
+
+static void removeFlowboxLinks(ursAPI_FlowBox_t* flowbox)
+{
+}
+	
+static int l_FreeAllFlowboxes(lua_State* lua)
+{
+	/*
+	for(int i=0; i < numFlowBoxes[currentPatch]; i++)
+	{
+		delete firstFlowbox[currentPatch][i]->object;
+//		removeFlowboxLinks(firstFlowbox[currentPatch][i]);
+		free(firstFlowbox[currentPatch][i]);
+	}
+	free(firstFlowbox[currentPatch]);
+	firstFlowbox[currentPatch] = NULL;
+	numFlowBoxes[currentPatch] = 0;
+	 */
+	return 0;
+}
+	
 static int l_FlowBox(lua_State* lua)
 {
-	const char *flowboxtype = luaL_checkstring(lua, 1);
-	const char *flowboxName = luaL_checkstring(lua, 2);
+	int idx = 1;
+	if(lua_gettop(lua)>1) // Allow for no arg construction
+	{
+		const char *flowboxtype = luaL_checkstring(lua, 1);
+		const char *flowboxName = luaL_checkstring(lua, 2);
+		idx = 3;
+		// Backward compatibility
+	}
+	luaL_checktype(lua, idx, LUA_TTABLE);
 
 	//	urAPI_flowbox_t *parentflowbox = (urAPI_flowbox_t*)luaL_checkudata(lua, 4, "URAPI.flowbox");
-	luaL_checktype(lua, 3, LUA_TTABLE);
-	lua_rawgeti(lua, 3, 0);
-	ursAPI_FlowBox_t *parentFlowBox = (ursAPI_FlowBox_t*)lua_touserdata(lua,4);
-	luaL_argcheck(lua, parentFlowBox!= NULL, 4, "'flowbox' expected");
+	lua_rawgeti(lua, idx, 0);
+	ursAPI_FlowBox_t *parentFlowBox = (ursAPI_FlowBox_t*)lua_touserdata(lua,idx+1);
+	luaL_argcheck(lua, parentFlowBox!= NULL, idx+1, "'flowbox' expected");
 	//	const char *inheritsflowbox = luaL_checkstring(lua, 1); //NYI
 
 	// NEW!! Return flowbox in a table at index 0
@@ -3973,6 +4030,8 @@ static int l_FlowBox(lua_State* lua)
 	lua_rawgeti(lua, LUA_REGISTRYINDEX, myflowbox->tableref);
 
 	myflowbox->object = parentFlowBox->object->Clone();
+	if(myflowbox->object != parentFlowBox->object) // instanced
+		addToPatch(myflowbox);
 //	myflowbox->object->instancenumber = parentFlowBox->object->instancenumber + 1;
 	
 	// ENDNEW!!
@@ -4322,11 +4381,34 @@ int l_SoarLoadRules(lua_State *lua)
 int l_WriteScreenshot(lua_State *lua)
 {
 	const char *infile = luaL_checkstring(lua,1);
-	UIImage* img = [g_glView saveImageFromGLView];
-	[g_glView saveImageToFile:img filename:infile];
+//	UIImage* img = [g_glView saveImageFromGLView];
+//	[g_glView saveImageToFile:img filename:infile];
+//	[img release];
+	[g_glView saveScreenToFile:infile];
+	return 0;
 }
 	
-//------------------------------------------------------------------------------
+int l_StartMovieMaking(lua_State *lua)
+{
+	const char *infile = luaL_checkstring(lua,1);
+	[g_glView startMovieWriter:infile];
+	return 0;
+}
+
+int l_AddScreenshot(lua_State *lua)
+{
+	double elapsed = luaL_checknumber(lua,1);
+	[g_glView writeScreenshotToMovie:elapsed];
+	return 0;
+}
+
+int l_FinishMovieMaking(lua_State *lua)
+{
+	[g_glView closeMovieWriter];
+	return 0;
+}
+	
+	//------------------------------------------------------------------------------
 // Register our API
 //------------------------------------------------------------------------------
 
@@ -4558,8 +4640,17 @@ void l_setupAPI(lua_State *lua)
 	lua_pushcfunction(lua, l_WriteScreenshot);
 	lua_setglobal(lua, "WriteScreenshot");
 	
+	lua_pushcfunction(lua, l_StartMovieMaking);
+	lua_setglobal(lua, "StartMovieMaking");
+	lua_pushcfunction(lua, l_AddScreenshot);
+	lua_setglobal(lua, "AddScreenshot");
+	lua_pushcfunction(lua, l_FinishMovieMaking);
+	lua_setglobal(lua, "FinishMovieMaking");
+	
 	lua_pushcfunction(lua, l_FreeAllRegions);
 	lua_setglobal(lua, "FreeAllRegions");
+	lua_pushcfunction(lua, l_FreeAllFlowboxes);
+	lua_setglobal(lua, "FreeAllFlowboxes");
 
 	// Initialize the global mic buffer table
 #ifdef MIC_ARRAY

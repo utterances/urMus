@@ -221,11 +221,14 @@ double urs_PullActivePullSinks()
 
 void callAllCameraSources(double brightness, double blueTotal, double greenTotal, double redTotal, double edginess)
 {
-	cameraObject->CallAllPushOuts(brightness,1);
-	cameraObject->CallAllPushOuts(blueTotal,2);
-	cameraObject->CallAllPushOuts(greenTotal,3);
-	cameraObject->CallAllPushOuts(redTotal,4);
-	cameraObject->CallAllPushOuts(edginess,5);	
+	if(cameraObject)
+	{
+		cameraObject->CallAllPushOuts(brightness,1);
+		cameraObject->CallAllPushOuts(blueTotal,2);
+		cameraObject->CallAllPushOuts(greenTotal,3);
+		cameraObject->CallAllPushOuts(redTotal,4);
+		cameraObject->CallAllPushOuts(edginess,5);	
+	}
 }
 
 
@@ -461,7 +464,7 @@ void ursObject::AddIn(const char* inname, const char* insemantics, void (*func)(
 
 void ursObject::CallAllPushOuts(double indata, int idx)
 {
-	if(this == NULL) return;
+	if(this == NULL || this->firstpushout == NULL) return;
 	
 	if(this->firstpushout[idx]!=NULL)
 	{
@@ -604,6 +607,18 @@ void ursObject::RemovePushOut(int idx, urSoundIn* in)
 		delete finder;
 	}
 }
+
+/* UNFINISHED void ursObject::RemoveAllPushOuts()
+{
+	for(int i=0; i<nr_outs; i++)
+	{
+		urSoundPushOut* finder = firstpushout[idx];
+		for(;finder != NULL && finder->in != in ; finder = finder->next)
+		{
+			previous = finder;
+		}
+	}
+}*/
 
 void ursObject::RemovePullIn(int idx, urSoundOut* out)
 {
@@ -1016,6 +1031,7 @@ void urs_SetupObjects()
 //	urmanipulatorobjectlist[lastmanipulatorobj++] = sampleobject;
 	urmanipulatorobjectlist.Append(sampleobject);
 
+#ifdef OFFER_SLEIGH
 	object = new ursObject("Sleigh", Sleigh_Constructor, Sleigh_Destructor,6,1);
 	object->AddOut("WaveForm", "TimeSeries", Sleigh_Tick, Sleigh_Out, NULL);
 	object->AddIn("Amp", "Amplitude", Sleigh_SetAmp);
@@ -1026,6 +1042,7 @@ void urs_SetupObjects()
 	object->AddIn("Loop", "Loop", Sleigh_Loop);
 	//	urmanipulatorobjectlist[lastmanipulatorobj++] = Sleighobject;
 	urmanipulatorobjectlist.Append(object);
+#endif
 	
 	object = new ursObject("Looper", Looper_Constructor, Looper_Destructor,6,1);
 	object->AddOut("WaveForm", "TimeSeries", Looper_Tick, Looper_Out, NULL);

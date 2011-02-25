@@ -11,6 +11,9 @@ function pathselect(dirtype) {
 		return "/Documents";
 }
 
+$(document).ready( function() {
+				  });
+
 $(document).ready(function() {
   var files = $('#files'), 
       gallery_files = $('#gallery_files'),
@@ -88,7 +91,7 @@ $(document).ready(function() {
         gallery_files.append('<p class="header">'+ucwords(dirtype)+':</p>');
         $.each(json, function(i, ele) {
           var path = '/'+ele, 
-              m_img = "bmp|png|gif|jpg|jpeg",
+              m_img = "bmp|png|gif|jpg|jpeg|mov",
               m_snd = "mp3|wav|aif|aiff",
               li = $('<li class="resource">'+ele+'</li>');
           if (ele.match('\.('+m_img+')$')) {
@@ -113,7 +116,17 @@ $(document).ready(function() {
         });
       },'json');          
     });
-    
+
+//   $('#file_list1').fileTree({
+//							   root: '/',
+//							   script: 'jqueryFileTree',
+//							   expandSpeed: 1000,
+//							   collapseSpeed: 1000,
+//							   multiFolder: false
+//							   }, function(file) {
+//							   alert(file);
+//							   });
+						   
   });
   
   function setOpenedFile(fname) {

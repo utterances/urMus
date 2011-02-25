@@ -396,10 +396,12 @@ extern lua_State *lua;
 
 #define TEST_CAMERA
 
+static GLuint	cameraTexture= 0;
+
 - (void)newCameraTextureForDisplay:(GLuint)texture {
 
 	_cameraTexture = texture;
-	
+	cameraTexture = texture;
 }
 
 
@@ -563,6 +565,7 @@ void SetupBrush()
 	if(brushtexture != NULL)
 	{
 		glBindTexture(GL_TEXTURE_2D, brushtexture.name);
+
 		glDisable(GL_DITHER);
 		glEnable(GL_TEXTURE_2D);
 		glEnable(GL_BLEND);
@@ -1000,22 +1003,178 @@ void setDisplay(int s)
 }
 #endif
 
-#ifdef SAVEFRAMES
+-(void) startMovieWriter:(const char*)fname
+{
+	NSError *error = nil;
+	NSString *file = [[NSString alloc] initWithUTF8String:fname];
+	// Create paths to output images
+	NSArray *paths;
+	paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+	NSString *documentPath;
+	if ([paths count] > 0)
+		documentPath = [paths objectAtIndex:0];
+	NSString  *movPath = [documentPath stringByAppendingPathComponent:file];
+	videoWriter = [[AVAssetWriter alloc] initWithURL:
+								  [NSURL fileURLWithPath:movPath] fileType:AVFileTypeQuickTimeMovie
+															  error:&error];
+	NSParameterAssert(videoWriter);
+	
+	NSDictionary *videoSettings = [NSDictionary dictionaryWithObjectsAndKeys:
+								   AVVideoCodecH264, AVVideoCodecKey,
+								   [NSNumber numberWithInt:SCREEN_WIDTH], AVVideoWidthKey,
+								   [NSNumber numberWithInt:SCREEN_HEIGHT], AVVideoHeightKey,
+								   nil];
+	writerInput = [[AVAssetWriterInput
+										assetWriterInputWithMediaType:AVMediaTypeVideo
+										outputSettings:videoSettings] retain];
+
+	adaptor = [[AVAssetWriterInputPixelBufferAdaptor
+                                                     assetWriterInputPixelBufferAdaptorWithAssetWriterInput:writerInput
+                                                     sourcePixelBufferAttributes:nil] retain];
+	
+	NSParameterAssert(writerInput);
+	NSParameterAssert([videoWriter canAddInput:writerInput]);
+	[videoWriter addInput:writerInput];	
+
+    //Start a session:
+    [videoWriter startWriting];
+    [videoWriter startSessionAtSourceTime:kCMTimeZero];
+}
+
+// This function is experimental and has known memory issues. Not currently used.
+- (CVPixelBufferRef) pixelBufferFromCGImage: (CGImageRef) image
+{
+    NSDictionary *options = [NSDictionary dictionaryWithObjectsAndKeys:
+							 [NSNumber numberWithBool:YES], kCVPixelBufferCGImageCompatibilityKey,
+							 [NSNumber numberWithBool:YES], kCVPixelBufferCGBitmapContextCompatibilityKey,
+							 nil];
+    CVPixelBufferRef pxbuffer = NULL;
+    CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, SCREEN_WIDTH,
+										  SCREEN_HEIGHT, kCVPixelFormatType_32ARGB, (CFDictionaryRef) options, 
+										  &pxbuffer);
+    NSParameterAssert(status == kCVReturnSuccess && pxbuffer != NULL);
+	
+    CVPixelBufferLockBaseAddress(pxbuffer, 0);
+    void *pxdata = CVPixelBufferGetBaseAddress(pxbuffer);
+    NSParameterAssert(pxdata != NULL);
+	
+    CGColorSpaceRef rgbColorSpace = CGColorSpaceCreateDeviceRGB();
+    CGContextRef lcontext = CGBitmapContextCreate(pxdata, SCREEN_WIDTH,
+												 SCREEN_HEIGHT, 8, 4*SCREEN_WIDTH, rgbColorSpace, 
+												 kCGImageAlphaNoneSkipFirst);
+    NSParameterAssert(lcontext);
+ //   CGContextConcatCTM(context, frameTransform);
+    CGContextDrawImage(lcontext, CGRectMake(0, 0, CGImageGetWidth(image), 
+										   CGImageGetHeight(image)), image);
+    CGColorSpaceRelease(rgbColorSpace);
+    CGContextRelease(lcontext);
+	
+    CVPixelBufferUnlockBaseAddress(pxbuffer, 0);
+	
+    return pxbuffer;
+}
+
+-(void) writeImageToMovie:(CGImageRef)image elapsed:(float)duration
+{
+	CVPixelBufferRef buffer = [self pixelBufferFromCGImage:image];
+    [adaptor appendPixelBuffer:buffer withPresentationTime:CMTimeMake(duration, 1)];
+	CVPixelBufferRelease(buffer);
+}
+
+-(void) closeMovieWriter
+{
+	[writerInput markAsFinished];
+//	[videoWriter endSessionAtSourceTime:…];
+	[videoWriter finishWriting];
+}
+
+-(void) writeScreenshotToMovie:(float)duration
+{
+    NSInteger myDataLength = SCREEN_WIDTH * SCREEN_HEIGHT * 4;
+    // allocate array and read pixels into it.
+    GLubyte *buffer = (GLubyte *) malloc(myDataLength);
+    glReadPixels(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+    // gl renders "upside down" so swap top to bottom into new array.
+    // there's gotta be a better way, but this works.
+    GLubyte *buffer2 = (GLubyte *) malloc(myDataLength);
+    for(int y = 0; y <SCREEN_HEIGHT; y++)
+    {
+        for(int x = 0; x <SCREEN_WIDTH * 4; x++)
+        {
+            buffer2[(SCREEN_HEIGHT -1 - y) * SCREEN_WIDTH * 4 + x] = buffer[y * 4 * SCREEN_WIDTH + x];
+        }
+    }
+    // make data provider with data.
+    CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, buffer2, myDataLength, NULL);
+    // prep the ingredients
+    int bitsPerComponent = 8;
+    int bitsPerPixel = 32;
+    int bytesPerRow = 4 * SCREEN_WIDTH;
+    CGColorSpaceRef colorSpaceRef = CGColorSpaceCreateDeviceRGB();
+    CGBitmapInfo bitmapInfo = kCGBitmapByteOrderDefault;
+    CGColorRenderingIntent renderingIntent = kCGRenderingIntentDefault;
+    // make the cgimage
+    CGImageRef imageRef = CGImageCreate(SCREEN_WIDTH, SCREEN_HEIGHT, bitsPerComponent, bitsPerPixel, bytesPerRow, colorSpaceRef, bitmapInfo, provider, NULL, NO, renderingIntent);
+	
+    NSDictionary *options = [NSDictionary dictionaryWithObjectsAndKeys:
+							 [NSNumber numberWithBool:YES], kCVPixelBufferCGImageCompatibilityKey,
+							 [NSNumber numberWithBool:YES], kCVPixelBufferCGBitmapContextCompatibilityKey,
+							 nil];
+    CVPixelBufferRef pxbuffer = NULL;
+    CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, SCREEN_WIDTH,
+										  SCREEN_HEIGHT, kCVPixelFormatType_32ARGB, (CFDictionaryRef) options, 
+										  &pxbuffer);
+    NSParameterAssert(status == kCVReturnSuccess && pxbuffer != NULL);
+	
+    CVPixelBufferLockBaseAddress(pxbuffer, 0);
+    void *pxdata = CVPixelBufferGetBaseAddress(pxbuffer);
+    NSParameterAssert(pxdata != NULL);
+	
+    CGColorSpaceRef rgbColorSpace = CGColorSpaceCreateDeviceRGB();
+    CGContextRef lcontext = CGBitmapContextCreate(pxdata, SCREEN_WIDTH,
+												  SCREEN_HEIGHT, 8, 4*SCREEN_WIDTH, rgbColorSpace, 
+												  kCGImageAlphaNoneSkipFirst);
+    NSParameterAssert(lcontext);
+	//   CGContextConcatCTM(context, frameTransform);
+    CGContextDrawImage(lcontext, CGRectMake(0, 0, CGImageGetWidth(imageRef), 
+											CGImageGetHeight(imageRef)), imageRef);
+    CGColorSpaceRelease(rgbColorSpace);
+    CGContextRelease(lcontext);
+	
+    CVPixelBufferUnlockBaseAddress(pxbuffer, 0);
+	
+	//	[adaptor appendPixelBuffer:buffer withPresentationTime:kCMTimeZero];
+    [adaptor appendPixelBuffer:pxbuffer withPresentationTime:CMTimeMake(duration, 1)];
+	CVPixelBufferRelease(pxbuffer);
+	CGDataProviderRelease(provider);
+	if( buffer != NULL ) { free(buffer); }
+	if( buffer2 != NULL ) { free(buffer2); }
+	
+}
+
 -(void) saveImageToFile:(UIImage*)image filename:(const char*)fname
 {
 	NSString *file = [[NSString alloc] initWithUTF8String:fname];
 	// Create paths to output images
-	NSString  *pngPath = [NSHomeDirectory() stringByAppendingPathComponent:file];
+	NSArray *paths;
+	paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+	NSString *documentPath;
+	if ([paths count] > 0)
+		documentPath = [paths objectAtIndex:0];
+	NSString  *pngPath = [documentPath stringByAppendingPathComponent:file];
 //	NSString  *jpgPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/Test.jpg"];
 	
 	// Write a UIImage to JPEG with minimum compression (best quality)
 	// The value 'image' must be a UIImage object
 	// The value '1.0' represents image compression quality as value from 0.0 to 1.0
 //	[UIImageJPEGRepresentation(image, 1.0) writeToFile:jpgPath atomically:YES];
-	
+//	NSLog(@"Documents directory: %@", pngPath);
 	// Write image to PNG
+#ifndef WRITETOPHOTOS
 	[UIImagePNGRepresentation(image) writeToFile:pngPath atomically:YES];
-	
+#else
+	UIImageWriteToSavedPhotosAlbum(image, self, @selector(imageSavedToPhotosAlbum: didFinishSavingWithError: contextInfo:), context);  	
+#endif
 	// Let's check to see if files were successfully written...
 	
 	// Create file manager
@@ -1027,22 +1186,24 @@ void setDisplay(int s)
 	
 	// Write out the contents of home directory to console
 //	NSLog(@"Documents directory: %@", [fileMgr contentsOfDirectoryAtPath:documentsDirectory error:&error]);
+//	[image release];
 }
 
--(UIImage *) saveImageFromGLView
+// This function is experimental and has known memory issues. Not currently used.
+-(CGImageRef) getImageRefFromGLView
 {
-    NSInteger myDataLength = 320 * 480 * 4;
+    NSInteger myDataLength = SCREEN_WIDTH * SCREEN_HEIGHT * 4;
     // allocate array and read pixels into it.
     GLubyte *buffer = (GLubyte *) malloc(myDataLength);
-    glReadPixels(0, 0, 320, 480, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+    glReadPixels(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
     // gl renders "upside down" so swap top to bottom into new array.
     // there's gotta be a better way, but this works.
     GLubyte *buffer2 = (GLubyte *) malloc(myDataLength);
-    for(int y = 0; y <480; y++)
+    for(int y = 0; y <SCREEN_HEIGHT; y++)
     {
-        for(int x = 0; x <320 * 4; x++)
+        for(int x = 0; x <SCREEN_WIDTH * 4; x++)
         {
-            buffer2[(479 - y) * 320 * 4 + x] = buffer[y * 4 * 320 + x];
+            buffer2[(SCREEN_HEIGHT -1 - y) * SCREEN_WIDTH * 4 + x] = buffer[y * 4 * SCREEN_WIDTH + x];
         }
     }
     // make data provider with data.
@@ -1050,17 +1211,87 @@ void setDisplay(int s)
     // prep the ingredients
     int bitsPerComponent = 8;
     int bitsPerPixel = 32;
-    int bytesPerRow = 4 * 320;
+    int bytesPerRow = 4 * SCREEN_WIDTH;
     CGColorSpaceRef colorSpaceRef = CGColorSpaceCreateDeviceRGB();
     CGBitmapInfo bitmapInfo = kCGBitmapByteOrderDefault;
     CGColorRenderingIntent renderingIntent = kCGRenderingIntentDefault;
     // make the cgimage
-    CGImageRef imageRef = CGImageCreate(320, 480, bitsPerComponent, bitsPerPixel, bytesPerRow, colorSpaceRef, bitmapInfo, provider, NULL, NO, renderingIntent);
+    CGImageRef imageRef = CGImageCreate(SCREEN_WIDTH, SCREEN_HEIGHT, bitsPerComponent, bitsPerPixel, bytesPerRow, colorSpaceRef, bitmapInfo, provider, NULL, NO, renderingIntent);
+	
+//	CGDataProviderRelease(provider);
+//	if( buffer != NULL ) { free(buffer); }
+//	if( buffer2 != NULL ) { free(buffer2); }
+	return imageRef;
+}
+
+// This function is experimental and has known memory issues. Not currently used.
+-(UIImage *) saveImageFromGLView
+{
+	CGImageRef imageRef = [self getImageRefFromGLView];
     // then make the uiimage from that
     UIImage *myImage = [UIImage imageWithCGImage:imageRef];
+//	CGImageRelease(imageRef);
+//	[(id)CFMakeCollectable(imageRef) autorelease];
+	
     return myImage;
 }
+
+-(void) saveScreenToFile:(const char*)fname
+{
+    NSInteger myDataLength = SCREEN_WIDTH * SCREEN_HEIGHT * 4;
+    // allocate array and read pixels into it.
+    GLubyte *buffer = (GLubyte *) malloc(myDataLength);
+    glReadPixels(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+    // gl renders "upside down" so swap top to bottom into new array.
+    // there's gotta be a better way, but this works.
+    GLubyte *buffer2 = (GLubyte *) malloc(myDataLength);
+    for(int y = 0; y <SCREEN_HEIGHT; y++)
+    {
+        for(int x = 0; x <SCREEN_WIDTH * 4; x++)
+        {
+            buffer2[(SCREEN_HEIGHT -1 - y) * SCREEN_WIDTH * 4 + x] = buffer[y * 4 * SCREEN_WIDTH + x];
+        }
+    }
+    // make data provider with data.
+    CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, buffer2, myDataLength, NULL);
+    // prep the ingredients
+    int bitsPerComponent = 8;
+    int bitsPerPixel = 32;
+    int bytesPerRow = 4 * SCREEN_WIDTH;
+    CGColorSpaceRef colorSpaceRef = CGColorSpaceCreateDeviceRGB();
+    CGBitmapInfo bitmapInfo = kCGBitmapByteOrderDefault;
+    CGColorRenderingIntent renderingIntent = kCGRenderingIntentDefault;
+    // make the cgimage
+    CGImageRef imageRef = CGImageCreate(SCREEN_WIDTH, SCREEN_HEIGHT, bitsPerComponent, bitsPerPixel, bytesPerRow, colorSpaceRef, bitmapInfo, provider, NULL, NO, renderingIntent);
+	UIImage *image = [[UIImage imageWithCGImage:imageRef] retain];
+	
+	NSString *file = [[NSString alloc] initWithUTF8String:fname];
+	// Create paths to output images
+	NSArray *paths;
+	paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+	NSString *documentPath;
+	if ([paths count] > 0)
+		documentPath = [paths objectAtIndex:0];
+	NSString  *pngPath = [documentPath stringByAppendingPathComponent:file];
+	//	NSString  *jpgPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/Test.jpg"];
+	
+	// Write a UIImage to JPEG with minimum compression (best quality)
+	// The value 'image' must be a UIImage object
+	// The value '1.0' represents image compression quality as value from 0.0 to 1.0
+	//	[UIImageJPEGRepresentation(image, 1.0) writeToFile:jpgPath atomically:YES];
+	//	NSLog(@"Documents directory: %@", pngPath);
+	// Write image to PNG
+#ifndef WRITETOPHOTOS
+	[UIImagePNGRepresentation(image) writeToFile:pngPath atomically:YES];
+#else
+	UIImageWriteToSavedPhotosAlbum(image, self, @selector(imageSavedToPhotosAlbum: didFinishSavingWithError: contextInfo:), context);  	
 #endif
+	CGDataProviderRelease(provider);
+	if( buffer != NULL ) { free(buffer); }
+	if( buffer2 != NULL ) { free(buffer2); }
+	CGImageRelease(imageRef);
+	[image release];
+}
 
 
 - (void)drawView {
@@ -1342,25 +1573,25 @@ void setDisplay(int s)
 				glColorPointer(4, GL_UNSIGNED_BYTE, 0, squareColors);
 				glEnableClientState(GL_COLOR_ARRAY);
 				
-				int bottom = t->bottom;
 				int fontheight = [t->textlabel->textlabelTex fontblockHeight];
+				int justify = 0;
 				switch(t->textlabel->justifyv)
 				{
 					case JUSTIFYV_MIDDLE:
-						bottom -= t->height/2-fontheight/2;
+						justify = -t->height+fontheight/2;
 						break;
 					case JUSTIFYV_TOP:
-						bottom = bottom;
+						justify = -t->height/2;
 						break;
 					case JUSTIFYV_BOTTOM:
-						bottom -= t->height-fontheight; 
+						justify = -3*t->height/2+fontheight;
 						break;
 				}
 				
 				glPushMatrix();
-				glTranslatef(t->left+t->width/2, bottom+t->height/2, 0);
+				glTranslatef(t->left+t->width/2, t->bottom+t->height/2, 0);
 				glRotatef(t->textlabel->rotation, 0.0f, 0.0f, 1.0f);
-				[t->textlabel->textlabelTex drawAtPoint:CGPointMake(-t->width/2, -t->height/2) tile:true];
+				[t->textlabel->textlabelTex drawAtPoint:CGPointMake(-t->width/2, justify) tile:true];
 				glPopMatrix();
 				
 				// switch it back to GL_ONE for other types of images, rather than text because Texture2D uses CG to load, which premultiplies alpha
