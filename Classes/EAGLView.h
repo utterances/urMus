@@ -42,15 +42,15 @@ Note that setting the view non-opaque will only work if the EAGL surface has an 
 
 #ifdef SANDWICH_SUPPORT
 #ifdef USEUDP
-@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate,SandwichUpdateDelegate, AsyncUdpSocketDelegate,CaptureSessionManagerDelegate>
+@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate,SandwichUpdateDelegate, AsyncUdpSocketDelegate,CaptureSessionManagerDelegate, NSNetServiceDelegate, NSNetServiceBrowserDelegate>
 #else
-@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate,SandwichUpdateDelegate, TCPServerDelegate,CaptureSessionManagerDelegate>
+@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate,SandwichUpdateDelegate, TCPServerDelegate,CaptureSessionManagerDelegate, NSNetServiceDelegate, NSNetServiceBrowserDelegate>
 #endif
 #else
 #ifdef USEUDP
-@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate, AsyncUdpSocketDelegate,CaptureSessionManagerDelegate>
+@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate, AsyncUdpSocketDelegate,CaptureSessionManagerDelegate, NSNetServiceDelegate, NSNetServiceBrowserDelegate>
 #else
-@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate, TCPServerDelegate,CaptureSessionManagerDelegate>
+@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate, TCPServerDelegate,CaptureSessionManagerDelegate, NSNetServiceDelegate, NSNetServiceBrowserDelegate>
 #endif
 #endif
 {
@@ -90,6 +90,8 @@ Note that setting the view non-opaque will only work if the EAGL surface has an 
 	AVAssetWriter *videoWriter;
 	AVAssetWriterInput* writerInput;
 	AVAssetWriterInputPixelBufferAdaptor *adaptor;
+	
+	int displaynumber;
 @private
 //	id<EAGLViewDelegate> _delegate;
 	NSString *_searchingForServicesString;
@@ -114,7 +116,7 @@ Note that setting the view non-opaque will only work if the EAGL surface has an 
 - (void)startAnimation;
 - (void)stopAnimation;
 - (void)drawView;
-- (void)setFramePointer;
+//- (void)setFramePointer;
 //- (void)processPixelBuffer: (CVImageBufferRef)pixelBuffer;
 //- (void)newFrame:(GLuint)frame;
 - (void)newCameraTextureForDisplay:(GLuint)frame;

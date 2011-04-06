@@ -83,11 +83,12 @@ typedef enum {
  */
 @interface Texture2D : NSObject
 {
+@public
+	NSUInteger                                      _width,
+	_height;
 @private
 	GLuint                                          _name;
 	CGSize                                          _size;
-	NSUInteger                                      _width,
-	_height;
 	Texture2DPixelFormat            _format;
 	GLfloat                                         _maxS,
 	_maxT;

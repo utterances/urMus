@@ -88,7 +88,7 @@ BOOL clientConnect(const char* ipaddr, int port)
 
 - (id) initWithServerAddress: (NSString*) aServerAddress withPort: (int) aPortNr;
 {
-	if (self = [super init]) {
+	if (self == [super init]) {
 		self.portNr = aPortNr;
 		self.serverAddress = aServerAddress;
 		self.sending = NO;

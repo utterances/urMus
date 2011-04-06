@@ -42,6 +42,9 @@
 @synthesize window;
 @synthesize glView;
 @synthesize repeatingTimer;
+@synthesize window2;
+@synthesize glView2;
+@synthesize externalWindow;
 
 #ifdef FINAL_PROJECTOR_VIDEO
 //@synthesize deviceWindow;
@@ -207,8 +210,12 @@ extern int SCREEN_HEIGHT;
 	[BLVideoOut sharedVideoOut].delegate = self;
 	if ([BLVideoOut sharedVideoOut].extScreenActive == YES)
 	{
-		[glView removeFromSuperview];
-		[[BLVideoOut sharedVideoOut].extWindow addSubview:glView];
+//		window2 = [glView superview];
+		glView2 = [[EAGLView alloc] initWithFrame:[BLVideoOut sharedVideoOut].extWindow.screen.applicationFrame];
+//		glView2 = [[EAGLView alloc] initWithFrame:window2.screen.applicationFrame];
+//		[glView removeFromSuperview];
+//		[window2 addSubview:glView2];
+		[[BLVideoOut sharedVideoOut].extWindow addSubview:glView2];
 	}
 #endif
 	
@@ -230,13 +237,14 @@ extern int SCREEN_HEIGHT;
 	
 	[glView startAnimation];
 	[glView drawView];
-//#ifdef BL_PROJECTOR_VIDEO
-//	if ([BLVideoOut sharedVideoOut].canProvideVideoOut == YES)
-//	{
-//		[glView2 startAnimation];
-//		[glView2 drawView];
-//	}
-//#endif
+#ifdef BL_PROJECTOR_VIDEO
+	if ([BLVideoOut sharedVideoOut].canProvideVideoOut == YES)
+	{
+		[[BLVideoOut sharedVideoOut].extWindow makeKeyAndVisible];
+		[glView2 startAnimation];
+		[glView2 drawView];
+	}
+#endif
 #ifdef EARLY_LAUNCH
 	NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
 #ifndef SLEEPER
@@ -244,13 +252,13 @@ extern int SCREEN_HEIGHT;
 	NSString *filePath;
 	if ([BLVideoOut sharedVideoOut].extScreenActive == YES)
 	{
-//	filePath = [resourcePath stringByAppendingPathComponent:@"urMus.lua"];
-	filePath = [resourcePath stringByAppendingPathComponent:@"urCameraDemo.lua"];
+	filePath = [resourcePath stringByAppendingPathComponent:@"urMus.lua"];
+//	filePath = [resourcePath stringByAppendingPathComponent:@"urCameraDemo.lua"];
 #ifdef BL_PERFORMANCE
 	filePath = [resourcePath stringByAppendingPathComponent:@"urBall-display.lua"];
 #endif
 //	glView.transform = CGAffineTransformRotate(glView.transform, M_PI * 1.5);
-	CGRect screendimensions;
+//	CGRect screendimensions;
 //	screendimensions = [[BLVideoOut sharedVideoOut].extWindow bounds];
 //	float NSCREEN_WIDTH = screendimensions.size.width;
 //	float NSCREEN_HEIGHT = screendimensions.size.height;

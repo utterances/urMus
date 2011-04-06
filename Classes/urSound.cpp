@@ -479,7 +479,7 @@ void ursObject::CallAllPushOuts(double indata, int idx)
 	}
 }
 
-double ursObject::FeedAllPullIns(int minidx)
+void ursObject::FeedAllPullIns(int minidx)
 {
 	if(fed != true)
 	{
@@ -1007,6 +1007,14 @@ void urs_SetupObjects()
 	object->SetCouple(0,0);
 	urmanipulatorobjectlist.Append(object);
 	
+	object = new ursObject("Range", Range_Constructor, Range_Destructor,3,1);
+	object->AddOut("Out", "Generic", Range_Out, Range_Tick, NULL);
+	object->AddIn("In", "Generic", Range_In);
+    object->AddIn("Bottom", "Generic", Range_Bottom);
+    object->AddIn("Top", "Generic", Range_Top);
+	object->SetCouple(0,0);
+	urmanipulatorobjectlist.Append(object);
+	
 	object = new ursObject("Quant", Quant_Constructor, Quant_Destructor,1,1);
 	object->AddOut("Out", "Generic", Quant_Out, Quant_Tick, NULL);
 	object->AddIn("In", "Generic", Quant_In);
@@ -1165,6 +1173,65 @@ void Oct_In(ursObject* gself, double in)
 	gself->CallAllPushOuts(((1.0+in)/2.0*0.125+2*0.125));
 }
 
+// Range
+
+void* Range_Constructor()
+{
+	Range_Data* self = new Range_Data;
+	self->bottom = -0.75;
+    self->top = +0.75;
+    self->k = (self->top - self->bottom)/2.0;
+    self->d = (self->top + self->bottom)/2.0;
+	return (void*)self;
+}
+
+void Range_Destructor(ursObject* gself)
+{
+	Range_Data* self = (Range_Data*)gself->objectdata;
+	delete (Range_Data*)self;
+}
+
+double Range_Tick(ursObject* gself)
+{
+	Range_Data* self = (Range_Data*)gself->objectdata;
+	double res;
+	res = gself->lastindata[0];
+	
+	res += gself->CallAllPullIns();
+	return (self->k*res+self->d);
+}
+
+double Range_Out(ursObject* gself)
+{
+	Range_Data* self = (Range_Data*)gself->objectdata;
+	return (gself->CallAllPullIns()*self->k+self->d);
+	//	return gself->lastindata[0];
+}
+
+
+void Range_In(ursObject* gself, double in)
+{
+	Range_Data* self = (Range_Data*)gself->objectdata;
+	gself->CallAllPushOuts(self->k*in+self->d);
+}
+
+void Range_Bottom(ursObject* gself, double in)
+{
+	Range_Data* self = (Range_Data*)gself->objectdata;
+	self->bottom = in;
+    self->k = (self->top - self->bottom)/2.0;
+    self->d = (self->top + self->bottom)/2.0;
+}
+
+void Range_Top(ursObject* gself, double in)
+{
+	Range_Data* self = (Range_Data*)gself->objectdata;
+	self->top = in;
+    self->k = (self->top - self->bottom)/2.0;
+    self->d = (self->top + self->bottom)/2.0;
+}
+
+// Quantization to semi-tones
 
 void* Quant_Constructor()
 {
@@ -1340,8 +1407,6 @@ float saw(float t)
 
 float rect(float t)
 {
-	float res = 0;
-	
 	if (fmod(t,2*PI)<PI)
 		return -1;
 	else
@@ -1452,7 +1517,6 @@ double Sample_Tick(ursObject* gself)
 	double out = 0;
 	if(self->playing && self->numsamples > 0)
 	{
-		int t = self->activesample;
 		if(self->samplebuffer[self->activesample]!=NULL)
 			out = self->amp*self->samplebuffer[self->activesample][self->position]/32767.0;
 		else
@@ -1835,7 +1899,8 @@ void LoopRhythm_SetBeatNow(ursObject* gself, double indata)
 
 void LoopRhythm_Pos(ursObject* gself, double indata)
 {
-	LoopRhythm_Data* self = (LoopRhythm_Data*)gself->objectdata;
+//	LoopRhythm_Data* self = (LoopRhythm_Data*)gself->objectdata;
+    // NYI
 }
 
 // CircleMap

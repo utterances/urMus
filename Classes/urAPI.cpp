@@ -80,7 +80,7 @@ urAPI_Region_t* findRegionHit(float x, float y)
 	return nil;
 }
 
-void callAllOnLeaveRegions(float x, float y)
+/*void callAllOnLeaveRegions(float x, float y)
 {
 	for(urAPI_Region_t* t=lastRegion[currentPage]; t != nil ; t=t->prev)
 	{
@@ -94,11 +94,30 @@ void callAllOnLeaveRegions(float x, float y)
 				callScript(t->OnLeave, t);
 			}
 	}
+}*/
+
+void callAllOnLeaveRegions(int nr, float* x, float* y, float* ox, float* oy)
+{
+	for(urAPI_Region_t* t=lastRegion[currentPage]; t != nil /* && t != firstRegion[currentPage] */; t=t->prev)
+	{
+		for(int i=0; i<nr; i++)
+		{
+			if(!(x[i] >= t->left && x[i] <= t->left+t->width &&
+                 y[i] >= t->bottom && y[i] <= t->bottom+t->height) && 
+			   ox[i] >= t->left && ox[i] <= t->left+t->width &&
+               oy[i] >= t->bottom && oy[i] <= t->bottom+t->height			   
+			   && t->OnLeave != 0)
+			{
+                t->entered = false;
+                callScriptWith2Args(t->OnLeave, t,x[i]-t->left,y[i]-t->bottom);
+			}
+		}
+	}
 }
 
 void callAllOnEnterLeaveRegions(int nr, float* x, float* y, float* ox, float* oy)
 {
-	bool didenter;
+//	bool didenter;
 	for(urAPI_Region_t* t=lastRegion[currentPage]; t != nil /* && t != firstRegion[currentPage] */; t=t->prev)
 	{
 		for(int i=0; i<nr; i++)
@@ -1895,14 +1914,15 @@ void removeRegion(urAPI_Region_t* region)
 void freeTexture(urAPI_Texture_t* texture)
 {
 	if(texture->backgroundTex!= NULL)
-		delete texture->backgroundTex;
+//		delete texture->backgroundTex;
+        free(texture->backgroundTex);
 //	free(texture); // GC should take care of this ... maybe
 }
 
 void freeTextLabel(urAPI_TextLabel_t* textlabel)
 {
 	if(textlabel->textlabelTex != NULL)
-		delete textlabel->textlabelTex;
+		free(textlabel->textlabelTex);
 //	delete textlabel; // GC should take care of this ... maybe
 }
 
@@ -1922,6 +1942,7 @@ int region_Free(lua_State* lua)
 	urAPI_Region_t* region = checkregion(lua,1);
 
 	freeRegion(region);
+    return 0;
 }
 
 int l_FreeAllRegions(lua_State* lua)
@@ -2315,7 +2336,7 @@ MoNet myoscnet;
 	
 void oscCallBack(osc::ReceivedMessageArgumentStream & argument_stream, void * data)
 {
-	float num;
+//	float num;
 //	argument_stream >> num;
 	callAllOnOSCMessage(argument_stream);
 }	
@@ -2401,6 +2422,7 @@ int l_NetAdvertise(lua_State* lua)
 	int port = luaL_checknumber(lua, 2);
 	
 	Net_Advertise(nsid, port);
+    return 0;
 }
 
 int l_NetFind(lua_State* lua)
@@ -2408,6 +2430,7 @@ int l_NetFind(lua_State* lua)
 	const char* nsid = luaL_checkstring(lua, 1);
 	
 	Net_Find(nsid);
+    return 0;
 }
 	
 static int audio_initialized = false;
@@ -2550,7 +2573,7 @@ int texture_SetGradientColor(lua_State* lua)
 
 int texture_Texture(lua_State* lua)
 {
-	urAPI_Texture_t* t = checktexture(lua, 1);
+//	urAPI_Texture_t* t = checktexture(lua, 1);
 	// NYI still don't know how to return user values
 	return 0;
 }
@@ -2921,6 +2944,7 @@ int texture_ClearBrush(lua_State* lua)
 	[t->backgroundTex release];
 	t->backgroundTex = nil;
 	ClearBrushTexture();
+    return 0;
 }
 
 void drawPointToTexture(urAPI_Texture_t *texture, float x, float y);
@@ -3308,8 +3332,9 @@ static const struct luaL_reg textlabelfuncs [] =
 
 int texture_gc(lua_State* lua)
 {
-	urAPI_Texture_t* region = checktexture(lua,1);
+//	urAPI_Texture_t* region = checktexture(lua,1);
 	int a = 0;
+    // NYI
 	return 0;
 }
 
@@ -3346,13 +3371,14 @@ static const struct luaL_reg texturefuncs [] =
 	{"Width", texture_Width},
 	{"Height", texture_Height},
 	{"UseCamera", texture_UseCamera},
-//	{"__gc",       texture_gc},
+	{"__gc",       texture_gc},
 	{NULL, NULL}
 };
 
 int region_gc(lua_State* lua)
 {
-	urAPI_Region_t* region = checkregion(lua,1);
+//	urAPI_Region_t* region = checkregion(lua,1);
+    // NYI
 	int a = 0;
 	return 0;
 }
@@ -3879,7 +3905,7 @@ extern double visoutdata;
 
 int flowbox_Get(lua_State *lua)
 {
-	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
+//	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
 //	float indata = luaL_checknumber(lua, 2);
 	
 	lua_pushnumber(lua, visoutdata);
@@ -3896,6 +3922,7 @@ int flowbox_AddFile(lua_State *lua)
 	{
 		Sample_AddFile(fb->object, filename);
 	}
+    return 0;
 }
 
 int flowbox_IsInstantiable(lua_State *lua)
@@ -3979,6 +4006,7 @@ static int addToPatch(ursAPI_FlowBox_t* flowbox)
 		firstFlowbox[currentPatch] = (ursAPI_FlowBox_t**)realloc(firstFlowbox[currentPatch],sizeof(ursAPI_FlowBox_t**)*numFlowBoxes[currentPatch]);
 		firstFlowbox[currentPatch][numFlowBoxes[currentPatch]-1] = flowbox;
 	}
+    return 0;
 }
 
 static void removeFlowboxLinks(ursAPI_FlowBox_t* flowbox)
@@ -4006,8 +4034,8 @@ static int l_FlowBox(lua_State* lua)
 	int idx = 1;
 	if(lua_gettop(lua)>1) // Allow for no arg construction
 	{
-		const char *flowboxtype = luaL_checkstring(lua, 1);
-		const char *flowboxName = luaL_checkstring(lua, 2);
+//		const char *flowboxtype = luaL_checkstring(lua, 1);
+//		const char *flowboxName = luaL_checkstring(lua, 2);
 		idx = 3;
 		// Backward compatibility
 	}

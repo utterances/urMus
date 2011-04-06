@@ -12,6 +12,7 @@
 #import "EAGLView.h"
 #import "urAPI.h"
 #import "Texture2d.h"
+
 #import "MachTimer.h"
 #import "urSound.h"
 #import "httpServer.h"
@@ -463,12 +464,14 @@ static EAGLSharegroup* theSharegroup = nil;
         context = [[EAGLContext alloc] 
 				   initWithAPI:kEAGLRenderingAPIOpenGLES1
 				   sharegroup:theSharegroup];
+		displaynumber = 2;
     }
     else
     {
         context = [[EAGLContext alloc]
 				   initWithAPI:kEAGLRenderingAPIOpenGLES1];
         theSharegroup = context.sharegroup;
+		displaynumber = 1;
     }
 	
     return context;
@@ -504,6 +507,32 @@ static EAGLSharegroup* theSharegroup = nil;
 
 	return self;
 }
+
+- (id)initWithFrame:(CGRect)frame {
+	if ((self = [super initWithFrame:frame])) {
+        // Get the layer
+        CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
+        
+        eaglLayer.opaque = YES;
+        eaglLayer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys:
+                                        [NSNumber numberWithBool:YES], kEAGLDrawablePropertyRetainedBacking, kEAGLColorFormatRGBA8, kEAGLDrawablePropertyColorFormat, nil];
+        
+		context = [self createContext];
+		//       context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
+        
+        if (!context || ![EAGLContext setCurrentContext:context]) {
+            [self release];
+            return nil;
+        }
+        
+        animationInterval = 1.0 / 60.0; // We look for 60 FPS
+		
+    }
+	
+	return self;
+}
+		
+		
 
 // Hard-wired screen dimension constants. This will soon be system-dependent variable!
 int SCREEN_WIDTH = 320;
@@ -721,9 +750,8 @@ void drawQuadToTexture(urAPI_Texture_t *texture, float x1, float y1, float x2, f
 		
 		static GLfloat*		vertexBuffer = NULL;
 		static NSUInteger	vertexMax = sqrt(SCREEN_HEIGHT*SCREEN_HEIGHT+SCREEN_WIDTH*SCREEN_WIDTH); //577; // Sqrt(480^2+320^2)
-		NSUInteger			vertexCount = 0,
-		count,
-		i;
+		NSUInteger			vertexCount = 0;
+//		NSUInteger			count, i;
 		
 		//Allocate vertex array buffer
 		if(vertexBuffer == NULL)
@@ -787,9 +815,9 @@ void drawEllipseToTexture(urAPI_Texture_t *texture, float x, float y, float w, f
 	else
 	{
 		
-		static GLfloat*		vertexBuffer = NULL;
-		static NSUInteger	vertexMax = sqrt(SCREEN_HEIGHT*SCREEN_HEIGHT+SCREEN_WIDTH*SCREEN_WIDTH); //577; // Sqrt(480^2+320^2)
-		NSUInteger			i;
+//		static GLfloat*		vertexBuffer = NULL;
+//		static NSUInteger	vertexMax = sqrt(SCREEN_HEIGHT*SCREEN_HEIGHT+SCREEN_WIDTH*SCREEN_WIDTH); //577; // Sqrt(480^2+320^2)
+//		NSUInteger			i;
 		
 		GLfloat vertices[720];
 		
@@ -1296,15 +1324,17 @@ void setDisplay(int s)
 
 - (void)drawView {
   
-  // eval http buffer
-  eval_buffer_exec(lua);
+	if(displaynumber == 1)
+	{
+	// eval http buffer
+		eval_buffer_exec(lua);
   
-	urs_PullVis(); // update vis data before we call events, this way we have a rate based pulling that is available in all events.
-	// Clock ourselves.
-	float elapsedtime = mytimer->elapsedSec();
-	mytimer->start();
-	callAllOnUpdate(elapsedtime); // Call lua APIs OnUpdates when we render a new region. We do this first so that stuff can still be drawn for this region.
-	
+		urs_PullVis(); // update vis data before we call events, this way we have a rate based pulling that is available in all events.
+		// Clock ourselves.
+		float elapsedtime = mytimer->elapsedSec();
+		mytimer->start();
+		callAllOnUpdate(elapsedtime); // Call lua APIs OnUpdates when we render a new region. We do this first so that stuff can still be drawn for this region.
+	}	
 	CGRect  bounds = [self bounds];
 	
     // Replace the implementation of this method to do your own custom drawing
@@ -1335,7 +1365,9 @@ void setDisplay(int s)
 	
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+
 	glOrthof(0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);
+//	glOrthof(0.0f, w, 0.0f, h, -1.0f, 1.0f);
     glMatrixMode(GL_MODELVIEW);
     glRotatef(0.0f, 0.0f, 0.0f, 1.0f);
     
@@ -1344,11 +1376,15 @@ void setDisplay(int s)
 	
 	// Render all (visible and unclipped) regions on a given page.
 	
+	CGRect screendimensions = [self bounds];
+	
+	int cw = screendimensions.size.width;
+	int ch = screendimensions.size.height;
 	for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
 	{
 		if(t->isClipping)
 		{
-			glScissor(t->clipleft,t->clipbottom,t->clipwidth,t->clipheight);
+			glScissor(t->clipleft*(float)cw/(float)SCREEN_WIDTH,t->clipbottom*(float)ch/(float)SCREEN_HEIGHT,t->clipwidth*(float)cw/(float)SCREEN_WIDTH,t->clipheight*(float)ch/(float)SCREEN_HEIGHT);
 			glEnable(GL_SCISSOR_TEST);
 		}
 		else
@@ -1544,7 +1580,6 @@ void setDisplay(int s)
 					}
 					else
 					{
-						CGSize shadowoffset = CGSizeMake(t->textlabel->shadowoffset[0],t->textlabel->shadowoffset[1]);
 						shadowColors[0] = t->textlabel->shadowcolor[0];
 						shadowColors[1] = t->textlabel->shadowcolor[1];
 						shadowColors[2] = t->textlabel->shadowcolor[2];
@@ -1659,9 +1694,10 @@ void setDisplay(int s)
 
 
 - (BOOL)createFramebuffer {
-	
 	CGRect screendimensions = [[UIScreen mainScreen] bounds];
+//	CGRect screendimensions = [self bounds];
     
+	
 	SCREEN_WIDTH = screendimensions.size.width;
 	SCREEN_HEIGHT = screendimensions.size.height;
 	HALF_SCREEN_WIDTH = SCREEN_WIDTH/2;
@@ -1926,6 +1962,8 @@ void onTouchDoubleDragUpdate(int t, int dragidx, float pos1x, float pos1y, float
 				float deltanewheight = fabs(cursorpositiony2-pos1y);
 				dragregion->width = dragtouches[dragidx].dragwidth + deltanewwidth;
 				dragregion->height = dragtouches[dragidx].dragheight + deltanewheight;
+                if(dragregion->textlabel != NULL)
+                    dragregion->textlabel->updatestring = true;
 			}
 			dragregion->right = dragregion->left + dragregion->width;
 			dragregion->top = dragregion->bottom + dragregion->height;
@@ -2267,8 +2305,7 @@ void onTouchDragEnd(int t,int touch, float posx, float posy)
 		}
 	}
 
-	callAllOnEnterLeaveRegions(arg, argcoordx, argcoordy,arg2coordx,arg2coordy);
-	
+	callAllOnLeaveRegions(arg, argcoordx, argcoordy,arg2coordx,arg2coordy);
 }
 
 - (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
@@ -2327,7 +2364,7 @@ extern EAGLView* g_glView;
 
 void Net_Send(float data)
 {
-	int8_t idata = data*128;
+//	int8_t idata = data*128;
 	//	[g_glView send:(int8_t)idata];
 }
 
@@ -2402,7 +2439,7 @@ void Net_Find(const char* nsid)
 	// If a service came online, add it to the list and update the table view if no more events are queued.
 	[service setDelegate:self];
 	[service resolveWithTimeout:10];
-	 NSString* temp = [service.name copy];	
+//	 NSString* temp = [service.name copy];	
 	[service retain];
 }	
 
@@ -2424,7 +2461,7 @@ void Net_Find(const char* nsid)
 	
 	
 - (void)netServiceDidResolveAddress:(NSNetService *)service {
-	int cnt = [[service addresses] count];
+//	int cnt = [[service addresses] count];
 	for (int i = 0; i < [[service addresses] count]; i++)
 	{
 		if ([service.name isEqual:[[UIDevice currentDevice] name]]) {

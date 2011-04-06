@@ -44,7 +44,7 @@
 - (id) initWithServerPort: (int) aPortNr andDelegate: (id<SandwichUpdateDelegate>) aDelegate;
 {
 
-	if (self = [super init])
+	if (self == [super init])
 	  {
 		  NSLog(@"SandwichUpdateListener Starting");
 		  iSocket = [[UdpServerSocket alloc] initWithPort:aPortNr ]; 

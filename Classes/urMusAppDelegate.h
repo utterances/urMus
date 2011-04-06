@@ -26,9 +26,10 @@
 //#endif
     UIWindow *window;
     EAGLView *glView;
+	EAGLView *glView2;
 
 	UIWindow *externalWindow;
-//	EAGLView *glView2;
+	UIWindow *window2;
 	NSArray *screenModes;
 	UIScreen *externalScreen;
 	ExternalDisplayViewController *externalVC;
@@ -37,7 +38,8 @@
 
 //@property (nonatomic, retain) IBOutlet UIWindow *deviceWindow;
 @property (nonatomic, retain) IBOutlet UIWindow *externalWindow;
-//@property (nonatomic, retain) IBOutlet EAGLView *glView2;	
+@property (nonatomic, retain) EAGLView *glView2;
+@property (nonatomic, retain) UIWindow *window2;
 @property (nonatomic, retain) IBOutlet UIWindow *window;
 @property (nonatomic, retain) IBOutlet EAGLView *glView;
 

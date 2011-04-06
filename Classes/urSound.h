@@ -72,7 +72,7 @@ public:
 	void RemovePushOut(int idx, urSoundIn* in);
 	void RemovePullIn(int idx, urSoundOut* out);
 	void SetCouple(int inidx, int outidx);
-	double FeedAllPullIns(int minidx = 0);
+	void FeedAllPullIns(int minidx = 0);
 	void CallAllPushOuts(double indata, int idx=0);
 	double CallAllPullIns(int idx = 0);
 
@@ -208,6 +208,16 @@ struct Gain_Data
 	double lastout;
 	double amp;
 	Gain_Data() { amp = 0.95; }
+};
+
+struct Range_Data
+{
+	double lastout;
+	double bottom;
+    double top;
+    double k;
+    double d;
+	Range_Data() { bottom = -0.75; top = 0.75; k = 0.75; d = 0.0; }
 };
 
 struct Sample_Data
@@ -406,6 +416,14 @@ void Oct_Destructor(ursObject* gself);
 double Oct_Tick(ursObject* gself);
 double Oct_Out(ursObject* gself);
 void Oct_In(ursObject* gself, double in);
+
+void* Range_Constructor();
+void Range_Destructor(ursObject* gself);
+double Range_Tick(ursObject* gself);
+double Range_Out(ursObject* gself);
+void Range_In(ursObject* gself, double in);
+void Range_Bottom(ursObject* gself, double in);
+void Range_Top(ursObject* gself, double in);
 
 void* Quant_Constructor();
 void Quant_Destructor(ursObject* gself);
