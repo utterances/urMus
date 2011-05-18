@@ -394,7 +394,6 @@ extern lua_State *lua;
 #endif
 }
 
-
 #define TEST_CAMERA
 
 static GLuint	cameraTexture= 0;

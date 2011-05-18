@@ -223,11 +223,11 @@ void callAllCameraSources(double brightness, double blueTotal, double greenTotal
 {
 	if(cameraObject)
 	{
-		cameraObject->CallAllPushOuts(brightness,1);
-		cameraObject->CallAllPushOuts(blueTotal,2);
-		cameraObject->CallAllPushOuts(greenTotal,3);
-		cameraObject->CallAllPushOuts(redTotal,4);
-		cameraObject->CallAllPushOuts(edginess,5);	
+		cameraObject->CallAllPushOuts(brightness,0);
+		cameraObject->CallAllPushOuts(blueTotal,1);
+		cameraObject->CallAllPushOuts(greenTotal,2);
+		cameraObject->CallAllPushOuts(redTotal,3);
+		cameraObject->CallAllPushOuts(edginess,4);	
 	}
 }
 
@@ -937,6 +937,8 @@ void urs_SetupObjects()
 	touchobject->AddOut("Y9", "TimeSeries", NULL, NULL, NULL); 
 	touchobject->AddOut("X10", "TimeSeries", NULL, NULL, NULL);
 	touchobject->AddOut("Y10", "TimeSeries", NULL, NULL, NULL); 
+	touchobject->AddOut("X11", "TimeSeries", NULL, NULL, NULL);
+	touchobject->AddOut("Y11", "TimeSeries", NULL, NULL, NULL); 
 	ursourceobjectlist.Append(touchobject);
 //	fileobject = new ursObject("File", NULL, NULL, 0, 1); // An file based source
 //	fileobject->AddOut("Out", "Event", NULL, NULL, NULL);

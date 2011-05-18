@@ -18,6 +18,22 @@ patchdir = "Patches"
 
 pagefile = {
 "urMus",
+"urHarp.lua",
+"urDuelNoise.lua",
+"urPipeline.lua",
+"urRotaryPhonics1.lua",
+"urRotaryPhonics2.lua",
+"urRotaryPhonics3.lua",
+"urRotaryPhonics4.lua",
+"urRotaryPhonics5.lua",
+"urRotaryPhonics6.lua",
+"urSpatialDidoo.lua",
+"urStrummer.lua",
+"urStrummerString.lua",
+"urSynesthesia.lua",
+"urTurntable.lua",
+"urTurntableOSC.lua",
+"urTurntableOSC2.lua",
 --"urAir.lua",
 --"urWater.lua",
 --"urFire.lua",
@@ -1385,12 +1401,13 @@ function RemoveRow(row)
 	
 	backdropanchor[row]:Hide()
 	backdropanchor[row]:EnableInput(false)
-	for col=1,mincol do
+	for col=1,backdropanchor[row].count do
 		celllock[row][col]:Hide()
 		celllock[row][col]:EnableInput(false)
 		cellbackdrop[row][col]:Hide()
 		cellbackdrop[row][col]:EnableInput(false)
 	end
+
 
 	for col = backdropanchor[row].count,1,-1 do
 		RecycleCell(row, col)

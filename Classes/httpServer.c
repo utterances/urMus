@@ -256,6 +256,7 @@ get_files(struct mg_connection *conn,
         char comma;
         if (first) { comma = ' '; first = 0; }
         else comma = ',';
+        if(strstr(de->d_name,"\\")==NULL) // Bandaid against chrome bug
         mg_printf(conn, "%c\"%s\"", comma, de->d_name);
       }
     }

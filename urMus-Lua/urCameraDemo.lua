@@ -96,6 +96,7 @@ function SwitchCamera(self)
 	DPrint(cam)
 	if cam == 1 then cam = 2 else cam = 1 end
 	SetActiveCamera(cam)
+    SetCameraAutoBalance(cam-1)
 end
 
 local backdrop = Region()

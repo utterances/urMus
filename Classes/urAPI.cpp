@@ -4340,6 +4340,16 @@ int l_ActiveCamera(lua_State *lua)
 	return 1;
 }
 
+int l_SetCameraAutoBalance(lua_State *lua)
+{
+    bool ab = lua_toboolean(lua,1);
+    int toggle = ab ? 1 : 0;
+    
+    [g_glView->captureManager autoWhiteBalanceAndExposure:toggle];
+    
+    return 0;
+}
+    
 int l_SetTorchFlashFrequency(lua_State *lua)
 {
 	double freq = luaL_checknumber(lua,1);
@@ -4664,7 +4674,9 @@ void l_setupAPI(lua_State *lua)
 	lua_setglobal(lua, "ActiveCamera");
 	lua_pushcfunction(lua, l_SetTorchFlashFrequency);
 	lua_setglobal(lua, "SetTorchFlashFrequency");
-	
+	lua_pushcfunction(lua, l_SetCameraAutoBalance);
+    lua_setglobal(lua, "SetCameraAutoBalance");
+    
 	lua_pushcfunction(lua, l_WriteScreenshot);
 	lua_setglobal(lua, "WriteScreenshot");
 	
