@@ -11,9 +11,6 @@ function pathselect(dirtype) {
 		return "/Documents";
 }
 
-$(document).ready( function() {
-				  });
-
 $(document).ready(function() {
   var files = $('#files'), 
       gallery_files = $('#gallery_files'),
@@ -35,6 +32,7 @@ $(document).ready(function() {
     tabMode: "shift"
   });
   
+
   $('#open_file').click(function() {
     var fl = $("#file_list").slideDown();
     files.html('<h3>Files on device:</h3>');
@@ -199,4 +197,9 @@ $(document).ready(function() {
     } 
   });
 
+  $.get('/open_file',{file:"urBlank.lua", dirtype:'root'},function(script) {
+    msg('success',"Loaded "+"urBlank.lua");
+    cm.setCode(script);                 
+    setOpenedFile("urBlank.lua");
+  });
 });

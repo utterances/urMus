@@ -58,6 +58,7 @@ pagefile = {
 "urVisDemo.lua",
 "urVisGraph.lua",
 "urCameraDemo.lua",
+"urCameraBrush.lua",
 "urTiles.lua",
 "urTiles2.lua",
 "urTurn.lua",

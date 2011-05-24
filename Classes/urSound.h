@@ -210,6 +210,13 @@ struct Gain_Data
 	Gain_Data() { amp = 0.95; }
 };
 
+struct Oct_Data
+{
+	double freq;
+	Oct_Data() { freq = 0.0; }
+};
+
+
 struct Range_Data
 {
 	double lastout;
@@ -416,6 +423,7 @@ void Oct_Destructor(ursObject* gself);
 double Oct_Tick(ursObject* gself);
 double Oct_Out(ursObject* gself);
 void Oct_In(ursObject* gself, double in);
+void Oct_Freq(ursObject* gself, double in);
 
 void* Range_Constructor();
 void Range_Destructor(ursObject* gself);

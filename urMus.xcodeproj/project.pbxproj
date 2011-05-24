@@ -272,6 +272,8 @@
 		7778B2F90FED34FB00F491D3 /* urAPI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7778B2F80FED34FB00F491D3 /* urAPI.cpp */; };
 		777E0FC20FF19903005882D0 /* MachTimer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 777E0FC10FF19903005882D0 /* MachTimer.cpp */; };
 		777E5AC91057F5EB007FD908 /* RIOAudioUnitLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 777E5AC81057F5EB007FD908 /* RIOAudioUnitLayer.mm */; };
+		77830A3B138B1AF10074A3FB /* urCameraBrush.lua in Sources */ = {isa = PBXBuildFile; fileRef = 77830A3A138B1AF10074A3FB /* urCameraBrush.lua */; };
+		77830A3C138B1B070074A3FB /* urCameraBrush.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77830A3A138B1AF10074A3FB /* urCameraBrush.lua */; };
 		778D80011275CCD500C161E1 /* smoke1 copy.png in Resources */ = {isa = PBXBuildFile; fileRef = 778D80001275CCD500C161E1 /* smoke1 copy.png */; };
 		778DBDA912B07DA200069B82 /* BLVideoOut.m in Sources */ = {isa = PBXBuildFile; fileRef = 778DBDA712B07DA200069B82 /* BLVideoOut.m */; };
 		778DBF3612B08FED00069B82 /* urBall-display.lua in Sources */ = {isa = PBXBuildFile; fileRef = 778DBF3512B08FED00069B82 /* urBall-display.lua */; };
@@ -1015,6 +1017,7 @@
 		777E0FC10FF19903005882D0 /* MachTimer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MachTimer.cpp; sourceTree = "<group>"; };
 		777E5AC71057F5EB007FD908 /* RIOAudioUnitLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RIOAudioUnitLayer.h; path = RIOAudioUnitLayer/RIOAudioUnitLayer.h; sourceTree = "<group>"; };
 		777E5AC81057F5EB007FD908 /* RIOAudioUnitLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RIOAudioUnitLayer.mm; path = RIOAudioUnitLayer/RIOAudioUnitLayer.mm; sourceTree = "<group>"; };
+		77830A3A138B1AF10074A3FB /* urCameraBrush.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urCameraBrush.lua; path = "urMus-Lua/urCameraBrush.lua"; sourceTree = "<group>"; };
 		778D80001275CCD500C161E1 /* smoke1 copy.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "smoke1 copy.png"; path = "Textures/smoke1 copy.png"; sourceTree = "<group>"; };
 		778DBDA712B07DA200069B82 /* BLVideoOut.m */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = BLVideoOut.m; sourceTree = "<group>"; };
 		778DBDA812B07DA200069B82 /* BLVideoOut.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; path = BLVideoOut.h; sourceTree = "<group>"; };
@@ -2139,6 +2142,7 @@
 		77B9FC5C1194AEF9006D5007 /* urMus-lua */ = {
 			isa = PBXGroup;
 			children = (
+				77830A3A138B1AF10074A3FB /* urCameraBrush.lua */,
 				77B03496135B11ED00E0710D /* urTurntableOSC2.lua */,
 				7762D945135387AF00723C3F /* urDuelNoise.lua */,
 				776913E8134E1605003C1643 /* urStrummerString.lua */,
@@ -2655,6 +2659,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				77830A3C138B1B070074A3FB /* urCameraBrush.lua in Resources */,
 				7762D94F13538C3000723C3F /* urDuelNoise.lua in Resources */,
 				77691404134E1889003C1643 /* urStrummerString.lua in Resources */,
 				77691405134E188A003C1643 /* urStrummer.lua in Resources */,
@@ -3379,6 +3384,7 @@
 				77691403134E1605003C1643 /* urHarp.lua in Sources */,
 				7762D946135387AF00723C3F /* urDuelNoise.lua in Sources */,
 				77B03497135B11ED00E0710D /* urTurntableOSC2.lua in Sources */,
+				77830A3B138B1AF10074A3FB /* urCameraBrush.lua in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -113,6 +113,8 @@ Note that setting the view non-opaque will only work if the EAGL surface has an 
 @property(nonatomic,retain) NSNetService* netService;
 @property(retain) CaptureSessionManager *captureManager;
 
+//- (id)initWithFrame:(CGRect)frame andContextSharegroup:(EAGLSharegroup*)passedSharegroup;
+- (id)initWithFrame:(CGRect)frame andContextSharegroup:(EAGLContext*)passedContext;
 - (void)startAnimation;
 - (void)stopAnimation;
 - (void)drawView;

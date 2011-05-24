@@ -585,11 +585,12 @@ void urSoundAtoms_Setup()
 	object->SetCouple(0,0);
 	urmanipulatorobjectlist.Append(object);
 
-	object = new ursObject("Hold", NULL, NULL,1,1);
+/*	object = new ursObject("Hold", NULL, NULL,1,1);
 	object->AddOut("Out", "Generic", Hold_Tick, Hold_Out, NULL);
 	object->AddIn("In", "Generic", Hold_In);
 	object->SetCouple(0,0);
 	urmanipulatorobjectlist.Append(object);
+*/
 	
 	object = new ursObject("SLP", NULL, NULL,1,1);
 	object->AddOut("Out", "Generic", SLP_Tick, SLP_Out, NULL);

@@ -2997,6 +2997,8 @@ int texture_BrushSize(lua_State* lua)
 	return 1;
 }
 
+
+
 int texture_UseCamera(lua_State* lua)
 {
 	urAPI_Texture_t* t = checktexture(lua, 1);
@@ -3008,14 +3010,21 @@ int texture_UseCamera(lua_State* lua)
 }
 	
 void SetBrushTexture(Texture2D* t);
-
+void SetBrushAsCamera(bool asdf);
+    
 int region_UseAsBrush(lua_State* lua)
 {
 	urAPI_Region_t* t = checkregion(lua, 1);
-
-	if(t->texture->backgroundTex == nil && t->texture->texturepath != TEXTURE_SOLID)
+    
+    if (t->texture->usecamera) {
+        SetBrushAsCamera(true);
+    } else if(t->texture->backgroundTex == nil && t->texture->texturepath != TEXTURE_SOLID) {
 		instantiateAllTextures(t);
-	SetBrushTexture(t->texture->backgroundTex);
+        SetBrushAsCamera(false);
+    }
+    
+    SetBrushTexture(t->texture->backgroundTex);
+
 
 	return 0;
 }

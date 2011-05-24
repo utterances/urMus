@@ -397,6 +397,7 @@ extern lua_State *lua;
 #define TEST_CAMERA
 
 static GLuint	cameraTexture= 0;
+static bool cameraBeingUsedAsBrush = false;
 
 - (void)newCameraTextureForDisplay:(GLuint)texture {
 
@@ -532,6 +533,39 @@ static EAGLSharegroup* theSharegroup = nil;
 }
 		
 		
+- (id)initWithFrame:(CGRect)frame andContextSharegroup:(EAGLContext*)passedContext {
+    
+    NSLog(@"Special initWithFrame:andContextSharegroup: call");
+    
+	if ((self = [super initWithFrame:frame])) {
+        // Get the layer
+        CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
+        
+        eaglLayer.opaque = YES;
+        eaglLayer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys:
+                                        [NSNumber numberWithBool:YES], kEAGLDrawablePropertyRetainedBacking, kEAGLColorFormatRGBA8, kEAGLDrawablePropertyColorFormat, nil];
+        
+		//context = passedContext;
+		//       context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
+        
+//        context = [[EAGLContext alloc] 
+//				   initWithAPI:kEAGLRenderingAPIOpenGLES1
+//				   sharegroup:passedContext.sharegroup];
+        context = passedContext;
+		displaynumber = 2;
+        
+        if (!context || ![EAGLContext setCurrentContext:context]) {
+            [self release];
+            return nil;
+        }
+        
+        animationInterval = 1.0 / 60.0; // We look for 60 FPS
+		
+    }
+	
+	return self;
+}
+
 
 // Hard-wired screen dimension constants. This will soon be system-dependent variable!
 int SCREEN_WIDTH = 320;
@@ -566,6 +600,10 @@ static float brushsize = 1;
 
 // Brush handling
 
+void SetBrushAsCamera(bool asdf) {
+    cameraBeingUsedAsBrush = asdf;
+}
+
 void SetBrushTexture(Texture2D * texture)
 {
 	brushtexture = texture;
@@ -590,14 +628,20 @@ float BrushSize()
 
 void SetupBrush()
 {
-	if(brushtexture != NULL)
+	if(brushtexture != NULL || cameraBeingUsedAsBrush)
 	{
-		glBindTexture(GL_TEXTURE_2D, brushtexture.name);
 
+        if (cameraBeingUsedAsBrush) {
+            glBindTexture(GL_TEXTURE_2D, cameraTexture);
+        } else {
+            glBindTexture(GL_TEXTURE_2D, brushtexture.name);
+        }
+        
 		glDisable(GL_DITHER);
 		glEnable(GL_TEXTURE_2D);
 		glEnable(GL_BLEND);
 //		glDisable(GL_BLEND);
+        
 		// Make the current material colour track the current color
 //		glEnable( GL_COLOR_MATERIAL );
 		// Multiply the texture colour by the material colour.
@@ -632,8 +676,10 @@ void SetupBrush()
 	}	
 	else
 	{
+		glEnable(GL_DITHER);
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_BLEND);
+        glDisable(GL_POINT_SPRITE_OES);
 	}
 	glPointSize(brushsize);
 }
@@ -723,7 +769,7 @@ void drawQuadToTexture(urAPI_Texture_t *texture, float x1, float y1, float x2, f
 	glDisableClientState(GL_COLOR_ARRAY);
 	glColor4ub(texture->texturebrushcolor[0], texture->texturebrushcolor[1], texture->texturebrushcolor[2], texture->texturebrushcolor[3]);		
 
-	if(brushtexture==NULL)
+	if(brushtexture==NULL && !cameraBeingUsedAsBrush)
 	{
 		static GLfloat		vertexBuffer[8];
 		
@@ -793,7 +839,7 @@ void drawEllipseToTexture(urAPI_Texture_t *texture, float x, float y, float w, f
 	glDisableClientState(GL_COLOR_ARRAY);
 	glColor4ub(texture->texturebrushcolor[0], texture->texturebrushcolor[1], texture->texturebrushcolor[2], texture->texturebrushcolor[3]);		
 
-	if(brushtexture==NULL)
+	if(brushtexture==NULL && !cameraBeingUsedAsBrush)
 	{
 		GLfloat vertices[720];
 	
@@ -858,7 +904,7 @@ void drawLineToTexture(urAPI_Texture_t *texture, float startx, float starty, flo
 	SetupBrush();
 
 //	if(bgtexture==NULL)
-	if(brushtexture==NULL)
+	if(brushtexture==NULL && !cameraBeingUsedAsBrush)
 	{
 		static GLfloat		vertexBuffer[4];
 		
@@ -911,6 +957,7 @@ void drawLineToTexture(urAPI_Texture_t *texture, float startx, float starty, flo
 	
 	// unbind frame buffer
 	glBindFramebufferOES(GL_FRAMEBUFFER_OES, 0);
+    glDisable(GL_POINT_SPRITE_OES);
 }
 
 // Clear a texture with a given RGB color
@@ -1485,7 +1532,7 @@ void setDisplay(int s)
 						break;
 				}
 
-				if(t->texture->backgroundTex)
+				if(t->texture->backgroundTex || t->texture->usecamera)
 				{
 					glEnable(GL_TEXTURE_2D);
 

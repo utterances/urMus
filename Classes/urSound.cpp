@@ -1002,10 +1002,10 @@ void urs_SetupObjects()
 	
 	urSoundAtoms_Setup();
 	
-	object = new ursObject("Oct", Oct_Constructor, Oct_Destructor,1,1);
+	object = new ursObject("Oct", Oct_Constructor, Oct_Destructor,2,1);
 	object->AddOut("Out", "Generic", Oct_Out, Oct_Tick, NULL);
 	object->AddIn("In", "Generic", Oct_In);
-//	object->AddIn("Base", "Frequency", Oct_Oct);
+    object->AddIn("Freq", "Frequency", Oct_Freq);
 	object->SetCouple(0,0);
 	urmanipulatorobjectlist.Append(object);
 	
@@ -1147,32 +1147,46 @@ void Pull_In(ursObject* gself, double in)
 
 void* Oct_Constructor()
 {
-	return NULL;
+	Oct_Data* self = new Oct_Data;
+	self->freq = 0.0;
+	return (void*)self;
 }
 
 void Oct_Destructor(ursObject* gself)
 {
+	Oct_Data* self = (Oct_Data*)gself->objectdata;
+	delete (Oct_Data*)self;
 }
 
 double Oct_Tick(ursObject* gself)
 {
+	Oct_Data* self = (Oct_Data*)gself->objectdata;
 	double res;
 	res = gself->lastindata[0];
 	
 	res += gself->CallAllPullIns();
-	return ((1.0+res)/2.0*0.125*2);
+	return ((1.0+res)/2.0*0.125*2+self->freq);
 }
 
 double Oct_Out(ursObject* gself)
 {
-	return ((1.0+gself->CallAllPullIns())/2.0*0.125*2);
+	Oct_Data* self = (Oct_Data*)gself->objectdata;
+	return ((1.0+gself->CallAllPullIns())/2.0*0.125*2+self->freq);
 	//	return gself->lastindata[0];
 }
 
 
 void Oct_In(ursObject* gself, double in)
 {
-	gself->CallAllPushOuts(((1.0+in)/2.0*0.125+2*0.125));
+	Oct_Data* self = (Oct_Data*)gself->objectdata;
+	gself->CallAllPushOuts(((1.0+in)/2.0*0.125*2+self->freq));
+}
+
+void Oct_Freq(ursObject* gself, double in)
+{
+	Oct_Data* self = (Oct_Data*)gself->objectdata;
+    self->freq = in;
+    
 }
 
 // Range
