@@ -28,6 +28,7 @@ static float pressure[4] = {0,0,0,0};
 #define USE_DEPTH_BUFFER 0
 
 extern int currentPage;
+extern int currentExternalPage;
 extern urAPI_Region_t* firstRegion[];
 extern urAPI_Region_t* lastRegion[];
 
@@ -1426,7 +1427,14 @@ void setDisplay(int s)
 	
 	int cw = screendimensions.size.width;
 	int ch = screendimensions.size.height;
-	for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
+    int page;
+    
+    if (displaynumber == 1)
+        page = currentPage;
+    else
+        page = currentExternalPage;
+    
+	for(urAPI_Region_t* t=firstRegion[page]; t != nil; t=t->next)
 	{
 		if(t->isClipping)
 		{

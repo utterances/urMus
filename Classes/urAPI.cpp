@@ -30,7 +30,10 @@ lua_State *lua;
 #define MAX_PAGES 30
 #define MAX_PATCHES 30
 
-int currentPage;
+int currentPage = 0;
+int currentExternalPage = 0;
+bool linkExternal = true;
+
 urAPI_Region_t* firstRegion[MAX_PAGES] = {nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil};
 urAPI_Region_t* lastRegion[MAX_PAGES] = {nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil};
 int numRegions[MAX_PAGES] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -4290,6 +4293,9 @@ int l_SetPage(lua_State *lua)
 		callAllOnPageLeft(num-1);
 		oldcurrent = currentPage;
 		currentPage = num-1;
+        if(linkExternal)
+            currentExternalPage = currentPage;
+        
 		callAllOnPageEntered(oldcurrent);
 	}
 	else
@@ -4300,6 +4306,24 @@ int l_SetPage(lua_State *lua)
 	return 0;
 }
 
+int l_DisplayExternalPage(lua_State *lua)
+{
+ 	int num = luaL_checknumber(lua,1);
+    currentExternalPage = num-1;
+    linkExternal = false;
+    return 0;
+}       
+
+int l_LinkExternalDisplay(lua_State *lua)
+{
+    bool link = lua_toboolean(lua,1);
+    linkExternal = link;
+    
+    if(link) 
+        currentExternalPage = currentPage;
+    return 0;
+}
+    
 #ifdef DISPLAY_CONTROL
 int l_NumDisplays(lua_State *lua)
 {
@@ -4656,6 +4680,10 @@ void l_setupAPI(lua_State *lua)
 	lua_setglobal(lua, "Page");
 	lua_pushcfunction(lua, l_SetPage);
 	lua_setglobal(lua, "SetPage");
+	lua_pushcfunction(lua, l_DisplayExternalPage);
+	lua_setglobal(lua, "DisplayExternalPage");
+	lua_pushcfunction(lua, l_LinkExternalDisplay);
+	lua_setglobal(lua, "LinkExternalDisplay");
 	
 #ifdef SOAR_SUPPORT_OLD
 	lua_pushcfunction(lua, l_SoarCreateID);

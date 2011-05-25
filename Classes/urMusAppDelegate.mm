@@ -14,24 +14,6 @@
 #include "httpServer.h"
 #import <QuartzCore/QuartzCore.h>
 
-//#define SLEEPER
-
-// This enables video projector output. It's not official API hence not safe for app store.
-//#define PROJECTOR_VIDEO
-//
-//#define NEW_PROJECTOR_VIDEO
-//#define FINAL_PROJECTOR_VIDEO
-#define BL_PROJECTOR_VIDEO
-
-// Note: Also check ipod define in TvOutManager.mm
-
-#ifdef NEW_PROJECTOR_VIDEO
-#import "TVOutManager.h"
-#endif
-
-#ifdef BL_PROJECTOR_VIDEO
-//#import "BLVideoOut.h"
-#endif
 
 #ifdef SANDWICH_SUPPORT
 #import "SandwichUpdateListener.h"
@@ -45,13 +27,7 @@
 @synthesize window2;
 @synthesize glView2;
 @synthesize externalWindow;
-
-#ifdef FINAL_PROJECTOR_VIDEO
-//@synthesize deviceWindow;
-@synthesize externalWindow;
-//@synthesize glView2;
-#endif
-
+@synthesize extScreen;
 
 // Make EAGLview global so lua interface can grab it without breaking a leg over IMP
 EAGLView* g_glView;
@@ -60,76 +36,75 @@ EAGLView* g_glView;
 extern std::string errorstr;
 extern bool newerror;
 
-//------------------------------------------------------------------------------
-// Application controls
-//------------------------------------------------------------------------------
-
-#ifdef FINAL_PROJECTOR_VIDEO
-/*- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
-{
-	UIScreenMode *desiredMode = [screenModes objectAtIndex:buttonIndex];
-//	[self log:[NSString stringWithFormat:@"Setting mode: %@", desiredMode]];
-	externalScreen.currentMode = desiredMode;
-	
-//	[self log:@"Assigning externalWindow to externalScreen."];
-	externalWindow = [[UIWindow alloc] init];
-//	[externalWindow addSubview:g_glView];
-	externalWindow.screen = externalScreen;
-	
-	[screenModes release];
-	[externalScreen release];
-	
-	CGRect rect = CGRectZero;
-	rect.size = desiredMode.size;
-	externalWindow.frame = rect;
-	externalWindow.clipsToBounds = YES;
-	
-//	[self log:@"Displaying externalWindow on externalScreen."];
-	externalWindow.hidden = NO;
-	[externalWindow makeKeyAndVisible];
-}
-*/
-
-- (void)screenDidConnect:(NSNotification*)notification
-{
-	externalScreen = [notification object];
-	NSLog(@"Screen %@ has connected", externalScreen);
-	
-	NSArray* availableModes = externalScreen.availableModes;
-	UIScreenMode* screenMode = nil;
-	
-	for (int sm = 0; sm < availableModes.count; ++sm)
-	{
-		screenMode = [availableModes objectAtIndex:sm];
-		
-		if (screenMode.size.width != 0 && screenMode.size.height != 0)
-		{
-			// This mode looks like something!
-			externalScreen.currentMode = screenMode;
-		}
-	}		
-}
-
-- (void) screenDidChange:(NSNotification*)notification
-{
-	externalScreen = [notification object];
-	NSLog(@"Screen %@ has changed resolution", externalScreen);
-	
-	const CGSize screenSize = externalScreen.currentMode.size;
-	CGRect windowFrame = CGRectMake(0, 0, screenSize.width, screenSize.height);
-	UIWindow* window = [[UIWindow alloc] initWithFrame:windowFrame];
-	
-	window.screen = externalScreen;
-	[window makeKeyAndVisible];
-	
-}
-#endif
-
-
 extern int SCREEN_WIDTH;
 extern int SCREEN_HEIGHT;
 
+
+- (void)screenDidChange:(NSNotification *)notification
+{
+    
+	NSArray			*screens;
+	
+	// Log the current screens and display modes
+	screens = [UIScreen screens];
+	
+    NSLog(@"1");
+	NSUInteger screenCount = [screens count];
+	
+	if (screenCount > 1) {
+
+		// Select first external screen
+		self.extScreen = [screens objectAtIndex:1];
+
+        if (externalWindow == nil || !CGRectEqualToRect(externalWindow.bounds, [extScreen bounds])) {
+           
+            externalWindow = [[UIWindow alloc] initWithFrame:[extScreen bounds]];
+           
+            externalWindow.screen = extScreen;
+             
+            // Control the size of the display here
+            //glView2 = [[EAGLView alloc] initWithFrame:[externalWindow frame] andContextSharegroup:glView.context];
+            glView2 = [[EAGLView alloc] initWithFrame:[[screens objectAtIndex:0] bounds] andContextSharegroup:glView.context];
+            [externalWindow addSubview:glView2];
+            
+            
+            glView.captureManager.delegateTwo = glView2;
+            [glView.captureManager informViewsOfCameraTexture];
+            
+            [glView2 startAnimation];
+            [glView2 drawView];
+            
+            [externalWindow makeKeyAndVisible];
+
+        }
+        
+    } else {
+        
+		// Release external screen and window
+		self.extScreen = nil;
+		
+		self.externalWindow = nil;
+        
+        glView.captureManager.delegateTwo = nil;
+        
+    }
+}
+
+
+
 - (void)applicationDidFinishLaunching:(UIApplication *)application {
+    
+    // Register for screen connect and disconnect notifications.
+	[[NSNotificationCenter defaultCenter] addObserver:self
+											 selector:@selector(screenDidChange:)
+												 name:UIScreenDidConnectNotification 
+											   object:nil];
+	
+	[[NSNotificationCenter defaultCenter] addObserver:self
+											 selector:@selector(screenDidChange:)
+												 name:UIScreenDidDisconnectNotification 
+											   object:nil];
+
     
 	g_glView = glView;
 	/* Declare a Lua State, open the Lua State and load the libraries (see above). */
@@ -138,87 +113,8 @@ extern int SCREEN_HEIGHT;
 	luaopen_lfs (lua); // Added external luafilesystem, runs under lua's open license
 	l_setupAPI(lua);
 
-//	[[UIApplication] sharedApplication] startTVOut]; // This enables that the video data is send to the AV out for projection (it's a mirror)
-#ifdef PROJECTOR_VIDEO
-	[application startTVOut]; // This enables that the video data is send to the AV out for projection (it's a mirror)
-#endif
 
-#ifdef NEW_PROJECTOR_VIDEO
-	[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(screenDidConnectNotification:) name: UIScreenDidConnectNotification object: nil];
-	[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(screenDidDisconnectNotification:) name: UIScreenDidDisconnectNotification object: nil];
-	[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(screenModeDidChangeNotification:) name: UIScreenModeDidChangeNotification object: nil];
 
-	[[TVOutManager sharedInstance] startTVOut];
-#endif
-	
-#ifdef FINAL_PROJECTOR_VIDEO
-	// Check for external screen.
-	if ([[UIScreen screens] count] > 1) {
-//		[self log:@"Found an external screen."];
-		
-		glView->current_display = 0;
-		for (int s = 0; s < [[UIScreen screens] count]; ++s)
-		{
-			UIScreen* screen = [[UIScreen screens] objectAtIndex:s];
-			if (screen != UIScreen.mainScreen)
-			{
-				NSLog(@"external screen %@ detected.", screen);
-				externalScreen = screen;
-				glView->current_display = s;
-			}
-		}
-		
-		glView->max_displays = [[UIScreen screens] count];
-		glView->current_display = 0;
-		
-		[[NSNotificationCenter defaultCenter] 
-		 addObserver:self
-		 selector:@selector(screenDidConnect:)
-		 name:UIScreenDidConnectNotification object:nil];
-		
-		[[NSNotificationCenter defaultCenter] 
-		 addObserver:self
-		 selector:@selector(screenDidChange:)
-		 name:UIScreenModeDidChangeNotification object:nil];
-		
-		
-		// Internal display is 0, external is 1.
-		externalScreen = [[[UIScreen screens] objectAtIndex:1] retain];
-//		[self log:[NSString stringWithFormat:@"External screen: %@", externalScreen]];
-		
-		screenModes = [externalScreen.availableModes retain];
-//		[self log:[NSString stringWithFormat:@"Available modes: %@", screenModes]];
-		
-		// Allow user to choose from available screen-modes (pixel-sizes).
-		UIAlertView *alert = [[[UIAlertView alloc] initWithTitle:@"External Display Size" 
-														 message:@"Choose a size for the external display." 
-														delegate:self 
-											   cancelButtonTitle:nil 
-											   otherButtonTitles:nil] autorelease];
-		for (UIScreenMode *mode in screenModes) {
-			CGSize modeScreenSize = mode.size;
-			[alert addButtonWithTitle:[NSString stringWithFormat:@"%.0f x %.0f pixels", modeScreenSize.width, modeScreenSize.height]];
-		}
-		[alert show];
-		
-	} else {
-//		[self log:@"External screen not found."];
-	}
-#endif
-	
-#ifdef BL_PROJECTOR_VIDEO
-	[BLVideoOut sharedVideoOut].delegate = self;
-	if ([BLVideoOut sharedVideoOut].extScreenActive == YES)
-	{
-//		window2 = [glView superview];
-		glView2 = [[EAGLView alloc] initWithFrame:[BLVideoOut sharedVideoOut].extWindow.screen.applicationFrame];
-//		glView2 = [[EAGLView alloc] initWithFrame:window2.screen.applicationFrame];
-//		[glView removeFromSuperview];
-//		[window2 addSubview:glView2];
-		[[BLVideoOut sharedVideoOut].extWindow addSubview:glView2];
-	}
-#endif
-	
 #ifdef SANDWICH_SUPPORT
 	// init SandwichUpdateListener
 //	NSLog(@"Delegate: Starting Listener...");
@@ -237,46 +133,18 @@ extern int SCREEN_HEIGHT;
 	
 	[glView startAnimation];
 	[glView drawView];
-#ifdef BL_PROJECTOR_VIDEO
-	if ([BLVideoOut sharedVideoOut].canProvideVideoOut == YES)
-	{
-		[[BLVideoOut sharedVideoOut].extWindow makeKeyAndVisible];
-		[glView2 startAnimation];
-		[glView2 drawView];
-	}
-#endif
+    
+    // Catches a launch with two screens and sets reasonable default values otherwise
+    [self screenDidChange:nil];
+    
 #ifdef EARLY_LAUNCH
 	NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
 #ifndef SLEEPER
-#ifdef BL_PROJECTOR_VIDEO
-	NSString *filePath;
-	if ([BLVideoOut sharedVideoOut].extScreenActive == YES)
-	{
-	filePath = [resourcePath stringByAppendingPathComponent:@"urMus.lua"];
-//	filePath = [resourcePath stringByAppendingPathComponent:@"urCameraDemo.lua"];
-#ifdef BL_PERFORMANCE
-	filePath = [resourcePath stringByAppendingPathComponent:@"urBall-display.lua"];
-#endif
-//	glView.transform = CGAffineTransformRotate(glView.transform, M_PI * 1.5);
-//	CGRect screendimensions;
-//	screendimensions = [[BLVideoOut sharedVideoOut].extWindow bounds];
-//	float NSCREEN_WIDTH = screendimensions.size.width;
-//	float NSCREEN_HEIGHT = screendimensions.size.height;
-//	glView.transform = CGAffineTransformScale(glView.transform, NSCREEN_HEIGHT/(float)SCREEN_HEIGHT, NSCREEN_WIDTH/(float)SCREEN_WIDTH);
-	
-	}
-	else
-		
-	{
-		filePath = [resourcePath stringByAppendingPathComponent:@"urMus.lua"];
-	}
-#else
 	NSString *filePath = [resourcePath stringByAppendingPathComponent:@"urMus.lua"];
-#endif
-	
 #else
 	NSString *filePath = [resourcePath stringByAppendingPathComponent:@"urSleeperLaunch.lua"];
 #endif
+    
 	NSArray *paths;
 	paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
 	NSString *documentPath;
@@ -333,105 +201,8 @@ extern int SCREEN_HEIGHT;
 	[window release];
 	[glView release];
 	[super dealloc];
-#ifdef BL_PROJECTOR_VIDEO
-	[BLVideoOut shutdown];
-#endif
-}
 
-#pragma mark Notifications
-
--(void) screenDidConnectNotification: (NSNotification*) notification
-{
-//	infoLabel.text = [NSString stringWithFormat: @"Screen connected: %@", [[notification object] description]];
 }
-
--(void) screenDidDisconnectNotification: (NSNotification*) notification
-{
-//	infoLabel.text = [NSString stringWithFormat: @"Screen disconnected: %@", [[notification object] description]];
-}
-
--(void) screenModeDidChangeNotification: (NSNotification*) notification
-{
-//	infoLabel.text = [NSString stringWithFormat: @"Screen mode changed: %@", [[notification object] description]];
-}
-
-- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
-{
-	UIScreenMode *desiredMode = [screenModes objectAtIndex:buttonIndex];
-	externalScreen.currentMode = desiredMode;
-	externalWindow.screen = externalScreen;
-	
-	[screenModes release];
-	[externalScreen release];
-	
-	CGRect rect = CGRectZero;
-	rect.size = desiredMode.size;
-	externalWindow.frame = rect;
-	externalWindow.clipsToBounds = YES;
-	
-	externalWindow.hidden = NO;
-	[externalWindow makeKeyAndVisible];
-	
-	externalVC = [[ExternalDisplayViewController alloc] initWithNibName:@"ExternalDisplayViewController" bundle:nil];
-	CGRect frame = [externalScreen applicationFrame];
-	switch(externalVC.interfaceOrientation){
-		case UIInterfaceOrientationPortrait:
-		case UIInterfaceOrientationPortraitUpsideDown:
-			[externalVC.view setFrame:frame];
-			break;
-		case UIInterfaceOrientationLandscapeLeft:
-		case UIInterfaceOrientationLandscapeRight:
-			[externalVC.view setFrame:CGRectMake(frame.origin.x, frame.origin.y, frame.size.height, frame.size.width)];
-			break;
-	}
-	
-	[externalWindow addSubview:externalVC.view];
-	NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:0.25
-													  target:self selector:@selector(takeCapture:)
-													userInfo:nil repeats:YES];
-	self.repeatingTimer = timer;
-}
-
-- (void) takeCapture:(NSTimer*)theTimer{
-	UIView *mainView = [window.subviews objectAtIndex:0];
-	
-	if (mainView) {
-		UIGraphicsBeginImageContext(mainView.frame.size);
-		[mainView.layer renderInContext:UIGraphicsGetCurrentContext()];
-		UIImage *viewImage = UIGraphicsGetImageFromCurrentImageContext();
-		
-		[externalVC.imgView setImage:viewImage];
-		UIGraphicsEndImageContext();
-	}
-	
-}
-
-#ifdef BL_PROJECTOR_VIDEO
-#pragma mark -
-#pragma mark Video out stuff
-																						  
-																						  
-																						  
--(void)screenDidConnect:(NSArray*)screens toWindow:(UIWindow*)_window 
-{	
-	[_window setBackgroundColor:[UIColor yellowColor]];
-}
-																						  
-																						  
--(void)screenDidDisconnect:(NSArray*)screens fromWindow:(UIWindow*)_window 
-{
-}
-																						  
-// let's just cycle the color here, to show something happening.
-float hue = 0;
--(void)displayLink:(CADisplayLink*)dispLink forWindow:(UIWindow*)_window 
-{
-//	hue += 0.01;
-//	if( hue>1.0) hue=0.0;
-//	UIColor * bgColor = [UIColor colorWithHue:hue saturation:1.0 brightness:1.0 alpha:1.0];
-//	[_window setBackgroundColor:bgColor];
-}
-#endif																							  
 
 
 @end

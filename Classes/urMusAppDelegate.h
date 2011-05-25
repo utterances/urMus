@@ -31,7 +31,8 @@
 	UIWindow *externalWindow;
 	UIWindow *window2;
 	NSArray *screenModes;
-	UIScreen *externalScreen;
+    UIScreen *extScreen;
+
 	ExternalDisplayViewController *externalVC;
 //	NSTimer *repeatingTimer;
 }
@@ -42,10 +43,10 @@
 @property (nonatomic, retain) UIWindow *window2;
 @property (nonatomic, retain) IBOutlet UIWindow *window;
 @property (nonatomic, retain) IBOutlet EAGLView *glView;
-
+@property (nonatomic, retain) UIScreen *extScreen;
 @property (nonatomic, retain) NSTimer *repeatingTimer;
 
-- (void) takeCapture:(NSTimer*)theTimer;
+
 	
 #ifdef SANDWICH_SUPPORT
 - (void) rearTouchUpdate: (SandwichEventManager * ) sender;

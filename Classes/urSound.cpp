@@ -967,7 +967,7 @@ void urs_SetupObjects()
 	object->SetCouple(0,0);
 	urmanipulatorobjectlist.Append(object);
 	
-	object = new ursObject("3-Dist", ThreeDist_Constructor, ThreeDist_Destructor,4,1);
+	object = new ursObject("Dist3", ThreeDist_Constructor, ThreeDist_Destructor,4,1);
 	object->AddOut("WaveForm", "TimeSeries", ThreeDist_Tick, ThreeDist_Out, NULL);
 	object->AddIn("In1", "TimeSeries", ThreeDist_In1);
 	object->AddIn("In2", "TimeSeries", ThreeDist_In2);
@@ -1081,13 +1081,14 @@ void urs_SetupObjects()
 	object->AddIn("Time", "Time", CircleMap_SetPhase);
 	urmanipulatorobjectlist.Append(object);
 
-	object = new ursObject("OWF", OWF_Constructor, OWF_Destructor,4,1);
+/*	object = new ursObject("OWF", OWF_Constructor, OWF_Destructor,4,1);
 	object->AddOut("WaveForm", "TimeSeries", OWF_Tick, OWF_Out, NULL);
 	object->AddIn("Freq", "Frequency", OWF_SetFreq);
 	object->AddIn("Amp", "Amplitude", OWF_SetAmp);
 	object->AddIn("SRate", "Rate", OWF_SetRate);
 	object->AddIn("Time", "Time", OWF_SetPhase);
 	urmanipulatorobjectlist.Append(object);
+*/
 	
 	dacobject = new ursObject("Dac", NULL, NULL, 1, 0, true);
 	dacobject->AddIn("In", "TimeSeries", Dac_In);
@@ -1105,10 +1106,10 @@ void urs_SetupObjects()
 //	drainobject->AddIn("In", "TimeSeries", Drain_In); // A rate based drain
 //	ursinkobjectlist.Append(drainobject);
 	
-	pullobject = new ursObject("Pull", NULL, NULL, 1, 0);
+/*	pullobject = new ursObject("Pull", NULL, NULL, 1, 0);
 	pullobject->AddIn("In", "Event", Pull_In); // A event based drain ("bang" drain in PD parlance)
 	ursinkobjectlist.Append(pullobject);
-
+*/
 #ifdef LOAD_STK_OBJECTS
 	urSTK_Setup();
 #endif
@@ -2159,6 +2160,7 @@ void Tuner_In(ursObject* gself, double indata)
 		moved=moved-(int)moved;
 		//gself->CallAllPushOuts(mantissa);
 		self->lastout=(0.29225+moved*12*0.01041);
+        gself->CallAllPushOuts(self->lastout);
 	}
 }
 

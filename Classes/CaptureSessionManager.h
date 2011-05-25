@@ -20,6 +20,7 @@
 @interface CaptureSessionManager : NSObject <AVCaptureVideoDataOutputSampleBufferDelegate> {
 	
 	id<CaptureSessionManagerDelegate> delegate;
+	id<CaptureSessionManagerDelegate> delegateTwo;
 
 	EAGLContext *threadContext;
 	GLuint	_cameraTexture;
@@ -43,9 +44,13 @@
 - (void) autoWhiteBalanceAndExposure:(int)setting;
 - (void) newFrameForDisplay;
 - (void) toggleCameraSelection;
+- (void) setTorchToggleFrequency:(float)freq;
+- (void)informViewsOfCameraTexture;
 
 @property(nonatomic, assign) id<CaptureSessionManagerDelegate> delegate;
+@property(nonatomic, assign) id<CaptureSessionManagerDelegate> delegateTwo;
 @property (retain) AVCaptureVideoPreviewLayer *previewLayer;
+@property (nonatomic, retain) EAGLContext *threadContext;
 @property (retain) AVCaptureSession *captureSession;
 @property (retain) AVCaptureDeviceInput *videoInput;
 @property (readwrite) float selectedFeatureValue;

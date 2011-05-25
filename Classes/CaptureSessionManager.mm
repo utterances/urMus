@@ -22,7 +22,9 @@
 @synthesize previewLayer;
 @synthesize selectedFeatureValue;
 @synthesize delegate;
+@synthesize delegateTwo;
 @synthesize videoInput;
+@synthesize threadContext;
 
 double lastframe = 0;
 
@@ -57,7 +59,7 @@ double lastframe = 0;
 		
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bufferWidth, bufferHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, CVPixelBufferGetBaseAddress(pixelBuffer));
 		
-		[self performSelectorOnMainThread:@selector(newFrameForDisplay) withObject:nil waitUntilDone:NO];
+		[self performSelectorOnMainThread:@selector(informViewsOfCameraTexture) withObject:nil waitUntilDone:NO];
 		
 	} else {
 		glEnable(GL_TEXTURE_2D);
@@ -143,10 +145,10 @@ double lastframe = 0;
 	CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
 }
 
-- (void)newFrameForDisplay {
+- (void)informViewsOfCameraTexture {
 	
-	[self.delegate newCameraTextureForDisplay:_cameraTexture];
-	
+	[delegate newCameraTextureForDisplay:_cameraTexture];
+	[delegateTwo newCameraTextureForDisplay:_cameraTexture];
 }
 
 #pragma mark SampleBufferDelegate Methods
@@ -317,7 +319,12 @@ double lastframe = 0;
 //TODO: Create Lua API for this
 - (void)autoWhiteBalanceAndExposure:(int)setting {
 
-	NSLog(@"Locking or Unlocking the AWB and Exposure");
+    if (setting) {
+        NSLog(@"Unlocking the AWB and Exposure");
+    } else {
+        NSLog(@"Locking the AWB and Exposure");
+    }
+
 	
 	NSError *error;
 	
@@ -376,6 +383,8 @@ double lastframe = 0;
 		}
 		
 	}
+    
+    //NSLog(@"The two interesting properties are %d and %d", device.whiteBalanceMode, device.exposureMode);
 
 }
 
@@ -457,6 +466,12 @@ double lastframe = 0;
 		self.captureSession = [[AVCaptureSession alloc] init];
 		self.captureSession.sessionPreset = AVCaptureSessionPreset640x480;
 		//[self setTorchToggleFrequency:.5];
+        
+//        // Create an OpenGL Context for this operation queue
+//        if (![EAGLContext currentContext]) {
+//            threadContext = [self createContext];
+//            [EAGLContext setCurrentContext:threadContext];
+//        }
 	}
 	
 	return self;
