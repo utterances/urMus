@@ -210,6 +210,8 @@ void callAllOnEnterLeaveRegions(int nr, float* x, float* y, float* ox, float* oy
                 if(onLeaveIteratorNext != NULL)
                     onLeaveIteratorNext = onLeaveIteratorNext->next;
             }
+            onLeaveIterator = NULL;
+            onLeaveIteratorNext = NULL;
         }
 
         if(OnEnterRegions != NULL)
@@ -232,6 +234,8 @@ void callAllOnEnterLeaveRegions(int nr, float* x, float* y, float* ox, float* oy
                 if(onEnterIteratorNext != NULL)
                     onEnterIteratorNext = onEnterIteratorNext->next;
             }
+            onEnterIterator = NULL;
+            onEnterIteratorNext = NULL;
         }
     }
 
@@ -1515,6 +1519,7 @@ Region_Chain_t* RemoveRegionFromChain(Region_Chain_t* chain, urAPI_Region* regio
                 free(c);
                 return chain;
             }
+            p = c;
         }
     }
     return chain;
