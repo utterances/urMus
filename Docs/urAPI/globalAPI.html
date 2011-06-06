@@ -71,11 +71,11 @@ for system errors and should not be used for normal user interactions.</p>
 
 <h1>Timing API</h1>
 
-<h2>GetTime</h2>
+<h2>Time</h2>
 
 <h3>Synopsis</h3>
 
-<pre><code>seconds = GetTime()
+<pre><code>seconds = Time()
 </code></pre>
 
 <h3>Description</h3>
@@ -497,6 +497,268 @@ A reference to the newly created region.</li>
 <ul>
 <li>screenWidth (Number)
   Width of window in pixels</li>
+</ul>
+
+
+<h1>Camera API (aka urLook more)</h1>
+
+<h2>SetActiveCamera</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>SetActiveCamera(camera)
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Sets the active camera. Allows to pick between multiple cameras if they are present (front-facing, back-facing)</p>
+
+<h3>Arguments</h3>
+
+<ul>
+<li>camera (Number)
+  1 is the default camera (usually backfacing)
+  2 and higher are an unspecified second camera (2 is usually front-facing)</li>
+</ul>
+
+
+<h2>ActiveCamera</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>camera = ActiveCamera()
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Returns which camera is currently active.</p>
+
+<h3>Returns</h3>
+
+<ul>
+<li>camera (Number)
+  1 is the default camera (usually backfacing)
+  2 and higher are an unspecified second camera (2 is usually front-facing)</li>
+</ul>
+
+
+<h2>SetTorchFlashFrequency</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>SetTorchFlashFrequency(frequency)
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Sets the flashing frequency of the camera flash-light if present.</p>
+
+<h3>Arguments</h3>
+
+<ul>
+<li>frequency (Number)
+  Frequency at which the light is turned on and off</li>
+</ul>
+
+
+<h1>Networking API</h1>
+
+<h2>IPAddress</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>host = IPAddress()
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Returns the IP-address of the device.</p>
+
+<h2>StartHTTPServer</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>host, port = StartHTTPServer()
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Starts the HTTP Server which provides the web-based urMus programming environment. Returns the hostname and port of the service.</p>
+
+<h3>Returns</h3>
+
+<ul>
+<li>host (String)
+  Hostname of the device which is running the web server</li>
+<li>port (Number)
+  port number to access the web server</li>
+</ul>
+
+
+<h2>StopHTTPServer</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>StopHTTPServer()
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Stops the HTTP Server which provides the web-based urMus programming environment.</p>
+
+<h2>HTTPServer</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>name, port = HTTPServer()
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Returns the name and port of the HTTPServer run on the device.</p>
+
+<h3>Returns</h3>
+
+<ul>
+<li>host (String)
+  Hostname of the device which is running the web server</li>
+<li>port (Number)
+  port number to access the web server</li>
+</ul>
+
+
+<h2>StartOSCListener</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>host, port = StartOSCListener()
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Starts the OSC Listening service, which allows for incoming OSC message to be received. The event OnOSCMessage will be triggered when a message is received.</p>
+
+<h3>Returns</h3>
+
+<ul>
+<li>host (String)
+  Hostname of the device which is running the web server</li>
+<li>port (Number)
+  port number to access the web server</li>
+</ul>
+
+
+<h2>StopOSCListener</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>StopOSCListener()
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Stops the OSC Listening service.</p>
+
+<h2>SetOSCPort</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>SetOSCPort(port)
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Sets the OSC port of the OSCListening service, if it is running.</p>
+
+<h3>Arguments</h3>
+
+<ul>
+<li>port (Number)
+  port number for the OSCListening service</li>
+</ul>
+
+
+<h2>OSCPort</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>port = OSCPort()
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Returns the current port of the OSCListener.</p>
+
+<h3>Returns</h3>
+
+<ul>
+<li>port (Number)
+  port number to access the web server</li>
+</ul>
+
+
+<h2>SendOSCMessage</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>SendOSCMessage(host, port, oscpattern, arg1, [arg2, ...])
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Sends an OSC message constiting of an arbitrary number of arguments which can be numbers or strings.</p>
+
+<h3>Arguments</h3>
+
+<ul>
+<li>host (String)
+  Hostname of the device which is running the OSC service</li>
+<li>port (Number)
+  port number of the OSC service</li>
+<li>oscpattern (String)
+  OSC pattern identifying the OSC functionality to address</li>
+<li>arg1, arg2, ... (Number, String)
+  Number and string data to be sent</li>
+</ul>
+
+
+<h2>StartNetAdvertise</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>StartNetAdvertise(id, port)
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Starts the ZeroConf service allowing a named id to be discovered by other devices on the local network.</p>
+
+<h3>Arguments</h3>
+
+<ul>
+<li>id (String)
+  id by which other devices can discover this service</li>
+<li>port (Number)
+  port number to advertise</li>
+</ul>
+
+
+<h2>StartNetDiscovery</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>StartNetDiscovery(id)
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Starts the ZeroConf service discovery, allowing to find if the service with a specific ID is present or not. Will trigger OnNetConnect when the service appears and OnNetDisconnect when the service disappears.</p>
+
+<h3>Arguments</h3>
+
+<ul>
+<li>id (String)
+  id by which other devices can discover this service</li>
 </ul>
 
 

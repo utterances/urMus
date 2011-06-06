@@ -3,7 +3,7 @@
  *  urMus
  *
  *  Created by Georg Essl on 6/20/09.
- *  Copyright 2009 Georg Essl. All rights reserved. See LICENSE.txt for license details.
+ *  Copyright 2009-11 Georg Essl. All rights reserved. See LICENSE.txt for license details.
  *
  */
 #ifndef __URAPI_H__
@@ -17,6 +17,26 @@
 #import "Texture2d.h"
 
 #undef SANDWICH_SUPPORT
+
+// To enable Soar, take the following steps...
+// 0. Download the iOS Soar distribution from the Soar web-page as linked on urmus.eecs.umich.edu
+// 1. set header search path to "include" of Soar release
+//    in urMus target
+// 2. add all "lib" of Soar release to "Link Binary with Libraries"
+//    Build Phase of urMus target (sans SQLite)
+//    (making sure to compile for ios-device or -simulator)
+// 3. add sqlite to Build Phase from built-in frameworks (see #2)
+// 4. Un-comment the following line
+//#define SOAR_SUPPORT "Soar!"
+#ifdef SOAR_SUPPORT
+
+#define SOAR_ASYNCH_PER_UPDATE 1
+//#define SOAR_DEBUG "I see Soar"
+
+#include "portability.h"
+#include "sml_Client.h"
+#include <map> // <- much disliked around here!
+#endif
 
 #define BLEND_DISABLED 0
 #define BLEND_BLEND 1
@@ -65,6 +85,7 @@ typedef struct urAPI_TextLabel
 } urAPI_TextLabel_t;
 
 typedef struct urAPI_Region urAPI_Region_t;
+typedef struct DrawQueueEntry DrawQueueEntry_t;
 
 // Texture user data
 typedef struct urAPI_Texture
@@ -183,6 +204,15 @@ typedef struct urAPI_Region
 #endif
 #ifdef SOAR_SUPPORT
 		int OnSoarOutput;
+		
+		sml::Kernel* soarKernel;
+		sml::Agent* soarAgent;
+		
+		std::map< int, sml::Identifier* >* soarIds;
+		int soarIdCounter;
+		
+		std::map< int, sml::WMElement* >* soarWMEs;
+		int soarWMEcounter;
 #endif
 		int OnRotation;
 		int OnHeading;
@@ -195,6 +225,12 @@ typedef struct urAPI_Region
 		int OnPageLeft;
 		
 	}urAPI_Region_t;
+
+typedef struct Region_Chain
+{
+    urAPI_Region_t* region;
+    struct Region_Chain* next;
+} Region_Chain_t;
 
 /*static int l_setanimspeed(lua_State *lua);
 static int l_Region(lua_State *lua);*/
@@ -215,6 +251,9 @@ bool callAllOnNetDisconnect(const char* name);
 bool callAllOnOSCMessage(float num);
 #ifdef SANDWICH_SUPPORT
 bool callAllOnPressure(float p);
+#endif
+#ifdef SOAR_SUPPORT
+bool callAllOnSoarOutput();
 #endif
 bool callAllOnRotRate(float x, float y, float z);
 bool callAllOnHeading(float x, float y, float z, float north);

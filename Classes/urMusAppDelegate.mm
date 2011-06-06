@@ -24,7 +24,7 @@
 @synthesize window;
 @synthesize glView;
 @synthesize repeatingTimer;
-@synthesize window2;
+//@synthesize window2;
 @synthesize glView2;
 @synthesize externalWindow;
 @synthesize extScreen;
@@ -48,23 +48,40 @@ extern int SCREEN_HEIGHT;
 	// Log the current screens and display modes
 	screens = [UIScreen screens];
 	
-    NSLog(@"1");
+ //   NSLog(@"1");
 	NSUInteger screenCount = [screens count];
 	
 	if (screenCount > 1) {
-
+        
 		// Select first external screen
 		self.extScreen = [screens objectAtIndex:1];
-
+        
         if (externalWindow == nil || !CGRectEqualToRect(externalWindow.bounds, [extScreen bounds])) {
-           
+            
             externalWindow = [[UIWindow alloc] initWithFrame:[extScreen bounds]];
-           
+            
             externalWindow.screen = extScreen;
-             
+            
             // Control the size of the display here
             //glView2 = [[EAGLView alloc] initWithFrame:[externalWindow frame] andContextSharegroup:glView.context];
-            glView2 = [[EAGLView alloc] initWithFrame:[[screens objectAtIndex:0] bounds] andContextSharegroup:glView.context];
+            
+            float extScreenWidth = externalWindow.frame.size.width;
+            float extScreenHeight = externalWindow.frame.size.height;
+            float deviceScreenRatio = [[screens objectAtIndex:0] bounds].size.width/[[screens objectAtIndex:0] bounds].size.height;
+            CGRect finalExtFrame;
+            
+            if (extScreenHeight < extScreenWidth) {
+                // Height is limiting factor
+                
+                finalExtFrame = CGRectMake(0, 0, extScreenHeight*deviceScreenRatio, extScreenHeight);
+            } else {
+                
+                finalExtFrame = CGRectMake(0, 0, extScreenWidth, extScreenWidth/deviceScreenRatio);
+            }
+            
+//            finalExtFrame = CGRectMake(0,0, [[screens objectAtIndex:0] bounds].size.width, [[screens objectAtIndex:0] bounds].size.height);
+            
+            glView2 = [[EAGLView alloc] initWithFrame:finalExtFrame andContextSharegroup:glView.context];
             [externalWindow addSubview:glView2];
             
             
@@ -75,7 +92,7 @@ extern int SCREEN_HEIGHT;
             [glView2 drawView];
             
             [externalWindow makeKeyAndVisible];
-
+            
         }
         
     } else {
@@ -89,7 +106,6 @@ extern int SCREEN_HEIGHT;
         
     }
 }
-
 
 
 - (void)applicationDidFinishLaunching:(UIApplication *)application {

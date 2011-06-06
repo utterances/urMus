@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>Text Labels &laquo; urMus API</title>
+    <script src="highlight/highlight.pack.js"></script>
+    <script>
+      hljs.tabReplace = '    ';
+      hljs.initHighlightingOnLoad();
+    </script>
+    <link rel="stylesheet" href="highlight/styles/github.css">
+	<link rel="stylesheet" href="styles.css" type="text/css" media="screen" charset="utf-8">
+	<!-- Date: 2010-03-16 -->
+</head>
+<body>
+<body bgcolor=#ffffff text=#000000>
+<center>
+<font size="4" face="Trebuchet MS">ur<span
+style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio and Media Interactions and Interfaces on Mobile Phones</font><br>
+<hr>
+<br>
+<img src="../images/urMusLogo.png" alt="urMus"><br>
+<br>
+<font size="4" face="Verdana"> urMus Tutorials </font>
+<br>
+<hr width="350">
+  <ul class="navigation">
+  <li><a href="../documentation.html">Main documentation</a></li>
+  <li><a href="luatutorials.html">urMus tutorials overview</a></li>
+</ul>
+
+</center>
+  <h1>Text Labels</h1>
+
+<hr />
+
+<p>Text Labels are currently the only way to add text in urMus, and they are always associated with a region.</p>
+
+<p>Here is an example of a region with a text label. The \n acts as a newline character.</p>
+
+<pre><code>FreeAllRegions()
+
+r = Region()
+r.tl = r:TextLabel()
+-- Note that the space after \n will be rendered
+r.tl:SetLabel("Test\n Test2")
+r:Show()
+</code></pre>
+
+<p>In order to see where this text is being positioned in the region, let's add a background to it. Adding colors and backgrounds to regions will be covered in a later tutorial.</p>
+
+<pre><code>FreeAllRegions()
+
+r = Region()
+r.tl = r:TextLabel()
+r.tl:SetLabel("Test\n Test2")
+r:Show()
+-- Giving the region a color allows to see where the labels are placed within it
+r.t = r:Texture(0,0,255,255)
+</code></pre>
+
+<p>There are several other ways to manipulate the text: font, size, alignment, color, and shadows. The following script demonstrates all of these. See the documentation for more information about the paramaters.</p>
+
+<pre><code>FreeAllRegions()
+
+r = Region()
+r.tl = r:TextLabel()
+r.tl:SetLabel("Test\n Test2")
+r:Show()
+r.t = r:Texture(0,0,255,255)
+
+-- Font
+r.tl:SetFont("Arial")
+
+-- Font Height
+r.tl:SetFontHeight(24)
+
+
+-- Horizontal Alignment (Options: LEFT, RIGHT, CENTER [default])
+r.tl:SetHorizontalAlign("LEFT")
+-- Vertical Alignment (Options: TOP, BOTTOM, MIDDLE [default])
+r.tl:SetVerticalAlign("TOP")
+
+-- Color
+r.tl:SetColor(0,255,255,255)
+
+-- (We set the background to be white here to make the colors make more sense)
+r.t:SetTexture(255,255,255,255)
+
+-- Shadow
+r.tl:SetShadowColor(0,0,255,250)
+r.tl:SetShadowOffset(5,-5)
+r.tl:SetShadowBlur(2)
+
+-- This is a good line to debug text problems. Remember, .. is a string concatenation
+DPrint(r.tl:Label().." "..r.tl:Font().." "..r.tl:ShadowBlur())
+</code></pre>
+
+<h3>Technical Note</h3>
+
+<p>As a general rule in urMus in regards to reading versus writing settings. For a property, X, of interest:
+- SetX() sets the property/value
+- X() reads the property/value</p>
+
+<center>
+  <ul class="navigation">
+  <li><a href="../documentation.html">Main documentation</a></li>
+  <li><a href="luatutorials.html">urMus tutorials overview</a></li>
+</ul>
+
+</center>
+</body>
+</html>

@@ -1,0 +1,129 @@
+waitsnc -e
+
+sp {apply*repeat-init
+    (state <s> ^operator <op> ^sequence <s1> ^current <c>)
+    (<op> ^name repeat-init)
+    -->
+    (<s> ^current <c> - ^current <s1> +)
+    (<c> ^button nil +)
+}
+
+
+sp {simon-wm*propose*repeat-init
+    (state <s> ^name simon-wm ^current <c> ^io <i*1>)
+    (<c> -^button <b*1>)
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^task { << repeat generate >> <t*1> })
+    -->
+    (<s> ^operator <op> + ^operator <op> =)
+    (<op> ^name repeat-init +)
+}
+
+
+sp {apply*repeat
+    (state <s> ^operator <op> ^current <c> ^io <i*1>)
+    (<op> ^name repeat)
+    (<c> ^button <b> ^next <n>)
+    (<i*1> ^output-link <out>)
+    -->
+    (<s> ^current <c> - ^current <n> +)
+    (<out> ^press <p*1> +)
+    (<p*1> ^button <b> +)
+}
+
+
+sp {simon-wm*propose*repeat
+    (state <s> ^name simon-wm ^current <c> ^io <i*1>)
+    (<c> ^button { <> nil <b*1> })
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^task { << repeat generate >> <t*1> })
+    -->
+    (<s> ^operator <op> + ^operator <op> =)
+    (<op> ^name repeat +)
+}
+
+
+sp {apply*loop
+    (state <s> ^operator <op> ^sequence <s1> ^current <c>)
+    (<op> ^name loop)
+    -->
+    (<s> ^current <c> - ^current <s1> +)
+}
+
+
+sp {simon-wm*propose*loop
+    (state <s> ^name simon-wm ^current <c*1> ^io <i*1>)
+    (<c*1> ^button nil)
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^task { << repeat generate >> <t*1> })
+    -->
+    (<s> ^operator <op> + ^operator <op> =)
+    (<op> ^name loop +)
+}
+
+
+sp {apply*listen
+    (state <s> ^operator <op> ^current <c> ^io <i*1>)
+    (<op> ^name listen)
+    (<c> ^time <t>)
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^listen <l>)
+    -->
+    (<s> ^current <c> - ^current <newbie> +)
+    (<c> ^button <l> + ^next <newbie> +)
+    (<newbie> ^time (+ <t> 1.) +)
+}
+
+
+sp {simon-wm*propose*listen
+    (state <s> ^name simon-wm ^current <c*1> ^io <i*1>)
+    (<c*1> ^time <t>)
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^time <t>)
+    -->
+    (<s> ^operator <op> + ^operator <op> =)
+    (<op> ^name listen +)
+}
+
+
+sp {apply*initialize-simon-wm
+    (state <s> ^operator <op>)
+    (<op> ^name initialize-simon-wm)
+    -->
+    (<s> ^name simon-wm + ^current <s1> + ^sequence <s1> +)
+    (<s1> ^time 1. +)
+}
+
+
+sp {propose*initialize-simon-wm
+    (state <s> ^superstate nil -^name <n*1>)
+    -->
+    (<s> ^operator <o> +)
+    (<o> ^name initialize-simon-wm +)
+}
+
+
+sp {elaborate*top-state*top-state
+    (state <s> ^superstate nil)
+    -->
+    (<s> ^top-state <s> +)
+}
+
+
+sp {elaborate*state*top-state
+    (state <s> ^superstate <s*1>)
+    (<s*1> ^top-state <ts>)
+    -->
+    (<s> ^top-state <ts> +)
+}
+
+
+sp {elaborate*state*name
+    (state <s> ^superstate <s*1>)
+    (<s*1> ^operator <o*1>)
+    (<o*1> ^name <name>)
+    -->
+    (<s> ^name <name> +)
+}
+
+

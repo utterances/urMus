@@ -19,6 +19,9 @@ backdrop.t:Clear(255,255,255,255);
 backdrop:SetLayer("BACKGROUND")
 backdrop:Show()
 
+if SoarEnabled() then
+    backdrop:SoarLoadRules("tictactoe", "soar")
+end
 
 function FreshBoard()
 	backdrop.t:Clear(255,255,255,255)
@@ -39,13 +42,64 @@ for i=1,buttonrows do
 	buttons[i] = {} -- Create columns
 end
 
-local turn = math.random(0,1)
+local turn
+if SoarEnabled() then
+    turn = 0
+else
+    turn = math.random(0,1)
+end
 local won
 local move = 1
 
 function TextureCol(t,r,g,b,a)
 	t:SetGradientColor("TOP",r,g,b,a,r,g,b,a)
 	t:SetGradientColor("BOTTOM",r,g,b,a,r,g,b,a)
+end
+
+if SoarEnabled() then
+gameresult = nil
+
+function CreateSoarBoard(first)
+    if first==1 then
+        board = backdrop:SoarCreateID(0, "board") -- 0 is magic for core of input (per Nate)		
+    else
+        backdrop:SoarDelete(gameresult)
+    end
+    gameresult = backdrop:SoarCreateConstant(0, "turn", "me")
+
+    for ix = 1, buttoncols do
+        for iy = 1, buttonrows do
+            local me = buttons[iy][ix]
+
+            if first==1 then
+                me.id = backdrop:SoarCreateID(board, "spot") -- Create spots inside the bored (yawn)		
+                me.sx = backdrop:SoarCreateConstant(me.id, "x", ix)
+                me.sy = backdrop:SoarCreateConstant(me.id, "y", iy)
+            else
+                backdrop:SoarDelete(me.contents)
+            end
+
+            me.contents = backdrop:SoarCreateConstant(me.id, "contents", "empty")
+        end
+    end
+end
+
+function ResetAgent(outcome)
+
+    backdrop:SoarDelete(gameresult)
+    if outcome==0 then -- tie
+        gameresult = backdrop:SoarCreateConstant(0, "turn", "tie")
+    elseif outcome==1 then -- lose
+        gameresult = backdrop:SoarCreateConstant(0, "turn", "lose")
+    elseif outcome==2 then -- win
+        gameresult = backdrop:SoarCreateConstant(0, "turn", "win")
+    end
+
+    backdrop:SoarFinish()
+    backdrop:SoarInit()
+
+    CreateSoarBoard(0)
+end
 end
 
 function CheckWin()
@@ -77,10 +131,19 @@ function CheckWin()
 	return win
 end
 
-function SingleDown(self)
 
+function SingleDown(self)
+    if won then
+        --DPrint("won="..won.." move="..move.." turn="..turn)
+    else
+        --DPrint("move="..move)
+    end
 	if won or move > 9 then -- New game
-		turn = won and 1-won or turn
+        if SoarEnabled() then
+            turn = 0
+        else
+            turn = won and 1-won or turn
+        end
 		move = 1
 		FreshBoard()
 		for ix = 1, buttoncols do
@@ -93,6 +156,59 @@ function SingleDown(self)
 	end
 
 	if not self.state then
+    if SoarEnabled() then
+        if turn <0.5 then
+            self.t:SetTexture("x-alpha.png")
+            TextureCol(self.t,0,255,0,255)
+            self.state = turn
+
+            backdrop:SoarDelete(self.contents)
+            self.contents = backdrop:SoarCreateConstant(self.id, "contents", "opponent")
+            move = move + 1
+
+            if CheckWin() then
+                won = turn				
+                ResetAgent(1)
+            elseif move>9 then
+                won = turn
+                ResetAgent(0)
+            else				
+                local other = nil
+
+                repeat
+                name, params =  backdrop:SoarGetOutput()
+
+
+                if name ~= "go" then
+                    DPrint("A baby wabbit died!")
+                else
+                -- print("attempted: ("..params.x..","..params.y..")")
+                end
+
+
+                other = buttons[params.y][params.x]
+                if (other.state~=nil) then
+                    backdrop:SoarSetOutputStatus(0)
+                end					
+                until (other.state==nil)				
+
+                backdrop:SoarDelete(other.contents)
+                other.contents = backdrop:SoarCreateConstant(other.id, "contents", "me")
+                backdrop:SoarSetOutputStatus(1)
+
+                other.state = 1 - turn
+                other.t:SetTexture("o-alpha.png")
+                TextureCol(other.t,0,0,255,255)
+                if CheckWin() then
+                    won = 1 - turn
+                    ResetAgent(2)
+                end
+
+                move = move + 1
+            end
+        end
+
+    else
 		if turn <0.5 then
 			self.t:SetTexture("x-alpha.png")
 			TextureCol(self.t,0,255,0,255)
@@ -104,9 +220,10 @@ function SingleDown(self)
 			self.state = turn
 			if CheckWin() then won = turn end
 		end
-		turn = 1 - turn
+        turn = 1 - turn
+        move = move + 1
+    end
 	end
-	move = move + 1
 end
 
 function SingleUp(self)
@@ -134,6 +251,10 @@ for ix = 1, buttoncols do
 		newbutton.index = ix + (iy-1)*buttoncols
 		buttons[iy][ix] = newbutton
 	end
+end
+
+if SoarEnabled() then
+CreateSoarBoard(1)
 end
 
 pagebutton=Region('region', 'pagebutton', UIParent);

@@ -113,6 +113,26 @@ The coordinates of the texture. Defaults to (0,1,1,1,0,0,1,0)
     The percentage [0..1] of from its respective corner of the page to its respective edge
     of the texture.
 
+Texture:SetTiling
+--------------------
+### Synopsis
+	SetTiling(tile)
+### Description
+Set whether or not textures are tiled if the texture coordinate are below 0 and above 1.
+### Arguments
+- tile (Boolean)
+	true turns tiling on, off otherwise. Default is off.
+
+Texture:Tiling
+----------------
+### Synopsis
+	tile = Tiling()
+### Description
+Returns if the texture is current being tiled if the texture coordiates are below 0 and above 1.
+### Returns
+- tile (Boolean)
+	true turns tiling on, off otherwise. Default is off.
+
 Texture:SetRotation
 -------------------
 ### Synopsis
@@ -240,5 +260,11 @@ Sets the color of the brush used for drawing functions such as Point, Line, Elli
 - `r,g,b,a` (Number)
     Color rgb components and alpha to be used by the brush.
 
+Texture:UseCamera
+-------------------
+### Synopsis
+	texture:UseCamera()
+### Description
+Uses the live camera image of the currently active camera as texture.
 
 [urMus API Overview](overview.html)

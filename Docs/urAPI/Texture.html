@@ -191,6 +191,44 @@ Otherwise it will be placed within a polygon give by the second form.</p>
 </ul>
 
 
+<h2>Texture:SetTiling</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>SetTiling(tile)
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Set whether or not textures are tiled if the texture coordinate are below 0 and above 1.</p>
+
+<h3>Arguments</h3>
+
+<ul>
+<li>tile (Boolean)
+  true turns tiling on, off otherwise. Default is off.</li>
+</ul>
+
+
+<h2>Texture:Tiling</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>tile = Tiling()
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Returns if the texture is current being tiled if the texture coordiates are below 0 and above 1.</p>
+
+<h3>Returns</h3>
+
+<ul>
+<li>tile (Boolean)
+  true turns tiling on, off otherwise. Default is off.</li>
+</ul>
+
+
 <h2>Texture:SetRotation</h2>
 
 <h3>Synopsis</h3>
@@ -426,6 +464,17 @@ on the texture.</p>
   Color rgb components and alpha to be used by the brush.</li>
 </ul>
 
+
+<h2>Texture:UseCamera</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>texture:UseCamera()
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Uses the live camera image of the currently active camera as texture.</p>
 
 <p><a href="overview.html">urMus API Overview</a></p>
 

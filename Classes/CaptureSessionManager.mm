@@ -274,7 +274,7 @@ double lastframe = 0;
 - (void)toggleCameraSelection
 {
 	
-	NSLog(@"Changing the camera selection");
+//	NSLog(@"Changing the camera selection");
 
 	// If there's nothing to toggle, don't toggle
     if ([self hasMultipleCameras]) {
@@ -320,9 +320,9 @@ double lastframe = 0;
 - (void)autoWhiteBalanceAndExposure:(int)setting {
 
     if (setting) {
-        NSLog(@"Unlocking the AWB and Exposure");
+//        NSLog(@"Unlocking the AWB and Exposure");
     } else {
-        NSLog(@"Locking the AWB and Exposure");
+//        NSLog(@"Locking the AWB and Exposure");
     }
 
 	
@@ -462,7 +462,7 @@ double lastframe = 0;
 	
 	if (self = [super init]) {
 		
-		NSLog(@"Initializing camera");
+//		NSLog(@"Initializing camera");
 		self.captureSession = [[AVCaptureSession alloc] init];
 		self.captureSession.sessionPreset = AVCaptureSessionPreset640x480;
 		//[self setTorchToggleFrequency:.5];

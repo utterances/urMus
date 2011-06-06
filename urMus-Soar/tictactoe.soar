@@ -1,0 +1,176 @@
+wait -e
+rl --set learning on
+
+sp {apply*reset
+    (state <s> ^operator <op> ^io <i*1>)
+    (<op> ^name reset)
+    (<i*1> ^output-link <ol>)
+    -->
+    (halt)
+}
+
+
+sp {ttt-random*propose*reset
+    (state <s> ^name ttt-random ^io <i*1>)
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^turn { << win lose tie >> <t*1> })
+    -->
+    (<s> ^operator <op> + ^operator <op> =)
+    (<op> ^name reset +)
+}
+
+
+sp {apply*initialize-ttt-random
+    (state <s> ^operator <op>)
+    (<op> ^name initialize-ttt-random)
+    -->
+    (<s> ^name ttt-random +)
+}
+
+
+sp {propose*initialize-ttt-random
+    (state <s> ^superstate nil -^name <n*1>)
+    -->
+    (<s> ^operator <o> +)
+    (<o> ^name initialize-ttt-random +)
+}
+
+
+sp {apply*go
+    (state <s> ^operator <op> ^io <i*1>)
+    (<op> ^name go ^spot <spot>)
+    (<spot> ^y <y> ^x <x>)
+    (<i*1> ^output-link <ol>)
+    -->
+    (<ol> ^go <go> +)
+    (<go> ^x <x> + ^y <y> +)
+}
+
+
+sp {ttt-random*propose*go
+    (state <s> ^name ttt-random ^io <i*1>)
+    (<i*1> ^input-link <il>)
+    (<il> ^turn me ^board <b*1>)
+    (<b*1> ^spot <spot>)
+    (<spot> ^contents empty ^y <y> ^x <x>)
+    -->
+    (<s> ^operator <op> +)
+    (<op> ^name go + ^spot <spot> +)
+}
+
+
+sp {apply*clean
+    (state <s> ^operator <op> ^io <i*1>)
+    (<op> ^name clean)
+    (<i*1> ^output-link <ol>)
+    (<ol> ^go <go>)
+    (<go> ^status <s*1>)
+    -->
+    (<ol> ^go <go> -)
+}
+
+
+sp {ttt-random*propose*clean
+    (state <s> ^name ttt-random ^io <i*1>)
+    (<i*1> ^output-link <o*1>)
+    (<o*1> ^go <g*1>)
+    (<g*1> ^status <s*1>)
+    -->
+    (<s> ^operator <op> + ^operator <op> >)
+    (<op> ^name clean +)
+}
+
+
+sp {elaborate*top-state*top-state
+    (state <s> ^superstate nil)
+    -->
+    (<s> ^top-state <s> +)
+}
+
+
+sp {elaborations*elaborate*reward*lose
+    (state <s> ^reward-link <rl> ^io <i*1>)
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^turn lose)
+    -->
+    (<rl> ^reward <r*1> +)
+    (<r*1> ^value -2 +)
+}
+
+sp {elaborations*elaborate*reward*tie
+    (state <s> ^reward-link <rl> ^io <i*1>)
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^turn tie)
+    -->
+    (<rl> ^reward <r*1> +)
+    (<r*1> ^value -1 +)
+}
+
+sp {elaborations*elaborate*reward*win
+    (state <s> ^reward-link <rl> ^io <i*1>)
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^turn win)
+    -->
+    (<rl> ^reward <r*1> +)
+    (<r*1> ^value 1 +)
+}
+
+
+sp {elaborate*state*top-state
+    (state <s> ^superstate <s*1>)
+    (<s*1> ^top-state <ts>)
+    -->
+    (<s> ^top-state <ts> +)
+}
+
+
+sp {elaborate*state*name
+    (state <s> ^superstate <s*1>)
+    (<s*1> ^operator <o*1>)
+    (<o*1> ^name <name>)
+    -->
+    (<s> ^name <name> +)
+}
+
+sp {ttt-rl*go
+	:template
+    (state <s> ^operator <op> + ^io <i*1>)
+    (<op> ^name go ^spot <spot>)
+    (<spot> ^y <y> ^x <x>)
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^board <board>)
+    (<board> ^spot <s33> ^spot <s32> ^spot <s31> ^spot <s23> ^spot <s22>
+          ^spot <s21> ^spot <s13> ^spot <s12> ^spot <s11>)
+    (<s33> ^y 3. ^x 3. ^contents <c33>)
+    (<s32> ^y 2. ^x 3. ^contents <c23>)
+    (<s31> ^y 1. ^x 3. ^contents <c13>)
+    (<s23> ^y 3. ^x 2. ^contents <c32>)
+    (<s22> ^y 2. ^x 2. ^contents <c22>)
+    (<s21> ^y 1. ^x 2. ^contents <c12>)
+    (<s13> ^y 3. ^x 1. ^contents <c31>)
+    (<s12> ^y 2. ^x 1. ^contents <c21>)
+    (<s11> ^y 1. ^x 1. ^contents <c11>)
+    -->
+    (<s> ^operator <op> = 0)
+}
+
+#gp {ttt-rl*go
+#    (state <s> ^operator <op> + ^io <i*1>)
+#    (<op> ^name go ^spot <spot>)
+#    (<spot> ^y <y> ^x <x>)
+#    (<i*1> ^input-link <i*2>)
+#    (<i*2> ^board <board>)
+#    (<board> ^spot <s33> ^spot <s32> ^spot <s31> ^spot <s23> ^spot <s22>
+#          ^spot <s21> ^spot <s13> ^spot <s12> ^spot <s11>)
+#    (<s33> ^y 3. ^x 3. ^contents [empty me opponent])
+#    (<s32> ^y 2. ^x 3. ^contents [empty me opponent])
+#    (<s31> ^y 1. ^x 3. ^contents [empty me opponent])
+#    (<s23> ^y 3. ^x 2. ^contents [empty me opponent])
+#    (<s22> ^y 2. ^x 2. ^contents [empty me opponent])
+#    (<s21> ^y 1. ^x 2. ^contents [empty me opponent])
+#    (<s13> ^y 3. ^x 1. ^contents [empty me opponent])
+#    (<s12> ^y 2. ^x 1. ^contents [empty me opponent])
+#    (<s11> ^y 1. ^x 1. ^contents [empty me opponent])
+#    -->
+#    (<s> ^operator <op> = 0)
+#}

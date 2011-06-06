@@ -1,8 +1,8 @@
 -- urMus default interface
 -- by Georg Essl
--- Started a long time ago as a first test case, still best and most complex test case!
--- Last modified: 04/04/2010
--- Copyright (c) 2010 Georg Essl. All Rights Reserved. See LICENSE.txt for license conditions.
+-- Started a long time ago as a first test case, still the best and most complex test case!
+-- Last modified: 05/26/2011
+-- Copyright (c) 2010-11 Georg Essl. All Rights Reserved. See LICENSE.txt for license conditions.
 
 dofile(SystemPath("urHelpers.lua"))
 Req("urWidget")
@@ -18,25 +18,11 @@ patchdir = "Patches"
 
 pagefile = {
 "urMus",
-"urHarp.lua",
-"urDuelNoise.lua",
-"urPipeline.lua",
-"urRotaryPhonics1.lua",
-"urRotaryPhonics2.lua",
-"urRotaryPhonics3.lua",
-"urRotaryPhonics4.lua",
-"urRotaryPhonics5.lua",
-"urRotaryPhonics6.lua",
-"urSpatialDidoo.lua",
-"urStrummer.lua",
-"urStrummerString.lua",
-"urSynesthesia.lua",
-"urTurntable.lua",
-"urTurntableOSC.lua",
-"urTurntableOSC2.lua",
---"urAir.lua",
---"urWater.lua",
---"urFire.lua",
+"urDrawDemo1.lua",
+"urTurn.lua",
+"urCameraDemo.lua",
+"urCameraBrush.lua",
+"urExternalTest.lua",
 "urPiano.lua",
 "urFlute.lua",
 "urPitcher.lua",
@@ -57,28 +43,53 @@ pagefile = {
 "urTicTacToe.lua",
 "urVisDemo.lua",
 "urVisGraph.lua",
-"urCameraDemo.lua",
-"urCameraBrush.lua",
-"urTiles.lua",
+--"urTiles.lua",
 "urTiles2.lua",
-"urTurn.lua",
-"urTuner.lua",
-"urMetro.lua",
+--"urTuner.lua",
+--"urMetro.lua",
 "urDistance.lua",
 "urAnimExample.lua",
 "urNetTest.lua",
 "urColorOrgan.lua",
-"urMrNoisy.lua",
-"urCircleOfWater.lua",
-"urBall-Master-player2.lua",
-"urBall-player1.lua",
-"urBall-player3.lua",
-"urBall-player4.lua",
-"urBall-display.lua",
+--"urMrNoisy.lua",
+--"urCircleOfWater.lua",
+--"urBall-Master-player2.lua",
+--"urBall-player1.lua",
+--"urBall-player3.lua",
+--"urBall-player4.lua",
+--"urBall-display.lua",
 "urChroma.lua",
-"urJamSession.lua",
-"urFeedback.lua",
+--"urJamSession.lua",
+--"urFeedback.lua",
+--"urHarp.lua",
+--"urDuelNoise.lua",
+--"urPipeline.lua",
+"urRotaryPhonics1.lua",
+"urRotaryPhonics2.lua",
+"urRotaryPhonics3.lua",
+"urRotaryPhonics4.lua",
+"urRotaryPhonics5.lua",
+"urRotaryPhonics6.lua",
+--"urSpatialDidoo.lua",
+"urStrummer.lua",
+"urStrummerString.lua",
+"urSynesthesia.lua",
+"urTurntable.lua",
+"urTurntableOSC.lua",
+"urTurntableOSC2.lua",
+--"urAir.lua",
+--"urWater.lua",
+--"urFire.lua",
 }
+
+if SoarEnabled() then
+	table.insert( pagefile, "urSoar.lua" )
+    table.insert( pagefile, "urColorMemory.lua" )
+    table.insert( pagefile, "urMusQuenzer.lua" )
+    table.insert( pagefile, "urAgents.lua" )
+    table.insert( pagefile, "urSoarAsynch.lua" )
+    table.insert( pagefile, "urWaterJug.lua" )
+end
 
 scrollpage = 29
 
@@ -1178,6 +1189,11 @@ function ScrollRowBackdrop(self, diff)
 	end
 	
 	self:SetAnchor('BOTTOMLEFT', UIParent, 'BOTTOMLEFT', self:Left() ,bottom)
+    top = self:Top() - selectorheight
+    div = top / rowheight
+    currentrow = math.floor((div-(minrow-1))-0.5)+1
+--    DPrint(top.." "..div.." "..currentrow)
+    RefreshRowIndices(1)
 end
 
 -- Scroll action ended, check if we need to align
@@ -1199,7 +1215,8 @@ function ScrollRowEnds(self)
 
 	top = self:Top() - selectorheight
 	div = top / rowheight
-	currentrow = div-(minrow-1)
+	currentrow = math.floor((div-(minrow-1))-0.5)+1
+--    DPrint(top.." "..div.." "..currentrow)
 	RefreshRowIndices(1)
 end
 
@@ -1398,6 +1415,13 @@ function RemoveRow(row)
 		return
 	end
 
+    -- Make sure the annotation regions are reanchored if the first backdrop was deleted
+    if row == 1 then
+        sourcetitlelabel:SetAnchor('CENTER', backdropanchor[row+1], 'TOPLEFT', colwidth/2, -4)
+        filtertitlelabel:SetAnchor('CENTER', backdropanchor[row+1], 'TOP', 0, -4)
+        sinktitlelabel:SetAnchor('CENTER', backdropanchor[row+1], 'TOPRIGHT', -colwidth/2, -4)
+    end
+
 	ClearRow(row)
 	
 	backdropanchor[row]:Hide()
@@ -1414,7 +1438,7 @@ function RemoveRow(row)
 		RecycleCell(row, col)
 	end
 
-	table.remove(backdropanchor, row)
+    table.remove(backdropanchor, row)
 	table.remove(celllock, row)
 	table.remove(cellbackdrop, row)
 	table.remove(rowregions, row)
@@ -1437,6 +1461,7 @@ function RemoveRow(row)
 	end
 	
 	rowbackdropanchor:SetAnchor('BOTTOMLEFT', UIParent, 'BOTTOMLEFT', rowbackdropanchor:Left() ,bottom)
+
 end
 
 -- When tapping arrows we insert a new cell.
@@ -1538,6 +1563,7 @@ end
 -- Setup instance joint indicators
 
 function InsertRow(self)
+--    DPrint(self.row .. " " ..(currentrow-1))
 	AddRow(self.row+currentrow-1)
 end
 
@@ -2114,7 +2140,6 @@ sinktitlelabel.textlabel:SetShadowColor(0,0,0,190)
 sinktitlelabel.textlabel:SetShadowBlur(2.0)
 sinktitlelabel:SetClipRegion(0,selectorheight,ScreenWidth(),rowheight*minrow)
 sinktitlelabel:EnableClipping(true)
-
 
 clearbutton=Region('region', 'clearbutton', UIParent)
 clearbutton:SetWidth(ScreenWidth()/4)

@@ -1,0 +1,393 @@
+waitsnc -e
+
+rl --set discount-rate 0
+rl --set learning-rate 0.8
+rl --set learning on
+
+
+sp {apply*task-init
+    (state <s> ^operator <op> ^task <t-old> ^repeat-counter <c-old>
+          ^previous <p-old> ^io <i*1>)
+    (<op> ^name task-init)
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^task <t>)
+    -->
+    (<s> ^task <t-old> - ^task <t> + ^previous <p-old> - ^previous nil +
+           ^repeat-counter <c-old> - ^repeat-counter 0 +)
+}
+
+sp {improv-rl*propose*task-init
+    (state <s> ^name improv-rl ^task <t*1> ^io <i*1>)
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^task { <> <t*1> <t> })
+    -->
+    (<s> ^operator <op> + ^operator <op> >)
+    (<op> ^name task-init +)
+}
+
+sp {apply*repeat
+    (state <s> ^operator <op> ^task <t> ^repeat-counter <rc> ^previous <p>)
+    (<op> ^name repeat ^<t> <tv>)
+    -->
+    (<s> ^previous <p> - ^previous <tv> + ^repeat-counter <rc> -
+           ^repeat-counter (+ <rc> 1) +)
+}
+
+sp {apply*repeat*note
+    (state <s> ^operator <op> ^task <t> ^io <i*1>)
+    (<op> ^name repeat ^<t> <n>)
+    (<i*1> ^output-link <out>)
+    (<n> ^<t> <note>)
+    -->
+    (<out> ^<t> <on> +)
+    (<on> ^<t> <note> +)
+}
+
+sp {apply*repeat*chord
+    (state <s> ^operator <op> ^task <t> ^repeat-counter <rc> ^io <i*1>)
+    (<op> ^name repeat ^<t> <c>)
+    (<i*1> ^output-link <out>)
+    (<c> ^chord3 <c3> ^chord2 <c2> ^chord1 <c1>)
+    -->
+    (<out> ^<t> <oc> +)
+    (<oc> ^chord1 <c1> + ^chord2 <c2> + ^chord3 <c3> + ^counter <rc> +)
+}
+
+sp {improv-rl*elaborate*context
+    (state <s> ^task { <t> note } ^name improv-rl ^mod-counter <mc> ^io <i*1>)
+    (<i*1> ^output-link <o*1>)
+    (<o*1> ^chord <c>)
+    (<c> ^counter <mc>)
+    -->
+    (<s> ^context <c> +)
+}
+
+sp {improv-rl*elaborate*mod
+    (state <s> ^name improv-rl ^repeat-counter <rc>)
+    -->
+    (<s> ^mod-counter (div <rc> 4) +)
+}
+
+sp {improv-rl*propose*repeat*notes
+    (state <s> ^task { <t> note } ^name improv-rl ^context <c>
+          ^repeat-counter <rc> ^possibilities <p*1>)
+    (<c> ^chord3 <c3> ^chord2 <c2> ^chord1 <c1>)
+    (<p*1> ^<t> <pn>)
+    (<pn> ^chord <pc>)
+    (<pc> ^chord3 <c3> ^chord2 <c2> ^chord1 <c1>)
+    -->
+    (<s> ^operator <op> + ^operator <op> =)
+    (<op> ^name repeat + ^<t> <pn> +)
+}
+
+sp {improv-rl*propose*repeat*chords
+    (state <s> ^task { <t> chord } ^name improv-rl ^repeat-counter <rc>
+          ^possibilities <p*1>)
+    (<p*1> ^<t> <pc>)
+    -->
+    (<s> ^operator <op> +)
+    (<op> ^name repeat + ^<t> <pc> +)
+}
+
+sp {apply*repeat*practice
+    (state <s> ^name practice ^operator <op> ^type <t>)
+    (<op> ^name repeat ^<t> <pt>)
+    -->
+    (<s> ^guess <pt> +)
+}
+
+sp {practice*propose*repeat*note
+    (state <s> ^name practice -^guess <g*1> ^type { <t> note } ^current <c>
+          ^context <cc> ^possibilities <p>)
+    (<p> ^chord <cc> ^<t> <pt>)
+    (<c> ^<t> <t*1>)
+    -->
+    (<s> ^operator <op> + ^operator <op> =)
+    (<op> ^name repeat + ^<t> <pt> +)
+}
+
+sp {practice*propose*repeat*chord
+    (state <s> ^name practice -^guess <g*1> ^type { <t> chord } ^current <c>
+          ^possibilities <p>)
+    (<p> ^<t> <pt>)
+    (<c> ^<t> <t*1>)
+    -->
+    (<s> ^operator <op> +)
+    (<op> ^name repeat + ^<t> <pt> +)
+}
+
+sp {apply*practice-pop
+    (state <s> ^operator <op> ^superstate <ss>)
+    (<op> ^name practice-pop)
+    (<ss> ^practice-counter <pc>)
+    -->
+    (<ss> ^practice-counter <pc> - ^practice-counter (+ <pc> 1) +)
+}
+
+sp {practice*propose*practice-pop
+    (state <s> ^name practice -^guess <g*1> ^current <c>
+          ^type { <> state <t> })
+    (<c> -^<t> <t*1>)
+    -->
+    (<s> ^operator <op> + ^operator <op> =)
+    (<op> ^name practice-pop +)
+}
+
+sp {apply*practice-next
+    (state <s> ^operator <op> ^current <c> ^guess <g> ^previous <p> ^type <t>)
+    (<op> ^name practice-next)
+    (<c> ^next <n> ^<t> <ct>)
+    -->
+    (<s> ^current <c> - ^current <n> + ^guess <g> - ^previous <p> -
+           ^previous <ct> +)
+}
+
+sp {practice*propose*practice-next
+    (state <s> ^name practice ^current <c> ^guess <g>)
+    -->
+    (<s> ^operator <op> + ^operator <op> =)
+    (<op> ^name practice-next +)
+}
+
+sp {apply*practice-init
+    (state <s> ^operator <op>)
+    (<op> ^name practice-init)
+    -->
+    (<s> ^previous nil +)
+}
+
+sp {apply*practice-init*note
+    (state <s> ^type note ^operator <op> ^superstate <ss>)
+    (<op> ^name practice-init)
+    (<ss> ^sequence-note <seq> ^operator <o*1>)
+    (<o*1> ^context <c>)
+    -->
+    (<s> ^current <seq> + ^context <c> +)
+}
+
+sp {apply*practice-init*chord
+    (state <s> ^type chord ^operator <op> ^superstate <ss>)
+    (<op> ^name practice-init)
+    (<ss> ^sequence-chord <seq>)
+    -->
+    (<s> ^current <seq> +)
+}
+
+sp {practice*propose*practice-init
+    (state <s> ^name practice -^current <c*1>)
+    -->
+    (<s> ^operator <op> + ^operator <op> =)
+    (<op> ^name practice-init +)
+}
+
+sp {practice*elaborate*reward*guess-bad
+    :interrupt
+    (state <s> ^name practice ^current <c*1> ^guess <g> ^reward-link <rl>
+          ^type { <> state <t> })
+    (<c*1> ^<t> { <> <g> <t*1> })
+    -->
+    (<rl> ^reward <r*1> +)
+    (<r*1> ^value -10 +)
+}
+
+sp {practice*elaborate*reward*guess-good
+    :interrupt
+    (state <s> ^name practice ^current <c*1> ^guess <g> ^type <t>
+          ^reward-link <rl>)
+    (<c*1> ^<t> <g>)
+    -->
+    (<rl> ^reward <r*1> +)
+    (<r*1> ^value 10 +)
+}
+
+sp {practice*elaborate*substate
+    (state <s> ^name practice ^superstate <ss>)
+    (<ss> ^operator <so> ^possibilities <p>)
+    (<so> ^name practice ^type <type>)
+    -->
+    (<s> ^type <type> + ^possibilities <p> +)
+}
+
+sp {improv-rl*propose*practice*note
+    (state <s> ^task listen ^name improv-rl ^practice-counter <pc>
+          ^possibilities <p*1>)
+    (<p*1> ^chord <c>)
+    -->
+    (<s> ^operator <op> + ^operator <op> =)
+    (<op> ^name practice + ^type note + ^context <c> +)
+}
+
+sp {improv-rl*propose*practice*chord
+    (state <s> ^task listen ^name improv-rl ^practice-counter <pc>
+          ^possibilities <p*1>)
+    (<p*1> ^chord <c*1>)
+    -->
+    (<s> ^operator <op> + ^operator <op> =)
+    (<op> ^name practice + ^type chord +)
+}
+
+sp {apply*listen*note
+    (state <s> ^operator <op> ^current-note <c> ^possibilities <p> ^io <i*1>)
+    (<op> ^name listen ^type note)
+    (<c> ^time <t>)
+    (<p> ^note <pn> ^chord <pc>)
+    (<pn> ^chord <pc> ^note <n>)
+    (<pc> ^chord3 <c3> ^chord2 <c2> ^chord1 <c1>)
+    (<i*1> ^input-link <in>)
+    (<in> ^chord3 <c3> ^chord2 <c2> ^chord1 <c1> ^note <n>)
+    -->
+    (<s> ^current-note <c> - ^current-note <newbie> +)
+    (<c> ^next <newbie> + ^note <pn> +)
+    (<newbie> ^time (+ <t> 1.) +)
+}
+
+sp {apply*listen*note-new
+    (state <s> ^operator <op> ^possibilities <p> ^io <i*1>)
+    (<op> ^name listen ^type note)
+    (<p> ^chord <pc>)
+    (<pc> ^chord3 <c3> ^chord2 <c2> ^chord1 <c1>)
+    (<i*1> ^input-link <in>)
+    (<in> ^chord3 <c3> ^chord2 <c2> ^chord1 <c1> ^note <n>)
+   -{ (<p> ^note <pn>)
+      (<pn> ^note <n> ^chord <pc>)}
+    -->
+    (<p> ^note <newbie> +)
+    (<newbie> ^note <n> + ^chord <pc> +)
+}
+
+sp {apply*listen*chord
+    (state <s> ^operator <op> ^current-chord <c> ^possibilities <p> ^io <i*1>)
+    (<op> ^name listen ^type chord)
+    (<c> ^time <t>)
+    (<p> ^chord <pc>)
+    (<pc> ^chord3 <c3> ^chord2 <c2> ^chord1 <c1>)
+    (<i*1> ^input-link <in>)
+    (<in> ^chord3 <c3> ^chord2 <c2> ^chord1 <c1>)
+    -->
+    (<s> ^current-chord <c> - ^current-chord <newbie> +)
+    (<c> ^next <newbie> + ^chord <pc> +)
+    (<newbie> ^time (+ <t> 1.) +)
+}
+
+sp {apply*listen*chord-new
+    (state <s> ^operator <op> ^possibilities <p> ^io <i*1>)
+    (<op> ^name listen ^type chord)
+    (<i*1> ^input-link <in>)
+    (<in> ^chord3 <c3> ^chord2 <c2> ^chord1 <c1>)
+   -{ (<p> ^chord <pc>)
+      (<pc> ^chord3 <c3> ^chord2 <c2> ^chord1 <c1>)}
+    -->
+    (<p> ^chord <newbie> +)
+    (<newbie> ^chord1 <c1> + ^chord2 <c2> + ^chord3 <c3> +)
+}
+
+sp {improv-rl*compare*listen
+    (state <s> ^name improv-rl ^operator <op2> + ^operator <op1> +)
+    (<op2> ^name listen ^type note)
+    (<op1> ^name listen ^type chord)
+    -->
+    (<s> ^operator <op1> > <op2>)
+}
+
+sp {improv-rl*propose*listen*note
+    (state <s> ^name improv-rl ^current-note <c*1> ^io <i*1>)
+    (<c*1> ^time <t>)
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^time-note <t>)
+    -->
+    (<s> ^operator <op> + ^operator <op> >)
+    (<op> ^name listen + ^type note +)
+}
+
+sp {improv-rl*propose*listen*chord
+    (state <s> ^name improv-rl ^current-chord <c*1> ^io <i*1>)
+    (<c*1> ^time <t>)
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^time-chord <t>)
+    -->
+    (<s> ^operator <op> + ^operator <op> >)
+    (<op> ^name listen + ^type chord +)
+}
+
+sp {apply*initialize-improv-rl
+    (state <s> ^operator <op>)
+    (<op> ^name initialize-improv-rl)
+    -->
+    (<s> ^name improv-rl + ^previous nil + ^possibilities <p> +
+           ^sequence-chord <sc1> + ^current-chord <sc1> +
+           ^sequence-note <sn1> + ^current-note <sn1> + ^practice-counter 0 +
+           ^repeat-counter 0 + ^task listen +)
+    (<sc1> ^time 1. +)
+    (<sn1> ^time 1. +)
+}
+
+sp {propose*initialize-improv-rl
+    (state <s> ^superstate nil -^name <n*1>)
+    -->
+    (<s> ^operator <o> +)
+    (<o> ^name initialize-improv-rl +)
+}
+
+sp {elaborate*top-state*top-state
+    (state <s> ^superstate nil)
+    -->
+    (<s> ^top-state <s> +)
+}
+
+sp {elaborate*state*top-state
+    (state <s> ^superstate <s*1>)
+    (<s*1> ^top-state <ts>)
+    -->
+    (<s> ^top-state <ts> +)
+}
+
+sp {elaborate*state*name
+    (state <s> ^superstate <s*1>)
+    (<s*1> ^operator <o*1>)
+    (<o*1> ^name <name>)
+    -->
+    (<s> ^name <name> +)
+}
+
+sp {repeat*rl*note
+   :template
+    (state <s> ^operator <op> + ^context <c> ^previous <p>)
+    (<op> ^name repeat ^note <n>)
+    (<c> ^chord3 <c3> ^chord2 <c2> ^chord1 <c1>)
+    (<n> ^note <nn>)
+    (<p> ^note <pn>)
+    -->
+    (<s> ^operator <op> = 0)
+}
+
+sp {repeat*rl*note*nil
+   :template
+    (state <s> ^previous nil ^operator <op> + ^context <c>)
+    (<op> ^name repeat ^note <n>)
+    (<c> ^chord3 <c3> ^chord2 <c2> ^chord1 <c1>)
+    (<n> ^note <nn>)
+    -->
+    (<s> ^operator <op> = 0)
+}
+
+sp {repeat*rl*chord
+   :template
+    (state <s> ^operator <op> + ^previous <p>)
+    (<op> ^name repeat ^chord <c>)
+    (<c> ^chord3 <c3> ^chord2 <c2> ^chord1 <c1>)
+    (<p> ^chord3 <p3> ^chord2 <p2> ^chord1 <p1>)
+    -->
+    (<s> ^operator <op> = 0)
+}
+
+sp {repeat*rl*chord*nil
+   :template
+    (state <s> ^previous nil ^operator <op> +)
+    (<op> ^name repeat ^chord <c>)
+    (<c> ^chord3 <c3> ^chord2 <c2> ^chord1 <c1>)
+    -->
+    (<s> ^operator <op> = 0)
+}
+
+
+

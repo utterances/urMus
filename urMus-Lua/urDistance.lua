@@ -1,14 +1,17 @@
 
-local lastx = 320/2
-local lasty = 480
+local scalex = ScreenWidth()/320.0
+local scaley = ScreenHeight()/480.0
+
+local lastx = 320/2*scalex
+local lasty = 480*scaley
 
 local sqrt = math.sqrt
 local random = math.random
 
 local vis = _G["FBVis"]
 
-local mx = {random(0,320),random(0,320)}
-local my = {random(0,480),random(0,480)}
+local mx = {random(0,320*scalex),random(0,320*scalex)}
+local my = {random(0,480*scaley),random(0,480*scaley)}
 local maxset = 2
 local setcount = 1
 
@@ -16,8 +19,8 @@ for i=1,maxset do
 	local pushflowbox = _G["FBPush"]
 	if pushflowbox.instances and pushflowbox.instances[3*i-2] and pushflowbox.instances[3*i-1] and pushflowbox.instances[3*i] then
 		pushflowbox.instances[3*i-2]:Push(1.0)
-		pushflowbox.instances[3*i-1]:Push((mx[i]-160.0)/160.0)
-		pushflowbox.instances[3*i]:Push((my[i]-240.0)/240.0)
+		pushflowbox.instances[3*i-1]:Push((mx[i]-160.0*scalex)/160.0/scalex)
+		pushflowbox.instances[3*i]:Push((my[i]-240.0*scaley)/240.0/scaley)
 	end
 end
 
@@ -51,8 +54,8 @@ function Paint(self)
 	for i=1,maxset do
 		if pushflowbox.instances and pushflowbox.instances[3*i-2] and pushflowbox.instances[3*i-1] and pushflowbox.instances[3*i] then
 			pushflowbox.instances[3*i-2]:Push(-1.0)
-			pushflowbox.instances[3*i-1]:Push((x-160.0)/160.0)
-			pushflowbox.instances[3*i]:Push((y-240.0)/240.0)
+			pushflowbox.instances[3*i-1]:Push((x-160.0*scalex)/160.0/scalex)
+			pushflowbox.instances[3*i]:Push((y-240.0*scaley)/240.0/scaley)
 		end
 	end
 end
@@ -67,8 +70,8 @@ function SetClass(self)
 	
 	if pushflowbox.instances and pushflowbox.instances[3*setcount-2] and pushflowbox.instances[3*setcount-1] and pushflowbox.instances[3*setcount] then
 		pushflowbox.instances[3*setcount-2]:Push(1.0)
-		pushflowbox.instances[3*setcount-1]:Push((x-160.0)/160.0)
-		pushflowbox.instances[3*setcount]:Push((y-240.0)/240.0)
+		pushflowbox.instances[3*setcount-1]:Push((x-160.0*scalex)/160.0/scalex)
+		pushflowbox.instances[3*setcount]:Push((y-240.0*scaley)/240.0*scaley)
 		pushflowbox.instances[3*setcount-2]:Push(-1.0)
 	end
 	
@@ -89,7 +92,11 @@ visgraphbackdropregion.texture = visgraphbackdropregion:Texture("Default.png")
 visgraphbackdropregion.texture:SetGradientColor("TOP",255,255,255,255,255,255,255,255)
 visgraphbackdropregion.texture:SetGradientColor("BOTTOM",255,255,255,255,255,255,255,255)
 --visgraphbackdropregion.texture:SetBlendMode("BLEND")
-visgraphbackdropregion.texture:SetTexCoord(0,0.63,0.94,0.0)
+if ScreenWidth() == 320.0 then
+    visgraphbackdropregion.texture:SetTexCoord(0,320.0/512.0,480.0/512.0,0.0)
+else
+    visgraphbackdropregion.texture:SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
+end
 visgraphbackdropregion:Handle("OnUpdate", Paint)
 visgraphbackdropregion:Handle("OnDoubleTap", SetClass)
 visgraphbackdropregion:EnableInput(true)

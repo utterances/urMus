@@ -1,0 +1,2215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>Global Flowboxes &laquo; urMus API</title>
+	<link rel="stylesheet" href="styles.css" type="text/css" media="screen" charset="utf-8">
+	<!-- Date: 2010-03-16 -->
+</head>
+<body>
+<body bgcolor=#ffffff text=#000000>
+<center>
+<font size="4" face="Trebuchet MS">ur<span
+style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio and Media Interactions and Interfaces on Mobile Phones</font><br>
+<hr>
+<br>
+<img src="../images/urMusLogo.png" alt="urMus"><br>
+<br>
+<font size="4" face="Verdana"> API Documentation </font>
+<br>
+<hr width="350">
+  <ul class="navigation">
+  <li><a href="../documentation.html">Main documentation</a></li>
+  <li><a href="overview.html">urMus API overview</a></li>
+</ul>
+
+</center>
+  <h1>Global Flowboxes</h1>
+
+<p>The following flowboxes are defined globally and can be used directly or as prototypes for cloning them. They can be accessed in lua in the global name space as _G["FB"..name] where name can be any of the flowbox names below.</p>
+
+<h1>Sources</h1>
+
+<p>Sources are flowboxes which do not have an input. They are typically driven by user input and provide relevant input data as output.</p>
+
+<h2>Accel</h2>
+
+<h3>Description</h3>
+
+<p>Provides hardware specific 3-axis accelerometer data. This flowbox is self-timed and provides a stable rate. It cannot be instanced.</p>
+
+<h3>Typical native rate</h3>
+
+<p>rate = 33.3Hz</p>
+
+<h3>Outputs</h3>
+
+<ul>
+<li>X (0): X-Axis acceleration (-1,1)</li>
+<li>Y (1): Y-Axis acceleration (-1,1)</li>
+<li>Z (2): Z-Axis acceleration (-1,1)</li>
+</ul>
+
+
+<h2>Camera</h2>
+
+<h3>Description</h3>
+
+<p>Provides hardware specific camera-derived data. This flowbox is self-timed and provides a stable rate. It cannot be instanced. It is subject to other camera settings.</p>
+
+<h3>Typical native rate</h3>
+
+<p>rate = 30.0Hz</p>
+
+<h3>Outputs</h3>
+
+<ul>
+<li>Bright (0): Overall Brightness (0,1)</li>
+<li>Red (1): Overall Red channel contribution (0,1)</li>
+<li>Green (2): Overall Green channel contribution (0,1)</li>
+<li>Blue (3): Overall Blue channel contribution (0,1)</li>
+<li>Edge (4): Overall Edge/gradient contribution (0,1)</li>
+</ul>
+
+
+<h2>Compass</h2>
+
+<h3>Description</h3>
+
+<p>Provides hardware specific 3-axis magnetic field and compass data. This flowbox is self-timed and provides a stable rate. It cannot be instanced.</p>
+
+<h3>Typical native rate</h3>
+
+<p>rate = not specificed</p>
+
+<h3>Outputs</h3>
+
+<ul>
+<li>X (0): X-Axis magnetic strength (-1,1)</li>
+<li>Y (1): Y-Axis magnetic strength (-1,1)</li>
+<li>Z (2): Z-Axis magnetic strength (-1,1)</li>
+<li>North (3): Compass geographic north (-1,1) -> (-180,180) degrees</li>
+</ul>
+
+
+<h2>Location</h2>
+
+<h3>Description</h3>
+
+<p>Provides hardware specific GPS data. This flowbox is self-timed and provides a stable rate. It cannot be instanced.</p>
+
+<h3>Typical native rate</h3>
+
+<p>rate = not specificed</p>
+
+<h3>Outputs</h3>
+
+<ul>
+<li>Lat (0): Geographical latitude (-1,1) -> (-180,180) degrees</li>
+<li>Long (1): Geographical longitude (-1,1) -> (-180,180) degrees</li>
+</ul>
+
+
+<h2>Mic</h2>
+
+<h3>Description</h3>
+
+<p>Provides hardware microphone data. This flowbox is self-timed and provides a stable rate. It cannot be instanced.</p>
+
+<h3>Typical native rate</h3>
+
+<p>rate = 48000Hz</p>
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): Microphone data (-1,1)</li>
+</ul>
+
+
+<h2>Net</h2>
+
+<h3>Description</h3>
+
+<p>Provides network data. This flowbox is self-timed but does not provide a stable rate. It must be instanced.</p>
+
+<h3>Typical native rate</h3>
+
+<p>rate = variable, depending on incoming network data timing</p>
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): Incoming Network data (-1,1)</li>
+</ul>
+
+
+<h2>Push</h2>
+
+<h3>Description</h3>
+
+<p>Provides data pushed by an urMus lua program. This flowbox is self-timed but does not provide a stable rate. It must be instanced. Calling its :Push(data) method will increase time and send data to its output.</p>
+
+<h3>Typical native rate</h3>
+
+<p>rate = variable, depending on the pattern Push:Push() is called</p>
+
+<h3>Output</h3>
+
+<ul>
+<li>Out(0): Programmatic pushed data (-1,1)</li>
+</ul>
+
+
+<h2>RotRate</h2>
+
+<h3>Description</h3>
+
+<p>Provides hardware specific 3-axis gyroscope data. This flowbox is self-timed and provides a stable rate. It cannot be instanced.</p>
+
+<h3>Typical native rate</h3>
+
+<p>rate = 60Hz</p>
+
+<h3>Outputs</h3>
+
+<ul>
+<li>x (0): X-axis angular velocity (-1,1)</li>
+<li>y (1): Y-axis angular velocity (-1,1)</li>
+<li>z (2): Z-axis angular velocity (-1,1)</li>
+</ul>
+
+
+<h2>Touch</h2>
+
+<h3>Description</h3>
+
+<p>Provides multi-touch contact coordinates for up to 11 contacts (less may be available for certain hardware). This flowbox is self-timed but does not provide a stable rate. It cannot be instanced.</p>
+
+<h3>Typical native rate</h3>
+
+<p>rate = variable, depending on multi-touch event pattern</p>
+
+<h3>Outputs</h3>
+
+<ul>
+<li>x1 (0): x position of first multi-touch contact (-1,1)</li>
+<li>y1 (1): y position of first multi-touch contact (-1,1)</li>
+<li>x2 (2): x position of second multi-touch contact (-1,1)</li>
+<li>y2 (3): y position of second multi-touch contact (-1,1)</li>
+<li>x3 (4): x position of third multi-touch contact (-1,1)</li>
+<li>y3 (5): y position of third multi-touch contact (-1,1)</li>
+<li>x4 (6): x position of forth multi-touch contact (-1,1)</li>
+<li>y4 (7): y position of forth multi-touch contact (-1,1)</li>
+<li>x5 (8): x position of fifth multi-touch contact (-1,1)</li>
+<li>y5 (9): y position of fifth multi-touch contact (-1,1)</li>
+<li>x6 (10): x position of sixth multi-touch contact (-1,1)</li>
+<li>y6 (11): y position of sixth multi-touch contact (-1,1)</li>
+<li>x7 (12): x position of seventh multi-touch contact (-1,1)</li>
+<li>y7 (13): y position of seventh multi-touch contact (-1,1)</li>
+<li>x8 (14): x position of eighth multi-touch contact (-1,1)</li>
+<li>y8 (15): y position of eighth multi-touch contact (-1,1)</li>
+<li>x9 (16): x position of nineth multi-touch contact (-1,1)</li>
+<li>y9 (17): y position of nineht multi-touch contact (-1,1)</li>
+<li>x10 (18): x position of tenth multi-touch contact (-1,1)</li>
+<li>y10 (19): y position of tenth multi-touch contact (-1,1)</li>
+<li>x11 (20): x position of eleventh multi-touch contact (-1,1)</li>
+<li>y11 (21): y position of eleventh multi-touch contact (-1,1)</li>
+</ul>
+
+
+<h1>Manipulators</h1>
+
+<p>Manipulators are flowboxes which have both at least one input and one output. They are typically manipulate data or generate controllable data. Traditionally these are associated with unit generators or filters. A manipulator can have coupled input/output pairs. This means that a timed update at one side must require a timed update on the other side. A number of manipulators are straight from the <a href="https://ccrma.stanford.edu/software/stk/">Synthesis Toolkit (STK)</a> by Perry Cook and Gary Scavone.</p>
+
+<h2>SinOsc</h2>
+
+<h3>Description</h3>
+
+<p>Generates a sine wave. It is not self-timed and derives its time update from being pulled at the output WaveForm. It provides not couples.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output WaveForm (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>Freq (0): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>Amp (1): Amplitude (0,1)</li>
+<li>SRate (2): Rate (-1,0,1) -> (-4,0,4) with 0.25->1 being standard rate</li>
+<li>Time (3): Time(-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>WaveForm (0): (-1,1)</li>
+</ul>
+
+
+<h2>Avg</h2>
+
+<h3>Description</h3>
+
+<p>Computes a sliding average of the incoming data. It is not self-timed and has coupled input/outputs.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change to input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>In (0) &lt;-> Out (0)</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Avg (1): (-1,1) -> (1,511), default = 256</li>
+</ul>
+
+
+<h2>Dist3</h2>
+
+<h3>Description</h3>
+
+<p>Computes the distance of an input 3-vector against a stored 3-vector. While Train is 1 it will store the inputs in internal storage. If train is -1 it will compute the distance. It is not self-timed and has no couples.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In1 (0): (-1,1)</li>
+<li>In2 (1): (-1,1)</li>
+<li>In3 (2): (-1,1)</li>
+<li>Train (3): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Min</h2>
+
+<h3>Description</h3>
+
+<p>Provides the minimum of two inputs at the output. It is not self-timed and has no couples.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In1 (0): (-1,1)</li>
+<li>In2 (1): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Max</h2>
+
+<h3>Description</h3>
+
+<p>Provides the maximum of two inputs at the output. It is not self-timed and has no couples.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In1 (0): (-1,1)</li>
+<li>In2 (1): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>MinS</h2>
+
+<h3>Description</h3>
+
+<p>Indicates which is the minimum of two inputs at the output. Outputs -1 if In1 is smaller, and 1 if In2 is smaller. It is not self-timed and has no couples.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In1 (0): (-1,1)</li>
+<li>In2 (1): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): -1 or 1</li>
+</ul>
+
+
+<h2>MaxS</h2>
+
+<h3>Description</h3>
+
+<p>Indicates which is the maximum of two inputs at the output. Outputs -1 if In1 is bigger, and 1 if In2 is bigger. It is not self-timed and has no couples.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In1 (0): (-1,1)</li>
+<li>In2 (1): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): -1 or 1</li>
+</ul>
+
+
+<h2>Nope</h2>
+
+<h1>Description</h1>
+
+<p>Does nothing. It is coupled for input In and output Out.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Input</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Inv</h2>
+
+<h1>Description</h1>
+
+<p>Numerically inverts the input (a -> -a). It is coupled for input In and output Out.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Input</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>V</h2>
+
+<h1>Description</h1>
+
+<p>Computes a piece-wise linear transfer function with a V shape with (-1->1, 0->0, 1->1). It is coupled for input In and output Out.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Input</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (0,1)</li>
+</ul>
+
+
+<h2>FullV</h2>
+
+<h1>Description</h1>
+
+<p>Computes a piece-wise linear transfer function with a V shape with (-1->1, 0->-1, 1->1). It is coupled for input In and output Out.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Input</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>DV</h2>
+
+<h1>Description</h1>
+
+<p>Computes a piece-wise linear transfer function with an inverted V shape with (-1->0, 0->1, 1->0). It is coupled for input In and output Out.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Input</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (0,1)</li>
+</ul>
+
+
+<h2>FullDV</h2>
+
+<h1>Description</h1>
+
+<p>Computes a piece-wise linear transfer function with an inverted V shape with (-1->-1, 0->1, 1->-1). It is coupled for input In and output Out.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Input</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>CJ</h2>
+
+<h1>Description</h1>
+
+<p>Computes a piece-wise linear transfer function with shifts the interval (-1,0,1) -> (0,1,-1), creating a center jump condition. This is equivalent to a phase shift of pi. It is coupled for input In and output Out.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Input</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>SQ</h2>
+
+<h1>Description</h1>
+
+<p>Computes a piece-wise linear transfer function with creates a square wave response. (-a,0,a) -> (-1,0,1). It is coupled for input In and output Out.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Input</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>PGate</h2>
+
+<h1>Description</h1>
+
+<p>Computes a piece-wise linear transfer function which sets all negative input to zero (-a,0,a) -> (0,0,a). It is coupled for input In and output Out.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Input</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>NGate</h2>
+
+<h1>Description</h1>
+
+<p>Computes a piece-wise linear transfer function which sets all positive input to zero (-a,0,a) -> (-a,0,0). It is coupled for input In and output Out.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Input</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Pos</h2>
+
+<h1>Description</h1>
+
+<p>Computes a linear transfer function creating an all-positive output (-1,0,1) -> (0,0.5,1). It is coupled for input In and output Out.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Input</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Neg</h2>
+
+<h1>Description</h1>
+
+<p>Computes a linear transfer function creating an all-negative output (-1,0,1) -> (-1,-0.5,0). It is coupled for input In and output Out.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Input</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>ZPuls</h2>
+
+<h1>Description</h1>
+
+<p>Generates a unit pulse when the input is zero (0->1). It is coupled for input In and output Out.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Input</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>SLP</h2>
+
+<h1>Description</h1>
+
+<p>Computes a simple two-point average which acts like a basic low-pass filter. It takes returns the average of the current and the previous sample.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Input</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>PosSqr</h2>
+
+<h1>Description</h1>
+
+<p>Computes a quadratic transfer function creating an all-positive output (-a,0,a) -> (a^2,0,a^2). It is coupled for input In and output Out.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Input</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Oct</h2>
+
+<h1>Description</h1>
+
+<p>Returns an octave range starting at base frequency Freq.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Range</h2>
+
+<h1>Description</h1>
+
+<p>Computes a linear transfer function creating a linear output (-1,1) -> (bottom,top). It is coupled for input In and output Out.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Bottom (1): (-1,1)</li>
+<li>Top (2): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Quant</h2>
+
+<h1>Description</h1>
+
+<p>Quantizes the smooth incoming signals to semi-tone intervals.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Input</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Gain</h2>
+
+<h1>Description</h1>
+
+<p>Applies a gain factor.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Gain (1): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Sample</h2>
+
+<h1>Description</h1>
+
+<p>Allows to play back a select sample from a list of loaded sample files. This flowbox has an additional method called AddFile(filename) to add files to its sample pool.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>Amp (0): (-1,1)</li>
+<li>Rate (1): Rate (-1,0,1) -> (-4,0,4) with 0.25->1 being standard rate</li>
+<li>Pos (2): (-1,1)</li>
+<li>Sample (3): (-1,1)</li>
+<li>Loop (4): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Looper</h2>
+
+<h1>Description</h1>
+
+<p>Allows the recording and play back a sample. While the input to Record is 1, it will record into an internal buffer. This will be played back looped when Play is 1.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Amp (1): (-1,1)</li>
+<li>Rate (2): Rate (-1,0,1) -> (-4,0,4) with 0.25->1 being standard rate</li>
+<li>Record (3): (-1,1)</li>
+<li>Play (4): (-1,1)</li>
+<li>Pos (5): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>CMap</h2>
+
+<h3>Description</h3>
+
+<p>Generates a circle map wave. A circle map is a non-linear oscillator. If the non-linearity is -1 it will behave like a linear sine oscillator. It is not self-timed and derives its time update from being pulled at the output WaveForm. It provides not couples.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output WaveForm (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>Freq (0): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>NonL (1): Generic (-1,1)</li>
+<li>Amp (2): Amplitude (0,1)</li>
+<li>SRate (3): Rate (-1,0,1) -> (-4,0,4) with 0.25->1 being standard rate</li>
+<li>Time (4): Time(-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>WaveForm (0): (-1,1)</li>
+</ul>
+
+
+<h2>Plucked</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK Plucked physical modeling algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>ADSR</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK ADSR envelope algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Attack (1): (-1,1)</li>
+<li>Decay (2): (-1,1)</li>
+<li>Sustain (3): (-1,1)</li>
+<li>Release (4): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Asymp</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK Asymp asymptotic smoothing algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Tau (1): Rate (-1,0,1) -> (-4,0,4) with 0.25->1 being standard rate</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>BiQuad</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK BiQuad resonant filter algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Reson (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>Q (2): (-1,1)</li>
+<li>Notch (3): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>NQ (3): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Blit</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK Blit band-limted impulse train unit generator algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>Phase (2): (-1,1)</li>
+<li>Harms (3): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>BlitSaw</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK BlitSaw band-limted sawtooth unit generator algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>Harms (2): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>BlitSq</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK BlitSq band-limted square wave unit generator algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>Phase (2): (-1,1)</li>
+<li>Harms (3): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>BlowBotl</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK BlowBotl physical modeling algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>BlowHol</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK BlowHol physical excitation algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Bowed</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK Bowed physical modeling algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>Vibrato (2): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>BowTbl</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK BowTbl physical excitation algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Offset (1): (-1,1)</li>
+<li>Slope (2): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Brass</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK Brass physical modeling algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Clarinet</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK Brass physical modeling algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Delay</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK Delay non-interpolating delay-line algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Delay (1): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>DelayA</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK Delay allpass interpolating delay-line algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Delay (1): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>DelayL</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK Delay linear interpolating delay-line algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Delay (1): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Echo</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK Echo algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Echo (1): (-1,1)</li>
+<li>Mix (2): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Env</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK Env envelope algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Time (1): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Flute</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK Brass physical modeling algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>JetRefl (2): (-1,1)</li>
+<li>EndRefl (3): (-1,1)</li>
+<li>JetDelay (4): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>JCRev</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK JCRev John Chowning reverb algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>T60 (1): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>JetTbl</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK JetTbl physical excitation algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Mod</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK Mod modulation algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>VibRate (1): (-1,1)</li>
+<li>VibGain (2): (-1,1)</li>
+<li>RandGain (3): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>NRev</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK NRev reverb algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>T60 (1): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>OnePole</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK OnePole filter algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Reson (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>Q (2): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>OneZero</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK OneZero filter algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Notch (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>B1 (2): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>PitShift</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK PitShift pitch shifting algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Shift (1): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>AllPass</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK AllPass filter algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Coeff (1): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>ZeroBlk</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK ZeroBlk zero blocking filter algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>PRCRev</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK PRCRev Perry Cook reverb algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>T60 (1): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>ReedTbl</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK ReedTbl physical excitation algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Any change at input In (0) or output Out (0)</p>
+
+<h3>Couples</h3>
+
+<ul>
+<li>In (0) &lt;-> Out (0)</li>
+</ul>
+
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Offset (1): (-1,1)</li>
+<li>Slope (2): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Saxofony</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK Saxofony physical modeling algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Sitar</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK Sitar physical modeling algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>StifKarp</h2>
+
+<h1>Description</h1>
+
+<p>This is the STK StifKarp physical modeling algorithm.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In (0): (-1,1)</li>
+<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>Stretch (2): (-1,1)</li>
+<li>Pos (3): (-1,1)</li>
+<li>Loop (4): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h1>Sinks</h1>
+
+<p>Sinks are flowboxes which do not have an output. They are typically driving device actuation, output to the user, or outgoing network traffic derived from the data at its input.</p>
+
+<h2>Dac</h2>
+
+<h3>Description</h3>
+
+<p>Provides hardware speaker playback. This flowbox is self-timed and provides a stable rate. It cannot be instanced.</p>
+
+<h3>Typical native rate</h3>
+
+<p>rate = 48000Hz</p>
+
+<h3>Input</h3>
+
+<ul>
+<li>In (0): Audio data (-1,1)</li>
+</ul>
+
+
+<h2>Net</h2>
+
+<h3>Description</h3>
+
+<p>Provides network data. This flowbox is self-timed but does not provide a stable rate. It must be instanced.</p>
+
+<h3>Typical native rate</h3>
+
+<p>rate = variable, depending on incoming network data timing</p>
+
+<h3>Input</h3>
+
+<ul>
+<li>In (0): Outgoing Network data (-1,1)</li>
+</ul>
+
+
+<h2>Vis</h2>
+
+<h3>Description</h3>
+
+<p>Provides pulling data at visual rates. This flowbox is self-timed but does not provide a stable rate, however the target rate is around 60Hz. It cannot be instanced. This flowbox offers a special method called Get() which allows access to the last data point acquired. Get is guaranteed to have been updated before the OnUpdate event fires.</p>
+
+<h3>Typical native rate</h3>
+
+<p>rate = variable, depending on computational and graphics load, target is 60Hz</p>
+
+<h3>Input</h3>
+
+<ul>
+<li>In (0): Pulled visual data (-1,1)</li>
+</ul>
+
+
+<center>
+  <ul class="navigation">
+  <li><a href="../documentation.html">Main documentation</a></li>
+  <li><a href="overview.html">urMus API overview</a></li>
+</ul>
+
+</center>
+</body>
+</html>

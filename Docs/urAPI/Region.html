@@ -858,7 +858,7 @@ be viewable on screen</p>
 
 <h3>Description</h3>
 
-<p>Fires when a touch event is released while inside a region that takes input. THis must be enabled via EnableInput(). This will only be triggered for the topmost region that takes input.</p>
+<p>Fires when a touch event is released while inside a region that takes input. This must be enabled via EnableInput(). This will only be triggered for the topmost region that takes input.</p>
 
 <h2>OnDoubleTap</h2>
 
@@ -880,6 +880,50 @@ be viewable on screen</p>
 visible; if the parent object is still invisible then this will still fire; however
 the object itself will not be actually visible on screen.</p>
 
+<h2>OnUpdate</h2>
+
+<h3>Handler Synopsis</h3>
+
+<pre><code>function(region, elapsed)
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Fires when a the screen is about to be redrawn. elapsed is the time since the last screen update in seconds.</p>
+
+<h2>OnNetConnect</h2>
+
+<h3>Handler Synopsis</h3>
+
+<pre><code>function(region, hostname)
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Fires when a network service is found via the ZeroConf system. Can only trigger after StartNetDiscovery(). hostname is the name of the found host.</p>
+
+<h2>OnNetDisconnect</h2>
+
+<h3>Handler Synopsis</h3>
+
+<pre><code>function(region, hostname)
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Fires when a network service is no longer available via the ZeroConf system. Can only trigger after StartNetDiscovery(). hostname is the name of the host no longer available.</p>
+
+<h2>OnOSCMessage</h2>
+
+<h3>Handler Synopsis</h3>
+
+<pre><code>function(region, arg1, [arg2, ...])
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Fires when an OSC message was received. Can only trigger after StartOSCListener() was called. Returns a variable number of arguments in accordance with the sent OSC message.</p>
+
 <h2>OnAccelerate</h2>
 
 <h3>Handler Synopsis</h3>
@@ -889,8 +933,18 @@ the object itself will not be actually visible on screen.</p>
 
 <h3>Description</h3>
 
-<p>Fires when an acceleration event is detected. No guarantees are made about the frequency
-of its updates.</p>
+<p>Fires when an acceleration event is detected. No guarantees are made about the frequency of its updates. Arguments are the x, y, and z axis acceleration values in units of g (typically between -1 and 1).</p>
+
+<h2>OnRotation</h2>
+
+<h3>Handler Synopsis</h3>
+
+<pre><code>function(region, x, y, z)
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Fires when a gyroscpe event is detected. No guarantees are made about the frequency of its update. Arguments are the x, y, and z axis angular velocity values.</p>
 
 <h2>OnHeading</h2>
 
@@ -939,6 +993,17 @@ the velocity of the current scroll.</p>
 
 <p>Fires when a given region is scrolled vertically. This handler returns scrollspeedY,
 the velocity of the current scroll.</p>
+
+<h2>OnMove</h2>
+
+<h3>Handler Synopsis</h3>
+
+<pre><code>function(region, x, y, dx, dy)
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Fires when a touch event moves within the region. This handler returns the old position x, and y as well as the relative distance moved inside the region dx, dy.</p>
 
 <h2>OnPageEntered</h2>
 

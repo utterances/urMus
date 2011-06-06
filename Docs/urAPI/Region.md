@@ -502,7 +502,7 @@ Fires when a touch event happens inside a region that takes input. This must be 
 OnTouchUp
 ---------
 ### Description
-Fires when a touch event is released while inside a region that takes input. THis must be enabled via EnableInput(). This will only be triggered for the topmost region that takes input.
+Fires when a touch event is released while inside a region that takes input. This must be enabled via EnableInput(). This will only be triggered for the topmost region that takes input.
 
 OnDoubleTap
 -----------
@@ -521,13 +521,47 @@ Fires when an object is made to be shown. Note that this is different from being
 visible; if the parent object is still invisible then this will still fire; however
 the object itself will not be actually visible on screen.
 
+OnUpdate
+--------
+### Handler Synopsis
+    function(region, elapsed)
+### Description
+Fires when a the screen is about to be redrawn. elapsed is the time since the last screen update in seconds.
+
+OnNetConnect
+------------
+### Handler Synopsis
+	function(region, hostname)
+### Description
+Fires when a network service is found via the ZeroConf system. Can only trigger after StartNetDiscovery(). hostname is the name of the found host.
+
+OnNetDisconnect
+---------------
+### Handler Synopsis
+	function(region, hostname)
+### Description
+Fires when a network service is no longer available via the ZeroConf system. Can only trigger after StartNetDiscovery(). hostname is the name of the host no longer available.
+
+OnOSCMessage
+------------
+### Handler Synopsis
+	function(region, arg1, [arg2, ...])
+### Description
+Fires when an OSC message was received. Can only trigger after StartOSCListener() was called. Returns a variable number of arguments in accordance with the sent OSC message.
+
 OnAccelerate
 ------------
 ### Handler Synopsis
     function(region,x, y, z)
 ### Description
-Fires when an acceleration event is detected. No guarantees are made about the frequency
-of its updates. 
+Fires when an acceleration event is detected. No guarantees are made about the frequency of its updates. Arguments are the x, y, and z axis acceleration values in units of g (typically between -1 and 1).
+
+OnRotation
+----------
+### Handler Synopsis
+	function(region, x, y, z)
+### Description
+Fires when a gyroscpe event is detected. No guarantees are made about the frequency of its update. Arguments are the x, y, and z axis angular velocity values.
 
 OnHeading
 ---------
@@ -561,6 +595,13 @@ OnVerticalScroll
 Fires when a given region is scrolled vertically. This handler returns scrollspeedY,
 the velocity of the current scroll.
 
+OnMove
+------
+### Handler Synopsis
+	function(region, x, y, dx, dy)
+### Description
+Fires when a touch event moves within the region. This handler returns the old position x, and y as well as the relative distance moved inside the region dx, dy.
+
 OnPageEntered
 -------
 ### Description
@@ -570,6 +611,5 @@ OnPageLeft
 ----------
 ### Description
 Fires when the page that the region belongs to is left. 
-
 
 [urMus API Overview](overview.html)

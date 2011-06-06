@@ -1,0 +1,3 @@
+./Markdown.pl regions.md > Tutorial-1-Regions-preh.html
+cat headertemplate.html Tutorial-1-Regions-preh.html > Tutorial-1-Regions.html
+rm Tutorial-1-Regions-preh.html

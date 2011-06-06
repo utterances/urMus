@@ -8,10 +8,10 @@ FreeAllRegions()
 local random = math.random
 
 local numrepetitions = 3
-local minradius = ScreenWidth()/2
-local maxradius = ScreenWidth()
-local minspeed = 1*30
-local maxspeed = 5*30
+local minradius = ScreenWidth()/3
+local maxradius = ScreenWidth()/4*3
+local minspeed = 1*30.0
+local maxspeed = 5*30.0
 local minfontsize = 12
 local maxfontsize = 24
 

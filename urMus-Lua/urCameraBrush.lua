@@ -6,27 +6,27 @@
 
 FreeAllRegions()
 
-local regions = {}
-recycledregions = {}
+local cregions = {}
+crecycledregions = {}
 
-function RecycleSelf(self)
+function cRecycleSelf(self)
 self:EnableInput(false)
 self:EnableMoving(false)
 self:EnableResizing(false)
 self:Hide()
-table.insert(recycledregions, self)
-for k,v in pairs(regions) do
+table.insert(crecycledregions, self)
+for k,v in pairs(cregions) do
 if v == self then
-table.remove(regions,k)
+table.remove(cregions,k)
 end
 end
 end
 
-function CreateorRecycleregion(ftype, name, parent)
+function cCreateorRecycleregion(ftype, name, parent)
 local region
-if #recycledregions > 0 then
-region = recycledregions[#recycledregions]
-table.remove(recycledregions)
+if #crecycledregions > 0 then
+region = crecycledregions[#crecycledregions]
+table.remove(crecycledregions)
 else
 region = Region()
 region.t = region:Texture("Ornament1.png")
@@ -45,66 +45,93 @@ end
 
 local random = math.random
 
-function CreateRegionAt(x,y)
-local region = CreateorRecycleregion('region', 'backdrop', UIParent)
+function cCreateRegionAt(x,y)
+local region = cCreateorRecycleregion('region', 'backdrop', UIParent)
 TextureCol(region.t,255,255,255,255)
 region.t:UseCamera()
 region.t:SetRotation(-pi/2)
 region:Show()
---region:EnableMoving(true)
---region:EnableResizing(true)
+region:EnableMoving(true)
+region:EnableResizing(true)
 region:EnableInput(true)
-region:Handle("OnDoubleTap", RecycleSelf)
-region:Handle("OnUpdate", GatherVis)
+--region:Handle("OnDoubleTap", cRecycleSelf)
+--region:Handle("OnUpdate", GatherVis)
 region.t:SetTiling()
 
 --region.t:SetRotation(random()*2.0*pi)
 region:SetAnchor("CENTER",x,y)
-table.insert(regions, region)
+table.insert(cregions, region)
+return region
 end
 
+local lastx =-1
+local lasty =-1
+local lastdx = -1
+local lastdy = -1
 
+function cDraw(self,elapsed)
 
-function Paint(self,x,y,dx,dy,n)
-brush1.t:SetBrushSize(64)
+    if lastx ~= -1 and lasty ~= -1 then
+cbrush1:UseAsBrush()
+cbrush1.t:SetBrushSize(64)
 -- The rotation of -pi/2 is necessary to get a righ-side-up camera texture
-brush1.t:SetRotation(-pi/2)
+cbrush1.t:SetRotation(-pi/2)
+self.texture:SetBrushColor(255,255,255,255)
+self.texture:Line(lastx, lasty, lastx+lastdx, lasty+lastdy)
+lastx = -1
+lasty = -1
+end
+end
+
+function cPaint(self,x,y,dx,dy,n)
+cbrush1:UseAsBrush()
+cbrush1.t:SetBrushSize(64)
+-- The rotation of -pi/2 is necessary to get a righ-side-up camera texture
+--cbrush1.t:SetRotation(-pi/2)
 self.texture:SetBrushColor(255,255,255,255)
 self.texture:Line(x, y, x+dx, y+dy)
-fingerposx, fingerposy = fingerposx+dx,fingerposy+dy
+--[[if lastx == -1 and lasty == -1 then
+lastdx = dx
+lastdy = dy
+lastx = x
+lasty = y
+else
+lastdx = lastdx + dx
+lastdy = lastdy + dy
+end--]]
 end
 
-function BrushDown(self,x,y)
-fingerposx, fingerposy = x, y
-self:Handle("OnMove", Paint)
+function cBrushDown(self,x,y)
+self:Handle("OnMove", cPaint)
 end
 
-function BrushUp(self)
+function cBrushUp(self)
 self:Handle("OnMove", nil)
 end
 
-function Clear(self)
-smudgebackdropregion.texture:Clear(255,255,255,0)
+function cClear(self)
+csmudgebackdropregion.texture:Clear(255,255,255,0)
 end
 
-smudgebackdropregion=Region('region', 'smudgebackdropregion', UIParent)
-smudgebackdropregion:SetWidth(ScreenWidth())
-smudgebackdropregion:SetHeight(ScreenHeight())
-smudgebackdropregion:SetLayer("BACKGROUND")
-smudgebackdropregion:SetAnchor('BOTTOMLEFT',0,0)
-smudgebackdropregion.texture = smudgebackdropregion:Texture()
-smudgebackdropregion.texture:SetTexture(255,255,255,255)
+csmudgebackdropregion=Region('region', 'smudgebackdropregion', UIParent)
+csmudgebackdropregion:SetWidth(ScreenWidth())
+csmudgebackdropregion:SetHeight(ScreenHeight())
+csmudgebackdropregion:SetLayer("BACKGROUND")
+csmudgebackdropregion:SetAnchor('BOTTOMLEFT',0,0)
+csmudgebackdropregion.texture = csmudgebackdropregion:Texture()
+csmudgebackdropregion.texture:SetTexture(255,255,255,255)
 if ScreenWidth() == 320.0 then
-smudgebackdropregion.texture:SetTexCoord(0,320.0/512.0,480.0/512.0,0.0)
+csmudgebackdropregion.texture:SetTexCoord(0,320.0/512.0,480.0/512.0,0.0)
 else
-smudgebackdropregion.texture:SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
+csmudgebackdropregion.texture:SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
 end
 
-smudgebackdropregion:Handle("OnDoubleTap", Clear)
-smudgebackdropregion:Handle("OnTouchDown", BrushDown)
-smudgebackdropregion:Handle("OnTouchUp", BrushUp)
-smudgebackdropregion:EnableInput(true)
-smudgebackdropregion:Show()
+csmudgebackdropregion:Handle("OnDoubleTap", cClear)
+csmudgebackdropregion:Handle("OnTouchDown", cBrushDown)
+csmudgebackdropregion:Handle("OnTouchUp", cBrushUp)
+--csmudgebackdropregion:Handle("OnUpdate", cDraw)
+csmudgebackdropregion:EnableInput(true)
+csmudgebackdropregion:Show()
 
 dummp = Region()
 dummp.t = dummp:Texture()
@@ -112,15 +139,15 @@ dummp.t:UseCamera()
 dummp:Show()
 dummp:SetAnchor("BOTTOMLEFT",-dummp:Width(),0)
 
-CreateRegionAt(ScreenWidth()/4,ScreenWidth()/4)
-CreateRegionAt(ScreenWidth()/2,ScreenWidth()/4)
-CreateRegionAt(ScreenWidth(),ScreenWidth()/4)
+--CreateRegionAt(ScreenWidth()/4,ScreenWidth()/4)
+cCreateRegionAt(ScreenWidth()/2,ScreenWidth()/4)
+--CreateRegionAt(ScreenWidth(),ScreenWidth()/4)
 
-brush1=Region('region','brush',UIParent)
-brush1.t=brush1:Texture()
-brush1.t:SetTiling()
-brush1.t:UseCamera()
-brush1:UseAsBrush()
+cbrush1=Region('region','brush',UIParent)
+cbrush1.t=cbrush1:Texture()
+cbrush1.t:SetTiling()
+cbrush1.t:UseCamera()
+cbrush1:UseAsBrush()
 
 
 local pagebutton=Region('region', 'pagebutton', UIParent)

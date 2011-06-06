@@ -237,8 +237,25 @@ Returns the height of the given textlabel in pixels.
 - heightInPx (Number)
     Returns the height of the given font in px.
 
-TextLabel:SetLabelHeight
+TextLabel:SetFontHeight
 -------------
+### Synopsis
+	textlabel:SetFontHeight(height)
+### Description
+Sets the rendering height of the current font in pixels.
+### Arguments
+- height (Number)
+	The rendering height of the font in pixels
+
+TextLabel:FontHeight
+-------------
+### Synopsis
+	height = textlabel:SetFontHeight()
+### Description
+Returns the rendering height of the current font in pixels.
+### Arguments
+- height (Number)
+	The rendering height of the font in pixels
 
 TextLabel:Width
 --------------
@@ -267,5 +284,26 @@ Sets the current text value for the given textlabel.
 ### Arguments
 - text (String)
     The desired text value for the label.
+
+TextLabel:SetRotation
+-------
+### Synopsis
+	textlabel:SetRotation(angle)
+### Description
+Rotates the current text label. Note that alignment operations still assume that the orientation is 0 angle.
+### Arguments
+- angle (Number)
+	Angle of rotation for the textlabel. 0 angle reflects urMus's default orientation.
+
+TextLabel:Rotation
+-------
+### Synopsis
+	textlabel:Rotation()
+### Description
+Returns the current rotation angle of the text label.
+### Returns
+- angle (Number)
+	Angle of rotation for the textlabel. 0 angle reflects urMus's default orientation.
+
 
 [urMus API Overview](overview.html)

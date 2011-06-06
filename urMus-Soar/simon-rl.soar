@@ -1,0 +1,211 @@
+waitsnc -e
+rl --set discount-rate 0
+rl --set learning-rate 0.5
+rl --set learning on
+
+
+sp {apply*repeat*next
+    (state <s> ^operator <op> ^counter <c> ^previous <p>)
+    (<op> ^name repeat ^button <l>)
+    -->
+    (<s> ^previous <p> - ^previous <l> + ^counter <c> - ^counter (+ <c> 1) +)
+}
+
+
+sp {apply*repeat*out
+    (state <s> ^operator <op> ^io <i*1>)
+    (<op> ^name repeat ^button <l>)
+    (<i*1> ^output-link <out>)
+    -->
+    (<out> ^press <p*1> +)
+    (<p*1> ^button <l> +)
+}
+
+
+sp {simon-rl*propose*repeat
+    (state <s> ^name simon-rl ^counter <c> ^possibilities <p*1> ^io <i*1>)
+    (<p*1> ^button <l>)
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^task { << repeat generate >> <t*1> })
+    -->
+    (<s> ^operator <op> +)
+    (<op> ^name repeat + ^button <l> +)
+}
+
+
+sp {apply*repeat*practice
+    (state <s> ^name practice ^operator <op>)
+    (<op> ^name repeat ^button <l>)
+    -->
+    (<s> ^guess <l> +)
+}
+
+
+sp {practice*propose*repeat
+    (state <s> ^name practice -^guess <g*1> ^current <c> ^possibilities <p>)
+    (<c> ^button <b*1>)
+    (<p> ^button <l>)
+    -->
+    (<s> ^operator <op> +)
+    (<op> ^name repeat + ^button <l> +)
+}
+
+
+sp {apply*practice-next
+    (state <s> ^operator <op> ^guess <g> ^current <c> ^previous <p>)
+    (<op> ^name practice-next)
+    (<c> ^button <l> ^next <n>)
+    -->
+    (<s> ^current <c> - ^current <n> + ^guess <g> - ^previous <p> -
+           ^previous <l> +)
+}
+
+
+sp {practice*propose*practice-next
+    (state <s> ^name practice ^guess <g> ^current <c>)
+    -->
+    (<s> ^operator <op> + ^operator <op> =)
+    (<op> ^name practice-next +)
+}
+
+
+sp {apply*practice-loop
+    (state <s> ^operator <op> ^current <c> ^sequence <s1> ^previous <p>)
+    (<op> ^name practice-loop)
+    -->
+    (<s> ^current <c> - ^current <s1> + ^previous <p> - ^previous nil +)
+}
+
+
+sp {practice*propose*practice-loop
+    (state <s> ^name practice -^guess <g*1> ^current <c>)
+    (<c> -^button <b*1>)
+    -->
+    (<s> ^operator <op> + ^operator <op> =)
+    (<op> ^name practice-loop +)
+}
+
+
+sp {apply*practice-init
+    (state <s> ^operator <op> ^superstate <ss>)
+    (<op> ^name practice-init)
+    (<ss> ^sequence <s1> ^possibilities <p>)
+    -->
+    (<s> ^current <s1> + ^sequence <s1> + ^possibilities <p> + ^previous nil +)
+}
+
+
+sp {practice*propose*practice-init
+    (state <s> ^name practice -^current <c*1>)
+    -->
+    (<s> ^operator <op> + ^operator <op> =)
+    (<op> ^name practice-init +)
+}
+
+
+sp {practice*elaborate*reward*guess-bad
+    (state <s> ^name practice ^guess <g> ^current <c*1> ^reward-link <rl>)
+    (<c*1> ^button { <> <g> <b*1> })
+    -->
+    (<rl> ^reward <r*1> +)
+    (<r*1> ^value -10 +)
+}
+
+
+sp {practice*elaborate*reward*guess-good
+    (state <s> ^name practice ^guess <g> ^current <c*1> ^reward-link <rl>)
+    (<c*1> ^button <g>)
+    -->
+    (<rl> ^reward <r*1> +)
+    (<r*1> ^value 10 +)
+}
+
+
+sp {simon-rl*propose*practice
+    (state <s> ^name simon-rl ^sequence <s*1>)
+   -{ (<s> ^io <i*1>)
+      (<i*1> ^input-link <i*2>)
+      (<i*2> ^task <t*1>)}
+    (<s*1> ^button <b*1>)
+    -->
+    (<s> ^operator <op> + ^operator <op> <)
+    (<op> ^name practice +)
+}
+
+
+sp {apply*listen
+    (state <s> ^operator <op> ^current <c> ^possibilities <p> ^io <i*1>)
+    (<op> ^name listen)
+    (<c> ^time <t>)
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^listen <l>)
+    -->
+    (<s> ^current <c> - ^current <newbie> +)
+    (<c> ^button <l> + ^next <newbie> +)
+    (<newbie> ^time (+ <t> 1.) +)
+    (<p> ^button <l> +)
+}
+
+
+sp {simon-rl*propose*listen
+    (state <s> ^name simon-rl ^current <c*1> ^io <i*1>)
+    (<c*1> ^time <t>)
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^time <t>)
+    -->
+    (<s> ^operator <op> + ^operator <op> >)
+    (<op> ^name listen +)
+}
+
+
+sp {apply*initialize-simon-rl
+    (state <s> ^operator <op>)
+    (<op> ^name initialize-simon-rl)
+    -->
+    (<s> ^name simon-rl + ^previous nil + ^possibilities <p> +
+           ^sequence <s1> + ^current <s1> + ^counter 0 +)
+    (<s1> ^time 1. +)
+}
+
+
+sp {propose*initialize-simon-rl
+    (state <s> ^superstate nil -^name <n*1>)
+    -->
+    (<s> ^operator <o> +)
+    (<o> ^name initialize-simon-rl +)
+}
+
+
+sp {elaborate*top-state*top-state
+    (state <s> ^superstate nil)
+    -->
+    (<s> ^top-state <s> +)
+}
+
+
+sp {elaborate*state*top-state
+    (state <s> ^superstate <s*1>)
+    (<s*1> ^top-state <ts>)
+    -->
+    (<s> ^top-state <ts> +)
+}
+
+
+sp {elaborate*state*name
+    (state <s> ^superstate <s*1>)
+    (<s*1> ^operator <o*1>)
+    (<o*1> ^name <name>)
+    -->
+    (<s> ^name <name> +)
+}
+
+
+sp {repeat*rl
+   :template
+    (state <s> ^operator <op> + ^previous <p>)
+    (<op> ^name repeat ^button <l>)
+    -->
+    (<s> ^operator <op> = 0)
+}
+
+

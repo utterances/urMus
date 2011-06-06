@@ -1,0 +1,169 @@
+waitsnc -e
+smem --set learning on
+
+sp {apply*task-init
+    (state <s> ^operator <op> ^task <old-t> ^time <time> ^previous <p>
+          ^io <i*1>)
+    (<op> ^name task-init)
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^task <t>)
+    -->
+    (<s> ^task <old-t> - ^task <t> + ^previous <p> - ^previous nil +
+           ^time <time> - ^time 0. +)
+}
+
+
+sp {simon-smem*propose*task-init
+    (state <s> ^name simon-smem ^task <t> ^io <i*1>)
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^task { <> <t> <t*1> })
+    -->
+    (<s> ^operator <op> + ^operator <op> >)
+    (<op> ^name task-init +)
+}
+
+
+sp {apply*repeat-result*prev
+    (state <s> ^operator <op> ^previous <p>)
+    (<op> ^name repeat-result ^button <l>)
+    -->
+    (<s> ^previous <p> - ^previous <l> +)
+}
+
+
+sp {apply*repeat-result*clean-smem
+    (state <s> ^operator <op> ^smem <s*1>)
+    (<op> ^name repeat-result)
+    (<s*1> ^command <cmd>)
+    (<cmd> ^query <q>)
+    -->
+    (<cmd> ^query <q> -)
+}
+
+
+sp {apply*repeat-result*out
+    (state <s> ^operator <op> ^io <i*1>)
+    (<op> ^name repeat-result ^button <l>)
+    (<i*1> ^output-link <out>)
+    -->
+    (<out> ^press <p*1> +)
+    (<p*1> ^button <l> +)
+}
+
+
+sp {simon-smem*propose*repeat-result*fail
+    (state <s> ^name simon-smem ^possibilities <p*1> ^smem <s*1> ^io <i*1>)
+    (<p*1> ^button <l>)
+    (<s*1> ^result <r*1>)
+    (<r*1> ^failure <f*1>)
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^task { << repeat generate >> <t*1> })
+    -->
+    (<s> ^operator <op> + ^operator <op> =)
+    (<op> ^name repeat-result + ^button <l> +)
+}
+
+
+sp {simon-smem*propose*repeat-result*succeed
+    (state <s> ^name simon-smem ^smem <s*1> ^io <i*1>)
+    (<s*1> ^result <r*1>)
+    (<r*1> ^retrieved <r*2>)
+    (<r*2> ^two <l>)
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^task { << repeat generate >> <t*1> })
+    -->
+    (<s> ^operator <op> + ^operator <op> =)
+    (<op> ^name repeat-result + ^button <l> +)
+}
+
+
+sp {apply*repeat-query
+    (state <s> ^operator <op> ^smem <s*1> ^previous <p>)
+    (<op> ^name repeat-query)
+    (<s*1> ^command <cmd>)
+    -->
+    (<cmd> ^query <q*1> +)
+    (<q*1> ^one <p> +)
+}
+
+
+sp {simon-smem*propose*repeat-query
+    (state <s> ^name simon-smem ^io <i*1>)
+   -{ (<s> ^smem <s*1>)
+      (<s*1> ^command <c*1>)
+      (<c*1> ^query <q*1>)}
+    (<i*1> ^input-link <i*2>)
+    (<i*2> ^task { << repeat generate >> <t*1> })
+    -->
+    (<s> ^operator <op> + ^operator <op> =)
+    (<op> ^name repeat-query +)
+}
+
+
+sp {apply*listen
+    (state <s> ^operator <op> ^possibilities <ps> ^time <old-t>
+          ^previous <old-p> ^io <i*1>)
+    (<op> ^name listen)
+    (<i*1> ^input-link <in>)
+    (<in> ^listen <l> ^time <t>)
+    -->
+    (<s> ^previous <old-p> - ^previous <l> + ^time <old-t> - ^time <t> +)
+    (<ps> ^button <l> +)
+}
+
+
+sp {simon-smem*propose*listen
+    (state <s> ^name simon-smem ^time <t*1> ^smem <s*1> ^previous <p>
+          ^io <i*1>)
+    (<s*1> ^command <cmd>)
+    (<i*1> ^input-link <in>)
+    (<in> ^listen <l> ^time { <> <t*1> <t> })
+    -->
+    (<s> ^operator <op> + ^operator <op> =)
+    (<op> ^name listen +)
+    (<cmd> ^store <chunk> +)
+    (<chunk> ^one <p> + ^two <l> +)
+}
+
+
+sp {apply*initialize-simon-smem
+    (state <s> ^operator <op>)
+    (<op> ^name initialize-simon-smem)
+    -->
+    (<s> ^name simon-smem + ^previous nil + ^time 0. + ^task listen +
+           ^possibilities <p> +)
+}
+
+
+sp {propose*initialize-simon-smem
+    (state <s> ^superstate nil -^name <n*1>)
+    -->
+    (<s> ^operator <o> +)
+    (<o> ^name initialize-simon-smem +)
+}
+
+
+sp {elaborate*top-state*top-state
+    (state <s> ^superstate nil)
+    -->
+    (<s> ^top-state <s> +)
+}
+
+
+sp {elaborate*state*top-state
+    (state <s> ^superstate <s*1>)
+    (<s*1> ^top-state <ts>)
+    -->
+    (<s> ^top-state <ts> +)
+}
+
+
+sp {elaborate*state*name
+    (state <s> ^superstate <s*1>)
+    (<s*1> ^operator <o*1>)
+    (<o*1> ^name <name>)
+    -->
+    (<s> ^name <name> +)
+}
+
+

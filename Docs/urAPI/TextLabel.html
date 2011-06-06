@@ -430,7 +430,43 @@ of text.</p>
 </ul>
 
 
-<h2>TextLabel:SetLabelHeight</h2>
+<h2>TextLabel:SetFontHeight</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>textlabel:SetFontHeight(height)
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Sets the rendering height of the current font in pixels.</p>
+
+<h3>Arguments</h3>
+
+<ul>
+<li>height (Number)
+  The rendering height of the font in pixels</li>
+</ul>
+
+
+<h2>TextLabel:FontHeight</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>height = textlabel:SetFontHeight()
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Returns the rendering height of the current font in pixels.</p>
+
+<h3>Arguments</h3>
+
+<ul>
+<li>height (Number)
+  The rendering height of the font in pixels</li>
+</ul>
+
 
 <h2>TextLabel:Width</h2>
 
@@ -482,6 +518,44 @@ of text.</p>
 <ul>
 <li>text (String)
   The desired text value for the label.</li>
+</ul>
+
+
+<h2>TextLabel:SetRotation</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>textlabel:SetRotation(angle)
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Rotates the current text label. Note that alignment operations still assume that the orientation is 0 angle.</p>
+
+<h3>Arguments</h3>
+
+<ul>
+<li>angle (Number)
+  Angle of rotation for the textlabel. 0 angle reflects urMus's default orientation.</li>
+</ul>
+
+
+<h2>TextLabel:Rotation</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>textlabel:Rotation()
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Returns the current rotation angle of the text label.</p>
+
+<h3>Returns</h3>
+
+<ul>
+<li>angle (Number)
+  Angle of rotation for the textlabel. 0 angle reflects urMus's default orientation.</li>
 </ul>
 
 

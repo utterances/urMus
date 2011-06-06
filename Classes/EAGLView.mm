@@ -573,6 +573,10 @@ int SCREEN_WIDTH = 320;
 int SCREEN_HEIGHT = 480;
 int HALF_SCREEN_WIDTH = 160;
 int HALF_SCREEN_HEIGHT = 240;
+
+int EXT_SCREEN_WIDTH = 320;
+int EXT_SCREEN_HEIGHT = 480;
+
 //#define SCREEN_WIDTH 320
 //#define SCREEN_HEIGHT 480
 
@@ -597,12 +601,15 @@ NSString *texturepathstr; // = @"Ship.png";
 static Texture2D* brushtexture = NULL;
 static float brushsize = 1;
 
+// Interfacing with C of the lua API
+extern EAGLView* g_glView;
+
 // 2D Painting functionality
 
 // Brush handling
 
-void SetBrushAsCamera(bool asdf) {
-    cameraBeingUsedAsBrush = asdf;
+void SetBrushAsCamera(bool s) {
+    cameraBeingUsedAsBrush = s;
 }
 
 void SetBrushTexture(Texture2D * texture)
@@ -697,6 +704,18 @@ void CreateFrameBuffer()
 
 void drawPointToTexture(urAPI_Texture_t *texture, float x, float y)
 {
+    [EAGLContext setCurrentContext:g_glView->context];
+    
+    glBindFramebufferOES(GL_FRAMEBUFFER_OES, g_glView->viewFramebuffer);
+    glViewport(0, 0, g_glView->backingWidth, g_glView->backingHeight);
+	
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    
+    glOrthof(0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);
+    glMatrixMode(GL_MODELVIEW);
+    glRotatef(0.0f, 0.0f, 0.0f, 1.0f);
+
 	Texture2D *bgtexture = texture->backgroundTex;
 	y = texture->backgroundTex->_height - y;
 
@@ -749,6 +768,18 @@ int prepareBrushedLine(float startx, float starty, float endx, float endy, int v
 // Render a quadrangle to a texture
 void drawQuadToTexture(urAPI_Texture_t *texture, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
 {
+    [EAGLContext setCurrentContext:g_glView->context];
+    
+    glBindFramebufferOES(GL_FRAMEBUFFER_OES, g_glView->viewFramebuffer);
+    glViewport(0, 0, g_glView->backingWidth, g_glView->backingHeight);
+	
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    
+    glOrthof(0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);
+    glMatrixMode(GL_MODELVIEW);
+    glRotatef(0.0f, 0.0f, 0.0f, 1.0f);
+
 	Texture2D *bgtexture = texture->backgroundTex;
 	y1 = texture->backgroundTex->_height - y1;
 	y2 = texture->backgroundTex->_height - y2;
@@ -822,6 +853,18 @@ void drawQuadToTexture(urAPI_Texture_t *texture, float x1, float y1, float x2, f
 // Render an ellipse to a texture
 void drawEllipseToTexture(urAPI_Texture_t *texture, float x, float y, float w, float h)
 {
+    [EAGLContext setCurrentContext:g_glView->context];
+    
+    glBindFramebufferOES(GL_FRAMEBUFFER_OES, g_glView->viewFramebuffer);
+    glViewport(0, 0, g_glView->backingWidth, g_glView->backingHeight);
+	
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    
+    glOrthof(0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);
+    glMatrixMode(GL_MODELVIEW);
+    glRotatef(0.0f, 0.0f, 0.0f, 1.0f);
+
 	Texture2D *bgtexture = texture->backgroundTex;
 	y = texture->backgroundTex->_height - y;
 	
@@ -889,6 +932,18 @@ void drawEllipseToTexture(urAPI_Texture_t *texture, float x, float y, float w, f
 
 void drawLineToTexture(urAPI_Texture_t *texture, float startx, float starty, float endx, float endy)
 {
+    [EAGLContext setCurrentContext:g_glView->context];
+    
+    glBindFramebufferOES(GL_FRAMEBUFFER_OES, g_glView->viewFramebuffer);
+    glViewport(0, 0, g_glView->backingWidth, g_glView->backingHeight);
+	
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    
+    glOrthof(0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);
+    glMatrixMode(GL_MODELVIEW);
+    glRotatef(0.0f, 0.0f, 0.0f, 1.0f);
+    
 	Texture2D *bgtexture = texture->backgroundTex;
 	
 	starty = texture->backgroundTex->_height - starty;
@@ -965,6 +1020,18 @@ void drawLineToTexture(urAPI_Texture_t *texture, float startx, float starty, flo
 
 void clearTexture(Texture2D* texture, float r, float g, float b, float a)
 {
+    [EAGLContext setCurrentContext:g_glView->context];
+    
+    glBindFramebufferOES(GL_FRAMEBUFFER_OES, g_glView->viewFramebuffer);
+    glViewport(0, 0, g_glView->backingWidth, g_glView->backingHeight);
+	
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    
+    glOrthof(0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);
+    glMatrixMode(GL_MODELVIEW);
+    glRotatef(0.0f, 0.0f, 0.0f, 1.0f);
+
 	if(textureFrameBuffer == -1)
 		CreateFrameBuffer();
 	glBindFramebufferOES(GL_FRAMEBUFFER_OES, textureFrameBuffer);
@@ -1044,39 +1111,6 @@ UILineBreakMode tolinebreakmode(int wrap)
 	}
 	return UILineBreakModeWordWrap;
 }
-
-#ifdef DISPLAY_CONTROL
-
-void setDisplay(int s)
-{
-	UIScreen* screen = [[UIScreen screens] objectAtIndex:s];
-	if (screen != UIScreen.mainScreen)
-	{
-		NSLog(@"external screen %@ detected.", screen);
-		externalScreen = screen;
-		glView->current_display = s;
-	}
-	else {
-		glView->current_display = 0;
-		externalScreen = NULL;
-	}
-	[BLVideoOut sharedVideoOut].delegate = self;
-	if ([BLVideoOut sharedVideoOut].extScreenActive == YES)
-	{
-		[glView removeFromSuperview];
-		[[BLVideoOut sharedVideoOut].extWindow addSubview:glView];
-	}
-	else {
-		CGRect windowFrame = CGRectMake(0, 0, screenSize.width, screenSize.height);
-		UIWindow* window = [[UIWindow alloc] initWithFrame:windowFrame];
-		
-		window.screen = externalScreen;
-		[glView removeFromSuperview];
-		[window addSubview:glView];
-		[window makeKeyAndVisible];
-	}
-}
-#endif
 
 -(void) startMovieWriter:(const char*)fname
 {
@@ -1368,9 +1402,12 @@ void setDisplay(int s)
 	[image release];
 }
 
+bool drawactive = false;
 
 - (void)drawView {
   
+    drawactive = true;
+    
 	if(displaynumber == 1)
 	{
 	// eval http buffer
@@ -1381,6 +1418,9 @@ void setDisplay(int s)
 		float elapsedtime = mytimer->elapsedSec();
 		mytimer->start();
 		callAllOnUpdate(elapsedtime); // Call lua APIs OnUpdates when we render a new region. We do this first so that stuff can still be drawn for this region.
+#ifdef SOAR_SUPPORT
+        callAllOnSoarOutput();
+#endif
 	}	
 	CGRect  bounds = [self bounds];
 	
@@ -1413,7 +1453,10 @@ void setDisplay(int s)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-	glOrthof(0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);
+	if(displaynumber == 1)
+        glOrthof(0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);
+    else
+        glOrthof(0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);
 //	glOrthof(0.0f, w, 0.0f, h, -1.0f, 1.0f);
     glMatrixMode(GL_MODELVIEW);
     glRotatef(0.0f, 0.0f, 0.0f, 1.0f);
@@ -1735,6 +1778,8 @@ void setDisplay(int s)
 	
     glBindRenderbufferOES(GL_RENDERBUFFER_OES, viewRenderbuffer);
     [context presentRenderbuffer:GL_RENDERBUFFER_OES];
+    
+    drawactive = false;
 	
 }
 
@@ -1750,14 +1795,39 @@ void setDisplay(int s)
 - (BOOL)createFramebuffer {
 	CGRect screendimensions = [[UIScreen mainScreen] bounds];
 //	CGRect screendimensions = [self bounds];
-    
-	
+
+    if(displaynumber == 1)
+    {
 	SCREEN_WIDTH = screendimensions.size.width;
 	SCREEN_HEIGHT = screendimensions.size.height;
 	HALF_SCREEN_WIDTH = SCREEN_WIDTH/2;
 	HALF_SCREEN_HEIGHT = SCREEN_HEIGHT/2;
-	
-	
+    }
+    else
+    {
+        UIWindow* externalWindow = [self window];
+        
+        float extScreenWidth = externalWindow.frame.size.width;
+        float extScreenHeight = externalWindow.frame.size.height;
+        NSArray			*screens;
+        
+        screens = [UIScreen screens];
+
+        float deviceScreenRatio = [[screens objectAtIndex:0] bounds].size.width/[[screens objectAtIndex:0] bounds].size.height;
+        CGRect finalExtFrame;
+        
+        if (extScreenHeight < extScreenWidth) {
+            // Height is limiting factor
+            
+            EXT_SCREEN_WIDTH = extScreenHeight*deviceScreenRatio;
+            EXT_SCREEN_HEIGHT = extScreenHeight;
+        } else {
+            EXT_SCREEN_WIDTH = extScreenWidth;
+            EXT_SCREEN_HEIGHT = extScreenWidth/deviceScreenRatio;
+        }
+    }
+        
+        
     glGenFramebuffersOES(1, &viewFramebuffer);
     glGenRenderbuffersOES(1, &viewRenderbuffer);
     
@@ -2125,6 +2195,11 @@ void onTouchScrollUpdate(int t)
 	
 	if(scrollregion != nil)
 	{
+        
+        if(drawactive)
+        {
+            int a=0;
+        }
 		callScriptWith5Args(scrollregion->OnMove, scrollregion, cursorpositionx[t]-scrollregion->left-cursorscrollspeedx[t],SCREEN_HEIGHT-cursorpositiony[t]-scrollregion->bottom+cursorscrollspeedy[t], cursorscrollspeedx[t], -cursorscrollspeedy[t],t+1);
 	}
 }
@@ -2233,7 +2308,9 @@ void onTouchDragEnd(int t,int touch, float posx, float posy)
 			
 			if(touch2 != -1)
 			{
-				position2 = [UTID2UITouch(touch2) locationInView:self];
+                UITouch* ttt = UTID2UITouch(touch2);
+				position2 = [ttt locationInView:self];
+//  				position2 = [UTID2UITouch(touch2) locationInView:self];
 			}
 				
 			doTouchSingleDragStart(t, touch1, position1.x, position1.y, position2.x, position2.y);
@@ -2412,9 +2489,6 @@ void onTouchDragEnd(int t,int touch, float posx, float posy)
 
 
 #define kurNetTestID	@"_urMus._udp."
-
-// Interfacing with C of the lua API
-extern EAGLView* g_glView;
 
 void Net_Send(float data)
 {

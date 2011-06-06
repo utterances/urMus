@@ -1,0 +1,31 @@
+/* blue: #548DD4
+*/
+body {
+  font-size: 0.9em;
+/*  font-family: Helvetica, Arial, Verdana, san-serif;*/
+  font-family: 'myriad pro', corbel, 'lucida grande', helvetica, sans-serif;
+/*  width: 500px; */
+  margin: 3em;
+  background-color: #fefefe;
+}
+
+code, pre {
+  font-family: Menlo, Monaco, 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
+}
+
+a {
+  color: #548DD4;
+}
+.navigation { 
+  border: 1px solid #999; 
+  background-color: #eee; 
+  padding: 10px; 
+  text-align: center;
+  margin: 1em;
+  width: 350px;}
+.navigation li {display: inline;}
+.navigation li {margin: 1em;}
+
+h2 { color: #222; }
+h3 { color: #444; font-weight: 100; }
+h4 { color: #666; }

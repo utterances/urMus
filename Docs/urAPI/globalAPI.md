@@ -31,10 +31,10 @@ Execute a string as Lua code.
 Timing API
 ==========
 
-GetTime
+Time
 -------
 ### Synopsis
-    seconds = GetTime()
+    seconds = Time()
 ### Description
 Returns the system uptime of the host machine in seconds, with millisecond precision.
 ### Returns
@@ -277,6 +277,159 @@ Returns the width of the window in pixels. For an iPhone this is 320.
 ### Returns
 - screenWidth (Number)
     Width of window in pixels
+
+Camera API (aka urLook more)
+=============================================
+
+SetActiveCamera
+-----------------
+### Synopsis
+	SetActiveCamera(camera)
+### Description
+Sets the active camera. Allows to pick between multiple cameras if they are present (front-facing, back-facing)
+### Arguments
+- camera (Number)
+	1 is the default camera (usually backfacing)
+	2 and higher are an unspecified second camera (2 is usually front-facing)
+
+ActiveCamera
+--------------
+### Synopsis
+	camera = ActiveCamera()
+### Description
+Returns which camera is currently active.
+### Returns
+- camera (Number)
+	1 is the default camera (usually backfacing)
+	2 and higher are an unspecified second camera (2 is usually front-facing)
+
+SetTorchFlashFrequency
+------------------------
+### Synopsis
+	SetTorchFlashFrequency(frequency)
+### Description
+Sets the flashing frequency of the camera flash-light if present.
+### Arguments
+- frequency (Number)
+	Frequency at which the light is turned on and off
+
+Networking API
+======================
+
+IPAddress
+----------
+### Synopsis
+	host = IPAddress()
+### Description
+Returns the IP-address of the device.
+
+StartHTTPServer
+-----------------
+### Synopsis
+	host, port = StartHTTPServer()
+### Description
+Starts the HTTP Server which provides the web-based urMus programming environment. Returns the hostname and port of the service.
+### Returns
+- host (String)
+	Hostname of the device which is running the web server
+- port (Number)
+	port number to access the web server
+
+StopHTTPServer
+----------------
+### Synopsis
+	StopHTTPServer()
+### Description
+Stops the HTTP Server which provides the web-based urMus programming environment.
+
+HTTPServer
+------------
+### Synopsis
+	name, port = HTTPServer()
+### Description
+Returns the name and port of the HTTPServer run on the device.
+### Returns
+- host (String)
+	Hostname of the device which is running the web server
+- port (Number)
+	port number to access the web server
+
+StartOSCListener
+------------------
+### Synopsis
+	host, port = StartOSCListener()
+### Description
+Starts the OSC Listening service, which allows for incoming OSC message to be received. The event OnOSCMessage will be triggered when a message is received.
+### Returns
+- host (String)
+	Hostname of the device which is running the web server
+- port (Number)
+	port number to access the web server
+
+StopOSCListener
+-----------------
+### Synopsis
+	StopOSCListener()
+### Description
+Stops the OSC Listening service.
+
+SetOSCPort
+------------
+### Synopsis
+	SetOSCPort(port)
+### Description
+Sets the OSC port of the OSCListening service, if it is running.
+### Arguments
+- port (Number)
+	port number for the OSCListening service
+
+OSCPort
+---------
+### Synopsis
+	port = OSCPort()
+### Description
+Returns the current port of the OSCListener.
+### Returns
+- port (Number)
+	port number to access the web server
+
+SendOSCMessage
+----------------
+### Synopsis
+	SendOSCMessage(host, port, oscpattern, arg1, [arg2, ...])
+### Description
+Sends an OSC message constiting of an arbitrary number of arguments which can be numbers or strings.
+### Arguments
+- host (String)
+	Hostname of the device which is running the OSC service
+- port (Number)
+	port number of the OSC service
+- oscpattern (String)
+	OSC pattern identifying the OSC functionality to address
+- arg1, arg2, ... (Number, String)
+	Number and string data to be sent
+
+StartNetAdvertise
+-------------------
+### Synopsis
+	StartNetAdvertise(id, port)
+### Description
+Starts the ZeroConf service allowing a named id to be discovered by other devices on the local network.
+### Arguments
+- id (String)
+	id by which other devices can discover this service
+- port (Number)
+	port number to advertise
+
+StartNetDiscovery
+-------------------
+### Synopsis
+	StartNetDiscovery(id)
+### Description
+Starts the ZeroConf service discovery, allowing to find if the service with a specific ID is present or not. Will trigger OnNetConnect when the service appears and OnNetDisconnect when the service disappears.
+### Arguments
+- id (String)
+	id by which other devices can discover this service
 
 [urMus API Overview](overview.html)
 

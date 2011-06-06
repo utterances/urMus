@@ -72,8 +72,8 @@ smudgebackdropregion:EnableInput(true);
 smudgebackdropregion:Show();
 --smudgebackdropregion.texture:Clear(0.8,0.8,0.8);
 
---smudgebackdropregion.texture:ClearBrush()
---smudgebackdropregion.texture:SetBrushSize(1)
+smudgebackdropregion.texture:ClearBrush()
+smudgebackdropregion.texture:SetBrushSize(1)
 smudgebackdropregion.texture:SetFill(true)
 smudgebackdropregion.texture:SetBrushColor(0,0,255,30)
 smudgebackdropregion.texture:Ellipse(160*rescalex, 240*rescaley, 120*rescalex, 120*rescaley)

@@ -31,11 +31,17 @@ in the urMus system. Currently the API is alpha grade. This means that any aspec
 
 <h3>Current Version</h3>
 
-<p>urMus 0.1.0alpha.</p>
+<p>urMus 0.9.8alpha.</p>
 
 <h3>Authors</h3>
 
 <p>This documentation was written by Bryan Summersett and Georg Essl. Thanks to <a href="Credits.html">many many contributors</a>!</p>
+
+<h1>Overview</h1>
+
+<p>The urMus API is organized as follows. There are a set of global function. These have the character that they do not require the creation of instances and address a range of aspect such as system-centric functions like file access, or support for networking, as well as functions to generate instances. There are currently two main groups of instanced APIs, Regions and Flowboxes. Regions address all aspects of visual output and interaction. Flowboxes are the building blocks of the multi-media dataflow pipeline allowing for the generation of audio and other output. Regions have subinstancing APIs for textures and textlabels. The API hierarchy is depicted below.</p>
+
+<p><img src="urMusAPI-hierarchy.png" alt="The API hierarchy of urMus" width=90%></p>
 
 <h1>2D Interface and Interaction API</h1>
 
@@ -61,6 +67,10 @@ is created by the urMus system.</p>
 <p>The <a href="Flowbox.html">Flowbox</a> is the fundamental unit of audio / data within urMus. This object can serve
 as a data source, a manipulator, or sink (outlet) and be connected vis push or pull
 links to other flowboxes, forming a graph of input -> output commands.</p>
+
+<h2><a href="FlowboxList.html">Global Flowboxes</a></h2>
+
+<p>A number of <a href="FlowboxList.html">Flowbox</a> units are provided by urMus.</p>
 
 <h1>Global API</h1>
 
