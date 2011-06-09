@@ -80,6 +80,7 @@ pagefile = {
 --"urAir.lua",
 --"urWater.lua",
 --"urFire.lua",
+"urTest.lua",
 }
 
 if SoarEnabled() then

@@ -462,6 +462,8 @@
 		77C47928108E938800DC9920 /* button4.png in Resources */ = {isa = PBXBuildFile; fileRef = 77C47927108E938800DC9920 /* button4.png */; };
 		77C4792E108E954100DC9920 /* circlebutton-16.png in Resources */ = {isa = PBXBuildFile; fileRef = 77C4792D108E954100DC9920 /* circlebutton-16.png */; };
 		77C492FA105CAA1300B2BA88 /* urSound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 77C492F9105CAA1300B2BA88 /* urSound.cpp */; };
+		77CF508C139D252100E19249 /* urTest.lua in Sources */ = {isa = PBXBuildFile; fileRef = 77CF508B139D252100E19249 /* urTest.lua */; };
+		77CF508D139D253400E19249 /* urTest.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77CF508B139D252100E19249 /* urTest.lua */; };
 		77D61B4510C80C170091DE81 /* Green-Mono.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77D61B3D10C80C170091DE81 /* Green-Mono.wav */; };
 		77D61B4610C80C170091DE81 /* Blue-Mono.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77D61B3E10C80C170091DE81 /* Blue-Mono.wav */; };
 		77D61B4710C80C170091DE81 /* Cyan-Mono.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77D61B3F10C80C170091DE81 /* Cyan-Mono.wav */; };
@@ -1052,6 +1054,7 @@
 		77C4792D108E954100DC9920 /* circlebutton-16.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "circlebutton-16.png"; path = "Textures/circlebutton-16.png"; sourceTree = "<group>"; };
 		77C492F8105CAA1300B2BA88 /* urSound.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = urSound.h; sourceTree = "<group>"; };
 		77C492F9105CAA1300B2BA88 /* urSound.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; path = urSound.cpp; sourceTree = "<group>"; };
+		77CF508B139D252100E19249 /* urTest.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; path = urTest.lua; sourceTree = "<group>"; };
 		77D61B3D10C80C170091DE81 /* Green-Mono.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "Green-Mono.wav"; path = "Sounds/Green-Mono.wav"; sourceTree = "<group>"; };
 		77D61B3E10C80C170091DE81 /* Blue-Mono.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "Blue-Mono.wav"; path = "Sounds/Blue-Mono.wav"; sourceTree = "<group>"; };
 		77D61B3F10C80C170091DE81 /* Cyan-Mono.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "Cyan-Mono.wav"; path = "Sounds/Cyan-Mono.wav"; sourceTree = "<group>"; };
@@ -1708,6 +1711,7 @@
 				771DC9B311B051BB00880F72 /* urBounce.lua */,
 				7737230D120A1C9D003AEE57 /* urDistance.lua */,
 				778F14E9128A517F0010253D /* urNetTest.lua */,
+				77CF508B139D252100E19249 /* urTest.lua */,
 			);
 			name = "urMus-lua";
 			sourceTree = "<group>";
@@ -1936,6 +1940,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				77CF508D139D253400E19249 /* urTest.lua in Resources */,
 				770EBAE013991D85002A03C3 /* wj.soar in Resources */,
 				770EBAE113991DA4002A03C3 /* urWaterJug.lua in Resources */,
 				77DFD94F1394F46800390EFC /* urSoarAsynch.lua in Resources */,
@@ -2413,6 +2418,7 @@
 				77C22D541394465B003F5359 /* urDrawDemo1.lua in Sources */,
 				77DFD94E1394F44C00390EFC /* urSoarAsynch.lua in Sources */,
 				770EBADE13991D6E002A03C3 /* urWaterJug.lua in Sources */,
+				77CF508C139D252100E19249 /* urTest.lua in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2423,7 +2429,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_UNIVERSAL_IPHONE_OS)";
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
@@ -2454,7 +2460,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_UNIVERSAL_IPHONE_OS)";
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;

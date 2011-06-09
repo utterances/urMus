@@ -2092,6 +2092,9 @@ void onTouchDoubleDragUpdate(int t, int dragidx, float pos1x, float pos1y, float
 			dragregion->right = dragregion->left + dragregion->width;
 			dragregion->top = dragregion->bottom + dragregion->height;
 			if(dragregion->isClamped) ClampRegion(dragregion);
+            dragregion->ofsx += dx;
+            dragregion->ofsy += dy;
+            changeLayout(dragregion);
 			callScript(dragregion->OnSizeChanged, dragregion);
 		}
 	}
@@ -2174,6 +2177,9 @@ void onTouchSingleDragUpdate(int t, int dragidx)
 			dragregion->bottom += dy;
 			dragregion->right += dx;
 			dragregion->top += dy;
+            dragregion->ofsx += dx;
+            dragregion->ofsy += dy;
+            changeLayout(dragregion);
 		}
 	}
 }

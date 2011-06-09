@@ -274,6 +274,7 @@ bool callScriptWith1String(int func_ref, urAPI_Region_t* region, const char* nam
 void addChild(urAPI_Region_t *parent, urAPI_Region_t *child);
 void removeChild(urAPI_Region_t *parent, urAPI_Region_t *child);
 bool layout(urAPI_Region_t* region);
+void changeLayout(urAPI_Region_t* region);
 
 void ur_GetSoundBuffer(SInt16* buffer, int channel, int size);
 
