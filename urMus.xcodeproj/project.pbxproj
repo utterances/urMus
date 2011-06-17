@@ -199,6 +199,16 @@
 		779AD4A4104A3B2C007040BF /* doublearrow.png in Resources */ = {isa = PBXBuildFile; fileRef = 779AD4A1104A3B2C007040BF /* doublearrow.png */; };
 		779AD4A5104A3B2C007040BF /* downarrow.png in Resources */ = {isa = PBXBuildFile; fileRef = 779AD4A2104A3B2C007040BF /* downarrow.png */; };
 		779B89211393A25900B6C9BA /* urExternalTest.lua in Resources */ = {isa = PBXBuildFile; fileRef = 774A6F6B13938A4300F13FAB /* urExternalTest.lua */; };
+		779BE9C013A99BF2002E36DC /* libcurl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 779BE9BF13A99BF2002E36DC /* libcurl.a */; };
+		779BE9CB13A99F25002E36DC /* libz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 779BE9CA13A99F25002E36DC /* libz.a */; };
+		779BE9DD13A9A010002E36DC /* curlbuild.h.cmake in Resources */ = {isa = PBXBuildFile; fileRef = 779BE9CF13A9A010002E36DC /* curlbuild.h.cmake */; };
+		779BE9DE13A9A010002E36DC /* curlbuild.h.in in Resources */ = {isa = PBXBuildFile; fileRef = 779BE9D013A9A010002E36DC /* curlbuild.h.in */; };
+		779BE9DF13A9A010002E36DC /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 779BE9D413A9A010002E36DC /* Makefile */; };
+		779BE9E013A9A010002E36DC /* Makefile.am in Resources */ = {isa = PBXBuildFile; fileRef = 779BE9D513A9A010002E36DC /* Makefile.am */; };
+		779BE9E113A9A010002E36DC /* Makefile.in in Resources */ = {isa = PBXBuildFile; fileRef = 779BE9D613A9A010002E36DC /* Makefile.in */; };
+		779BE9E213A9A010002E36DC /* stamp-h3 in Resources */ = {isa = PBXBuildFile; fileRef = 779BE9D913A9A010002E36DC /* stamp-h3 */; };
+		779BE9F413A9B156002E36DC /* urMap.lua in Sources */ = {isa = PBXBuildFile; fileRef = 779BE9F313A9B156002E36DC /* urMap.lua */; };
+		779BE9F513A9B1E9002E36DC /* urMap.lua in Resources */ = {isa = PBXBuildFile; fileRef = 779BE9F313A9B156002E36DC /* urMap.lua */; };
 		77A1A6D810ABC5C8004A7C47 /* pitcher.png in Resources */ = {isa = PBXBuildFile; fileRef = 77A1A6D510ABC5C8004A7C47 /* pitcher.png */; };
 		77A1A6D910ABC5C8004A7C47 /* pitchwheel.png in Resources */ = {isa = PBXBuildFile; fileRef = 77A1A6D610ABC5C8004A7C47 /* pitchwheel.png */; };
 		77A1A6DA10ABC5C8004A7C47 /* thumper.png in Resources */ = {isa = PBXBuildFile; fileRef = 77A1A6D710ABC5C8004A7C47 /* thumper.png */; };
@@ -462,8 +472,9 @@
 		77C47928108E938800DC9920 /* button4.png in Resources */ = {isa = PBXBuildFile; fileRef = 77C47927108E938800DC9920 /* button4.png */; };
 		77C4792E108E954100DC9920 /* circlebutton-16.png in Resources */ = {isa = PBXBuildFile; fileRef = 77C4792D108E954100DC9920 /* circlebutton-16.png */; };
 		77C492FA105CAA1300B2BA88 /* urSound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 77C492F9105CAA1300B2BA88 /* urSound.cpp */; };
+		77C8B85A13AAA155002DAC6B /* urMenu.lua in Sources */ = {isa = PBXBuildFile; fileRef = 77C8B85913AAA155002DAC6B /* urMenu.lua */; };
+		77C8B85B13AAA251002DAC6B /* urMenu.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77C8B85913AAA155002DAC6B /* urMenu.lua */; };
 		77CF508C139D252100E19249 /* urTest.lua in Sources */ = {isa = PBXBuildFile; fileRef = 77CF508B139D252100E19249 /* urTest.lua */; };
-		77CF508D139D253400E19249 /* urTest.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77CF508B139D252100E19249 /* urTest.lua */; };
 		77D61B4510C80C170091DE81 /* Green-Mono.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77D61B3D10C80C170091DE81 /* Green-Mono.wav */; };
 		77D61B4610C80C170091DE81 /* Blue-Mono.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77D61B3E10C80C170091DE81 /* Blue-Mono.wav */; };
 		77D61B4710C80C170091DE81 /* Cyan-Mono.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77D61B3F10C80C170091DE81 /* Cyan-Mono.wav */; };
@@ -710,6 +721,25 @@
 		779AD4A0104A3B2C007040BF /* button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = button.png; path = Textures/button.png; sourceTree = "<group>"; };
 		779AD4A1104A3B2C007040BF /* doublearrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = doublearrow.png; path = Textures/doublearrow.png; sourceTree = "<group>"; };
 		779AD4A2104A3B2C007040BF /* downarrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = downarrow.png; path = Textures/downarrow.png; sourceTree = "<group>"; };
+		779BE9BF13A99BF2002E36DC /* libcurl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcurl.a; path = libs/libcurl.a; sourceTree = "<group>"; };
+		779BE9CA13A99F25002E36DC /* libz.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libz.a; path = libs/libz.a; sourceTree = "<group>"; };
+		779BE9CD13A9A010002E36DC /* curl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = curl.h; sourceTree = "<group>"; };
+		779BE9CE13A9A010002E36DC /* curlbuild.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = curlbuild.h; sourceTree = "<group>"; };
+		779BE9CF13A9A010002E36DC /* curlbuild.h.cmake */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = curlbuild.h.cmake; sourceTree = "<group>"; };
+		779BE9D013A9A010002E36DC /* curlbuild.h.in */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = curlbuild.h.in; sourceTree = "<group>"; };
+		779BE9D113A9A010002E36DC /* curlrules.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = curlrules.h; sourceTree = "<group>"; };
+		779BE9D213A9A010002E36DC /* curlver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = curlver.h; sourceTree = "<group>"; };
+		779BE9D313A9A010002E36DC /* easy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = easy.h; sourceTree = "<group>"; };
+		779BE9D413A9A010002E36DC /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		779BE9D513A9A010002E36DC /* Makefile.am */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Makefile.am; sourceTree = "<group>"; };
+		779BE9D613A9A010002E36DC /* Makefile.in */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Makefile.in; sourceTree = "<group>"; };
+		779BE9D713A9A010002E36DC /* mprintf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mprintf.h; sourceTree = "<group>"; };
+		779BE9D813A9A010002E36DC /* multi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = multi.h; sourceTree = "<group>"; };
+		779BE9D913A9A010002E36DC /* stamp-h3 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "stamp-h3"; sourceTree = "<group>"; };
+		779BE9DA13A9A010002E36DC /* stdcheaders.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = stdcheaders.h; sourceTree = "<group>"; };
+		779BE9DB13A9A010002E36DC /* typecheck-gcc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "typecheck-gcc.h"; sourceTree = "<group>"; };
+		779BE9DC13A9A010002E36DC /* types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = types.h; sourceTree = "<group>"; };
+		779BE9F313A9B156002E36DC /* urMap.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urMap.lua; path = "urMus-Lua/urMap.lua"; sourceTree = "<group>"; };
 		77A1A6D510ABC5C8004A7C47 /* pitcher.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = pitcher.png; path = Textures/pitcher.png; sourceTree = "<group>"; };
 		77A1A6D610ABC5C8004A7C47 /* pitchwheel.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = pitchwheel.png; path = Textures/pitchwheel.png; sourceTree = "<group>"; };
 		77A1A6D710ABC5C8004A7C47 /* thumper.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = thumper.png; path = Textures/thumper.png; sourceTree = "<group>"; };
@@ -1054,6 +1084,7 @@
 		77C4792D108E954100DC9920 /* circlebutton-16.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "circlebutton-16.png"; path = "Textures/circlebutton-16.png"; sourceTree = "<group>"; };
 		77C492F8105CAA1300B2BA88 /* urSound.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = urSound.h; sourceTree = "<group>"; };
 		77C492F9105CAA1300B2BA88 /* urSound.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; path = urSound.cpp; sourceTree = "<group>"; };
+		77C8B85913AAA155002DAC6B /* urMenu.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urMenu.lua; path = "urMus-Lua/urMenu.lua"; sourceTree = "<group>"; };
 		77CF508B139D252100E19249 /* urTest.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; path = urTest.lua; sourceTree = "<group>"; };
 		77D61B3D10C80C170091DE81 /* Green-Mono.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "Green-Mono.wav"; path = "Sounds/Green-Mono.wav"; sourceTree = "<group>"; };
 		77D61B3E10C80C170091DE81 /* Blue-Mono.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "Blue-Mono.wav"; path = "Sounds/Blue-Mono.wav"; sourceTree = "<group>"; };
@@ -1104,6 +1135,8 @@
 				77B3FFEA12E63B6600F119FE /* AVFoundation.framework in Frameworks */,
 				77B3001112E63BD300F119FE /* CoreMedia.framework in Frameworks */,
 				77B3001312E63BD300F119FE /* CoreVideo.framework in Frameworks */,
+				779BE9C013A99BF2002E36DC /* libcurl.a in Frameworks */,
+				779BE9CB13A99F25002E36DC /* libz.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1152,6 +1185,7 @@
 		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
 			isa = PBXGroup;
 			children = (
+				779BE9CC13A9A010002E36DC /* curl */,
 				7703630C1392C47A0096D9BF /* urMus-Soar */,
 				77E37C2A1306D28100E44393 /* jqueryFileTree.js */,
 				778F140C128A11350010253D /* mopho-api */,
@@ -1196,6 +1230,8 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				779BE9CA13A99F25002E36DC /* libz.a */,
+				779BE9BF13A99BF2002E36DC /* libcurl.a */,
 				77B3D17C10C7196000D5FB4B /* MediaPlayer.framework */,
 				77A3269F1058A79900D0394E /* AudioToolbox.framework */,
 				7706EBAC1044E0E200E7D656 /* CoreLocation.framework */,
@@ -1466,6 +1502,29 @@
 			path = osc;
 			sourceTree = "<group>";
 		};
+		779BE9CC13A9A010002E36DC /* curl */ = {
+			isa = PBXGroup;
+			children = (
+				779BE9CD13A9A010002E36DC /* curl.h */,
+				779BE9CE13A9A010002E36DC /* curlbuild.h */,
+				779BE9CF13A9A010002E36DC /* curlbuild.h.cmake */,
+				779BE9D013A9A010002E36DC /* curlbuild.h.in */,
+				779BE9D113A9A010002E36DC /* curlrules.h */,
+				779BE9D213A9A010002E36DC /* curlver.h */,
+				779BE9D313A9A010002E36DC /* easy.h */,
+				779BE9D413A9A010002E36DC /* Makefile */,
+				779BE9D513A9A010002E36DC /* Makefile.am */,
+				779BE9D613A9A010002E36DC /* Makefile.in */,
+				779BE9D713A9A010002E36DC /* mprintf.h */,
+				779BE9D813A9A010002E36DC /* multi.h */,
+				779BE9D913A9A010002E36DC /* stamp-h3 */,
+				779BE9DA13A9A010002E36DC /* stdcheaders.h */,
+				779BE9DB13A9A010002E36DC /* typecheck-gcc.h */,
+				779BE9DC13A9A010002E36DC /* types.h */,
+			);
+			path = curl;
+			sourceTree = "<group>";
+		};
 		77B3A84A114F056F0073CCCF /* Networking */ = {
 			isa = PBXGroup;
 			children = (
@@ -1659,6 +1718,8 @@
 		77B9FC5C1194AEF9006D5007 /* urMus-lua */ = {
 			isa = PBXGroup;
 			children = (
+				77C8B85913AAA155002DAC6B /* urMenu.lua */,
+				779BE9F313A9B156002E36DC /* urMap.lua */,
 				77B9FC6C1194AF12006D5007 /* urMus.lua */,
 				770EBADD13991D6E002A03C3 /* urWaterJug.lua */,
 				77DFD94D1394F44C00390EFC /* urSoarAsynch.lua */,
@@ -1940,7 +2001,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				77CF508D139D253400E19249 /* urTest.lua in Resources */,
+				77C8B85B13AAA251002DAC6B /* urMenu.lua in Resources */,
+				779BE9F513A9B1E9002E36DC /* urMap.lua in Resources */,
 				770EBAE013991D85002A03C3 /* wj.soar in Resources */,
 				770EBAE113991DA4002A03C3 /* urWaterJug.lua in Resources */,
 				77DFD94F1394F46800390EFC /* urSoarAsynch.lua in Resources */,
@@ -2247,6 +2309,11 @@
 				7703630A1392C1800096D9BF /* yummy2.wav in Resources */,
 				77C22D561394466F003F5359 /* Steering.png in Resources */,
 				77200C1913995A6400954C41 /* MerryGo.wav in Resources */,
+				779BE9DD13A9A010002E36DC /* curlbuild.h.cmake in Resources */,
+				779BE9DE13A9A010002E36DC /* curlbuild.h.in in Resources */,
+				779BE9E013A9A010002E36DC /* Makefile.am in Resources */,
+				779BE9E113A9A010002E36DC /* Makefile.in in Resources */,
+				779BE9E213A9A010002E36DC /* stamp-h3 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2419,6 +2486,9 @@
 				77DFD94E1394F44C00390EFC /* urSoarAsynch.lua in Sources */,
 				770EBADE13991D6E002A03C3 /* urWaterJug.lua in Sources */,
 				77CF508C139D252100E19249 /* urTest.lua in Sources */,
+				779BE9DF13A9A010002E36DC /* Makefile in Sources */,
+				779BE9F413A9B156002E36DC /* urMap.lua in Sources */,
+				77C8B85A13AAA155002DAC6B /* urMenu.lua in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2443,6 +2513,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/../urMus-Soar-Stuff/lib-device\"",
+					"\"$(SRCROOT)/libs\"",
 				);
 				OTHER_LDFLAGS = (
 					"-ObjC",
@@ -2472,6 +2543,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/../urMus-Soar-Stuff/lib-device\"",
+					"\"$(SRCROOT)/libs\"",
 				);
 				OTHER_LDFLAGS = (
 					"-ObjC",

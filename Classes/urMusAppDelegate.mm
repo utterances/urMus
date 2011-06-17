@@ -14,7 +14,6 @@
 #include "httpServer.h"
 #import <QuartzCore/QuartzCore.h>
 
-
 #ifdef SANDWICH_SUPPORT
 #import "SandwichUpdateListener.h"
 #endif
@@ -173,7 +172,7 @@ extern int SCREEN_HEIGHT;
 	http_start([resourcePath UTF8String],
 			   [documentPath UTF8String]);
 #endif
-	
+
 	const char* filestr = [filePath UTF8String];
 
 	if(luaL_dofile(lua, filestr)!=0)

@@ -129,45 +129,46 @@ var LUAParser = Editor.Parser = (function() {
     }
  
 function inSLComment(source, setState) {
-      var start = true;
+    var start = true;
 	var count=0;
       while (!source.endOfLine()) {
 	 	var ch = source.next();
 		var level = 0;
-		if ((ch =="[") && start)
+		if ((ch =="[") && start) // gessl: The original parselua.js has a bug here, in that the block parenthesis are missing.
+        {
 			while(source.equals("=")){
-			source.next();
-			level++;
+                source.next();
+                level++;
 			}
-			if (source.equals("[")){
-       				setState(inMLSomething(level,"lua-comment"));
-        			return null;
-  				}
-		 start = false;	
+			if (ch == "[" && source.equals("[")){
+                setState(inMLSomething(level,"lua-comment"));
+                return null;
+            }
+        }
+        start = false;	
 	}
 	setState(normal);      		
-     return "lua-comment";
-	
-    }
+    return "lua-comment";
+}
 
-    function inMLSomething(level,what) {
-	//wat sholud be "lua-string" or "lua-comment", level is the number of "=" in opening mark.
-	return function(source, setState){
-      var dashes = 0;
-      while (!source.endOfLine()) {
+function inMLSomething(level,what) {
+//wat sholud be "lua-string" or "lua-comment", level is the number of "=" in opening mark.
+    return function(source, setState){
+        var dashes = 0;
+        while (!source.endOfLine()) {
         var ch = source.next();
         if (dashes == level+1 && ch == "]" ) {
           setState(normal);
           break;
         }
-		if (dashes == 0) 
-			dashes = (ch == "]") ? 1:0;
-		else
- 			dashes = (ch == "=") ? dashes + 1 : 0;
+        if (dashes == 0) 
+            dashes = (ch == "]") ? 1:0;
+        else
+            dashes = (ch == "=") ? dashes + 1 : 0;
         }
-      return what;
-	 }
-    }
+        return what;
+     }
+}
 
 
     function inString(quote) {

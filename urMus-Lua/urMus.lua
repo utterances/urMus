@@ -18,6 +18,7 @@ patchdir = "Patches"
 
 pagefile = {
 "urMus",
+"urMenu.lua",
 "urDrawDemo1.lua",
 "urTurn.lua",
 "urCameraDemo.lua",
@@ -50,6 +51,7 @@ pagefile = {
 "urDistance.lua",
 "urAnimExample.lua",
 "urNetTest.lua",
+"urMap.lua",
 "urColorOrgan.lua",
 --"urMrNoisy.lua",
 --"urCircleOfWater.lua",

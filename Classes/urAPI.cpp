@@ -14,6 +14,17 @@
 #include "urSound.h"
 #include "httpServer.h"
 
+#define CURLY
+#ifdef CURLY
+#include "curl.h"
+
+static size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream)
+{
+    int written = fwrite(ptr, size, nmemb, (FILE *)stream);
+    return written;
+}
+#endif
+
 // Make EAGLview global so lua interface can grab it without breaking a leg over IMP
 extern EAGLView* g_glView;
 // This is to transport error and print messages to EAGLview
@@ -5836,6 +5847,48 @@ int l_FinishMovieMaking(lua_State *lua)
 	return 0;
 }
 	
+#ifdef CURLY    
+int l_WriteURLData(lua_State *lua)
+{
+    const char *inurl = luaL_checkstring(lua,1);
+	const char *outfile = luaL_checkstring(lua,2);
+    
+    CURL *curl;
+    CURLcode res;
+    char bodyfilename[255];
+	NSArray *paths;
+	paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+	NSString *documentPath;
+	if ([paths count] > 0)
+    {
+		documentPath = [paths objectAtIndex:0];
+        strcpy(bodyfilename,[documentPath UTF8String]);
+        strcat(bodyfilename,"/");
+        strcat(bodyfilename, outfile);
+        FILE *bodyfile;
+        
+        curl = curl_easy_init();
+        if(curl) {
+            curl_easy_setopt(curl, CURLOPT_URL, inurl);
+            /* no progress meter please */ 
+            curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L);
+            /* send all data to this function  */ 
+            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+            /* open the files */ 
+            bodyfile = fopen(bodyfilename,"w");
+            if (bodyfile != NULL) {
+                curl_easy_setopt(curl,   CURLOPT_WRITEDATA, bodyfile);
+                res = curl_easy_perform(curl);
+            }
+            
+            /* always cleanup */ 
+            curl_easy_cleanup(curl);
+        }
+    }
+    return 0;
+}
+#endif
+
 	//------------------------------------------------------------------------------
 // Register our API
 //------------------------------------------------------------------------------
@@ -6080,6 +6133,9 @@ void l_setupAPI(lua_State *lua)
 	lua_pushcfunction(lua, l_FreeAllFlowboxes);
 	lua_setglobal(lua, "FreeAllFlowboxes");
 
+	lua_pushcfunction(lua, l_WriteURLData);
+	lua_setglobal(lua, "WriteURLData");
+	
 	// Initialize the global mic buffer table
 #ifdef MIC_ARRAY
 	lua_newtable(lua);
