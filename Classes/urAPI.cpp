@@ -5388,6 +5388,32 @@ int flowbox_AddFile(lua_State *lua)
     return 0;
 }
 
+int flowbox_ReadFile(lua_State *lua)
+{
+	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
+	const char* filename = luaL_checkstring(lua, 2);
+    
+	if(!strcmp(fb->object->name, "Looper"))
+	{
+		Looper_ReadFile(fb->object, filename);
+	}
+    return 0;
+    
+}
+
+int flowbox_WriteFile(lua_State *lua)
+{
+	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
+	const char* filename = luaL_checkstring(lua, 2);
+    
+	if(!strcmp(fb->object->name, "Looper"))
+	{
+		Looper_WriteFile(fb->object, filename);
+	}
+    return 0;
+    
+}
+
 int flowbox_IsInstantiable(lua_State *lua)
 {
 	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
@@ -5448,6 +5474,8 @@ static const struct luaL_reg flowboxfuncs [] =
 {"Pull", flowbox_Pull},
 {"Get", flowbox_Get},
 {"AddFile", flowbox_AddFile},
+{"ReadFile", flowbox_ReadFile},
+{"WriteFile", flowbox_WriteFile},
 {"IsInstantiable", flowbox_IsInstantiable},
 {"InstanceNumber", flowbox_InstanceNumber},
 {"NumberInstances", flowbox_NumberInstances},

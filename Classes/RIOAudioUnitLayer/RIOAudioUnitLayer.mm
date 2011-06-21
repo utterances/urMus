@@ -450,3 +450,101 @@ Exit:
 	
 	return theData;
 }
+
+void* SaveAudioFileData(const char *filename, UInt32 *outDataSize, UInt32*	outSampleRate)
+{
+	OSStatus						err = noErr;	
+	SInt64							theFileLengthInFrames = 0;
+	AudioStreamBasicDescription		theFileFormat;
+	UInt32							thePropertySize = sizeof(theFileFormat);
+	ExtAudioFileRef					extRef = NULL;
+	void*							theData = NULL;
+	AudioStreamBasicDescription		theOutputFormat;
+	
+	NSString *filename2 = [[NSString alloc] initWithUTF8String:filename]; // Leak here, fix.
+    //	NSString *filePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:filename2]; // Leak here, fix.
+	NSString *filePath = NULL;
+	CFURLRef inFileURL = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, (CFStringRef)filename2, kCFURLPOSIXPathStyle, false); // Leak here, fix.
+	// Open a file with ExtAudioFileOpen()
+	err = ExtAudioFileOpenURL(inFileURL, &extRef);
+	if(err) {
+		filePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:filename2]; // Leak here, fix.
+		inFileURL = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, (CFStringRef)filePath, kCFURLPOSIXPathStyle, false); // Leak here, fix.
+		// Open a file with ExtAudioFileOpen()
+		err = ExtAudioFileOpenURL(inFileURL, &extRef);
+		if(err) {
+			// NYI
+		}
+	}
+    
+	// Get the audio data format
+	err = ExtAudioFileGetProperty(extRef, kExtAudioFileProperty_FileDataFormat, &thePropertySize, &theFileFormat);
+	if(err) {// NYI
+	}
+	if (theFileFormat.mChannelsPerFrame > 2)  { 
+        // NYI
+	}
+	
+	// Set the client format to 16 bit signed integer (native-endian) data
+	// Maintain the channel count and sample rate of the original source format
+	theOutputFormat.mSampleRate = theFileFormat.mSampleRate;
+	theOutputFormat.mChannelsPerFrame = theFileFormat.mChannelsPerFrame;
+	
+	theOutputFormat.mFormatID = kAudioFormatLinearPCM;
+	theOutputFormat.mBytesPerPacket = 2 * theOutputFormat.mChannelsPerFrame;
+	theOutputFormat.mFramesPerPacket = 1;
+	theOutputFormat.mBytesPerFrame = 2 * theOutputFormat.mChannelsPerFrame;
+	theOutputFormat.mBitsPerChannel = 16;
+	theOutputFormat.mFormatFlags = kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked | kAudioFormatFlagIsSignedInteger;
+	
+	// Set the desired client (output) data format
+	err = ExtAudioFileSetProperty(extRef, kExtAudioFileProperty_ClientDataFormat, sizeof(theOutputFormat), &theOutputFormat);
+	if(err) { // NYI
+	}
+	
+	// Get the total frame count
+	thePropertySize = sizeof(theFileLengthInFrames);
+	err = ExtAudioFileGetProperty(extRef, kExtAudioFileProperty_FileLengthFrames, &thePropertySize, &theFileLengthInFrames);
+	if(err) { 
+        // NYI
+	}
+	
+	// Read all the data into memory
+	UInt32		dataSize = theFileLengthInFrames * theOutputFormat.mBytesPerFrame;;
+	theData = malloc(dataSize);
+	if (theData)
+	{
+		AudioBufferList		theDataBuffer;
+		theDataBuffer.mNumberBuffers = 1;
+		theDataBuffer.mBuffers[0].mDataByteSize = dataSize;
+		theDataBuffer.mBuffers[0].mNumberChannels = theOutputFormat.mChannelsPerFrame;
+		theDataBuffer.mBuffers[0].mData = theData;
+		
+		// Read the data into an AudioBufferList
+		err = ExtAudioFileRead(extRef, (UInt32*)&theFileLengthInFrames, &theDataBuffer);
+		if(err == noErr)
+		{
+			// success
+			*outDataSize = theFileLengthInFrames; //dataSize;
+			//*outDataFormat = (theOutputFormat.mChannelsPerFrame > 1) ? AL_FORMAT_STEREO16 : AL_FORMAT_MONO16;
+			*outSampleRate = theOutputFormat.mSampleRate;
+		}
+		else 
+		{ 
+			// failure
+			free (theData);
+			theData = NULL; // make sure to return NULL
+			printf("MyGetOpenALAudioData: ExtAudioFileRead FAILED, Error = %ld\n", err); goto Exit;
+		}	
+	}
+	
+Exit:
+	[filename2 release];
+	if(filePath != NULL)
+		[filePath release];
+	// Dispose the ExtAudioFileRef, it is no longer needed
+	if (extRef) ExtAudioFileDispose(extRef);
+	
+	return theData;
+}
+

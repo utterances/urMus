@@ -411,6 +411,8 @@ void Looper_In(ursObject* gself, double indata);
 void Looper_Record(ursObject* gself, double indata);
 void Looper_Play(ursObject* gself, double indata);
 void Looper_Pos(ursObject* gself, double indata);
+void Looper_ReadFile(ursObject* gself, const char* filename);
+void Looper_WriteFile(ursObject* gself, const char* filename);
 
 void* Nope_Constructor();
 void Nope_Destructor(ursObject* gself);

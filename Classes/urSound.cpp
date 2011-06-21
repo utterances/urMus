@@ -11,6 +11,7 @@
 #include "RIOAudioUnitLayer.h"
 #include "urSTK.h"
 #include "urSoundAtoms.h"
+#include "FileWrite.h"
 
 #define LOAD_STK_OBJECTS
 
@@ -1852,6 +1853,45 @@ void Looper_Pos(ursObject* gself, double indata)
 	Looper_Data* self = (Looper_Data*)gself->objectdata;
 	self->realposition = self->reclen*indata;
 }
+
+void Looper_ReadFile(ursObject* gself, const char* filename)
+{
+	Looper_Data* self = (Looper_Data*)gself->objectdata;
+	UInt32 frate;
+    SInt16*	tempbuffer;
+	tempbuffer = (SInt16*)LoadAudioFileData(filename, &self->len, &frate);
+    //	self->rate = 48000.0/frate;
+	self->rate = 1.0;
+    
+    if(tempbuffer != NULL)
+    {
+        for(int i=0; i<self->len; i++)
+        {
+            self->samplebuffer[i] = tempbuffer[i]*32767.0;
+        }
+        self->reclen = self->len;
+		self->position = 0;
+		self->realposition = 0.0;
+    }
+}
+
+void Looper_WriteFile(ursObject* gself, const char* filename)
+{
+	Looper_Data* self = (Looper_Data*)gself->objectdata;
+	UInt32 frate;
+
+    StkFrames frames(self->len,1);
+    for(int i=0; i<self->len; i++)
+    {
+        frames[i]=(double)self->amp*self->samplebuffer[i]/32767.0;
+    }
+	FileWrite fw(filename);
+
+    fw.write(frames);
+    fw.close();
+}
+
+
 
 // LoopRhythm
 
