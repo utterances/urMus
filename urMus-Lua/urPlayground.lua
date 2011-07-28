@@ -24,6 +24,7 @@ function CreateorRecycleregion(ftype, name, parent)
 	else
 		region = Region('region', 'backdrop', UIParent)
 		region.t = region:Texture()
+        region:EnableClamping(true)
 	end
 	return region
 end

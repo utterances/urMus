@@ -16,12 +16,30 @@
 
 #define CURLY
 #ifdef CURLY
+#include <stdio.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "curl.h"
 
 static size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream)
 {
     int written = fwrite(ptr, size, nmemb, (FILE *)stream);
     return written;
+}
+
+static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *stream)
+{
+    size_t retcode;
+    
+    /* in real-world cases, this would probably get this data differently
+     as this fread() stuff is exactly what the library already would do
+     by default internally */ 
+    retcode = fread(ptr, size, nmemb, (FILE *)stream);
+    
+//    fprintf(stderr, "*** We read %d bytes from file\n", retcode);
+    
+    return retcode;
 }
 #endif
 
@@ -2399,11 +2417,17 @@ int region_Handle(lua_State* lua)
 	}
 }
 
+void ClampRegion(urAPI_Region_t* region);
+
 void changeLayout(urAPI_Region_t* region)
 {
 	if(region->textlabel!=NULL)
 		region->textlabel->updatestring = true;
 	region->update = true;
+
+	if(region->isClamped)
+		ClampRegion(region);
+    
 	if(!layout(region)) // Change may not have had a layouting effect on parent, but still could affect children that are anchored to Y
 		layoutchildren(region);
 }
@@ -2495,8 +2519,6 @@ int region_EnableResizing(lua_State* lua)
 	return 0;
 }
 
-void ClampRegion(urAPI_Region_t* region);
-
 int region_SetAnchor(lua_State* lua)
 {
 	urAPI_Region_t* region = checkregion(lua,1);
@@ -2567,9 +2589,9 @@ int region_SetAnchor(lua_State* lua)
 	region->ofsx = ofsx;
 	region->ofsy = ofsy;
 	region->update = true;
-	layout(region);
 	if(region->isClamped)
 		ClampRegion(region);
+	layout(region);
 	return true;
 }
 
@@ -3627,6 +3649,8 @@ int texture_SetTexture(lua_State* lua)
 		else
 			t->texturesolidcolor[3] = 255;
 		textureColorCopyToGradient(t);
+		if(t->backgroundTex != NULL) [t->backgroundTex release]; // Antileak
+		t->backgroundTex = nil;
 	}
 	else
 	{
@@ -5887,6 +5911,7 @@ int l_WriteURLData(lua_State *lua)
 	NSArray *paths;
 	paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
 	NSString *documentPath;
+    
 	if ([paths count] > 0)
     {
 		documentPath = [paths objectAtIndex:0];
@@ -5897,7 +5922,7 @@ int l_WriteURLData(lua_State *lua)
         
         curl = curl_easy_init();
         if(curl) {
-            curl_easy_setopt(curl, CURLOPT_URL, inurl);
+            curl_easy_setopt(curl, CURLOPT_URL,inurl);
             /* no progress meter please */ 
             curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L);
             /* send all data to this function  */ 
@@ -5913,6 +5938,79 @@ int l_WriteURLData(lua_State *lua)
             curl_easy_cleanup(curl);
         }
     }
+    return 0;
+}
+
+int l_PutURLData(lua_State *lua)
+{
+    const char *inurl = luaL_checkstring(lua,1);
+	const char *outfile = luaL_checkstring(lua,2);
+    
+    CURL *curl;
+    CURLcode res;
+    char bodyfilename[255];
+	NSArray *paths;
+	paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+	NSString *documentPath;
+    
+	if ([paths count] > 0)
+    {
+		documentPath = [paths objectAtIndex:0];
+        strcpy(bodyfilename,[documentPath UTF8String]);
+        strcat(bodyfilename,"/");
+        strcat(bodyfilename, outfile);
+        FILE *bodyfile;
+        int hd ;
+        struct stat file_info;
+
+        /* get the file size of the local file */ 
+        hd = open(bodyfilename, O_RDONLY) ;
+        fstat(hd, &file_info);
+        close(hd) ;
+        
+        /* get a FILE * of the same file, could also be made with
+         fdopen() from the previous descriptor, but hey this is just
+         an example! */ 
+        bodyfile = fopen(bodyfilename, "rb");
+        
+        /* In windows, this will init the winsock stuff */ 
+        curl_global_init(CURL_GLOBAL_ALL);
+        
+        /* get a curl handle */ 
+        curl = curl_easy_init();
+        if(curl) {
+            /* we want to use our own read function */ 
+//            curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback);
+            
+            /* enable uploading */ 
+            curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
+            
+            /* HTTP PUT please */ 
+            curl_easy_setopt(curl, CURLOPT_PUT, 1L);
+            
+            /* specify target URL, and note that this URL should include a file
+             name, not only a directory */ 
+            curl_easy_setopt(curl, CURLOPT_URL, inurl);
+            
+            /* now specify which file to upload */ 
+            curl_easy_setopt(curl, CURLOPT_READDATA, bodyfile);
+            
+            /* provide the size of the upload, we specicially typecast the value
+             to curl_off_t since we must be sure to use the correct data size */ 
+            curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE,
+                             (curl_off_t)file_info.st_size);
+            
+            /* Now run off and do what you've been told! */ 
+            res = curl_easy_perform(curl);
+            
+            /* always cleanup */ 
+            curl_easy_cleanup(curl);
+        }
+        fclose(bodyfile); /* close the local file */ 
+        
+//        curl_global_cleanup();
+    }
+        
     return 0;
 }
 #endif
@@ -6075,7 +6173,7 @@ void l_setupAPI(lua_State *lua)
 	lua_pushcfunction(lua, l_OSCPort);
 	lua_setglobal(lua,"OSCPort");
 	lua_pushcfunction(lua, l_IPAddress);
-	lua_setglobal(lua,"IPAddSendress");
+	lua_setglobal(lua,"IPAddress");
 	lua_pushcfunction(lua, l_SendOSCMessage);
 	lua_setglobal(lua,"SendOSCMessage");
 
@@ -6161,8 +6259,12 @@ void l_setupAPI(lua_State *lua)
 	lua_pushcfunction(lua, l_FreeAllFlowboxes);
 	lua_setglobal(lua, "FreeAllFlowboxes");
 
+#ifdef CURLY    
 	lua_pushcfunction(lua, l_WriteURLData);
 	lua_setglobal(lua, "WriteURLData");
+	lua_pushcfunction(lua, l_PutURLData);
+	lua_setglobal(lua, "PutURLData");
+#endif
 	
 	// Initialize the global mic buffer table
 #ifdef MIC_ARRAY

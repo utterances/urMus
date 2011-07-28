@@ -7,9 +7,13 @@ function Rotate(self,x,y,z,h)
 end
 
 function GPS(self,lat,long)
---   DPrint(lat .. " " ..long.." center="..(lat*180)..","..(long*180))
+    local x,y = InputPosition()
     if lat ~= clat or long~= clong then
+        lat = 43.69064547/180 + x / 4000
+        long = -82.98623126/180 + y / 4000
+        DPrint(lat .. " " ..long.." center="..(lat*180)..","..(long*180))
         WriteURLData("http://maps.google.com/maps/api/staticmap?center="..(lat*180)..","..(long*180).."&zoom=14&size=512x512&maptype=roadmap&sensor=false&format=png", "map.png")
+--        WriteURLData("http://maps.google.com/maps/api/staticmap?center=43.69064547,-82.98623126&zoom=14&size=512x512&maptype=roadmap&sensor=false&format=png", "map.png")
         clat = lat
         clong = long
     end
@@ -26,4 +30,5 @@ r.t = r:Texture(255,255,255,255)
 r:Show()
 r:Handle("OnHeading",Rotate)
 r:Handle("OnLocation",GPS)
+r:Handle("OnTouchDown",GPS)
 

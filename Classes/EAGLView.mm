@@ -2064,10 +2064,14 @@ void ClampRegion(urAPI_Region_t*region)
 {
 	if(region->left < 0) region->left = 0;
 	if(region->bottom < 0) region->bottom = 0;
+//    if(region->ofsx < 0) region->ofsx = 0;
+//    if(region->ofsy < 0) region->ofsy = 0;
 	if(region->width > SCREEN_WIDTH) region->width = SCREEN_WIDTH;
 	if(region->height > SCREEN_HEIGHT) region->height = SCREEN_HEIGHT;
 	if(region->left+region->width > SCREEN_WIDTH) region->left = SCREEN_WIDTH-region->width;
 	if(region->bottom+region->height > SCREEN_HEIGHT) region->bottom = SCREEN_HEIGHT-region->height;
+//    if(region->ofsx+region->width > SCREEN_WIDTH) region->ofsx = SCREEN_WIDTH-region->width;;
+//    if(region->ofsy+region->height > SCREEN_HEIGHT) region->ofsy = SCREEN_HEIGHT-region->height;
 }
 
 
