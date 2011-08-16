@@ -18,6 +18,9 @@ patchdir = "Patches"
 
 pagefile = {
 "urMus",
+"urVen2.lua",
+"urLuaEditor.lua",
+"urNetDiscoveryTest.lua",
 "urMenu.lua",
 "urDrawDemo1.lua",
 "urTurn.lua",
@@ -2251,14 +2254,14 @@ notificationregion.textlabel:SetLabel("Notifications")
 notificationregion.textlabel:SetFontHeight(48)
 notificationregion.textlabel:SetColor(255,255,255,190)
 
-local function NewConnection(self, name)
+local function NewConnection(self, name, btype)
 --	DPrint("connect "..name)
-	ShowNotification("Connect: "..name)
+	ShowNotification("Connect: "..name.."\n"..btype)
 end
 
-local function LostConnection(self, name)
+local function LostConnection(self, name, btype)
 --	DPrint("disconnect "..name)
-	ShowNotification("Disconnect: "..name)
+	ShowNotification("Disconnect: "..name.."\n"..btype)
 end
 
 notificationregion:Handle("OnNetConnect", NewConnection)

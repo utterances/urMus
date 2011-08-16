@@ -214,6 +214,7 @@ typedef struct urAPI_Region
 		std::map< int, sml::WMElement* >* soarWMEs;
 		int soarWMEcounter;
 #endif
+        int OnAttitude;
 		int OnRotation;
 		int OnHeading;
 		int OnLocation;
@@ -246,8 +247,8 @@ urAPI_Region_t* findRegionMoved(float x, float y, float dx, float dy);
 bool callAllOnUpdate(float time);
 bool callAllOnAccelerate(float x, float y, float z);
 bool callAllOnNetIn(float a);
-bool callAllOnNetConnect(const char* name);
-bool callAllOnNetDisconnect(const char* name);
+bool callAllOnNetConnect(const char* name, const char* btype);
+bool callAllOnNetDisconnect(const char* name, const char* btype);
 bool callAllOnOSCMessage(float num);
 #ifdef SANDWICH_SUPPORT
 bool callAllOnPressure(float p);
@@ -255,6 +256,7 @@ bool callAllOnPressure(float p);
 #ifdef SOAR_SUPPORT
 bool callAllOnSoarOutput();
 #endif
+bool callAllOnAttitude(float x, float y, float z, float w);
 bool callAllOnRotRate(float x, float y, float z);
 bool callAllOnHeading(float x, float y, float z, float north);
 bool callAllOnLocation(float latitude, float longitude);
@@ -270,6 +272,7 @@ bool callScriptWith2Args(int func_ref, urAPI_Region_t* region ,float a, float b)
 bool callScriptWith1Args(int func_ref, urAPI_Region_t* region ,float a);
 bool callScriptWith1Global(int func_ref, urAPI_Region_t* region, const char* globaldata);
 bool callScriptWith1String(int func_ref, urAPI_Region_t* region, const char* name);
+bool callScriptWith2String(int func_ref, urAPI_Region_t* region, const char* name, const char* btype);
 
 void addChild(urAPI_Region_t *parent, urAPI_Region_t *child);
 void removeChild(urAPI_Region_t *parent, urAPI_Region_t *child);

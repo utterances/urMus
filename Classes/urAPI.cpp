@@ -90,6 +90,7 @@ Region_Chain_t* OnPressureRegions = nil;
 #ifdef SOAR_SUPPORT
 Region_Chain_t* OnSoarOutputRegions = nil;
 #endif
+Region_Chain_t* OnAttitudeRegions = nil;
 Region_Chain_t* OnRotationRegions = nil;
 Region_Chain_t* OnHeadingRegions = nil;
 Region_Chain_t* OnLocationRegions = nil;
@@ -1024,6 +1025,30 @@ bool callAllOnHeading(float x, float y, float z, float north)
 	return true;
 }
 
+Region_Chain_t* onAttitudeIterator;
+Region_Chain_t* onAttitudeIteratorNext;
+
+bool callAllOnAttitude(float x, float y, float z, float w)
+{
+    if(OnAttitudeRegions != NULL)
+    {
+        onAttitudeIteratorNext = OnAttitudeRegions->next; // Helps save-guard the chain should a region unhook itself
+        onAttitudeIterator = OnAttitudeRegions;
+        
+        while(onAttitudeIterator != NULL)
+        {
+            urAPI_Region_t* t = onAttitudeIterator->region;
+            if(t->OnAttitude != 0)
+                callScriptWith4Args(t->OnAttitude,t,x,y,z,w);
+            onAttitudeIterator = onAttitudeIteratorNext;
+            if(onAttitudeIteratorNext != NULL)
+                onAttitudeIteratorNext = onAttitudeIteratorNext->next;
+        }
+    }
+    
+	return true;
+}
+
 Region_Chain_t* onRotationIterator;
 Region_Chain_t* onRotationIteratorNext;
 
@@ -1120,7 +1145,7 @@ bool callAllOnNetIn(float a)
 Region_Chain_t* onNetConnectIterator;
 Region_Chain_t* onNetConnectIteratorNext;
 
-bool callAllOnNetConnect(const char* name)
+bool callAllOnNetConnect(const char* name, const char* btype)
 {
     if(OnNetConnectRegions != NULL)
     {
@@ -1131,7 +1156,7 @@ bool callAllOnNetConnect(const char* name)
         {
             urAPI_Region_t* t = onNetConnectIterator->region;
             if(t->OnNetConnect != 0)
-                callScriptWith1String(t->OnNetConnect,t,name);
+                callScriptWith2String(t->OnNetConnect,t,name,btype);
             onNetConnectIterator = onNetConnectIteratorNext;
             if(onNetConnectIteratorNext != NULL)
                 onNetConnectIteratorNext = onNetConnectIteratorNext->next;
@@ -1151,7 +1176,7 @@ bool callAllOnNetConnect(const char* name)
 Region_Chain_t* onNetDisconnectIterator;
 Region_Chain_t* onNetDisconnectIteratorNext;
 
-bool callAllOnNetDisconnect(const char* name)
+bool callAllOnNetDisconnect(const char* name, const char* btype)
 {
     if(OnNetDisconnectRegions != NULL)
     {
@@ -1162,7 +1187,7 @@ bool callAllOnNetDisconnect(const char* name)
         {
             urAPI_Region_t* t = onNetDisconnectIterator->region;
             if(t->OnNetDisconnect != 0)
-                callScriptWith1String(t->OnNetDisconnect,t,name);
+                callScriptWith2String(t->OnNetDisconnect,t,name,btype);
             onNetDisconnectIterator = onNetDisconnectIteratorNext;
             if(onNetDisconnectIteratorNext != NULL)
                 onNetDisconnectIteratorNext = onNetDisconnectIteratorNext->next;
@@ -1509,6 +1534,29 @@ bool callScriptWith1String(int func_ref, urAPI_Region_t* region, const char* nam
 	return true;
 }
 
+bool callScriptWith2String(int func_ref, urAPI_Region_t* region, const char* name, const char* btype)
+{
+	if(func_ref == 0) return false;
+	
+	//		int func_ref = region->OnDragging;
+	// Call lua function by stored Reference
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
+	lua_pushstring(lua, name);
+	lua_pushstring(lua, btype);
+	if(lua_pcall(lua,3,0,0) != 0)
+	{
+		//<return Error>
+		const char* error = lua_tostring(lua, -1);
+		errorstr = error; // DPrinting errors for now
+		newerror = true;
+		return false;
+	}
+	
+	// OK!
+	return true;
+}
+
 bool callScript(int func_ref, urAPI_Region_t* region)
 {
 	if(func_ref == 0) return false;
@@ -1603,6 +1651,7 @@ void FreeAllChains()
 #ifdef SOAR_SUPPORT
     OnSoarOutputRegions = FreeChain(OnSoarOutputRegions);
 #endif
+    OnAttitudeRegions = FreeChain(OnAttitudeRegions);
     OnRotationRegions = FreeChain(OnRotationRegions);
     OnHeadingRegions = FreeChain(OnHeadingRegions);
     OnHeadingRegions = FreeChain(OnLocationRegions);
@@ -1698,6 +1747,10 @@ void PopulateAllChains(urAPI_Region_t* first)
             OnSoarOutputRegions = AddRegionToChain(OnSoarOutputRegions, region);
 		}
 #endif
+		if(region->OnAttitude != 0)
+		{
+            OnAttitudeRegions = AddRegionToChain(OnAttitudeRegions, region);
+		}
 		if(region->OnRotation != 0)
 		{
             OnRotationRegions = AddRegionToChain(OnRotationRegions, region);
@@ -2076,6 +2129,23 @@ int region_Handle(lua_State* lua)
 			region->OnSoarOutput = 0;
 		}
 #endif
+		else if(!strcmp(handler, "OnAttitude"))
+		{
+			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnAttitude);
+            // Update iterator if needed
+            if(onAttitudeIterator!=NULL && region==onAttitudeIterator->region)
+            {
+                onAttitudeIterator = onAttitudeIteratorNext; 
+                if(onAttitudeIteratorNext != NULL)
+                    onAttitudeIteratorNext = onAttitudeIteratorNext->next;
+            }
+            if(onAttitudeIteratorNext != NULL && region==onAttitudeIteratorNext->region)
+            {
+                onAttitudeIteratorNext = onAttitudeIteratorNext->next;
+            }
+            OnAttitudeRegions=RemoveRegionFromChain(OnAttitudeRegions, region);
+			region->OnAttitude = 0;
+		}
 		else if(!strcmp(handler, "OnRotation"))
 		{
 			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnRotation);
@@ -3606,7 +3676,21 @@ int l_NetFind(lua_State* lua)
 	Net_Find(nsid);
     return 0;
 }
-	
+
+int l_StopNetAdvertise(lua_State* lua)
+{
+	const char* nsid = luaL_checkstring(lua, 1);
+	Stop_Net_Advertise(nsid);
+    return 0;
+}
+
+int l_StopNetFind(lua_State* lua)
+{
+	const char* nsid = luaL_checkstring(lua, 1);
+	Stop_Net_Find(nsid);
+    return 0;
+}
+
 static int audio_initialized = false;
 
 int l_StartAudio(lua_State* lua)
@@ -6182,6 +6266,10 @@ void l_setupAPI(lua_State *lua)
 	lua_setglobal(lua,"StartNetAdvertise");
 	lua_pushcfunction(lua, l_NetFind);
 	lua_setglobal(lua,"StartNetDiscovery");
+	lua_pushcfunction(lua, l_StopNetAdvertise);
+	lua_setglobal(lua,"StopNetAdvertise");
+	lua_pushcfunction(lua, l_StopNetFind);
+	lua_setglobal(lua,"StopNetDiscovery");
 	
 	// UR!
 	lua_pushcfunction(lua, l_setanimspeed);

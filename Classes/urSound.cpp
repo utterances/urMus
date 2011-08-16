@@ -338,8 +338,11 @@ void callAllMicSingleTickSources(SInt16 data)
 
 void callAllNetSingleTickSources(SInt16 data)
 {
-	netinobject->lastindata[0] = (float)data/128.0;//32768.0;
-	netinobject->CallAllPushOuts(data/128.0);//32768.0);
+    if(netinobject != NULL)
+    {
+        netinobject->lastindata[0] = (float)data/128.0;//32768.0;
+        netinobject->CallAllPushOuts(data/128.0);//32768.0);
+    }
 }
 
 double NetIn_Tick(ursObject* gself)

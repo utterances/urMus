@@ -40,6 +40,16 @@ Note that setting the view non-opaque will only work if the EAGL surface has an 
 
 #define MAX_FINGERS 10
 
+@interface urNetServiceDiscovery : NSObject <NSNetServiceBrowserDelegate>
+{
+@public
+    NSMutableArray *remoteIPs;
+	NSNetService *netService;
+	NSMutableArray *_services;
+	NSNetServiceBrowser *_netServiceBrowser;    
+}
+@end
+
 #ifdef SANDWICH_SUPPORT
 #ifdef USEUDP
 @interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate,SandwichUpdateDelegate, AsyncUdpSocketDelegate,CaptureSessionManagerDelegate, NSNetServiceDelegate, NSNetServiceBrowserDelegate>
@@ -56,6 +66,7 @@ Note that setting the view non-opaque will only work if the EAGL surface has an 
 {
 @public
 	NSNetService *netService;
+    NSMutableArray *remoteIPs;
 	CaptureSessionManager *captureManager;
 @private
     /* The pixel dimensions of the backbuffer */
@@ -100,6 +111,7 @@ Note that setting the view non-opaque will only work if the EAGL surface has an 
 	BOOL _showDisclosureIndicators;
 	NSMutableArray *_services;
 	NSNetServiceBrowser *_netServiceBrowser;
+    NSMutableDictionary *searchtype;
 	NSNetService *_currentResolve;
 	NSTimer *_timer;
 	BOOL _needsActivityIndicator;
@@ -137,9 +149,12 @@ Note that setting the view non-opaque will only work if the EAGL surface has an 
 - (void) pressureUpdate: (SandwichEventManager * ) sender;
 #endif
 
+- (void) setupNetConnects;
+
 void Net_Advertise(const char* nsid, int port);
 void Net_Find(const char* nsid);
-
+void Stop_Net_Advertise(const char* nsid);
+void Stop_Net_Find(const char* nsid);
 
 @end
 

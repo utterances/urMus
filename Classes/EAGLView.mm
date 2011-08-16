@@ -50,7 +50,8 @@ MachTimer* mytimer;
 @property (nonatomic, retain, readwrite) NSTimer *timer;
 @property (nonatomic, assign, readwrite) BOOL needsActivityIndicator;
 @property (nonatomic, assign, readwrite) BOOL initialWaitOver;
-
+@property (nonatomic, retain, readwrite) NSMutableArray *remoteIPs;
+@property (nonatomic, retain, readwrite) NSMutableDictionary *searchtype;
 
 - (BOOL) createFramebuffer;
 - (void) destroyFramebuffer;
@@ -76,6 +77,8 @@ MachTimer* mytimer;
 @dynamic timer;
 @synthesize initialWaitOver = _initialWaitOver;
 @synthesize netService;
+@synthesize remoteIPs;
+@synthesize searchtype;
 
 @synthesize captureManager;
 
@@ -327,6 +330,17 @@ extern lua_State *lua;
 	//        NSLog(@"No gyroscope on device.");
 			[motionManager release];
 		}
+        
+ 		motionManager.deviceMotionUpdateInterval = 1.0/60.0;
+        if (motionManager.deviceMotionAvailable) {
+            
+            [motionManager startDeviceMotionUpdatesToQueue:[NSOperationQueue currentQueue]
+                                               withHandler: ^(CMDeviceMotion *motion, NSError *error){
+                                                   CMAttitude *attitude = motion.attitude;
+                                                   callAllOnAttitude(attitude.quaternion.x,attitude.quaternion.y,attitude.quaternion.z,attitude.quaternion.w);
+                                               }];
+            [motionManager startDeviceMotionUpdates];
+        }
     }
 	
 	// setup the location manager
@@ -367,7 +381,8 @@ extern lua_State *lua;
 #endif	
 	//Create and advertise networking and discover others
 //	[self setup];
-	
+	[self setupNetConnects];
+    
 	mytimer = new MachTimer();
 	mytimer->start();
 	
@@ -1942,8 +1957,11 @@ bool drawactive = false;
 	
 	[self stopCurrentResolve];
 	self.services = nil;
-	[self.netServiceBrowser stop];
-	self.netServiceBrowser = nil;
+    for(id key in searchtype) {
+        NSNetServiceBrowser *obj = [searchtype objectForKey:key];      // We use the (unique) key to access the (possibly non-unique) object.
+        [obj stop];
+        obj = nil;
+    }
 	[self.netService removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
 	self.netService = nil;
 	[_searchingForServicesString release];
@@ -2504,10 +2522,22 @@ void onTouchDragEnd(int t,int touch, float posx, float posy)
 
 #define kurNetTestID	@"_urMus._udp."
 
+extern MoNet myoscnet;
+
 void Net_Send(float data)
 {
-//	int8_t idata = data*128;
-	//	[g_glView send:(int8_t)idata];
+    const char* oscip;
+    for(int i=0; i<[g_glView->remoteIPs count]; i++)
+    {
+        oscip=[[g_glView->remoteIPs objectAtIndex:i] UTF8String];
+        myoscnet.startSendStream(oscip,8888);
+        myoscnet.startSendMessage("/urMus/netstream");
+        
+        myoscnet.addSendFloat(data);
+        
+        myoscnet.endSendMessage();
+        myoscnet.closeSendStream();
+    }
 }
 
 void Net_Advertise(const char* nsid, int port)
@@ -2515,6 +2545,17 @@ void Net_Advertise(const char* nsid, int port)
 	NSString *nsid2 =  [[NSString alloc] initWithUTF8String: nsid];
 	NSString *fullnsid = [NSString stringWithFormat:@"_%@urMus._udp.", nsid2];
 	[g_glView advertiseService:[[UIDevice currentDevice] name] withID:fullnsid atPort:port];
+}
+
+void Stop_Net_Advertise(const char* nsid)
+{
+	[g_glView stopAdvertisingService];
+}
+
+void Stop_Net_Find(const char* nsid)
+{
+    NSString *nsid2 =  [[NSString alloc] initWithUTF8String: nsid];
+    [g_glView stopFindService:nsid2];
 }
 
 void Net_Find(const char* nsid)
@@ -2539,8 +2580,60 @@ void Net_Find(const char* nsid)
 	[self.netService retain];
 }
 
-- (void) setup {
+- (void) stopAdvertisingService
+{
+    [self.netService stop];
+    [self.netService release];
+}
+
+
+- (void) stopFindService:(NSString *)btype
+{
+    NSString *fullnsid = [NSString stringWithFormat:@"_%@urMus._udp.", btype];
+    NSNetServiceBrowser *aNetServiceBrowser = [searchtype objectForKey:fullnsid];
+    if(aNetServiceBrowser!=NULL)
+    {
+        [aNetServiceBrowser stop];
+    }
+//    [self.netServiceBrowser stop];
+//	[self.services removeAllObjects];
+}
+
+#define MAX_THROTTLE 1
+
+int throttle = MAX_THROTTLE;
+
+void oscCallBack3(osc::ReceivedMessageArgumentStream & argument_stream, void * data)
+{
+    if(throttle > 0)
+    {
+        throttle --;
+    }
+    else
+    {
+        throttle = MAX_THROTTLE;
+        float num;
+        argument_stream >> num;
+        callAllNetSingleTickSources(num*128.0);
+    }
+}
+
+- (void) setupNetConnects {
+    remoteIPs = [[NSMutableArray alloc] init];
+    _services = [[NSMutableArray alloc] init];
+    searchtype = [[NSMutableDictionary alloc] init];
+    
+    NSString *fullnsid = [NSString stringWithFormat:@"_%@urMus._udp.", @"net1"];
+    [self searchForServicesOfType:fullnsid inDomain:@""];
 	
+	[self advertiseService:[[UIDevice currentDevice] name] withID:fullnsid atPort:8888];
+    myoscnet.addAddressCallback("/urMus/netstream",oscCallBack3);
+    myoscnet.setListeningPort(8888);
+    myoscnet.startListening();
+}
+
+- (void) setup {
+    
 	[self advertiseService:[[UIDevice currentDevice] name] withID:kurNetTestID atPort:8888];
 
 	[self searchForServicesOfType:@"_urMus._udp." inDomain:@""];
@@ -2552,20 +2645,31 @@ void Net_Find(const char* nsid)
 // discovering other services.
 - (BOOL)searchForServicesOfType:(NSString *)type inDomain:(NSString *)domain {
 	
-	[self.netServiceBrowser stop];
-	[self.services removeAllObjects];
+//    urNetServiceDiscovery *netdiscoverer;
+    NSNetServiceBrowser *aNetServiceBrowser;
+    if([searchtype objectForKey:type]==NULL)
+    {
+//        netdiscoverer = [[urNetServiceDiscovery alloc] init];
+        aNetServiceBrowser = [[NSNetServiceBrowser alloc] init];
+        aNetServiceBrowser.delegate = self;
+       if(!aNetServiceBrowser) {
+            // The NSNetServiceBrowser couldn't be allocated and initialized.
+            return NO;
+        }
+//        [searchtype setObject:netdiscoverer forKey:type];
+        [searchtype setObject:aNetServiceBrowser forKey:type];
+    }
+    else
+    {
+        aNetServiceBrowser = [searchtype objectForKey:type];
+        [aNetServiceBrowser stop];
+    }
+//	[self.netServiceBrowser stop];
+//	[self.services removeAllObjects];
 	
-	NSNetServiceBrowser *aNetServiceBrowser = [[NSNetServiceBrowser alloc] init];
-	if(!aNetServiceBrowser) {
-        // The NSNetServiceBrowser couldn't be allocated and initialized.
-		return NO;
-	}
-	
-	aNetServiceBrowser.delegate = self;
-	self.netServiceBrowser = aNetServiceBrowser;
-	[aNetServiceBrowser release];
-	[self.netServiceBrowser searchForServicesOfType:type inDomain:domain];
-	
+//	self.netServiceBrowser = aNetServiceBrowser;
+	[aNetServiceBrowser searchForServicesOfType:type inDomain:domain];
+//    [aNetServiceBrowser release];
 	return YES;
 }
 
@@ -2573,8 +2677,23 @@ void Net_Find(const char* nsid)
 	// If a service went away, stop resolving it if it's currently being resolved,
 	// remove it from the list and update the table view if no more events are queued.
 
-	callAllOnNetDisconnect([[service name] UTF8String]);
-	[self.services removeObject:service];
+	for (int i = 0; i < [self.services count]; i++)
+	{
+        NSNetService* tservice = [self.services objectAtIndex:i];
+    
+        if([[tservice name] isEqualToString:[service name]] && [[tservice type] isEqualToString:[service type]])
+        {  
+            
+			NSString* ipaddress = [self.remoteIPs objectAtIndex:i];
+            NSString* btype = [service type];
+            NSRange range = [btype rangeOfString:@"urMus._udp."];
+            btype = [btype substringWithRange:NSMakeRange(1, range.location-1)];
+            callAllOnNetDisconnect([ipaddress UTF8String],[btype UTF8String]);
+            [self.remoteIPs removeObjectAtIndex:i];
+            [self.services removeObject:service];
+            [self.services removeObject:tservice];
+        }
+    }
 }	
 
 - (void)netServiceBrowser:(NSNetServiceBrowser *)netServiceBrowser didFindService:(NSNetService *)service moreComing:(BOOL)moreComing {
@@ -2615,7 +2734,11 @@ void Net_Find(const char* nsid)
 			NSString* ipaddress = [self getStringFromAddressData:[[service addresses] objectAtIndex:i]];
 			if (![ipaddress isEqual:@"0.0.0.0"])
 			{
-				callAllOnNetConnect([ipaddress UTF8String]);
+                NSString* btype = [service type];
+                NSRange range = [btype rangeOfString:@"urMus._udp."];
+                btype = [btype substringWithRange:NSMakeRange(1, range.location-1)];
+				callAllOnNetConnect([ipaddress UTF8String],[btype UTF8String]);
+                [remoteIPs addObject:ipaddress];
 				[self.services addObject:service];
 			}
 		}
