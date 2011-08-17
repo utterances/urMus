@@ -2432,6 +2432,11 @@ int region_Handle(lua_State* lua)
 				region->OnSoarOutput = func_ref;
             }
 #endif
+			else if(!strcmp(handler, "OnAttitude"))
+            {
+                OnAttitudeRegions=AddRegionToChain(OnAttitudeRegions, region);
+				region->OnAttitude = func_ref;
+            }
 			else if(!strcmp(handler, "OnRotation"))
             {
                 OnRotationRegions=AddRegionToChain(OnRotationRegions, region);

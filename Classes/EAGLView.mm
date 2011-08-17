@@ -304,7 +304,8 @@ extern lua_State *lua;
     {
 		// setup the gyroscope collection
 		motionManager = [[CMMotionManager alloc] init];
-		motionManager.gyroUpdateInterval = 1.0/60.0;
+ 		motionManager.deviceMotionUpdateInterval = 1.0/60.0;
+/*		motionManager.gyroUpdateInterval = 1.0/60.0;
 		
 		if (motionManager.gyroAvailable) {
 			opQ = [[NSOperationQueue currentQueue] retain];
@@ -326,21 +327,34 @@ extern lua_State *lua;
 			[motionManager startGyroUpdatesToQueue:[NSOperationQueue currentQueue]
 									   withHandler: gyroHandler];
 			
-		} else {
+		} else*/
+        
+        if (motionManager.deviceMotionAvailable) {
+			CMDeviceMotionHandler deviceMotionHandler = ^ (CMDeviceMotion *motion, NSError *error) {
+                CMRotationRate rotate = motion.rotationRate;
+                // handle rotation-rate data here......
+                float rate_x = rotate.x/7.0;//128.0;
+                float rate_y = rotate.y/7.0;//128.0;
+                float rate_z = rotate.z/7.0;//128.0;
+                
+                //			float heading_north = ([heading trueHeading]-180.0)/180.0;
+                
+                // lua API events
+                callAllOnRotRate(rate_x, rate_y, rate_z);
+                // UrSound pipeline
+                callAllGyroSources(rate_x, rate_y, rate_z);
+                CMAttitude *attitude = motion.attitude;
+                callAllOnAttitude(attitude.quaternion.x,attitude.quaternion.y,attitude.quaternion.z,attitude.quaternion.w);
+            };
+            [motionManager startDeviceMotionUpdatesToQueue:[NSOperationQueue currentQueue]
+                                               withHandler: deviceMotionHandler];
+//            [motionManager startDeviceMotionUpdates];
+        }
+        else {
 	//        NSLog(@"No gyroscope on device.");
 			[motionManager release];
 		}
         
- 		motionManager.deviceMotionUpdateInterval = 1.0/60.0;
-        if (motionManager.deviceMotionAvailable) {
-            
-            [motionManager startDeviceMotionUpdatesToQueue:[NSOperationQueue currentQueue]
-                                               withHandler: ^(CMDeviceMotion *motion, NSError *error){
-                                                   CMAttitude *attitude = motion.attitude;
-                                                   callAllOnAttitude(attitude.quaternion.x,attitude.quaternion.y,attitude.quaternion.z,attitude.quaternion.w);
-                                               }];
-            [motionManager startDeviceMotionUpdates];
-        }
     }
 	
 	// setup the location manager

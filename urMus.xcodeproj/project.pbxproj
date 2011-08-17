@@ -43,6 +43,8 @@
 		770F779413E6043A000E133D /* urNetDiscoveryTest.lua in Sources */ = {isa = PBXBuildFile; fileRef = 770F779313E6043A000E133D /* urNetDiscoveryTest.lua */; };
 		770F779513E6054F000E133D /* urNetDiscoveryTest.lua in Resources */ = {isa = PBXBuildFile; fileRef = 770F779313E6043A000E133D /* urNetDiscoveryTest.lua */; };
 		770FD84B10AB51CF004B0967 /* flatbutton-64.png in Resources */ = {isa = PBXBuildFile; fileRef = 770FD84A10AB51CF004B0967 /* flatbutton-64.png */; };
+		7710B7DF13FB014300E3D710 /* unlock.png in Resources */ = {isa = PBXBuildFile; fileRef = 7710B7DD13FB014300E3D710 /* unlock.png */; };
+		7710B7E013FB014300E3D710 /* lock.png in Resources */ = {isa = PBXBuildFile; fileRef = 7710B7DE13FB014300E3D710 /* lock.png */; };
 		771DAFB21357F200008F5166 /* G-low-shaking.wav in Resources */ = {isa = PBXBuildFile; fileRef = 771DAFA51357F200008F5166 /* G-low-shaking.wav */; };
 		771DAFB31357F200008F5166 /* A-low-shaking.wav in Resources */ = {isa = PBXBuildFile; fileRef = 771DAFA61357F200008F5166 /* A-low-shaking.wav */; };
 		771DAFB41357F200008F5166 /* B-low-shaking.wav in Resources */ = {isa = PBXBuildFile; fileRef = 771DAFA71357F200008F5166 /* B-low-shaking.wav */; };
@@ -555,6 +557,8 @@
 		770EBADF13991D85002A03C3 /* wj.soar */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = wj.soar; path = "urMus-Soar/wj.soar"; sourceTree = "<group>"; };
 		770F779313E6043A000E133D /* urNetDiscoveryTest.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; path = urNetDiscoveryTest.lua; sourceTree = "<group>"; };
 		770FD84A10AB51CF004B0967 /* flatbutton-64.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "flatbutton-64.png"; path = "Textures/flatbutton-64.png"; sourceTree = "<group>"; };
+		7710B7DD13FB014300E3D710 /* unlock.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = unlock.png; path = Textures/unlock.png; sourceTree = "<group>"; };
+		7710B7DE13FB014300E3D710 /* lock.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = lock.png; path = Textures/lock.png; sourceTree = "<group>"; };
 		771DAFA51357F200008F5166 /* G-low-shaking.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "G-low-shaking.wav"; path = "Sounds/G-low-shaking.wav"; sourceTree = "<group>"; };
 		771DAFA61357F200008F5166 /* A-low-shaking.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "A-low-shaking.wav"; path = "Sounds/A-low-shaking.wav"; sourceTree = "<group>"; };
 		771DAFA71357F200008F5166 /* B-low-shaking.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "B-low-shaking.wav"; path = "Sounds/B-low-shaking.wav"; sourceTree = "<group>"; };
@@ -1812,6 +1816,8 @@
 		77F043941123BC3F00CB8C95 /* Textures */ = {
 			isa = PBXGroup;
 			children = (
+				7710B7DD13FB014300E3D710 /* unlock.png */,
+				7710B7DE13FB014300E3D710 /* lock.png */,
 				778A7FB013F45EF700846B59 /* color_map.png */,
 				778A7FB113F45EF700846B59 /* trashbin.png */,
 				778A7FB213F45EF700846B59 /* right.png */,
@@ -2039,6 +2045,14 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7710B7DF13FB014300E3D710 /* unlock.png in Resources */,
+				7710B7E013FB014300E3D710 /* lock.png in Resources */,
+				778A7FB613F45EF700846B59 /* color_map.png in Resources */,
+				778A7FB713F45EF700846B59 /* trashbin.png in Resources */,
+				778A7FB813F45EF700846B59 /* right.png in Resources */,
+				778A7FB913F45EF700846B59 /* left.png in Resources */,
+				778A7FBA13F45EF700846B59 /* down.png in Resources */,
+				778A7FBB13F45EF700846B59 /* up.png in Resources */,
 				778A7FCA13F4691C00846B59 /* urTopBar.lua in Resources */,
 				778A7FCB13F4691D00846B59 /* urLuaEditor.lua in Resources */,
 				778A7FCC13F4691E00846B59 /* urKeyboard.lua in Resources */,
@@ -2357,12 +2371,6 @@
 				779BE9E013A9A010002E36DC /* Makefile.am in Resources */,
 				779BE9E113A9A010002E36DC /* Makefile.in in Resources */,
 				779BE9E213A9A010002E36DC /* stamp-h3 in Resources */,
-				778A7FB613F45EF700846B59 /* color_map.png in Resources */,
-				778A7FB713F45EF700846B59 /* trashbin.png in Resources */,
-				778A7FB813F45EF700846B59 /* right.png in Resources */,
-				778A7FB913F45EF700846B59 /* left.png in Resources */,
-				778A7FBA13F45EF700846B59 /* down.png in Resources */,
-				778A7FBB13F45EF700846B59 /* up.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
