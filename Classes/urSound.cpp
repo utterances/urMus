@@ -12,6 +12,7 @@
 #include "urSTK.h"
 #include "urSoundAtoms.h"
 #include "FileWrite.h"
+#include "FileRead.h"
 
 #define LOAD_STK_OBJECTS
 
@@ -328,6 +329,10 @@ void callAllMicSources(SInt16* buff, UInt32 len)
 	}
 }
 
+void callAllMicSingleTickSourcesF(double data)
+{
+    micobject->CallAllPushOuts(data);
+}
 
 void callAllMicSingleTickSources(SInt16 data)
 {
@@ -948,6 +953,13 @@ void urs_SetupObjects()
 //	fileobject->AddOut("Out", "Event", NULL, NULL, NULL);
 //	ursourceobjectlist.Append(fileobject);
 	
+    
+/*    ratemasterobhject = new ursObject("RateMaster", RateMaster_Constructor, RateMaster_Destructor,1,2);
+	ratemasterobhject->AddOut("Control", "TimeSeries", RateMaster_ControlTick, RateMaster_ControlOut, NULL);
+	ratemasterobhject->AddOut("Read", "TimeSeries", RateMaster_ReadTick, RateMaster_ReadOut, NULL);
+	ratemasterobject->AddIn("In", "Generic", RateMaster_In);
+	urmanipulatorobjectlist.Append(ratemasterobject);
+*/    
 	sinobject = new ursObject("SinOsc", SinOsc_Constructor, SinOsc_Destructor,4,1);
 	sinobject->AddOut("WaveForm", "TimeSeries", SinOsc_Tick, SinOsc_Out, NULL);
 //	sinobject->AddOut("WaveForm", "TimeSeries", NULL, SinOsc_FillBuffer);
@@ -1519,8 +1531,30 @@ void Sample_AddFile(ursObject* gself, const char* filename)
 		self->samplebuffer = (SInt16**)realloc(self->samplebuffer, sizeof(SInt16*)*self->numsamples);
 		self->len = (UInt32*)realloc(self->len,sizeof(UInt32)*self->numsamples);
 	}
-	self->samplebuffer[self->numsamples-1] = (SInt16*)LoadAudioFileData(filename, &self->len[self->numsamples-1], &frate);
-	self->len[self->numsamples-1] = self->len[self->numsamples-1]-1;
+/*    self->samplebuffer[self->numsamples-1] = (SInt16*)malloc(1000);
+    self->len[self->numsamples-1] = 250;
+    memset(self->samplebuffer[self->numsamples-1], 0, 1000);*/
+
+    const char* filestr = multiPath(filename);
+
+	FileRead fr(filestr);
+    UInt32 len = fr.fileSize();
+    StkFrames frames(len,1);
+    fr.read(frames);
+    self->samplebuffer[self->numsamples-1] = (SInt16*)malloc(frames.size()*sizeof(SInt16));
+    len = frames.size();
+    for(int i=0; i<len; i++)
+    {
+        self->samplebuffer[self->numsamples-1][i]=frames[i]*32767;
+    }
+    self->len[self->numsamples-1] = len;
+    
+    fr.close();
+    
+    
+    
+//	self->samplebuffer[self->numsamples-1] = (SInt16*)LoadAudioFileData2(filename, &self->len[self->numsamples-1], &frate);
+//	self->len[self->numsamples-1] = self->len[self->numsamples-1]-1;
 //	self->rate = 48000.0/frate;
 	self->rate = 1.0;
 }

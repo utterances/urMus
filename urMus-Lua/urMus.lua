@@ -18,8 +18,12 @@ patchdir = "Patches"
 
 pagefile = {
 "urMus",
+"urTurntable2.lua",
+"urColors.lua",
+"urGEAugRel2.lua",
 "urVen2.lua",
 "urLuaEditor.lua",
+"urDeleteFile.lua",
 "urNetDiscoveryTest.lua",
 "urMenu.lua",
 "urDrawDemo1.lua",
@@ -39,7 +43,6 @@ pagefile = {
 "urSleigh.lua",
 "urThumper.lua",
 "urPitchWheel.lua",
-"urColors.lua",
 "urPaint.lua",
 "urSmudge.lua",
 "urBounce.lua",

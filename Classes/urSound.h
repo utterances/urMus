@@ -527,6 +527,7 @@ void callAllCompassSources(double heading_x, double heading_y, double heading_z,
 void callAllLocationSources(double latitude, double longitude);
 void callAllTouchSources(double touch_x, double touch_y, int idx);
 void callAllMicSources(SInt16* buff, UInt32 len);
+void callAllMicSingleTickSourcesF(double data);
 void callAllMicSingleTickSources(SInt16 data);
 void callAllNetSingleTickSources(SInt16 data);
 void callAllPushSources(double indata);

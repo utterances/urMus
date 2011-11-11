@@ -2030,9 +2030,9 @@ void onTouchDownParse(int t, int numTaps, float posx, float posy)
 			float x = hitregion[t]->lastinputx;
 			float y = hitregion[t]->lastinputy;
 			// A double tap.
-			if (numTaps == 2 && hitregion[t]->OnDoubleTap) 
+			if (numTaps == 2 && hitregion[t]->OnEvents[OnDoubleTap]) 
 			{
-				callScript(hitregion[t]->OnDoubleTap, hitregion[t]);
+				callScript(hitregion[t]->OnEvents[OnDoubleTap], hitregion[t]);
 				//					callScript(hitregion[t]->OnTouchUp, hitregion[t]);
 			}
 			else if (numTaps == 3 && false)
@@ -2040,9 +2040,9 @@ void onTouchDownParse(int t, int numTaps, float posx, float posy)
 				// Tripple Tap NYI
 			}
 			else if (numTaps == 1)
-				callScriptWith2Args(hitregion[t]->OnTouchDown, hitregion[t],x,y);
+				callScriptWith2Args(hitregion[t]->OnEvents[OnTouchDown], hitregion[t],x,y);
 			else {
-				callScriptWith2Args(hitregion[t]->OnTouchDown, hitregion[t],x,y);
+				callScriptWith2Args(hitregion[t]->OnEvents[OnTouchDown], hitregion[t],x,y);
 //				callScriptWith2Args(hitregion[t]->OnTouchUp, hitregion[t],x,y); // GESSL: Double Tap issue.
 			}
 		}
@@ -2077,7 +2077,7 @@ void onTouchEnds(int numTaps, float oposx, float oposy, float posx, float posy)
 	urAPI_Region_t* hitregion = findRegionHit(posx, SCREEN_HEIGHT-posy);
 	if(hitregion /* && numTaps <= 1 */) // GESSL: Double tab issue
 	{
-		callScriptWith2Args(hitregion->OnTouchUp, hitregion,hitregion->lastinputx,hitregion->lastinputy);
+		callScriptWith2Args(hitregion->OnEvents[OnTouchUp], hitregion,hitregion->lastinputx,hitregion->lastinputy);
 		//		callAllOnLeaveRegions(posx, SCREEN_HEIGHT-posy); // GESSL: Double tab issue
 
 	}
@@ -2135,7 +2135,7 @@ void onTouchDoubleDragUpdate(int t, int dragidx, float pos1x, float pos1y, float
             dragregion->ofsx += dx;
             dragregion->ofsy += dy;
             changeLayout(dragregion);
-			callScript(dragregion->OnSizeChanged, dragregion);
+			callScript(dragregion->OnEvents[OnSizeChanged], dragregion);
 		}
 	}
 }
@@ -2229,12 +2229,12 @@ void onTouchScrollUpdate(int t)
 	urAPI_Region_t* scrollregion = findRegionXScrolled(cursorpositionx[t],SCREEN_HEIGHT-cursorpositiony[t],cursorscrollspeedx[t]);
 	if(scrollregion != nil)
 	{
-		callScriptWith1Args(scrollregion->OnHorizontalScroll, scrollregion, cursorscrollspeedx[t]);
+		callScriptWith1Args(scrollregion->OnEvents[OnHorizontalScroll], scrollregion, cursorscrollspeedx[t]);
 	}
 	scrollregion = findRegionYScrolled(cursorpositionx[t],SCREEN_HEIGHT-cursorpositiony[t],-cursorscrollspeedy[t]);
 	if(scrollregion != nil)
 	{
-		callScriptWith1Args(scrollregion->OnVerticalScroll, scrollregion, -cursorscrollspeedy[t]);
+		callScriptWith1Args(scrollregion->OnEvents[OnVerticalScroll], scrollregion, -cursorscrollspeedy[t]);
 	}
 	
 	scrollregion = findRegionMoved(cursorpositionx[t],SCREEN_HEIGHT-cursorpositiony[t],cursorscrollspeedx[t],-cursorscrollspeedy[t]);
@@ -2246,7 +2246,7 @@ void onTouchScrollUpdate(int t)
         {
             int a=0;
         }
-		callScriptWith5Args(scrollregion->OnMove, scrollregion, cursorpositionx[t]-scrollregion->left-cursorscrollspeedx[t],SCREEN_HEIGHT-cursorpositiony[t]-scrollregion->bottom+cursorscrollspeedy[t], cursorscrollspeedx[t], -cursorscrollspeedy[t],t+1);
+		callScriptWith5Args(scrollregion->OnEvents[OnMove], scrollregion, cursorpositionx[t]-scrollregion->left-cursorscrollspeedx[t],SCREEN_HEIGHT-cursorpositiony[t]-scrollregion->bottom+cursorscrollspeedy[t], cursorscrollspeedx[t], -cursorscrollspeedy[t],t+1);
 	}
 }
 
@@ -2276,7 +2276,7 @@ void onTouchDragEnd(int t,int touch, float posx, float posy)
 			{
 				dragtouches[dragidx].active = false;
 				dragtouches[dragidx].dragregion->isDragged = false;
-				callScript(dragtouches[dragidx].dragregion->OnDragStop, dragtouches[dragidx].dragregion);
+				callScript(dragtouches[dragidx].dragregion->OnEvents[OnDragStop], dragtouches[dragidx].dragregion);
 			}
 			else if(dragtouches[dragidx].touch2 != -1)
 			{

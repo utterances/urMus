@@ -17,6 +17,7 @@
 #include "urAPI.h"
 
 #define SINT32_MAXINT 2147483647
+#define UINT32_MAXINT 4294967295U
 #define SINT16_MAXINT 32767
 
 #define kPreferredBufferSize .005
@@ -42,7 +43,9 @@ void CheckMic()
  
 // This data structure contains info that needs to be passed to callbacks. In aurio touch this was the app delegate
 
+#ifdef ENABLE_URMICEVENTS
 SInt16* currentMicBuffer;
+#endif
 
 typedef struct rioClientData
 {
@@ -78,13 +81,14 @@ int SetupRemoteIO (AudioUnit* inRemoteIOUnit, AURenderCallbackStruct inRenderPro
 	// set our required format - Canonical AU format: LPCM non-interleaved 8.24 fixed point
 
 	outFormat->mFormatID = kAudioFormatLinearPCM;
-	outFormat->mFormatFlags = kAudioFormatFlagsCanonical;
+	outFormat->mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked;
 //	outFormat->mFormatFlags = kAudioFormatFlagsCanonical | (kAudioUnitSampleFractionBits << kLinearPCMFormatFlagsSampleFractionShift);
 	outFormat->mChannelsPerFrame = 2;
 	outFormat->mFramesPerPacket = 1;
-	outFormat->mBitsPerChannel = 8 * sizeof(AudioUnitSampleType);
-	outFormat->mBytesPerPacket = outFormat->mBytesPerFrame = sizeof(AudioUnitSampleType);
-	outFormat->mFormatFlags |= kAudioFormatFlagIsNonInterleaved;
+	outFormat->mBitsPerChannel = 8 * sizeof(SInt16);//sizeof(AudioUnitSampleType);
+	outFormat->mBytesPerPacket = outFormat->mBytesPerFrame = sizeof(SInt16);//sizeof(AudioUnitSampleType);
+//	outFormat->mFormatFlags |= kAudioFormatFlagIsNonInterleaved;
+    outFormat->mReserved = 0;
 	
 	AudioUnitSetProperty(*inRemoteIOUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &outFormat, sizeof(outFormat));
 	AudioUnitSetProperty(*inRemoteIOUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 1, &outFormat, sizeof(outFormat));
@@ -190,6 +194,9 @@ void propListener( void * inClientData,
 			}
 			else if (CFStringCompare(newRoute, CFSTR("ReceiverAndMicrophone"), NULL) == kCFCompareEqualTo) // headset plugged in
 			{
+                const CFStringRef routeDestination = kAudioSessionOutputRoute_BuiltInSpeaker;
+                AudioSessionSetProperty(kAudioSessionProperty_OutputDestination, sizeof(routeDestination), &routeDestination);
+                
 			}
 			else if (CFStringCompare(newRoute, CFSTR("HeadphonesAndMicrophone"), NULL) == kCFCompareEqualTo) // headset plugged in
 			{
@@ -197,11 +204,19 @@ void propListener( void * inClientData,
 			else if (CFStringCompare(newRoute, CFSTR("LineOut"), NULL) == kCFCompareEqualTo) // headset plugged in
 			{
 			}
+            else if (CFStringCompare(newRoute, CFSTR("SpeakerAndMicrophone"), NULL) == kCFCompareEqualTo) // headset plugged in
+            {
+            }
 			else
 			{
 				
 			}
 		}
+/*        Float64 vol;
+        size = sizeof(Float64);
+        AudioSessionGetProperty(kAudioSessionProperty_CurrentHardwareOutputVolume, &size, &vol);
+        vol = vol * 1.0;
+ */
 	}
 	AudioSessionGetProperty (kAudioSessionProperty_CurrentHardwareIOBufferDuration, &siz, &bufferSize);
 }
@@ -222,8 +237,8 @@ static OSStatus	PerformThru(
 		err = AudioUnitRender(THIS->rioUnit, ioActionFlags, inTimeStamp, 1, inNumberFrames, ioData);
 	if (err) { printf("PerformThru: error %d\n", (int)err); return err; }
 	
-	currentMicBuffer = (SInt16*)(ioData->mBuffers[0].mData);
 #ifdef ENABLE_URMICEVENTS
+	currentMicBuffer = (SInt16*)(ioData->mBuffers[0].mData);
 	callAllOnMicrophone(currentMicBuffer, inNumberFrames);
 #endif
 //	callAllMicSources(currentMicBuffer, inNumberFrames);
@@ -240,7 +255,7 @@ static OSStatus	PerformThru(
 		for(int i=0; i<inNumberFrames; i++)
 		{
 			callAllMicSingleTickSources(dataptr[2*i]);
-			dataptr[2*i]=urs_PullActiveDacSingleTickSinks()*SINT16_MAXINT;
+            dataptr[i]=urs_PullActiveDacSingleTickSinks()*SINT16_MAXINT;
 			dataptr[2*i+1]=dataptr[2*i];
 		}
 	}
@@ -265,7 +280,7 @@ void inputAvailablePropertyListener (void                      *inClientData,
                                      AudioSessionPropertyID    inID,
                                      UInt32                    inDataSize,
                                      const void                *inData) {
-    if ( inID = kAudioSessionProperty_AudioInputAvailable ) {
+    if ( inID == kAudioSessionProperty_AudioInputAvailable ) {
         UInt32 *inputAvailable = (UInt32*)inData;
         UInt32 sessionCategory;
         if ( *inputAvailable ) {
@@ -277,9 +292,10 @@ void inputAvailablePropertyListener (void                      *inClientData,
 			// make sure we are again the active session
         }
 		
-        OSStatus status = AudioSessionSetProperty (kAudioSessionProperty_AudioCategory,
+        OSStatus err = AudioSessionSetProperty (kAudioSessionProperty_AudioCategory,
                                                    sizeof (sessionCategory),
                                                    &sessionCategory);    
+        assert(err==noErr);
 
     }
 	CheckMic();
@@ -296,8 +312,6 @@ void initializeRIOAudioLayer()
 	err = AudioSessionInitialize(NULL, NULL, rioInterruptionListener, &myRioData);
 	err = AudioSessionSetActive(true);
 	
-	OSStatus status;
-	
 	UInt32 inputAvailable=0;
 	UInt32 size = sizeof(inputAvailable);
 	AudioSessionGetProperty(kAudioSessionProperty_AudioInputAvailable, 
@@ -308,6 +322,7 @@ void initializeRIOAudioLayer()
 	if ( inputAvailable ) {
 		// Set the audio session category for simultaneous play and record
 		audioCategory = kAudioSessionCategory_PlayAndRecord;
+		audioCategory = kAudioSessionCategory_MediaPlayback;
 	} else {
 		// Just playback
 		audioCategory = kAudioSessionCategory_MediaPlayback;
@@ -316,37 +331,57 @@ void initializeRIOAudioLayer()
 	err = AudioSessionSetProperty(kAudioSessionProperty_AudioCategory, sizeof(audioCategory), &audioCategory);
 	err = AudioSessionAddPropertyListener(kAudioSessionProperty_AudioRouteChange, propListener, &myRioData);
 
-	Float32 preferredBufferSize = .005;
+    // Needed for IOS5...
+    UInt32 doChangeDefaultRoute = 1;
+    AudioSessionSetProperty(kAudioSessionProperty_OverrideCategoryDefaultToSpeaker, sizeof (doChangeDefaultRoute), &doChangeDefaultRoute);
+    
+    const CFStringRef routeDestination = kAudioSessionOutputRoute_BuiltInSpeaker;
+    AudioSessionSetProperty(kAudioSessionProperty_OutputDestination, sizeof(routeDestination), &routeDestination);
+    
+/*    UInt32 audioRouteOverride = kAudioSessionOverrideAudioRoute_Speaker;
+    AudioSessionSetProperty (kAudioSessionProperty_OverrideAudioRoute,sizeof (audioRouteOverride),&audioRouteOverride);
+  */  
+	Float32 preferredBufferSize = kPreferredBufferSize;
 	err = AudioSessionSetProperty(kAudioSessionProperty_PreferredHardwareIOBufferDuration, sizeof(preferredBufferSize), &preferredBufferSize);
 
 	size = sizeof(myRioData.hwSampleRate);
 	err = AudioSessionGetProperty(kAudioSessionProperty_CurrentHardwareSampleRate, &size, &myRioData.hwSampleRate);
-	memset (&(myRioData.thruFormat), 0, sizeof(AudioStreamBasicDescription));
+
+    memset (&(myRioData.thruFormat), 0, sizeof(AudioStreamBasicDescription));
 	err = SetupRemoteIO(&(myRioData.rioUnit), myRioData.inputProc, &(myRioData.thruFormat));	
 
-	UInt32 maxFPS;
+/*	UInt32 maxFPS;
 	size = sizeof(maxFPS);
 	err = AudioUnitGetProperty(myRioData.rioUnit, kAudioUnitProperty_MaximumFramesPerSlice, kAudioUnitScope_Global, 0, &maxFPS, &size);
-	err = AudioOutputUnitStart(myRioData.rioUnit);
+*/
+    err = AudioOutputUnitStart(myRioData.rioUnit);
 	
 	size = sizeof(myRioData.thruFormat);
-	err = AudioUnitGetProperty(myRioData.rioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 1, &myRioData.thruFormat, &size);
+//	err = AudioUnitGetProperty(myRioData.rioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Output, 1, &myRioData.thruFormat, &size);
 
+    err = AudioUnitGetProperty(myRioData.rioUnit, kAudioUnitProperty_StreamFormat, 
+                               kAudioUnitScope_Input, 0, &myRioData.thruFormat, &size );
+
+    
 	// Listen for audio input availability
-	status = AudioSessionAddPropertyListener(kAudioSessionProperty_AudioInputAvailable,
+	err = AudioSessionAddPropertyListener(kAudioSessionProperty_AudioInputAvailable,
 											 inputAvailablePropertyListener, 
 											 NULL);
+
+    assert(err==noErr);
 	CheckMic();
 }
 
 void playRIOAudioLayer()
 {
-	OSStatus status = AudioOutputUnitStart(myRioData.rioUnit);
+	OSStatus err = AudioOutputUnitStart(myRioData.rioUnit);
+    assert(err==noErr);
 }
 
 void stopRIOAudioLayer()
 {
-	OSStatus status = AudioOutputUnitStop(myRioData.rioUnit);
+	OSStatus err = AudioOutputUnitStop(myRioData.rioUnit);
+    assert(err==noErr);
 }
 
 void cleanupRIOAudioLayer()
@@ -417,7 +452,43 @@ void* LoadAudioFileData(const char *filename, UInt32 *outDataSize, UInt32*	outSa
 	theData = malloc(dataSize);
 	if (theData)
 	{
-		AudioBufferList		theDataBuffer;
+/*       
+        memset(theData, 0, dataSize);
+        *outDataSize = dataSize/4;
+        *outSampleRate = 48000;
+*/        
+        UInt64 remainingFrames = theFileLengthInFrames;
+        SInt16* audioDataPtr = (SInt16*)theData;
+        theFileLengthInFrames = 0;
+        while ( 1 ) {
+            // Set up buffers
+            AudioBufferList bufferList;
+            bufferList.mNumberBuffers = 1;
+            bufferList.mBuffers[0].mData = audioDataPtr;
+            bufferList.mBuffers[0].mDataByteSize = MIN(16384, remainingFrames * theOutputFormat.mBytesPerFrame);
+            
+            // Perform read
+            UInt32 numberOfPackets = (UInt32)(bufferList.mBuffers[0].mDataByteSize / theOutputFormat.mBytesPerFrame);
+            err = ExtAudioFileRead(extRef, &numberOfPackets, &bufferList);
+            
+            if ( numberOfPackets == 0 ) {
+                // Termination condition
+                break;
+            }
+            
+            if ( err != noErr ) {
+                ExtAudioFileDispose(extRef);
+                free(theData);
+                return NULL;
+            }
+            
+            audioDataPtr += (numberOfPackets * theOutputFormat.mChannelsPerFrame);
+            remainingFrames -= numberOfPackets;
+            theFileLengthInFrames += numberOfPackets;
+        }
+
+/*		
+        AudioBufferList		theDataBuffer;
 		theDataBuffer.mNumberBuffers = 1;
 		theDataBuffer.mBuffers[0].mDataByteSize = dataSize;
 		theDataBuffer.mBuffers[0].mNumberChannels = theOutputFormat.mChannelsPerFrame;
@@ -438,7 +509,8 @@ void* LoadAudioFileData(const char *filename, UInt32 *outDataSize, UInt32*	outSa
 			free (theData);
 			theData = NULL; // make sure to return NULL
 			printf("MyGetOpenALAudioData: ExtAudioFileRead FAILED, Error = %ld\n", err); goto Exit;
-		}	
+		}
+ */
 	}
 	
 Exit:
@@ -451,6 +523,90 @@ Exit:
 	return theData;
 }
 
+const char* multiPath(const char* filename)
+{
+    const char* filestr = filename;
+    FILE *fd = fopen( filename, "rb" );
+    if ( !fd ) {
+        NSString *filename2 = [[NSString alloc] initWithCString:filename]; 
+        NSString *filePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:filename2];
+        filestr = [filePath UTF8String];
+    }
+    return filestr;
+}
+
+void* LoadAudioFileData2(const char *filename, UInt32 *outDataSize, UInt32*	outSampleRate)
+{
+    OSStatus err = noErr;
+    UInt32 propertySize;
+    AudioFileID fileId = 0;
+    
+	NSString *filename2 = [[NSString alloc] initWithUTF8String:filename]; // Leak here, fix.
+    //	NSString *filePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:filename2]; // Leak here, fix.
+	NSString *filePath = NULL;
+	CFURLRef inFileURL; 
+/*    inFileURL = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, (CFStringRef)filename2, kCFURLPOSIXPathStyle, false);
+    err = AudioFileOpenURL(inFileURL, kAudioFileReadPermission, 0, &fileId);
+    CFRelease(inFileURL);*/
+    err = 1;
+	if(err) {
+		filePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:filename2]; // Leak here, fix.
+		inFileURL = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, (CFStringRef)filePath, kCFURLPOSIXPathStyle, false); // Leak 
+        err = AudioFileOpenURL(inFileURL, kAudioFileReadPermission, 0, &fileId);
+        CFRelease(inFileURL);
+        [filePath release];
+    }
+    [filename2 release];
+	// Dispose the ExtAudioFileRef, it is no longer needed
+
+ /*        
+    AudioStreamBasicDescription fileFormat;
+    propertySize = sizeof(fileFormat);
+    err = AudioFileGetProperty(fileId, kAudioFilePropertyDataFormat, &propertySize, &fileFormat);
+    
+    if (fileFormat.mChannelsPerFrame > 2)
+    {
+    }
+    
+    if (fileFormat.mFormatID != kAudioFormatLinearPCM)
+    {
+    }
+    
+    if (!TestAudioFormatNativeEndian(fileFormat))
+    {
+    }
+    
+    if ((fileFormat.mBitsPerChannel != 8) && (fileFormat.mBitsPerChannel != 16))
+    {
+    }
+    
+    UInt64 fileSize = 0;
+    propertySize = sizeof(fileSize);
+    err = AudioFileGetProperty(fileId, kAudioFilePropertyAudioDataByteCount, &propertySize, &fileSize);
+*/    
+    UInt32 dataSize = (UInt32) 1000;//fileSize;
+    SInt16* theData = (SInt16*)malloc(dataSize);
+    if (!theData)
+    {
+    }
+    memset(theData,0,dataSize);
+    err = noErr;
+//    err = AudioFileReadBytes(fileId, false, 0, &dataSize, theData);
+    
+    if( err )
+    {
+        free(theData);
+        theData = NULL;
+    }
+exit:
+    if (fileId)
+        AudioFileClose(fileId);
+
+    *outDataSize = dataSize/2; //dataSize;
+    *outSampleRate = 48000.0;//fileFormat.mSampleRate;
+    return theData;
+
+}
 void* SaveAudioFileData(const char *filename, UInt32 *outDataSize, UInt32*	outSampleRate)
 {
 	OSStatus						err = noErr;	
@@ -547,4 +703,5 @@ Exit:
 	
 	return theData;
 }
+
 

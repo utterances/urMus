@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 45;
+	objectVersion = 46;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -179,6 +179,7 @@
 		7778B2090FED04AF00F491D3 /* lzio.c in Sources */ = {isa = PBXBuildFile; fileRef = 7778B1E80FED04AF00F491D3 /* lzio.c */; };
 		7778B20A0FED04AF00F491D3 /* print.c in Sources */ = {isa = PBXBuildFile; fileRef = 7778B1EA0FED04AF00F491D3 /* print.c */; };
 		7778B2F90FED34FB00F491D3 /* urAPI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7778B2F80FED34FB00F491D3 /* urAPI.cpp */; };
+		777A0C7214609C690057D748 /* mo_audio.mm in Sources */ = {isa = PBXBuildFile; fileRef = 777A0C7114609C690057D748 /* mo_audio.mm */; };
 		777E0FC20FF19903005882D0 /* MachTimer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 777E0FC10FF19903005882D0 /* MachTimer.cpp */; };
 		777E5AC91057F5EB007FD908 /* RIOAudioUnitLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 777E5AC81057F5EB007FD908 /* RIOAudioUnitLayer.mm */; };
 		77830A3B138B1AF10074A3FB /* urCameraBrush.lua in Sources */ = {isa = PBXBuildFile; fileRef = 77830A3A138B1AF10074A3FB /* urCameraBrush.lua */; };
@@ -211,6 +212,10 @@
 		778FB5220FEEE8F900F109A7 /* Texture2d.mm in Sources */ = {isa = PBXBuildFile; fileRef = 778FB5210FEEE8F900F109A7 /* Texture2d.mm */; };
 		778FB5350FEEEB7800F109A7 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 778FB5340FEEEB7800F109A7 /* QuartzCore.framework */; };
 		778FB5F80FEEEDEA00F109A7 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 778FB5F70FEEEDEA00F109A7 /* CoreGraphics.framework */; };
+		7795310E142A83CA004AF845 /* urGEAugRel2.lua in Sources */ = {isa = PBXBuildFile; fileRef = 7795310D142A83CA004AF845 /* urGEAugRel2.lua */; };
+		7795310F142A8550004AF845 /* urGEAugRel2.lua in Resources */ = {isa = PBXBuildFile; fileRef = 7795310D142A83CA004AF845 /* urGEAugRel2.lua */; };
+		77953111142A8684004AF845 /* ARConfig.lua in Sources */ = {isa = PBXBuildFile; fileRef = 77953110142A8684004AF845 /* ARConfig.lua */; };
+		77953112142A868B004AF845 /* ARConfig.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77953110142A8684004AF845 /* ARConfig.lua */; };
 		7798DD71124023BC00238912 /* urAnimExample.lua in Sources */ = {isa = PBXBuildFile; fileRef = 7798DD70124023BC00238912 /* urAnimExample.lua */; };
 		7798DD791240246100238912 /* urAnimExample.lua in Resources */ = {isa = PBXBuildFile; fileRef = 7798DD70124023BC00238912 /* urAnimExample.lua */; };
 		779AD4A3104A3B2C007040BF /* button.png in Resources */ = {isa = PBXBuildFile; fileRef = 779AD4A0104A3B2C007040BF /* button.png */; };
@@ -502,9 +507,20 @@
 		77D61B4B10C80C170091DE81 /* Orange-Mono.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77D61B4310C80C170091DE81 /* Orange-Mono.wav */; };
 		77D61B4C10C80C170091DE81 /* Red-Mono.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77D61B4410C80C170091DE81 /* Red-Mono.wav */; };
 		77DEFB5712930C2200110BA1 /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = 77DEFB5612930C2200110BA1 /* Default.png */; };
+		77DF162213FC828200B00815 /* urStringEditBox.lua in Sources */ = {isa = PBXBuildFile; fileRef = 77DF162013FC828200B00815 /* urStringEditBox.lua */; };
+		77DF162313FC828200B00815 /* urFileBrowser.lua in Sources */ = {isa = PBXBuildFile; fileRef = 77DF162113FC828200B00815 /* urFileBrowser.lua */; };
+		77DF162413FC829600B00815 /* urStringEditBox.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77DF162013FC828200B00815 /* urStringEditBox.lua */; };
+		77DF162513FC829700B00815 /* urFileBrowser.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77DF162113FC828200B00815 /* urFileBrowser.lua */; };
+		77DF162813FCB77E00B00815 /* urSelectorDialog.lua in Sources */ = {isa = PBXBuildFile; fileRef = 77DF162613FCB77E00B00815 /* urSelectorDialog.lua */; };
+		77DF162913FCB77E00B00815 /* urDeleteFile.lua in Sources */ = {isa = PBXBuildFile; fileRef = 77DF162713FCB77E00B00815 /* urDeleteFile.lua */; };
+		77DF162A13FCB7D500B00815 /* urSelectorDialog.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77DF162613FCB77E00B00815 /* urSelectorDialog.lua */; };
+		77DF162B13FCB7D500B00815 /* urDeleteFile.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77DF162713FCB77E00B00815 /* urDeleteFile.lua */; };
 		77DFD94E1394F44C00390EFC /* urSoarAsynch.lua in Sources */ = {isa = PBXBuildFile; fileRef = 77DFD94D1394F44C00390EFC /* urSoarAsynch.lua */; };
 		77DFD94F1394F46800390EFC /* urSoarAsynch.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77DFD94D1394F44C00390EFC /* urSoarAsynch.lua */; };
 		77E37C2B1306D28100E44393 /* jqueryFileTree.js in Sources */ = {isa = PBXBuildFile; fileRef = 77E37C2A1306D28100E44393 /* jqueryFileTree.js */; };
+		77E5EDE5143ABB3100D08628 /* lightMetal.png in Resources */ = {isa = PBXBuildFile; fileRef = 77E5EDE4143ABB3100D08628 /* lightMetal.png */; };
+		77E5EDE7143ABB3C00D08628 /* urTurntable2.lua in Sources */ = {isa = PBXBuildFile; fileRef = 77E5EDE6143ABB3C00D08628 /* urTurntable2.lua */; };
+		77E5EDE8143ABB6C00D08628 /* urTurntable2.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77E5EDE6143ABB3C00D08628 /* urTurntable2.lua */; };
 		77F01C10112508CB007FD520 /* paddle.png in Resources */ = {isa = PBXBuildFile; fileRef = 77F01C0C112508CB007FD520 /* paddle.png */; };
 		77F01C11112508CB007FD520 /* small-ball.png in Resources */ = {isa = PBXBuildFile; fileRef = 77F01C0D112508CB007FD520 /* small-ball.png */; };
 		77F01C12112508CB007FD520 /* ball.png in Resources */ = {isa = PBXBuildFile; fileRef = 77F01C0E112508CB007FD520 /* ball.png */; };
@@ -703,6 +719,8 @@
 		7778B1EA0FED04AF00F491D3 /* print.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = print.c; path = "Classes/lua-5.1.4/src/print.c"; sourceTree = "<group>"; };
 		7778B2F70FED34FB00F491D3 /* urAPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = urAPI.h; sourceTree = "<group>"; };
 		7778B2F80FED34FB00F491D3 /* urAPI.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = urAPI.cpp; sourceTree = "<group>"; };
+		777A0C7014609C690057D748 /* mo_audio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mo_audio.h; path = "Classes/mopho-api/mo_audio.h"; sourceTree = "<group>"; };
+		777A0C7114609C690057D748 /* mo_audio.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = mo_audio.mm; path = "Classes/mopho-api/mo_audio.mm"; sourceTree = "<group>"; };
 		777E0FC00FF19903005882D0 /* MachTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachTimer.h; sourceTree = "<group>"; };
 		777E0FC10FF19903005882D0 /* MachTimer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MachTimer.cpp; sourceTree = "<group>"; };
 		777E5AC71057F5EB007FD908 /* RIOAudioUnitLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RIOAudioUnitLayer.h; path = RIOAudioUnitLayer/RIOAudioUnitLayer.h; sourceTree = "<group>"; };
@@ -748,6 +766,8 @@
 		778FB5210FEEE8F900F109A7 /* Texture2d.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Texture2d.mm; sourceTree = "<group>"; };
 		778FB5340FEEEB7800F109A7 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = /System/Library/Frameworks/QuartzCore.framework; sourceTree = "<absolute>"; };
 		778FB5F70FEEEDEA00F109A7 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		7795310D142A83CA004AF845 /* urGEAugRel2.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urGEAugRel2.lua; path = "urMus-Lua/urGEAugRel2.lua"; sourceTree = "<group>"; };
+		77953110142A8684004AF845 /* ARConfig.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = ARConfig.lua; path = "urMus-Lua/ARConfig.lua"; sourceTree = "<group>"; };
 		7798DD70124023BC00238912 /* urAnimExample.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urAnimExample.lua; path = "urMus-Lua/urAnimExample.lua"; sourceTree = "<group>"; };
 		779AD4A0104A3B2C007040BF /* button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = button.png; path = Textures/button.png; sourceTree = "<group>"; };
 		779AD4A1104A3B2C007040BF /* doublearrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = doublearrow.png; path = Textures/doublearrow.png; sourceTree = "<group>"; };
@@ -1126,8 +1146,14 @@
 		77D61B4310C80C170091DE81 /* Orange-Mono.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "Orange-Mono.wav"; path = "Sounds/Orange-Mono.wav"; sourceTree = "<group>"; };
 		77D61B4410C80C170091DE81 /* Red-Mono.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "Red-Mono.wav"; path = "Sounds/Red-Mono.wav"; sourceTree = "<group>"; };
 		77DEFB5612930C2200110BA1 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
+		77DF162013FC828200B00815 /* urStringEditBox.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urStringEditBox.lua; path = "urMus-Lua/urStringEditBox.lua"; sourceTree = "<group>"; };
+		77DF162113FC828200B00815 /* urFileBrowser.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urFileBrowser.lua; path = "urMus-Lua/urFileBrowser.lua"; sourceTree = "<group>"; };
+		77DF162613FCB77E00B00815 /* urSelectorDialog.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urSelectorDialog.lua; path = "urMus-Lua/urSelectorDialog.lua"; sourceTree = "<group>"; };
+		77DF162713FCB77E00B00815 /* urDeleteFile.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urDeleteFile.lua; path = "urMus-Lua/urDeleteFile.lua"; sourceTree = "<group>"; };
 		77DFD94D1394F44C00390EFC /* urSoarAsynch.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urSoarAsynch.lua; path = "urMus-Lua/urSoarAsynch.lua"; sourceTree = "<group>"; };
 		77E37C2A1306D28100E44393 /* jqueryFileTree.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = jqueryFileTree.js; path = html/js/jqueryFileTree.js; sourceTree = "<group>"; };
+		77E5EDE4143ABB3100D08628 /* lightMetal.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = lightMetal.png; path = Textures/lightMetal.png; sourceTree = "<group>"; };
+		77E5EDE6143ABB3C00D08628 /* urTurntable2.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urTurntable2.lua; path = "urMus-Lua/urTurntable2.lua"; sourceTree = "<group>"; };
 		77F01C0C112508CB007FD520 /* paddle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = paddle.png; path = Textures/paddle.png; sourceTree = "<group>"; };
 		77F01C0D112508CB007FD520 /* small-ball.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "small-ball.png"; path = "Textures/small-ball.png"; sourceTree = "<group>"; };
 		77F01C0E112508CB007FD520 /* ball.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = ball.png; path = Textures/ball.png; sourceTree = "<group>"; };
@@ -1471,6 +1497,8 @@
 		778F140C128A11350010253D /* mopho-api */ = {
 			isa = PBXGroup;
 			children = (
+				777A0C7014609C690057D748 /* mo_audio.h */,
+				777A0C7114609C690057D748 /* mo_audio.mm */,
 				778F140E128A114F0010253D /* mo_def.h */,
 				778F140F128A114F0010253D /* mo_net.h */,
 				778F1410128A114F0010253D /* mo_net.mm */,
@@ -1749,6 +1777,13 @@
 		77B9FC5C1194AEF9006D5007 /* urMus-lua */ = {
 			isa = PBXGroup;
 			children = (
+				77E5EDE6143ABB3C00D08628 /* urTurntable2.lua */,
+				77953110142A8684004AF845 /* ARConfig.lua */,
+				7795310D142A83CA004AF845 /* urGEAugRel2.lua */,
+				77DF162613FCB77E00B00815 /* urSelectorDialog.lua */,
+				77DF162713FCB77E00B00815 /* urDeleteFile.lua */,
+				77DF162013FC828200B00815 /* urStringEditBox.lua */,
+				77DF162113FC828200B00815 /* urFileBrowser.lua */,
 				77C8B85913AAA155002DAC6B /* urMenu.lua */,
 				779BE9F313A9B156002E36DC /* urMap.lua */,
 				77B9FC6C1194AF12006D5007 /* urMus.lua */,
@@ -1816,6 +1851,7 @@
 		77F043941123BC3F00CB8C95 /* Textures */ = {
 			isa = PBXGroup;
 			children = (
+				77E5EDE4143ABB3100D08628 /* lightMetal.png */,
 				7710B7DD13FB014300E3D710 /* unlock.png */,
 				7710B7DE13FB014300E3D710 /* lock.png */,
 				778A7FB013F45EF700846B59 /* color_map.png */,
@@ -2021,8 +2057,11 @@
 /* Begin PBXProject section */
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0420;
+			};
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "urMus" */;
-			compatibilityVersion = "Xcode 3.1";
+			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
@@ -2045,6 +2084,13 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				77E5EDE8143ABB6C00D08628 /* urTurntable2.lua in Resources */,
+				77953112142A868B004AF845 /* ARConfig.lua in Resources */,
+				7795310F142A8550004AF845 /* urGEAugRel2.lua in Resources */,
+				77DF162A13FCB7D500B00815 /* urSelectorDialog.lua in Resources */,
+				77DF162B13FCB7D500B00815 /* urDeleteFile.lua in Resources */,
+				77DF162413FC829600B00815 /* urStringEditBox.lua in Resources */,
+				77DF162513FC829700B00815 /* urFileBrowser.lua in Resources */,
 				7710B7DF13FB014300E3D710 /* unlock.png in Resources */,
 				7710B7E013FB014300E3D710 /* lock.png in Resources */,
 				778A7FB613F45EF700846B59 /* color_map.png in Resources */,
@@ -2371,6 +2417,7 @@
 				779BE9E013A9A010002E36DC /* Makefile.am in Resources */,
 				779BE9E113A9A010002E36DC /* Makefile.in in Resources */,
 				779BE9E213A9A010002E36DC /* stamp-h3 in Resources */,
+				77E5EDE5143ABB3100D08628 /* lightMetal.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2551,6 +2598,14 @@
 				778A7FC713F468FA00846B59 /* urTopBar.lua in Sources */,
 				778A7FC813F468FA00846B59 /* urLuaEditor.lua in Sources */,
 				778A7FC913F468FA00846B59 /* urKeyboard.lua in Sources */,
+				77DF162213FC828200B00815 /* urStringEditBox.lua in Sources */,
+				77DF162313FC828200B00815 /* urFileBrowser.lua in Sources */,
+				77DF162813FCB77E00B00815 /* urSelectorDialog.lua in Sources */,
+				77DF162913FCB77E00B00815 /* urDeleteFile.lua in Sources */,
+				7795310E142A83CA004AF845 /* urGEAugRel2.lua in Sources */,
+				77953111142A8684004AF845 /* ARConfig.lua in Sources */,
+				77E5EDE7143ABB3C00D08628 /* urTurntable2.lua in Sources */,
+				777A0C7214609C690057D748 /* mo_audio.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2561,8 +2616,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ARCHS = (
+					armv6,
+					"$(ARCHS_STANDARD_32_BIT)",
+				);
+				CODE_SIGN_IDENTITY = "";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -2582,10 +2640,10 @@
 					"-all_load",
 				);
 				PRODUCT_NAME = urMus;
-				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = "armv6 armv7";
 			};
 			name = Debug;
 		};
@@ -2593,8 +2651,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ARCHS = (
+					armv6,
+					"$(ARCHS_STANDARD_32_BIT)",
+				);
+				CODE_SIGN_IDENTITY = "";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -2612,10 +2673,10 @@
 					"-all_load",
 				);
 				PRODUCT_NAME = urMus;
-				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = "armv6 armv7";
 			};
 			name = Release;
 		};
@@ -2633,7 +2694,6 @@
 					"-ObjC",
 					"-all_load",
 				);
-				PREBINDING = NO;
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -2644,7 +2704,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Georg Essl (Q4K2DQJWQ3)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
@@ -2653,8 +2713,7 @@
 					"-ObjC",
 					"-all_load",
 				);
-				PREBINDING = NO;
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "531F300A-1F03-4F71-8FA0-195F1A448619";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

@@ -251,6 +251,6 @@ end
 function urScrollList.SelectscrollRegion(self)
 	if self.highlit then
 		SetPage(urScrollList.returnPage)
-		self.callback(self.data, self.data2)
-	end
+        self.callback(self.data, self.data2)
+    end
 end

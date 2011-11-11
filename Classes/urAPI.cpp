@@ -7,12 +7,50 @@
  *
  */
 
+#define USEMUMOAUDIO
+
 #include "urAPI.h"
 #import "EAGLView.h"
 #import "MachTimer.h"
+#ifdef USEMUMOAUDIO
+#import "mo_audio.h"
+#define SRATE 48000
+#define FRAMESIZE 256
+#define NUMCHANNELS 2
+#else
 #include "RIOAudioUnitLayer.h"
+#endif
 #include "urSound.h"
 #include "httpServer.h"
+
+//------------------------------------------------------------------------------
+// MUMO Audio Callbacks
+//------------------------------------------------------------------------------
+
+#ifdef USEMUMOAUDIO
+// Implement audio callback here
+void audioCallback( Float32 * buffer, UInt32 framesize, void* userData)
+{
+	// NSLog(@"inside audioCB");
+	
+#ifdef ENABLE_URMICEVENTS
+	currentMicBuffer = buffer;
+	callAllOnMicrophone(currentMicBuffer, framesize);
+#endif
+    
+#ifdef ENABLE_URSOUNDBUFFER		
+    ur_GetSoundBuffer(buffer, j+1, inNumberFrames);
+#endif
+	for (int i=0; i<framesize; i++)	{
+		callAllMicSingleTickSourcesF(buffer[2*i]);
+		buffer[2*i] = buffer[2*i+1] = urs_PullActiveDacSingleTickSinks();    // amplitude*sin(2.0*M_PI*phase);
+	}
+}
+#endif
+
+//------------------------------------------------------------------------------
+// Curly
+//------------------------------------------------------------------------------
 
 #define CURLY
 #ifdef CURLY
@@ -21,6 +59,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "curl.h"
+
+//------------------------------------------------------------------------------
+// Curly FileIO Callbacks
+//------------------------------------------------------------------------------
 
 static size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream)
 {
@@ -43,17 +85,32 @@ static size_t read_callback(void *ptr, size_t size, size_t nmemb, void *stream)
 }
 #endif
 
+//------------------------------------------------------------------------------
+// Extern exchange with Display
+//------------------------------------------------------------------------------
+
 // Make EAGLview global so lua interface can grab it without breaking a leg over IMP
 extern EAGLView* g_glView;
+extern int SCREEN_WIDTH;
+extern int SCREEN_HEIGHT;
+
 // This is to transport error and print messages to EAGLview
 extern std::string errorstr;
 extern bool newerror;
+
+//------------------------------------------------------------------------------
+// Sharing global lua state
+//------------------------------------------------------------------------------
 
 // Global lua state
 lua_State *lua;
 
 // Region based API below, this is inspired by WoW's frame API with many modifications and expansions.
 // Our engine supports paging, region horizontal and vertical scrolling, full multi-touch and more.
+
+//------------------------------------------------------------------------------
+// Paging
+//------------------------------------------------------------------------------
 
 // Hardcoded for now... lazy me
 #define MAX_PAGES 40
@@ -67,41 +124,15 @@ urAPI_Region_t* firstRegion[MAX_PAGES] = {nil,nil,nil,nil,nil,nil,nil,nil,nil,ni
 urAPI_Region_t* lastRegion[MAX_PAGES] = {nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil};
 int numRegions[MAX_PAGES] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
-//Region_Chain_t* OnDragStartRegions = nil;
-//Region_Chain_t* OnDragStopRegions = nil;
-Region_Chain_t* OnEnterRegions = nil;
-//Region_Chain_t* OnEventRegions =nil;
-//Region_Chain_t* OnHideRegions = nil;
-Region_Chain_t* OnLeaveRegions = nil;
-//Region_Chain_t* OnTouchDownRegions = nil;
-//Region_Chain_t* OnTouchUpRegions = nil;
-//Region_Chain_t* OnShowRegions = nil;
-//Region_Chain_t* OnSizeChangedRegions = nil;
-Region_Chain_t* OnUpdateRegions = nil;
-//Region_Chain_t* OnDoubleTapRegions = nil;
-Region_Chain_t* OnAccelerateRegions = nil;
-Region_Chain_t* OnNetInRegions = nil;
-Region_Chain_t* OnNetConnectRegions = nil;
-Region_Chain_t* OnNetDisconnectRegions = nil;
-Region_Chain_t* OnOSCMessageRegions = nil;
-#ifdef SANDWICH_SUPPORT
-Region_Chain_t* OnPressureRegions = nil;
-#endif
-#ifdef SOAR_SUPPORT
-Region_Chain_t* OnSoarOutputRegions = nil;
-#endif
-Region_Chain_t* OnAttitudeRegions = nil;
-Region_Chain_t* OnRotationRegions = nil;
-Region_Chain_t* OnHeadingRegions = nil;
-Region_Chain_t* OnLocationRegions = nil;
-Region_Chain_t* OnMicrophoneRegions = nil;
-//Region_Chain_t* OnHorizontalScrollRegions = nil;
-//Region_Chain_t* OnVerticalScrollRegions = nil;
-Region_Chain_t* OnMoveRegions = nil;
-Region_Chain_t* OnPageEnteredRegions = nil;
-Region_Chain_t* OnPageLeftRegions = nil;
+//------------------------------------------------------------------------------
+// UIParent region
+//------------------------------------------------------------------------------
 
 urAPI_Region_t* UIParent = nil;
+
+//------------------------------------------------------------------------------
+// Flowbox patches (NYI)
+//------------------------------------------------------------------------------
 
 ursAPI_FlowBox_t* FBNope = nil;
 
@@ -129,6 +160,712 @@ const char DEFAULT_RPOINT[] = "BOTTOMLEFT";
 #define LAYER_OVERLAY 4
 #define LAYER_HIGHLIGHT 5
 
+//------------------------------------------------------------------------------
+// Event strings
+//------------------------------------------------------------------------------
+
+// IMPORTANT: Make sure to keep urEventNames and the enum eventIDs (in urAPI.h) synchronized, else bad things happen.
+
+// Events Strings, index has to match ID.
+const char* urEventNames[] = { "OnDragStart", "OnDragStop", "OnHide", "OnShow", "OnTouchDown", "OnTouchUp", "OnDoubleTap", "OnSizeChanged", "OnEnter", "OnLeave", "OnUpdate", "OnNetIn", "OnNetConnect", "OnNetDisconnect", "OnOSCMessage",
+#ifdef SANDWICH_SUPPORT
+    "OnPressure",
+#endif
+#ifdef SOAR_SUPPORT
+    "OnSoarOutput",
+#endif
+    "OnAccelerate", "OnAttitude", "OnRotation", "OnHeading", "OnLocation", "OnMicrophone", "OnHorizontalScroll", "OnVerticalScroll", "OnMove", "OnPageEntered", "OnPageLeft"
+};
+
+
+//------------------------------------------------------------------------------
+// Event Chains
+//------------------------------------------------------------------------------
+
+// Event chains prevent that resorting or changing region order interfers with event processing. Events are processed by chain order not by strata order.
+
+Region_Chain_Iterator_t EventChain[EventsCount];
+
+//------------------------------------------------------------------------------
+// Event Chain handling
+//------------------------------------------------------------------------------
+
+void RemoveRegionFromChain(Region_Chain_Iterator_t &chain, urAPI_Region* region)
+{
+    if (region->page == currentPage)
+    {
+        Region_Chain_t* p = NULL;
+        for( Region_Chain_t* c=chain.first; c!= NULL; c=c->next)
+        {
+            if(c->region == region)
+            {
+                if(p == NULL)
+                {
+                    p = c->next;
+                    free(c);
+                    chain.first = p;
+                    return;
+                }
+                p->next = c->next;
+                free(c);
+                return;
+            }
+            p = c;
+        }
+    }
+}
+
+void AddRegionToChain(Region_Chain_Iterator_t &chain, urAPI_Region* region)
+{
+    if (region->page == currentPage)
+    {
+        Region_Chain_t* n = (Region_Chain_t*)malloc(sizeof(Region_Chain_t));
+        n->region = region;
+        n->next = chain.first;
+        chain.first = n;
+    }
+}
+
+void FreeChain(Region_Chain_Iterator_t &chain)
+{
+    Region_Chain_t* p;
+    for( Region_Chain_t* c=chain.first; c!= NULL; c=p)
+    {
+        p = c->next;
+        free(c);
+    }
+    chain.first = NULL;
+}
+
+void FreeAllChains()
+{
+    for(int i=0; i<MAX_EVENTS; i++)
+    {
+        FreeChain(EventChain[i]);
+    }
+}
+
+void PopulateAllChains(urAPI_Region_t* first)
+{
+    for(urAPI_Region_t* region=first; region != nil; region=region->next)
+	{
+        for(int i=0; i< MAX_EVENTS; i++)
+        {
+            if(region->OnEvents[i] != 0)
+            {
+                AddRegionToChain(EventChain[i], region);
+            }
+        }
+    }
+}
+
+void RemoveEventRegistry(lua_State* lua, enum eventIDs event, urAPI_Region_t* region)
+{
+    luaL_unref(lua, LUA_REGISTRYINDEX, region->OnEvents[event]);
+    // Update iterator if needed
+    if(EventChain[event].current!=NULL && region==EventChain[event].current->region)
+    {
+        EventChain[event].current = EventChain[event].next; 
+        if(EventChain[event].next != NULL)
+            EventChain[event].next = EventChain[event].next->next;
+    }
+    if(EventChain[event].next != NULL && region==EventChain[event].next->region)
+    {
+        EventChain[event].next = EventChain[event].next->next;
+    }
+    RemoveRegionFromChain(EventChain[event], region);
+    region->OnEvents[event] = 0;
+}
+
+//------------------------------------------------------------------------------
+// Event Service functions (single region argument calls)
+//------------------------------------------------------------------------------
+
+bool callScriptWithOscArgs(int func_ref, urAPI_Region_t* region, osc::ReceivedMessageArgumentStream & s)
+{
+	if(func_ref == 0) return false;
+	
+	// Call lua function by stored Reference
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
+	int len = 0;
+	while(!s.Eos())
+	{
+		float num;
+		s >> num;
+		lua_pushnumber(lua,num);
+		len = len+1;
+	}
+	if(lua_pcall(lua,len+1,0,0) != 0)
+	{
+		// Error!!
+		const char* error = lua_tostring(lua, -1);
+		errorstr = error; // DPrinting errors for now
+		newerror = true;
+		return false;
+	}
+	
+	// OK!
+	return true;
+}
+
+bool callScriptWith5Args(int func_ref, urAPI_Region_t* region, float a, float b, float c, float d, float e)
+{
+	if(func_ref == 0) return false;
+	
+	// Call lua function by stored Reference
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
+	lua_pushnumber(lua,a);
+	lua_pushnumber(lua,b);
+	lua_pushnumber(lua,c);
+	lua_pushnumber(lua,d);
+	lua_pushnumber(lua,e);
+	if(lua_pcall(lua,6,0,0) != 0)
+	{
+		// Error!!
+		const char* error = lua_tostring(lua, -1);
+		errorstr = error; // DPrinting errors for now
+		newerror = true;
+		return false;
+	}
+	
+	// OK!
+	return true;
+}
+
+bool callScriptWith4Args(int func_ref, urAPI_Region_t* region, float a, float b, float c, float d)
+{
+	if(func_ref == 0) return false;
+    
+	// Call lua function by stored Reference
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
+	lua_pushnumber(lua,a);
+	lua_pushnumber(lua,b);
+	lua_pushnumber(lua,c);
+	lua_pushnumber(lua,d);
+	if(lua_pcall(lua,5,0,0) != 0)
+	{
+		// Error!!
+		const char* error = lua_tostring(lua, -1);
+		errorstr = error; // DPrinting errors for now
+		newerror = true;
+		return false;
+	}
+	
+	// OK!
+	return true;
+}
+
+bool callScriptWith3Args(int func_ref, urAPI_Region_t* region, float a, float b, float c)
+{
+	if(func_ref == 0) return false;
+	
+	// Call lua function by stored Reference
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
+	lua_pushnumber(lua,a);
+	lua_pushnumber(lua,b);
+	lua_pushnumber(lua,c);
+	if(lua_pcall(lua,4,0,0) != 0)
+	{
+		// Error!!
+		const char* error = lua_tostring(lua, -1);
+		errorstr = error; // DPrinting errors for now
+		newerror = true;
+		return false;
+	}
+	
+	// OK!
+	return true;
+}
+
+bool callScriptWith2Args(int func_ref, urAPI_Region_t* region, float a, float b)
+{
+	if(func_ref == 0) return false;
+	
+	// Call lua function by stored Reference
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
+	lua_pushnumber(lua,a);
+	lua_pushnumber(lua,b);
+	if(lua_pcall(lua,3,0,0) != 0)
+	{
+		//<return Error>
+		const char* error = lua_tostring(lua, -1);
+		errorstr = error; // DPrinting errors for now
+		newerror = true;
+		return false;
+	}
+	
+	// OK!
+	return true;
+}
+
+bool callScriptWith1Args(int func_ref, urAPI_Region_t* region, float a)
+{
+	if(func_ref == 0) return false;
+	
+	//		int func_ref = region->OnDragging;
+	// Call lua function by stored Reference
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
+	lua_pushnumber(lua,a);
+	if(lua_pcall(lua,2,0,0) != 0)
+	{
+		//<return Error>
+		const char* error = lua_tostring(lua, -1);
+		errorstr = error; // DPrinting errors for now
+		newerror = true;
+		return false;
+	}
+    
+	// OK!
+	return true;
+}
+
+bool callScriptWith1Global(int func_ref, urAPI_Region_t* region, const char* globaldata)
+{
+	if(func_ref == 0) return false;
+	
+	//		int func_ref = region->OnDragging;
+	// Call lua function by stored Reference
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
+	lua_getglobal(lua, globaldata);
+	if(lua_pcall(lua,2,0,0) != 0)
+	{
+		//<return Error>
+		const char* error = lua_tostring(lua, -1);
+		errorstr = error; // DPrinting errors for now
+		newerror = true;
+		return false;
+	}
+	
+	// OK!
+	return true;
+}
+
+bool callScriptWith1String(int func_ref, urAPI_Region_t* region, const char* name)
+{
+	if(func_ref == 0) return false;
+	
+	//		int func_ref = region->OnDragging;
+	// Call lua function by stored Reference
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
+	lua_pushstring(lua, name);
+	if(lua_pcall(lua,2,0,0) != 0)
+	{
+		//<return Error>
+		const char* error = lua_tostring(lua, -1);
+		errorstr = error; // DPrinting errors for now
+		newerror = true;
+		return false;
+	}
+	
+	// OK!
+	return true;
+}
+
+bool callScriptWith2String(int func_ref, urAPI_Region_t* region, const char* name, const char* btype)
+{
+	if(func_ref == 0) return false;
+	
+	//		int func_ref = region->OnDragging;
+	// Call lua function by stored Reference
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
+	lua_pushstring(lua, name);
+	lua_pushstring(lua, btype);
+	if(lua_pcall(lua,3,0,0) != 0)
+	{
+		//<return Error>
+		const char* error = lua_tostring(lua, -1);
+		errorstr = error; // DPrinting errors for now
+		newerror = true;
+		return false;
+	}
+	
+	// OK!
+	return true;
+}
+
+bool callScript(int func_ref, urAPI_Region_t* region)
+{
+	if(func_ref == 0) return false;
+	
+	// Call lua function by stored Reference
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
+	if(lua_pcall(lua,1,0,0) != 0) // find table of udata here!!
+	{
+		//<return Error>
+		const char* error = lua_tostring(lua, -1);
+		errorstr = error; // DPrinting errors for now
+		newerror = true;
+		return false;
+	}
+    
+	// OK!
+	return true;
+}
+
+//------------------------------------------------------------------------------
+// Event Service functions (All region argument calls)
+//------------------------------------------------------------------------------
+
+bool callAllOn1Args(enum eventIDs event, float data)
+{
+    if(EventChain[event].first != NULL)
+    {
+        EventChain[event].next = EventChain[event].first->next; // Helps save-guard the EventChain[event] should a region unhook itself
+        EventChain[event].next = EventChain[event].first;
+        
+        while(EventChain[event].next != NULL)
+        {
+            urAPI_Region_t* t = EventChain[event].next->region;
+            callScriptWith1Args(t->OnEvents[event], t, data);
+            EventChain[event].next = EventChain[event].next;
+            if(EventChain[event].next != NULL)
+                EventChain[event].next = EventChain[event].next->next;
+        }
+    }
+	return true;
+    
+}
+
+bool callAllOn1Global(enum eventIDs event, const char* data)
+{
+    if(EventChain[event].first != NULL)
+    {
+        EventChain[event].next = EventChain[event].first->next; // Helps save-guard the EventChain[event] should a region unhook itself
+        EventChain[event].next = EventChain[event].first;
+        
+        while(EventChain[event].next != NULL)
+        {
+            urAPI_Region_t* t = EventChain[event].next->region;
+            callScriptWith1Global(t->OnEvents[event], t, data);
+            EventChain[event].next = EventChain[event].next;
+            if(EventChain[event].next != NULL)
+                EventChain[event].next = EventChain[event].next->next;
+        }
+    }
+	return true;
+    
+}
+
+bool callAllOn2Args(enum eventIDs event, float data, float data2)
+{
+    if(EventChain[event].first != NULL)
+    {
+        EventChain[event].next = EventChain[event].first->next; // Helps save-guard the EventChain[event] should a region unhook itself
+        EventChain[event].next = EventChain[event].first;
+        
+        while(EventChain[event].next != NULL)
+        {
+            urAPI_Region_t* t = EventChain[event].next->region;
+            callScriptWith2Args(t->OnEvents[event], t, data, data2);
+            EventChain[event].next = EventChain[event].next;
+            if(EventChain[event].next != NULL)
+                EventChain[event].next = EventChain[event].next->next;
+        }
+    }
+	return true;
+    
+}
+
+bool callAllOn3Args(enum eventIDs event, float data, float data2, float data3)
+{
+    if(EventChain[event].first != NULL)
+    {
+        EventChain[event].next = EventChain[event].first->next; // Helps save-guard the EventChain[event] should a region unhook itself
+        EventChain[event].next = EventChain[event].first;
+        
+        while(EventChain[event].next != NULL)
+        {
+            urAPI_Region_t* t = EventChain[event].next->region;
+            callScriptWith3Args(t->OnEvents[event], t, data, data2, data3);
+            EventChain[event].next = EventChain[event].next;
+            if(EventChain[event].next != NULL)
+                EventChain[event].next = EventChain[event].next->next;
+        }
+    }
+	return true;
+    
+}
+
+bool callAllOn4Args(enum eventIDs event, float data, float data2, float data3, float data4)
+{
+    if(EventChain[event].first != NULL)
+    {
+        EventChain[event].next = EventChain[event].first->next; // Helps save-guard the EventChain[event] should a region unhook itself
+        EventChain[event].next = EventChain[event].first;
+        
+        while(EventChain[event].next != NULL)
+        {
+            urAPI_Region_t* t = EventChain[event].next->region;
+            callScriptWith4Args(t->OnEvents[event], t, data, data2, data3, data4);
+            EventChain[event].next = EventChain[event].next;
+            if(EventChain[event].next != NULL)
+                EventChain[event].next = EventChain[event].next->next;
+        }
+    }
+	return true;
+    
+}
+
+bool callAllOn1String(enum eventIDs event, const char* data)
+{
+    if(EventChain[event].first != NULL)
+    {
+        EventChain[event].next = EventChain[event].first->next; // Helps save-guard the EventChain[event] should a region unhook itself
+        EventChain[event].next = EventChain[event].first;
+        
+        while(EventChain[event].next != NULL)
+        {
+            urAPI_Region_t* t = EventChain[event].next->region;
+            callScriptWith1String(t->OnEvents[event],t,data);
+            EventChain[event].next = EventChain[event].next;
+            if(EventChain[event].next != NULL)
+                EventChain[event].next = EventChain[event].next->next;
+        }
+    }
+	return true;
+}
+
+bool callAllOn2Strings(enum eventIDs event, const char* data, const char* data2)
+{
+    if(EventChain[event].first != NULL)
+    {
+        EventChain[event].next = EventChain[event].first->next; // Helps save-guard the EventChain[event] should a region unhook itself
+        EventChain[event].next = EventChain[event].first;
+        
+        while(EventChain[event].next != NULL)
+        {
+            urAPI_Region_t* t = EventChain[event].next->region;
+            callScriptWith2String(t->OnEvents[event],t,data,data2);
+            EventChain[event].next = EventChain[event].next;
+            if(EventChain[event].next != NULL)
+                EventChain[event].next = EventChain[event].next->next;
+        }
+    }
+	return true;
+}
+
+bool callAllOnOSCArgs(enum eventIDs event, osc::ReceivedMessageArgumentStream & argument_stream)
+{
+    if(EventChain[event].first != NULL)
+    {
+        EventChain[event].next = EventChain[event].first->next; // Helps save-guard the EventChain[event] should a region unhook itself
+        EventChain[event].next = EventChain[event].first;
+        
+        while(EventChain[event].next != NULL)
+        {
+            urAPI_Region_t* t = EventChain[event].next->region;
+            callScriptWithOscArgs(t->OnEvents[event],t,argument_stream);
+            EventChain[event].next = EventChain[event].next;
+            if(EventChain[event].next != NULL)
+                EventChain[event].next = EventChain[event].next->next;
+        }
+    }
+	return true;
+    
+}
+
+//------------------------------------------------------------------------------
+// Event specific interface calls for all regions
+//------------------------------------------------------------------------------
+
+bool callAllOnUpdate(float time)
+{
+    callAllOn1Args(OnUpdate, time);
+	return true;
+}
+
+#ifdef SOAR_SUPPORT
+bool callAllOnSoarOutput()
+{
+    enum eventIDs event = OnSoarOutput;
+    
+    if(EventChain[event].first != NULL)
+    {
+        EventChain[event].next = EventChain[event].first->next;
+        EventChain[event].prev = NULL;
+        EventChain[event].current = EventChain[event].first;
+        
+        while(EventChain[event].current != NULL)
+        {
+            urAPI_Region_t* t = EventChain[event].current->region;
+            if (t->OnEvents[event] != 0)
+            {
+                int counter=0;
+                
+                while ( !t->soarAgent->Commands() && (counter<SOAR_ASYNCH_PER_UPDATE) )
+                {
+                    t->soarAgent->RunSelfTilOutput();
+                    counter++;
+                }
+                
+                if (t->soarAgent->Commands())
+                {
+                    int callback_id = t->OnEvents[event];
+                    t->OnEvents[event]=0;
+                    if(EventChain[event].current == EventChain[event].first)
+                        EventChain[event].first = EventChain[event].next;
+                    else if( EventChain[event].prev != NULL)
+                        EventChain[event].prev->next = EventChain[event].next;
+                    
+                    free(EventChain[event].current);
+                    
+                    callScript(callback_id, t);
+                }
+            }
+            EventChain[event].current = EventChain[event].next;
+            if(EventChain[event].next != NULL)
+                EventChain[event].next = EventChain[event].next->next;
+            if(EventChain[event].prev == NULL)
+                EventChain[event].prev = EventChain[event].first;
+            else
+                EventChain[event].prev = EventChain[event].prev->next;
+        }
+    }
+    return true;
+}
+#endif
+
+bool callAllOnPageEntered(float page)
+{
+    callAllOn1Args(OnPageEntered, page);
+	return true;
+}
+
+bool callAllOnPageLeft(float page)
+{
+    callAllOn1Args(OnPageLeft, page);
+	return true;
+}
+
+#ifdef SOAR_SUPPORT
+bool callScriptWith2ActionTableArgs(int func_ref, urAPI_Region_t* region)
+{
+	if(func_ref == 0) return false;
+	
+	// Call lua function by stored Reference
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
+	//constuctSoarArgs();
+	//lua_pushnumber(lua,a);
+	//lua_pushnumber(lua,b);
+	if(lua_pcall(lua,3,0,0) != 0)
+	{
+		//<return Error>
+		const char* error = lua_tostring(lua, -1);
+		errorstr = error; // DPrinting errors for now
+		newerror = true;
+		return false;
+	}
+	
+	// OK!
+	return true;
+}
+#endif
+
+bool callAllOnLocation(float latitude, float longitude)
+{
+    callAllOn2Args(OnLocation, latitude, longitude);
+	return true;
+}
+
+bool callAllOnHeading(float x, float y, float z, float north)
+{
+    callAllOn4Args(OnHeading,x,y,z,north);
+	return true;
+}
+
+bool callAllOnAttitude(float x, float y, float z, float w)
+{
+    callAllOn4Args(OnAttitude, x,y,z,w);
+	return true;
+}
+
+bool callAllOnRotRate(float x, float y, float z)
+{
+    callAllOn3Args(OnRotation, x,y,z);
+	return true;
+}
+
+bool callAllOnAccelerate(float x, float y, float z)
+{
+    callAllOn3Args(OnAccelerate, x,y,z);
+	return true;
+}
+
+bool callAllOnNetIn(float a)
+{
+    callAllOn1Args(OnNetIn, a);
+	return true;
+}
+
+bool callAllOnNetConnect(const char* name, const char* btype)
+{
+    callAllOn2Strings(OnNetConnect, name, btype);
+	return true;	
+}
+
+bool callAllOnNetDisconnect(const char* name, const char* btype)
+{
+    callAllOn2Strings(OnNetDisconnect, name, btype);
+	return true;		
+}
+
+// Shared event for different argument types.
+bool callAllOnOSCMessage(osc::ReceivedMessageArgumentStream & argument_stream)
+{
+    callAllOnOSCArgs(OnOSCMessage, argument_stream);
+	return true;		
+}
+
+// Shared event for different argument types.
+bool callAllOnOSCString(const char* str)
+{
+    callAllOn1String(OnOSCMessage, str);
+	return true;		
+}
+
+#ifdef SANDWICH_SUPPORT
+bool callAllOnPressure(float p)
+{
+    callAllOn1Args(OnPressure, p);
+	return true;
+}
+#endif
+
+bool callAllOnMicrophone(SInt32* mic_buffer, UInt32 bufferlen)
+{
+	lua_getglobal(lua, "urMicData");
+	if(lua_isnil(lua, -1) || !lua_istable(lua,-1)) // Channel doesn't exist or is falsely set up
+	{
+		lua_pop(lua,1);
+		return false;
+	}
+	
+	for(UInt32 i=0;i<bufferlen; i++)
+	{
+		lua_pushnumber(lua, mic_buffer[i]);
+		lua_rawseti(lua, -2, i+1);
+	}	
+	lua_setglobal(lua, "urMicData");
+    
+    callAllOn1Global(OnMicrophone, "urMicData");
+	return true;
+}
+
+//------------------------------------------------------------------------------
+// Events around Region Collision (hit, OnEnter, OnLeave)
+//------------------------------------------------------------------------------
+
 urAPI_Region_t* findRegionHit(float x, float y)
 {
 	for(urAPI_Region_t* t=lastRegion[currentPage]; t != nil /* && t != firstRegion[currentPage] */; t=t->prev)
@@ -146,227 +883,97 @@ urAPI_Region_t* findRegionHit(float x, float y)
 	return nil;
 }
 
-/*void callAllOnLeaveRegions(float x, float y)
-{
-	for(urAPI_Region_t* t=lastRegion[currentPage]; t != nil ; t=t->prev)
-	{
-		if(x >= t->left && x <= t->left+t->width &&
-			 y >= t->bottom && y <= t->bottom+t->height
-		   && t->OnLeave != 0)
-			if(t->isClipping==false || (x >= t->clipleft && x <= t->clipleft+t->clipwidth &&
-								  y >= t->clipbottom && y <= t->clipbottom+t->clipheight))
-			{
-				t->entered = false;
-				callScript(t->OnLeave, t);
-			}
-	}
-}*/
-
-Region_Chain_t* onLeaveIterator;
-Region_Chain_t* onLeaveIteratorNext;
-
 void callAllOnLeaveRegions(int nr, float* x, float* y, float* ox, float* oy)
 {
-    if(OnLeaveRegions != NULL)
+    enum eventIDs event = OnLeave;
+    if(EventChain[event].first != NULL)
     {
-        onLeaveIteratorNext = OnLeaveRegions->next; // Helps save-guard the chain should a region unhook itself
-        onLeaveIterator = OnLeaveRegions;
+        EventChain[event].next = EventChain[event].first->next; // Helps save-guard the chain should a region unhook itself
+        EventChain[event].current = EventChain[event].first;
         
-        while(onLeaveIterator != NULL)
+        while(EventChain[event].current != NULL)
         {
-            urAPI_Region_t* t = onLeaveIterator->region;
+            urAPI_Region_t* t = EventChain[event].current->region;
             for(int i=0; i<nr; i++)
             {
                 if(!(x[i] >= t->left && x[i] <= t->left+t->width &&
                      y[i] >= t->bottom && y[i] <= t->bottom+t->height) && 
                    ox[i] >= t->left && ox[i] <= t->left+t->width &&
                    oy[i] >= t->bottom && oy[i] <= t->bottom+t->height			   
-                   && t->OnLeave != 0)
+                   && t->OnEvents[event] != 0)
                 {
                     t->entered = false;
-                    callScriptWith2Args(t->OnLeave, t,x[i]-t->left,y[i]-t->bottom);
+                    callScriptWith2Args(t->OnEvents[event], t,x[i]-t->left,y[i]-t->bottom);
                 }
             }
-            onLeaveIterator = onLeaveIteratorNext;
-            if(onLeaveIteratorNext != NULL)
-                onLeaveIteratorNext = onLeaveIteratorNext->next;
+            EventChain[event].current = EventChain[event].next;
+            if(EventChain[event].next != NULL)
+                EventChain[event].next = EventChain[event].next->next;
         }
     }
-    
-    /*
-	for(urAPI_Region_t* t=lastRegion[currentPage]; t != nil ; t=t->prev)
-	{
-		for(int i=0; i<nr; i++)
-		{
-			if(!(x[i] >= t->left && x[i] <= t->left+t->width &&
-                 y[i] >= t->bottom && y[i] <= t->bottom+t->height) && 
-			   ox[i] >= t->left && ox[i] <= t->left+t->width &&
-               oy[i] >= t->bottom && oy[i] <= t->bottom+t->height			   
-			   && t->OnLeave != 0)
-			{
-                t->entered = false;
-                callScriptWith2Args(t->OnLeave, t,x[i]-t->left,y[i]-t->bottom);
-			}
-		}
-	}
-    */
 }
-
-Region_Chain_t* onEnterIterator;
-Region_Chain_t* onEnterIteratorNext;
 
 void callAllOnEnterLeaveRegions(int nr, float* x, float* y, float* ox, float* oy)
 {
+    enum eventIDs event = OnLeave;
     for(int i=0; i<nr; i++)
     {
-        if(OnLeaveRegions != NULL)
+        if(EventChain[event].first != NULL)
         {
-            onLeaveIteratorNext = OnLeaveRegions->next; // Helps save-guard the chain should a region unhook itself
-            onLeaveIterator = OnLeaveRegions;
+            EventChain[event].next = EventChain[event].first->next; // Helps save-guard the chain should a region unhook itself
+            EventChain[event].current = EventChain[event].first;
             
-            while(onLeaveIterator != NULL)
+            while(EventChain[event].current != NULL)
             {
-                urAPI_Region_t* t = onLeaveIterator->region;
+                urAPI_Region_t* t = EventChain[event].current->region;
                 if(!(x[i] >= t->left && x[i] <= t->left+t->width &&
                      y[i] >= t->bottom && y[i] <= t->bottom+t->height) && 
                    ox[i] >= t->left && ox[i] <= t->left+t->width &&
                    oy[i] >= t->bottom && oy[i] <= t->bottom+t->height			   
-                   && t->OnLeave != 0)
+                   && t->OnEvents[event] != 0)
                 {
                     t->entered = false;
-                    callScriptWith2Args(t->OnLeave, t,x[i]-t->left,y[i]-t->bottom);
+                    callScriptWith2Args(t->OnEvents[event], t,x[i]-t->left,y[i]-t->bottom);
                 }
-                onLeaveIterator = onLeaveIteratorNext;
-                if(onLeaveIteratorNext != NULL)
-                    onLeaveIteratorNext = onLeaveIteratorNext->next;
+                EventChain[event].current = EventChain[event].next;
+                if(EventChain[event].next != NULL)
+                    EventChain[event].next = EventChain[event].next->next;
             }
-            onLeaveIterator = NULL;
-            onLeaveIteratorNext = NULL;
+            EventChain[event].current = NULL;
+            EventChain[event].next = NULL;
         }
 
-        if(OnEnterRegions != NULL)
+        event = OnEnter;
+        
+        if(EventChain[event].first != NULL)
         {
-            onEnterIteratorNext = OnEnterRegions->next; // Helps save-guard the chain should a region unhook itself
-            onEnterIterator = OnEnterRegions;
-            while(onEnterIterator != NULL)
+            EventChain[event].next = EventChain[event].first->next; // Helps save-guard the chain should a region unhook itself
+            EventChain[event].current = EventChain[event].first;
+            while(EventChain[event].current != NULL)
             {
-                urAPI_Region_t* t = onEnterIterator->region;
+                urAPI_Region_t* t = EventChain[event].current->region;
                 if(x[i] >= t->left && x[i] <= t->left+t->width &&
                    y[i] >= t->bottom && y[i] <= t->bottom+t->height &&
                    (!(ox[i] >= t->left && ox[i] <= t->left+t->width &&
                       oy[i] >= t->bottom && oy[i] <= t->bottom+t->height) || !t->entered)			   
-                   && t->OnEnter != 0)
+                   && t->OnEvents[event] != 0)
                 {
                     t->entered = true;
-                    callScriptWith2Args(t->OnEnter, t, x[i]-t->left, y[i]-t->bottom);
+                    callScriptWith2Args(t->OnEvents[event], t, x[i]-t->left, y[i]-t->bottom);
                 }
-                onEnterIterator = onEnterIteratorNext;
-                if(onEnterIteratorNext != NULL)
-                    onEnterIteratorNext = onEnterIteratorNext->next;
+                EventChain[event].current = EventChain[event].next;
+                if(EventChain[event].next != NULL)
+                    EventChain[event].next = EventChain[event].next->next;
             }
-            onEnterIterator = NULL;
-            onEnterIteratorNext = NULL;
+            EventChain[event].current = NULL;
+            EventChain[event].next = NULL;
         }
     }
-
-/*
-    for(Region_Chain_t* c=OnLeaveRegions; c != nil; c=c->next)
-    {
-        urAPI_Region_t* t = c->region;
-		for(int i=0; i<nr; i++)
-		{
-			if(!(x[i] >= t->left && x[i] <= t->left+t->width &&
-                 y[i] >= t->bottom && y[i] <= t->bottom+t->height) && 
-			   ox[i] >= t->left && ox[i] <= t->left+t->width &&
-               oy[i] >= t->bottom && oy[i] <= t->bottom+t->height			   
-			   && t->OnLeave != 0)
-			{
-                //				if(t->entered)
-                //				{
-                t->entered = false;
-                callScriptWith2Args(t->OnLeave, t,x[i]-t->left,y[i]-t->bottom);
-                //				}
-                //				else
-                //				{
-                //					int a=0;
-                //				}
-			}
-			else if(x[i] >= t->left && x[i] <= t->left+t->width &&
-                    y[i] >= t->bottom && y[i] <= t->bottom+t->height &&
-                    (!(ox[i] >= t->left && ox[i] <= t->left+t->width &&
-                       oy[i] >= t->bottom && oy[i] <= t->bottom+t->height) || !t->entered)			   
-                    && t->OnEnter != 0)
-			{
-                //				didenter = true;
-                //				if(!t->entered)
-                //				{
-                t->entered = true;
-                callScriptWith2Args(t->OnEnter, t, x[i]-t->left, y[i]-t->bottom);
-                //				}
-                //				else
-                //				{
-                //					int a=0;
-                //				}
-			}
-		}
-        //		if(t->entered && !didenter)
-        //		{
-        //			t->entered = false;
-        //			callScript(t->OnLeave, t);
-        //		}
-        //		didenter = false;
-	}
-*/
-    
-//	bool didenter;
-    /*
-	for(urAPI_Region_t* t=lastRegion[currentPage]; t != nil ; t=t->prev)
-	{
-		for(int i=0; i<nr; i++)
-		{
-			if(!(x[i] >= t->left && x[i] <= t->left+t->width &&
-			   y[i] >= t->bottom && y[i] <= t->bottom+t->height) && 
-			   ox[i] >= t->left && ox[i] <= t->left+t->width &&
-				 oy[i] >= t->bottom && oy[i] <= t->bottom+t->height			   
-			   && t->OnLeave != 0)
-			{
-//				if(t->entered)
-//				{
-					t->entered = false;
-					callScriptWith2Args(t->OnLeave, t,x[i]-t->left,y[i]-t->bottom);
-//				}
-//				else
-//				{
-//					int a=0;
-//				}
-			}
-			else if(x[i] >= t->left && x[i] <= t->left+t->width &&
-			   y[i] >= t->bottom && y[i] <= t->bottom+t->height &&
-			   (!(ox[i] >= t->left && ox[i] <= t->left+t->width &&
-			   oy[i] >= t->bottom && oy[i] <= t->bottom+t->height) || !t->entered)			   
-			   && t->OnEnter != 0)
-			{
-//				didenter = true;
-//				if(!t->entered)
-//				{
-					t->entered = true;
-					callScriptWith2Args(t->OnEnter, t, x[i]-t->left, y[i]-t->bottom);
-//				}
-//				else
-//				{
-//					int a=0;
-//				}
-			}
-		}
-//		if(t->entered && !didenter)
-//		{
-//			t->entered = false;
-//			callScript(t->OnLeave, t);
-//		}
-//		didenter = false;
-	}
-     */
 }
+
+//------------------------------------------------------------------------------
+// Region Dragging
+//------------------------------------------------------------------------------
 
 urAPI_Region_t* findRegionDraggable(float x, float y)
 {
@@ -381,6 +988,10 @@ urAPI_Region_t* findRegionDraggable(float x, float y)
 	}
 	return nil;
 }
+
+//------------------------------------------------------------------------------
+// Region Scrolling/Moving
+//------------------------------------------------------------------------------
 
 urAPI_Region_t* findRegionXScrolled(float x, float y, float dx)
 {
@@ -418,28 +1029,21 @@ urAPI_Region_t* findRegionYScrolled(float x, float y, float dy)
 
 urAPI_Region_t* findRegionMoved(float x, float y, float dx, float dy)
 {
-    for(Region_Chain_t* c=OnMoveRegions; c != nil; c=c->next)
+    for(Region_Chain_t* c=EventChain[OnMove].first; c != nil; c=c->next)
     {
         urAPI_Region_t* t = c->region;
 		if(x >= t->left && x <= t->left+t->width &&
-		   y >= t->bottom && y <= t->bottom+t->height && t->isTouchEnabled && t->OnMove != NULL)
+		   y >= t->bottom && y <= t->bottom+t->height && t->isTouchEnabled && t->OnEvents[OnMove] != NULL)
 			if(t->isClipping==false || (x >= t->clipleft && x <= t->clipleft+t->clipwidth &&
 										y >= t->clipbottom && y <= t->clipbottom+t->clipheight))
 				return t;
 	}
-    /*
-	for(urAPI_Region_t* t=lastRegion[currentPage]; t != nil ; t=t->prev)
-	{
-		if(x >= t->left && x <= t->left+t->width &&
-		   y >= t->bottom && y <= t->bottom+t->height && t->isTouchEnabled && t->OnMove != NULL)
-			if(t->isClipping==false || (x >= t->clipleft && x <= t->clipleft+t->clipwidth &&
-										y >= t->clipbottom && y <= t->clipbottom+t->clipheight))
-				return t;
-	}
-    */
 	return nil;
 }
 
+//------------------------------------------------------------------------------
+// Region Layouting
+//------------------------------------------------------------------------------
 
 void layoutchildren(urAPI_Region_t* region)
 {
@@ -478,8 +1082,8 @@ void showchildren(urAPI_Region_t* region)
 		if(child->isShown)
 		{
 			child->isVisible = true;
-			if(region->OnShow != 0)
-				callScript(region->OnShow, region);
+			if(region->OnEvents[OnShow] != 0)
+				callScript(region->OnEvents[OnShow], region);
 			showchildren(child);
 		}
 		child = child->nextchild;
@@ -494,8 +1098,8 @@ void hidechildren(urAPI_Region_t* region)
 		if(child->isVisible)
 		{
 			child->isVisible = false;
-			if(region->OnHide != 0)
-				callScript(region->OnHide, region);
+			if(region->OnEvents[OnHide] != 0)
+				callScript(region->OnEvents[OnHide], region);
 			hidechildren(child);
 		}
 		child = child->nextchild;
@@ -712,12 +1316,13 @@ bool layout(urAPI_Region_t* region)
 	
 }
 
-
 //------------------------------------------------------------------------------
 // Our custom lua API
 //------------------------------------------------------------------------------
 
-
+//------------------------------------------------------------------------------
+// Service function to check userdata type integrity
+//------------------------------------------------------------------------------
 
 static urAPI_Region_t *checkregion(lua_State *lua, int nr)
 {
@@ -754,1738 +1359,61 @@ static ursAPI_FlowBox_t *checkflowbox(lua_State *lua, int nr)
 	return (ursAPI_FlowBox_t*)flowbox;
 }
 
-// NEW!!
-static int l_NumRegions(lua_State *lua)
-{
-	lua_pushnumber(lua, numRegions[currentPage]);
-	return 1;
-}
-
-static int l_EnumerateRegions(lua_State *lua)
-{
-	urAPI_Region_t* region;
-
-	if(lua_isnil(lua,1))
-	{
-		region = UIParent->next;
-	}
-	else
-	{
-		region = checkregion(lua,1);
-		if(region!=nil)
-			region = region->next;
-	}
-	
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
-	
-	return 1;
-}
-
-// Region events to support
-// OnDragStart
-// OnDragStop
-// OnEnter
-// OnEvent
-// OnHide
-// OnLeave
-// OnTouchDown
-// OnTouchUp
-// OnReceiveDrag (NYI)
-// OnShow
-// OnSizeChanged
-// OnUpdate
-// OnDoubleTap (UR!)
-
-
-Region_Chain_t* onUpdateIterator;
-Region_Chain_t* onUpdateIteratorNext;
-
-bool callAllOnUpdate(float time)
-{
-    
-//	for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
-    if(OnUpdateRegions != NULL)
-    {
-        onUpdateIteratorNext = OnUpdateRegions->next; // Helps save-guard the chain should a region unhook itself
-        onUpdateIterator = OnUpdateRegions;
-            
-        while(onUpdateIterator != NULL)
-        {
-            urAPI_Region_t* t = onUpdateIterator->region;
-            if(t->OnUpdate != 0)
-                callScriptWith1Args(t->OnUpdate, t,time);
-            onUpdateIterator = onUpdateIteratorNext;
-            if(onUpdateIteratorNext != NULL)
-                onUpdateIteratorNext = onUpdateIteratorNext->next;
-        }
-    }
-	return true;
-}
-
-#ifdef SOAR_SUPPORT
-Region_Chain_t* onSoarOutputIterator;
-Region_Chain_t* onSoarOutputIteratorNext;
-Region_Chain_t* onSoarOutputIteratorPrev;
-
-bool callAllOnSoarOutput()
-{
-    if(OnSoarOutputRegions != NULL)
-    {
-        onSoarOutputIteratorNext = OnSoarOutputRegions->next;
-        onSoarOutputIteratorPrev = NULL;
-        onSoarOutputIterator = OnSoarOutputRegions;
-        
-        while(onSoarOutputIterator != NULL)
-        {
-            urAPI_Region_t* t = onSoarOutputIterator->region;
-            if (t->OnSoarOutput != 0)
-            {
-                int counter=0;
-                
-                while ( !t->soarAgent->Commands() && (counter<SOAR_ASYNCH_PER_UPDATE) )
-                {
-                    t->soarAgent->RunSelfTilOutput();
-                    counter++;
-                }
-                
-                if (t->soarAgent->Commands())
-                {
-                    int callback_id = t->OnSoarOutput;
-                    t->OnSoarOutput=0;
-                    if(onSoarOutputIterator == OnSoarOutputRegions)
-                        OnSoarOutputRegions = onSoarOutputIteratorNext;
-                    else if( onSoarOutputIteratorPrev != NULL)
-                        onSoarOutputIteratorPrev->next = onSoarOutputIteratorNext;
-                                            
-                    free(onSoarOutputIterator);
-                    
-                    callScript(callback_id, t);
-                }
-            }
-            onSoarOutputIterator = onSoarOutputIteratorNext;
-            if(onSoarOutputIteratorNext != NULL)
-                onSoarOutputIteratorNext = onSoarOutputIteratorNext->next;
-            if(onSoarOutputIteratorPrev == NULL)
-                onSoarOutputIteratorPrev = OnSoarOutputRegions;
-            else
-                onSoarOutputIteratorPrev = onSoarOutputIteratorPrev->next;
-        }
-    }
-    return true;
-}
-#endif
-
-Region_Chain_t* onPageEnteredIterator;
-Region_Chain_t* onPageEnteredIteratorNext;
-
-bool callAllOnPageEntered(float page)
-{
-    if(OnPageEnteredRegions != NULL)
-    {
-        onPageEnteredIteratorNext = OnPageEnteredRegions->next;
-        onPageEnteredIterator = OnPageEnteredRegions;
-        
-        while(onPageEnteredIterator != NULL)
-        {
-            urAPI_Region_t* t = onPageEnteredIterator->region;
-            
-            if(t->OnPageEntered != 0)
-                callScriptWith1Args(t->OnPageEntered, t,page);
-
-            onPageEnteredIterator = onPageEnteredIteratorNext;
-            if(onPageEnteredIteratorNext != NULL)
-                onPageEnteredIteratorNext = onPageEnteredIteratorNext->next;
-        }
-    }        
-        
-        /*
-	for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
-	{
-		if(t->OnPageEntered != 0)
-			callScriptWith1Args(t->OnPageEntered, t,page);
-	}	
-         */
-	return true;
-}
-
-Region_Chain_t* onPageLeftIterator;
-Region_Chain_t* onPageLeftIteratorNext;
-
-bool callAllOnPageLeft(float page)
-{
-    if(OnPageLeftRegions != NULL)
-    {
-        onPageLeftIteratorNext = OnPageLeftRegions->next;
-        onPageLeftIterator = OnPageLeftRegions;
-        
-        while(onPageLeftIterator != NULL)
-        {
-            urAPI_Region_t* t = onPageLeftIterator->region;
-            if(t->OnPageLeft != 0)
-                callScriptWith1Args(t->OnPageLeft, t,page);
-
-            onPageLeftIterator = onPageLeftIteratorNext;
-            if(onPageLeftIteratorNext != NULL)
-                onPageLeftIteratorNext = onPageLeftIteratorNext->next;
-        }
-	}	
-/*
-    for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
-	{
-		if(t->OnPageLeft != 0)
-			callScriptWith1Args(t->OnPageLeft, t,page);
-	}	
- */
-	return true;
-}
-
-#ifdef SOAR_SUPPORT
-bool callScriptWith2ActionTableArgs(int func_ref, urAPI_Region_t* region)
-{
-	if(func_ref == 0) return false;
-	
-	// Call lua function by stored Reference
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
-	//constuctSoarArgs();
-	//lua_pushnumber(lua,a);
-	//lua_pushnumber(lua,b);
-	if(lua_pcall(lua,3,0,0) != 0)
-	{
-		//<return Error>
-		const char* error = lua_tostring(lua, -1);
-		errorstr = error; // DPrinting errors for now
-		newerror = true;
-		return false;
-	}
-	
-	// OK!
-	return true;
-}
-#endif
-
-Region_Chain_t* onLocationIterator;
-Region_Chain_t* onLocationIteratorNext;
-
-bool callAllOnLocation(float latitude, float longitude)
-{
-    if(OnLocationRegions != NULL)
-    {
-        onLocationIteratorNext = OnLocationRegions->next; // Helps save-guard the chain should a region unhook itself
-        onLocationIterator = OnLocationRegions;
-        
-        while(onLocationIterator != NULL)
-        {
-            urAPI_Region_t* t = onLocationIterator->region;
-            if(t->OnLocation != 0)
-                callScriptWith2Args(t->OnLocation,t,latitude, longitude);
-            onLocationIterator = onLocationIteratorNext;
-            if(onLocationIteratorNext != NULL)
-                onLocationIteratorNext = onLocationIteratorNext->next;
-        }
-    }
-/*        
-    for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
-	{
-		if(t->OnLocation != 0)
-			callScriptWith2Args(t->OnLocation,t,latitude, longitude);
-	}	
- */
-	return true;
-}
-
-Region_Chain_t* onHeadingIterator;
-Region_Chain_t* onHeadingIteratorNext;
-
-bool callAllOnHeading(float x, float y, float z, float north)
-{
-    if(OnHeadingRegions != NULL)
-    {
-        onHeadingIteratorNext = OnHeadingRegions->next; // Helps save-guard the chain should a region unhook itself
-        onHeadingIterator = OnHeadingRegions;
-        
-        while(onHeadingIterator != NULL)
-        {
-            urAPI_Region_t* t = onHeadingIterator->region;
-            if(t->OnHeading != 0)
-                callScriptWith4Args(t->OnHeading,t,x,y,z,north);
-            onHeadingIterator = onHeadingIteratorNext;
-            if(onHeadingIteratorNext != NULL)
-                onHeadingIteratorNext = onHeadingIteratorNext->next;
-        }
-    }
-
-	/*
-    for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
-	{
-		if(t->OnHeading != 0)
-			callScriptWith4Args(t->OnHeading,t,x,y,z,north);
-	}
-     */
-	return true;
-}
-
-Region_Chain_t* onAttitudeIterator;
-Region_Chain_t* onAttitudeIteratorNext;
-
-bool callAllOnAttitude(float x, float y, float z, float w)
-{
-    if(OnAttitudeRegions != NULL)
-    {
-        onAttitudeIteratorNext = OnAttitudeRegions->next; // Helps save-guard the chain should a region unhook itself
-        onAttitudeIterator = OnAttitudeRegions;
-        
-        while(onAttitudeIterator != NULL)
-        {
-            urAPI_Region_t* t = onAttitudeIterator->region;
-            if(t->OnAttitude != 0)
-                callScriptWith4Args(t->OnAttitude,t,x,y,z,w);
-            onAttitudeIterator = onAttitudeIteratorNext;
-            if(onAttitudeIteratorNext != NULL)
-                onAttitudeIteratorNext = onAttitudeIteratorNext->next;
-        }
-    }
-    
-	return true;
-}
-
-Region_Chain_t* onRotationIterator;
-Region_Chain_t* onRotationIteratorNext;
-
-bool callAllOnRotRate(float x, float y, float z)
-{
-    if(OnRotationRegions != NULL)
-    {
-        onRotationIteratorNext = OnRotationRegions->next; // Helps save-guard the chain should a region unhook itself
-        onRotationIterator = OnRotationRegions;
-        
-        while(onRotationIterator != NULL)
-        {
-            urAPI_Region_t* t = onRotationIterator->region;
-            if(t->OnRotation != 0)
-                callScriptWith3Args(t->OnRotation,t,x,y,z);
-            onRotationIterator = onRotationIteratorNext;
-            if(onRotationIteratorNext != NULL)
-                onRotationIteratorNext = onRotationIteratorNext->next;
-        }
-    }
-
-    /*
-    for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
-	{
-		if(t->OnRotation != 0)
-			callScriptWith3Args(t->OnRotation,t,x,y,z);
-	}
-     */
-	return true;
-}
-
-Region_Chain_t* onAccelerateIterator;
-Region_Chain_t* onAccelerateIteratorNext;
-
-bool callAllOnAccelerate(float x, float y, float z)
-{
-    if(OnAccelerateRegions != NULL)
-    {
-        onAccelerateIteratorNext = OnAccelerateRegions->next; // Helps save-guard the chain should a region unhook itself
-        onAccelerateIterator = OnAccelerateRegions;
-        
-        while(onAccelerateIterator != NULL)
-        {
-            urAPI_Region_t* t = onAccelerateIterator->region;
-            if(t->OnAccelerate != 0)
-                callScriptWith3Args(t->OnAccelerate,t,x,y,z);
-            onAccelerateIterator = onAccelerateIteratorNext;
-            if(onAccelerateIteratorNext != NULL)
-                onAccelerateIteratorNext = onAccelerateIteratorNext->next;
-        }
-    }
-        
-        /*
-	for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
-	{
-		if(t->OnAccelerate != 0)
-			callScriptWith3Args(t->OnAccelerate,t,x,y,z);
-	}	
-         */
-	return true;
-}
-
-Region_Chain_t* onNetInIterator;
-Region_Chain_t* onNetInIteratorNext;
-
-bool callAllOnNetIn(float a)
-{
-    if(OnNetInRegions != NULL)
-    {
-        onNetInIteratorNext = OnNetInRegions->next; // Helps save-guard the chain should a region unhook itself
-        onNetInIterator = OnNetInRegions;
-        
-        while(onNetInIterator != NULL)
-        {
-            urAPI_Region_t* t = onNetInIterator->region;
-            if(t->OnNetIn != 0)
-                callScriptWith1Args(t->OnNetIn,t,a);
-            onNetInIterator = onNetInIteratorNext;
-            if(onNetInIteratorNext != NULL)
-                onNetInIteratorNext = onNetInIteratorNext->next;
-        }
-    }
-
-/*            
-    for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
-	{
-		if(t->OnNetIn != 0)
-			callScriptWith1Args(t->OnNetIn,t,a);
-	}
- */
-	return true;
-}
-
-Region_Chain_t* onNetConnectIterator;
-Region_Chain_t* onNetConnectIteratorNext;
-
-bool callAllOnNetConnect(const char* name, const char* btype)
-{
-    if(OnNetConnectRegions != NULL)
-    {
-        onNetConnectIteratorNext = OnNetConnectRegions->next; // Helps save-guard the chain should a region unhook itself
-        onNetConnectIterator = OnNetConnectRegions;
-        
-        while(onNetConnectIterator != NULL)
-        {
-            urAPI_Region_t* t = onNetConnectIterator->region;
-            if(t->OnNetConnect != 0)
-                callScriptWith2String(t->OnNetConnect,t,name,btype);
-            onNetConnectIterator = onNetConnectIteratorNext;
-            if(onNetConnectIteratorNext != NULL)
-                onNetConnectIteratorNext = onNetConnectIteratorNext->next;
-        }
-    }
-
-    /*    
-    for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
-	{
-		if(t->OnNetConnect != 0)
-			callScriptWith1String(t->OnNetConnect,t,name);
-	}
-     */
-	return true;	
-}
-
-Region_Chain_t* onNetDisconnectIterator;
-Region_Chain_t* onNetDisconnectIteratorNext;
-
-bool callAllOnNetDisconnect(const char* name, const char* btype)
-{
-    if(OnNetDisconnectRegions != NULL)
-    {
-        onNetDisconnectIteratorNext = OnNetDisconnectRegions->next; // Helps save-guard the chain should a region unhook itself
-        onNetDisconnectIterator = OnNetDisconnectRegions;
-        
-        while(onNetDisconnectIterator != NULL)
-        {
-            urAPI_Region_t* t = onNetDisconnectIterator->region;
-            if(t->OnNetDisconnect != 0)
-                callScriptWith2String(t->OnNetDisconnect,t,name,btype);
-            onNetDisconnectIterator = onNetDisconnectIteratorNext;
-            if(onNetDisconnectIteratorNext != NULL)
-                onNetDisconnectIteratorNext = onNetDisconnectIteratorNext->next;
-        }
-    }
-
-	/*
-    for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
-	{
-		if(t->OnNetDisconnect != 0)
-			callScriptWith1String(t->OnNetDisconnect,t,name);
-	}
-     */
-	return true;		
-}
-
-Region_Chain_t* onOSCMessageIterator;
-Region_Chain_t* onOSCMessageIteratorNext;
-
-//bool callAllOnOSCMessage(float num)
-bool callAllOnOSCMessage(osc::ReceivedMessageArgumentStream & argument_stream)
-{
-    if(OnOSCMessageRegions != NULL)
-    {
-        onOSCMessageIteratorNext = OnOSCMessageRegions->next; // Helps save-guard the chain should a region unhook itself
-        onOSCMessageIterator = OnOSCMessageRegions;
-        
-        while(onOSCMessageIterator != NULL)
-        {
-            urAPI_Region_t* t = onOSCMessageIterator->region;
-            if(t->OnOSCMessage != 0)
-                callScriptWithOscArgs(t->OnOSCMessage,t,argument_stream);
-            onOSCMessageIterator = onOSCMessageIteratorNext;
-            if(onOSCMessageIteratorNext != NULL)
-                onOSCMessageIteratorNext = onOSCMessageIteratorNext->next;
-        }
-    }
-
-    /*    
-    for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
-	{
-		if(t->OnOSCMessage != 0)
-			callScriptWithOscArgs(t->OnOSCMessage,t,argument_stream);
-	}
-     */
-	return true;		
-}
-
-// Shared iterator with OSCMessage
-
-bool callAllOnOSCString(const char* str)
-{
-    if(OnOSCMessageRegions != NULL)
-    {
-        onOSCMessageIteratorNext = OnOSCMessageRegions->next; // Helps save-guard the chain should a region unhook itself
-        onOSCMessageIterator = OnOSCMessageRegions;
-        
-        while(onOSCMessageIterator != NULL)
-        {
-            urAPI_Region_t* t = onOSCMessageIterator->region;
-            if(t->OnOSCMessage != 0)
-                callScriptWith1String(t->OnOSCMessage,t,str);
-            onOSCMessageIterator = onOSCMessageIteratorNext;
-            if(onOSCMessageIteratorNext != NULL)
-                onOSCMessageIteratorNext = onOSCMessageIteratorNext->next;
-        }
-    }
-	
-/*    
-    for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
-	{
-		if(t->OnOSCMessage != 0)
-			callScriptWith1String(t->OnOSCMessage,t,str);
-	}
- */
-	return true;		
-}
-	
-#ifdef SANDWICH_SUPPORT
-Region_Chain_t* onPressureIterator;
-Region_Chain_t* onPressureIteratorNext;
-
-bool callAllOnPressure(float p)
-{
-    if(OnPressureRegions != NULL)
-    {
-        onPressureIteratorNext = OnPressureRegions->next; // Helps save-guard the chain should a region unhook itself
-        onPressureIterator = OnPressureRegions;
-        
-        while(onPressureIterator != NULL)
-        {
-            urAPI_Region_t* t = onPressureIterator->region;
-            if(t->OnPressure != 0)
-                callScriptWith1Args(t->OnPressure,t,p);
-            onPressureIterator = onPressureIteratorNext;
-            if(onPressureIteratorNext != NULL)
-                onPressureIteratorNext = onPressureIteratorNext->next;
-        }
-    }
-	
-/*    
-    for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
-	{
-		if(t->OnPressure != 0)
-			callScriptWith1Args(t->OnPressure,t,p);
-	}	
- */
-	return true;
-}
-#endif
-
-
-Region_Chain_t* onMicrophoneIterator;
-Region_Chain_t* onMicrophoneIteratorNext;
-
-bool callAllOnMicrophone(SInt32* mic_buffer, UInt32 bufferlen)
-{
-	lua_getglobal(lua, "urMicData");
-	if(lua_isnil(lua, -1) || !lua_istable(lua,-1)) // Channel doesn't exist or is falsely set up
-	{
-		lua_pop(lua,1);
-		return false;
-	}
-	
-	for(UInt32 i=0;i<bufferlen; i++)
-	{
-		lua_pushnumber(lua, mic_buffer[i]);
-		lua_rawseti(lua, -2, i+1);
-	}	
-	lua_setglobal(lua, "urMicData");
-
-    if(OnMicrophoneRegions != NULL)
-    {
-        onMicrophoneIteratorNext = OnMicrophoneRegions->next; // Helps save-guard the chain should a region unhook itself
-        onMicrophoneIterator = OnMicrophoneRegions;
-        
-        while(onMicrophoneIterator != NULL)
-        {
-            urAPI_Region_t* t = onMicrophoneIterator->region;
-            if(t->OnMicrophone != 0)
-                callScriptWith1Global(t->OnMicrophone, t, "urMicData");
-            onMicrophoneIterator = onMicrophoneIteratorNext;
-            if(onMicrophoneIteratorNext != NULL)
-                onMicrophoneIteratorNext = onMicrophoneIteratorNext->next;
-        }
-    }
-
-	
-/*    
-    for(urAPI_Region_t* t=firstRegion[currentPage]; t != nil; t=t->next)
-	{
-		if(t->OnMicrophone != 0)
-			callScriptWith1Global(t->OnMicrophone, t, "urMicData");
-	}
- */
-	return true;
-}
-
-bool callScriptWithOscArgs(int func_ref, urAPI_Region_t* region, osc::ReceivedMessageArgumentStream & s)
-{
-	if(func_ref == 0) return false;
-	
-	// Call lua function by stored Reference
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
-	int len = 0;
-	while(!s.Eos())
-	{
-		float num;
-		s >> num;
-		lua_pushnumber(lua,num);
-		len = len+1;
-	}
-	if(lua_pcall(lua,len+1,0,0) != 0)
-	{
-		// Error!!
-		const char* error = lua_tostring(lua, -1);
-		errorstr = error; // DPrinting errors for now
-		newerror = true;
-		return false;
-	}
-	
-	// OK!
-	return true;
-}
-	
-bool callScriptWith5Args(int func_ref, urAPI_Region_t* region, float a, float b, float c, float d, float e)
-{
-	if(func_ref == 0) return false;
-	
-	// Call lua function by stored Reference
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
-	lua_pushnumber(lua,a);
-	lua_pushnumber(lua,b);
-	lua_pushnumber(lua,c);
-	lua_pushnumber(lua,d);
-	lua_pushnumber(lua,e);
-	if(lua_pcall(lua,6,0,0) != 0)
-	{
-		// Error!!
-		const char* error = lua_tostring(lua, -1);
-		errorstr = error; // DPrinting errors for now
-		newerror = true;
-		return false;
-	}
-	
-	// OK!
-	return true;
-}
-
-bool callScriptWith4Args(int func_ref, urAPI_Region_t* region, float a, float b, float c, float d)
-{
-	if(func_ref == 0) return false;
-
-	// Call lua function by stored Reference
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
-	lua_pushnumber(lua,a);
-	lua_pushnumber(lua,b);
-	lua_pushnumber(lua,c);
-	lua_pushnumber(lua,d);
-	if(lua_pcall(lua,5,0,0) != 0)
-	{
-		// Error!!
-		const char* error = lua_tostring(lua, -1);
-		errorstr = error; // DPrinting errors for now
-		newerror = true;
-		return false;
-	}
-	
-	// OK!
-	return true;
-}
-
-bool callScriptWith3Args(int func_ref, urAPI_Region_t* region, float a, float b, float c)
-{
-	if(func_ref == 0) return false;
-	
-	// Call lua function by stored Reference
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
-	lua_pushnumber(lua,a);
-	lua_pushnumber(lua,b);
-	lua_pushnumber(lua,c);
-	if(lua_pcall(lua,4,0,0) != 0)
-	{
-		// Error!!
-		const char* error = lua_tostring(lua, -1);
-		errorstr = error; // DPrinting errors for now
-		newerror = true;
-		return false;
-	}
-	
-	// OK!
-	return true;
-}
-
-bool callScriptWith2Args(int func_ref, urAPI_Region_t* region, float a, float b)
-{
-	if(func_ref == 0) return false;
-	
-	// Call lua function by stored Reference
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
-	lua_pushnumber(lua,a);
-	lua_pushnumber(lua,b);
-	if(lua_pcall(lua,3,0,0) != 0)
-	{
-		//<return Error>
-		const char* error = lua_tostring(lua, -1);
-		errorstr = error; // DPrinting errors for now
-		newerror = true;
-		return false;
-	}
-	
-	// OK!
-	return true;
-}
-	
-bool callScriptWith1Args(int func_ref, urAPI_Region_t* region, float a)
-{
-	if(func_ref == 0) return false;
-	
-	//		int func_ref = region->OnDragging;
-	// Call lua function by stored Reference
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
-	lua_pushnumber(lua,a);
-	if(lua_pcall(lua,2,0,0) != 0)
-	{
-		//<return Error>
-		const char* error = lua_tostring(lua, -1);
-		errorstr = error; // DPrinting errors for now
-		newerror = true;
-		return false;
-	}
-		
-	// OK!
-	return true;
-}
-
-bool callScriptWith1Global(int func_ref, urAPI_Region_t* region, const char* globaldata)
-{
-	if(func_ref == 0) return false;
-	
-	//		int func_ref = region->OnDragging;
-	// Call lua function by stored Reference
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
-	lua_getglobal(lua, globaldata);
-	if(lua_pcall(lua,2,0,0) != 0)
-	{
-		//<return Error>
-		const char* error = lua_tostring(lua, -1);
-		errorstr = error; // DPrinting errors for now
-		newerror = true;
-		return false;
-	}
-	
-	// OK!
-	return true;
-}
-
-bool callScriptWith1String(int func_ref, urAPI_Region_t* region, const char* name)
-{
-	if(func_ref == 0) return false;
-	
-	//		int func_ref = region->OnDragging;
-	// Call lua function by stored Reference
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
-	lua_pushstring(lua, name);
-	if(lua_pcall(lua,2,0,0) != 0)
-	{
-		//<return Error>
-		const char* error = lua_tostring(lua, -1);
-		errorstr = error; // DPrinting errors for now
-		newerror = true;
-		return false;
-	}
-	
-	// OK!
-	return true;
-}
-
-bool callScriptWith2String(int func_ref, urAPI_Region_t* region, const char* name, const char* btype)
-{
-	if(func_ref == 0) return false;
-	
-	//		int func_ref = region->OnDragging;
-	// Call lua function by stored Reference
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
-	lua_pushstring(lua, name);
-	lua_pushstring(lua, btype);
-	if(lua_pcall(lua,3,0,0) != 0)
-	{
-		//<return Error>
-		const char* error = lua_tostring(lua, -1);
-		errorstr = error; // DPrinting errors for now
-		newerror = true;
-		return false;
-	}
-	
-	// OK!
-	return true;
-}
-
-bool callScript(int func_ref, urAPI_Region_t* region)
-{
-	if(func_ref == 0) return false;
-	
-	// Call lua function by stored Reference
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
-	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
-	if(lua_pcall(lua,1,0,0) != 0) // find table of udata here!!
-	{
-		//<return Error>
-		const char* error = lua_tostring(lua, -1);
-		errorstr = error; // DPrinting errors for now
-		newerror = true;
-		return false;
-	}
-
-	// OK!
-	return true;
-}
-
-Region_Chain_t* RemoveRegionFromChain(Region_Chain_t* chain, urAPI_Region* region)
-{
-    if (region->page == currentPage)
-    {
-        Region_Chain_t* p = NULL;
-        for( Region_Chain_t* c=chain; c!= NULL; c=c->next)
-        {
-            if(c->region == region)
-            {
-                if(p == NULL)
-                {
-                    p = c->next;
-                    free(c);
-                    return p;
-                }
-                p->next = c->next;
-                free(c);
-                return chain;
-            }
-            p = c;
-        }
-    }
-    return chain;
-}
-
-Region_Chain_t* AddRegionToChain(Region_Chain_t* chain, urAPI_Region* region)
-{
-    if (region->page == currentPage)
-    {
-        Region_Chain_t* n = (Region_Chain_t*)malloc(sizeof(Region_Chain_t));
-        n->region = region;
-        n->next = chain;
-        return n;
-    }
-    else
-        return chain;
-}
-
-Region_Chain_t* FreeChain(Region_Chain_t* chain)
-{
-    Region_Chain_t* p;
-    for( Region_Chain_t* c=chain; c!= NULL; c=p)
-    {
-        p = c->next;
-        free(c);
-    }
-    return NULL;
-}
-
-void FreeAllChains()
-{
-//    OnDragStartRegions = FreeChain(OnDragStartRegions);
-//    OnDragStopRegions = FreeChain(OnDragStopRegions);
-    OnEnterRegions = FreeChain(OnEnterRegions);
-//    OnEventRegions = FreeChain(OnEventRegions);
-//    OnHideRegions = FreeChain(OnHideRegions);
-    OnLeaveRegions = FreeChain(OnLeaveRegions);
-//    OnTouchDownRegions = FreeChain(OnTouchDownRegions);
-//    OnTouchUpRegions = FreeChain(OnTouchUpRegions);
-//    OnShowRegions = FreeChain(OnShowRegions);
-//    OnSizeChangedRegions = FreeChain(OnSizeChangedRegions);
-    OnUpdateRegions = FreeChain(OnUpdateRegions);
-//    OnDoubleTapRegions = FreeChain(OnDoubleTapRegions);
-    OnAccelerateRegions = FreeChain(OnAccelerateRegions);
-    OnNetInRegions = FreeChain(OnNetInRegions);
-    OnNetConnectRegions = FreeChain(OnNetConnectRegions);
-    OnNetDisconnectRegions = FreeChain(OnNetDisconnectRegions);
-    OnOSCMessageRegions = FreeChain(OnOSCMessageRegions);
-#ifdef SANDWICH_SUPPORT
-    OnPressureRegions = FreeChain(OnPressureRegions);
-#endif
-#ifdef SOAR_SUPPORT
-    OnSoarOutputRegions = FreeChain(OnSoarOutputRegions);
-#endif
-    OnAttitudeRegions = FreeChain(OnAttitudeRegions);
-    OnRotationRegions = FreeChain(OnRotationRegions);
-    OnHeadingRegions = FreeChain(OnHeadingRegions);
-    OnHeadingRegions = FreeChain(OnLocationRegions);
-    OnMicrophoneRegions = FreeChain(OnMicrophoneRegions);
-//    OnHorizontalScrollRegions = FreeChain(OnHorizontalScrollRegions);
-//    OnVerticalScrollRegions = FreeChain(OnVerticalScrollRegions);
-    OnMoveRegions = FreeChain(OnMoveRegions);
-    OnPageEnteredRegions = FreeChain(OnPageEnteredRegions);
-    OnPageLeftRegions = FreeChain(OnPageLeftRegions);
-}
-
-void PopulateAllChains(urAPI_Region_t* first)
-{
-    for(urAPI_Region_t* region=first; region != nil; region=region->next)
-	{
-/*		if(region->OnDragStart != 0)
-		{
-            OnDragStartRegions = AddRegionToChain(OnDragStartRegions, region);
-		}
-		if(region->OnDragStop != 0)
-		{
-            OnDragStopRegions = AddRegionToChain(OnDragStopRegions, region);
-		}*/
-		if(region->OnEnter != 0)
-		{
-            OnEnterRegions = AddRegionToChain(OnEnterRegions, region);
-		}
-/*		if(region->OnEvent != 0)
-		{
-            OnEventRegions = AddRegionToChain(OnEventRegions, region);
-		}*/
-/*		if(region->OnHide != 0)
-		{
-            OnHideRegions = AddRegionToChain(OnHideRegions, region);
-		}*/
-		if(region->OnLeave != 0)
-		{
-            OnLeaveRegions = AddRegionToChain(OnLeaveRegions, region);
-		}
-/*		if(region->OnTouchDown != 0)
-		{
-            OnTouchDownRegions = AddRegionToChain(OnTouchDownRegions, region);
-		}*/
-/*		if(region->OnTouchUp != 0)
-		{
-            OnTouchUpRegions = AddRegionToChain(OnTouchUpRegions, region);
-		}*/
-/*		if(region->OnShow != 0)
-		{
-            OnShowRegions = AddRegionToChain(OnShowRegions, region);
-		}*/
-/*        if(region->OnSizeChanged != 0)
-		{
-            OnSizeChangedRegions = AddRegionToChain(OnSizeChangedRegions, region);
-		}*/
-		if(region->OnUpdate != 0)
-		{
-            OnUpdateRegions = AddRegionToChain(OnUpdateRegions, region);
-		}
-/*		if(region->OnDoubleTap != 0)
-		{
-            OnDoubleTapRegions = AddRegionToChain(OnDoubleTapRegions, region);
-		}*/
-		if(region->OnAccelerate != 0)
-		{
-            OnAccelerateRegions = AddRegionToChain(OnAccelerateRegions, region);
-		}
-		if(region->OnNetIn != 0)
-		{
-            OnNetInRegions = AddRegionToChain(OnNetInRegions, region);
-		}
-		if(region->OnNetConnect != 0)
-		{
-            OnNetConnectRegions = AddRegionToChain(OnNetConnectRegions, region);
-		}
-		if(region->OnNetDisconnect != 0)
-		{
-            OnNetDisconnectRegions = AddRegionToChain(OnNetDisconnectRegions, region);
-		}		
-		if(region->OnOSCMessage != 0)
-		{
-            OnOSCMessageRegions = AddRegionToChain(OnOSCMessageRegions, region);
-		}		
-#ifdef SANDWICH_SUPPORT
-		if(region->OnPressure != 0)
-		{
-            OnPressureRegions = AddRegionToChain(OnPressureRegions, region);
-		}
-#endif
-#ifdef SOAR_SUPPORT
-		if(region->OnSoarOutput != 0)
-		{
-            OnSoarOutputRegions = AddRegionToChain(OnSoarOutputRegions, region);
-		}
-#endif
-		if(region->OnAttitude != 0)
-		{
-            OnAttitudeRegions = AddRegionToChain(OnAttitudeRegions, region);
-		}
-		if(region->OnRotation != 0)
-		{
-            OnRotationRegions = AddRegionToChain(OnRotationRegions, region);
-		}
-		if(region->OnHeading != 0)
-		{
-            OnHeadingRegions = AddRegionToChain(OnHeadingRegions, region);
-		}
-		if(region->OnLocation != 0)
-		{
-            OnLocationRegions = AddRegionToChain(OnLocationRegions, region);
-		}
-		if(region->OnMicrophone != 0)
-		{
-            OnMicrophoneRegions = AddRegionToChain(OnMicrophoneRegions, region);
-		}
-/*		if(region->OnHorizontalScroll != 0)
-		{
-            OnHorizontalScrollRegions = AddRegionToChain(OnHorizontalScrollRegions, region);
-		}*/
-/*		if(region->OnVerticalScroll != 0)
-		{
-            OnVerticalScrollRegions = AddRegionToChain(OnVerticalScrollRegions, region);
-		}*/
-		if(region->OnMove != 0)
-		{
-            OnMoveRegions = AddRegionToChain(OnMoveRegions, region);
-		}
-		if(region->OnPageEntered != 0)
-		{
-            OnPageEnteredRegions = AddRegionToChain(OnPageEnteredRegions, region);
-		}
-		if(region->OnPageLeft != 0)
-		{
-            OnPageLeftRegions = AddRegionToChain(OnPageLeftRegions, region);
-		}
-    }
-}
+//------------------------------------------------------------------------------
+// Region Member urMus lua API function implementations
+//------------------------------------------------------------------------------
 
 int region_Handle(lua_State* lua)
 {
-	urAPI_Region_t* region 
-	= checkregion(lua,1);
+	urAPI_Region_t* region = checkregion(lua,1);
 	//get parameter
 	const char* handler = luaL_checkstring(lua, 2);
 	
 	if(lua_isnil(lua,3))
 	{
-		if(!strcmp(handler, "OnDragStart"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnDragStart);
-/*            // Update iterator if needed
-            if(onDragStartIterator!=NULL && region==onDragStartIterator->region)
+        bool found = false;
+        for(int i=0; i<MAX_EVENTS; i++)
+        {
+            if(!strcmp(handler, urEventNames[i]))
             {
-                onDragStartIterator = onDragStartIteratorNext; 
-                if(onDragStartIteratorNext != NULL)
-                    onDragStartIteratorNext = onDragStartIteratorNext->next;
+                RemoveEventRegistry(lua, OnEnter, region);
+                found = true;
             }
-            if(onDragStartIteratorNext != NULL && region==onDragStartIteratorNext->region)
-            {
-                onDragStartIteratorNext = onDragStartIteratorNext->next;
-            }
-            OnDragStartRegions=RemoveRegionFromChain(OnDragStartRegions, region);*/
-			region->OnDragStart = 0;
-		}
-		else if(!strcmp(handler, "OnDragStop"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnDragStop);
-/*            // Update iterator if needed
-            if(onDragStopIterator!=NULL && region==onDragStopIterator->region)
-            {
-                onDragStopIterator = onDragStopIteratorNext; 
-                if(onDragStopIteratorNext != NULL)
-                    onDragStopIteratorNext = onDragStopIteratorNext->next;
-            }
-            if(onDragStopIteratorNext != NULL && region==onDragStopIteratorNext->region)
-            {
-                onDragStopIteratorNext = onDragStopIteratorNext->next;
-            }
-            OnDragStopRegions=RemoveRegionFromChain(OnDragStopRegions, region);*/
-			region->OnDragStop = 0;
-		}
-		else if(!strcmp(handler, "OnEnter"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnEnter);
-            // Update iterator if needed
-            if(onEnterIterator!=NULL && region==onEnterIterator->region)
-            {
-                onEnterIterator = onEnterIteratorNext; 
-                if(onEnterIteratorNext != NULL)
-                    onEnterIteratorNext = onEnterIteratorNext->next;
-            }
-            if(onEnterIteratorNext != NULL && region==onEnterIteratorNext->region)
-            {
-                onEnterIteratorNext = onEnterIteratorNext->next;
-            }
-            OnEnterRegions=RemoveRegionFromChain(OnEnterRegions, region);
-			region->OnEnter = 0;
-		}
-/*		else if(!strcmp(handler, "OnEvent"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnEvent);
-            // Update iterator if needed
-            if(onEventIterator!=NULL && region==onEventIterator->region)
-            {
-                onEventIterator = onEventIteratorNext; 
-                if(onEventIteratorNext != NULL)
-                    onEventIteratorNext = onEventIteratorNext->next;
-            }
-            if(onEventIteratorNext != NULL && region==onEventIteratorNext->region)
-            {
-                onEventIteratorNext = onEventIteratorNext->next;
-            }
-            OnEventRegions=RemoveRegionFromChain(OnEventRegions, region);
-			region->OnEvent = 0;
-		}*/
-		else if(!strcmp(handler, "OnHide"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnHide);
-/*            // Update iterator if needed
-            if(onHideIterator!=NULL && region==onHideIterator->region)
-            {
-                onHideIterator = onHideIteratorNext; 
-                if(onHideIteratorNext != NULL)
-                    onHideIteratorNext = onHideIteratorNext->next;
-            }
-            if(onHideIteratorNext != NULL && region==onHideIteratorNext->region)
-            {
-                onHideIteratorNext = onHideIteratorNext->next;
-            }
-            OnHideRegions=RemoveRegionFromChain(OnHideRegions, region);*/
-			region->OnHide = 0;
-		}
-		else if(!strcmp(handler, "OnLeave"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnLeave);
-            // Update iterator if needed
-            if(onLeaveIterator!=NULL && region==onLeaveIterator->region)
-            {
-                onLeaveIterator = onLeaveIteratorNext; 
-                if(onLeaveIteratorNext != NULL)
-                    onLeaveIteratorNext = onLeaveIteratorNext->next;
-            }
-            if(onLeaveIteratorNext != NULL && region==onLeaveIteratorNext->region)
-            {
-                onLeaveIteratorNext = onLeaveIteratorNext->next;
-            }
-            OnLeaveRegions=RemoveRegionFromChain(OnLeaveRegions, region);
-			region->OnLeave = 0;
-		}
-		else if(!strcmp(handler, "OnTouchDown"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnTouchDown);
-            // Update iterator if needed
-/*            if(onTouchDownIterator!=NULL && region==onTouchDownIterator->region)
-            {
-                onTouchDownIterator = onTouchDownIteratorNext; 
-                if(onTouchDownIteratorNext != NULL)
-                    onTouchDownIteratorNext = onTouchDownIteratorNext->next;
-            }
-            if(onTouchDownIteratorNext != NULL && region==onTouchDownIteratorNext->region)
-            {
-                onTouchDownIteratorNext = onTouchDownIteratorNext->next;
-            }
-            OnTouchDownRegions=RemoveRegionFromChain(OnTouchDownRegions, region);*/
-			region->OnTouchDown = 0;
-		}
-		else if(!strcmp(handler, "OnTouchUp"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnTouchUp);
-/*            // Update iterator if needed
-            if(onTouchUpIterator!=NULL && region==onTouchUpIterator->region)
-            {
-                onTouchUpIterator = onTouchUpIteratorNext; 
-                if(onTouchUpIteratorNext != NULL)
-                    onTouchUpIteratorNext = onTouchUpIteratorNext->next;
-            }
-            if(onTouchUpIteratorNext != NULL && region==onTouchUpIteratorNext->region)
-            {
-                onTouchUpIteratorNext = onTouchUpIteratorNext->next;
-            }
-            OnTouchUpRegions=RemoveRegionFromChain(OnTouchUpRegions, region);*/
-			region->OnTouchUp = 0;
-		}
-		else if(!strcmp(handler, "OnShow"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnShow);
-/*            // Update iterator if needed
-            if(onShowIterator!=NULL && region==onShowIterator->region)
-            {
-                onShowIterator = onShowIteratorNext; 
-                if(onShowIteratorNext != NULL)
-                    onShowIteratorNext = onShowIteratorNext->next;
-            }
-            if(onShowIteratorNext != NULL && region==onShowIteratorNext->region)
-            {
-                onShowIteratorNext = onShowIteratorNext->next;
-            }
-            OnShowRegions=RemoveRegionFromChain(OnShowRegions, region);*/
-			region->OnShow = 0;
-		}
-		else if(!strcmp(handler, "OnSizeChanged"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnSizeChanged);
-/*            // Update iterator if needed
-            if(onSizeChangedIterator!=NULL && region==onSizeChangedIterator->region)
-            {
-                onSizeChangedIterator = onSizeChangedIteratorNext; 
-                if(onSizeChangedIteratorNext != NULL)
-                    onSizeChangedIteratorNext = onSizeChangedIteratorNext->next;
-            }
-            if(onSizeChangedIteratorNext != NULL && region==onSizeChangedIteratorNext->region)
-            {
-                onSizeChangedIteratorNext = onSizeChangedIteratorNext->next;
-            }
-            OnSizeChangedRegions=RemoveRegionFromChain(OnSizeChangedRegions, region);*/
-			region->OnSizeChanged = 0;
-		}
-		else if(!strcmp(handler, "OnUpdate"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnUpdate);
-            // Update iterator if needed
-            if(onUpdateIterator!=NULL && region==onUpdateIterator->region)
-            {
-                onUpdateIterator = onUpdateIteratorNext; 
-                if(onUpdateIteratorNext != NULL)
-                    onUpdateIteratorNext = onUpdateIteratorNext->next;
-            }
-            if(onUpdateIteratorNext != NULL && region==onUpdateIteratorNext->region)
-            {
-                onUpdateIteratorNext = onUpdateIteratorNext->next;
-            }
-            OnUpdateRegions=RemoveRegionFromChain(OnUpdateRegions, region);
-			region->OnUpdate = 0;
-		}
-		else if(!strcmp(handler, "OnDoubleTap"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnDoubleTap);
-/*            // Update iterator if needed
-            if(onDoubleTapIterator!=NULL && region==onDoubleTapIterator->region)
-            {
-                onDoubleTapIterator = onDoubleTapIteratorNext; 
-                if(onDoubleTapIteratorNext != NULL)
-                    onDoubleTapIteratorNext = onDoubleTapIteratorNext->next;
-            }
-            if(onDoubleTapIteratorNext != NULL && region==onDoubleTapIteratorNext->region)
-            {
-                onDoubleTapIteratorNext = onDoubleTapIteratorNext->next;
-            }
-            OnDoubleTapRegions=RemoveRegionFromChain(OnDoubleTapRegions, region);*/
-			region->OnDoubleTap = 0;
-		}
-		else if(!strcmp(handler, "OnAccelerate"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnAccelerate);
-            // Update iterator if needed
-            if(onAccelerateIterator!=NULL && region==onAccelerateIterator->region)
-            {
-                onAccelerateIterator = onAccelerateIteratorNext; 
-                if(onAccelerateIteratorNext != NULL)
-                    onAccelerateIteratorNext = onAccelerateIteratorNext->next;
-            }
-            if(onAccelerateIteratorNext != NULL && region==onAccelerateIteratorNext->region)
-            {
-                onAccelerateIteratorNext = onAccelerateIteratorNext->next;
-            }
-            OnAccelerateRegions=RemoveRegionFromChain(OnAccelerateRegions, region);
-			region->OnAccelerate = 0;
-		}
-		else if(!strcmp(handler, "OnNetIn"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnNetIn);
-            // Update iterator if needed
-            if(onNetInIterator!=NULL && region==onNetInIterator->region)
-            {
-                onNetInIterator = onNetInIteratorNext; 
-                if(onNetInIteratorNext != NULL)
-                    onNetInIteratorNext = onNetInIteratorNext->next;
-            }
-            if(onNetInIteratorNext != NULL && region==onNetInIteratorNext->region)
-            {
-                onNetInIteratorNext = onNetInIteratorNext->next;
-            }
-            OnNetInRegions=RemoveRegionFromChain(OnNetInRegions, region);
-			region->OnNetIn = 0;
-		}
-		else if(!strcmp(handler, "OnNetConnect"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnNetConnect);
-            // Update iterator if needed
-            if(onNetConnectIterator!=NULL && region==onNetConnectIterator->region)
-            {
-                onNetConnectIterator = onNetConnectIteratorNext; 
-                if(onNetConnectIteratorNext != NULL)
-                    onNetConnectIteratorNext = onNetConnectIteratorNext->next;
-            }
-            if(onNetConnectIteratorNext != NULL && region==onNetConnectIteratorNext->region)
-            {
-                onNetConnectIteratorNext = onNetConnectIteratorNext->next;
-            }
-            OnNetConnectRegions=RemoveRegionFromChain(OnNetConnectRegions, region);
-			region->OnNetConnect = 0;
-		}
-		else if(!strcmp(handler, "OnNetDisconnect"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnNetDisconnect);
-            // Update iterator if needed
-            if(onNetDisconnectIterator!=NULL && region==onNetDisconnectIterator->region)
-            {
-                onNetDisconnectIterator = onNetDisconnectIteratorNext; 
-                if(onNetDisconnectIteratorNext != NULL)
-                    onNetDisconnectIteratorNext = onNetDisconnectIteratorNext->next;
-            }
-            if(onNetDisconnectIteratorNext != NULL && region==onNetDisconnectIteratorNext->region)
-            {
-                onNetDisconnectIteratorNext = onNetDisconnectIteratorNext->next;
-            }
-            OnNetDisconnectRegions=RemoveRegionFromChain(OnNetDisconnectRegions, region);
-			region->OnNetDisconnect = 0;
-		}		
-		else if(!strcmp(handler, "OnOSCMessage"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnOSCMessage);
-            // Update iterator if needed
-            if(onOSCMessageIterator!=NULL && region==onOSCMessageIterator->region)
-            {
-                onOSCMessageIterator = onOSCMessageIteratorNext; 
-                if(onOSCMessageIteratorNext != NULL)
-                    onOSCMessageIteratorNext = onOSCMessageIteratorNext->next;
-            }
-            if(onOSCMessageIteratorNext != NULL && region==onOSCMessageIteratorNext->region)
-            {
-                onOSCMessageIteratorNext = onOSCMessageIteratorNext->next;
-            }
-            OnOSCMessageRegions=RemoveRegionFromChain(OnOSCMessageRegions, region);
-			region->OnOSCMessage = 0;
-		}		
-#ifdef SANDWICH_SUPPORT
-		else if(!strcmp(handler, "OnPressure"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnPressure);
-            // Update iterator if needed
-            if(onPressureIterator!=NULL && region==onPressureIterator->region)
-            {
-                onPressureIterator = onPressureIteratorNext; 
-                if(onPressureIteratorNext != NULL)
-                    onPressureIteratorNext = onPressureIteratorNext->next;
-            }
-            if(onPressureIteratorNext != NULL && region==onPressureIteratorNext->region)
-            {
-                onPressureIteratorNext = onPressureIteratorNext->next;
-            }
-            OnPressureRegions=RemoveRegionFromChain(OnPressureRegions, region);
-			region->OnPressure = 0;
-		}
-#endif
-#ifdef SOAR_SUPPORT
-		else if(!strcmp(handler, "OnSoarOutput"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnSoarOutput);
-            if(onSoarOutputIterator != NULL && region==onSoarOutputIterator->region)
-            {
-                onSoarOutputIterator = onSoarOutputIteratorNext; 
-                if(onSoarOutputIteratorNext != NULL)
-                    onSoarOutputIteratorNext = onSoarOutputIteratorNext->next;
-            }
-            if(onSoarOutputIteratorNext != NULL && region==onSoarOutputIteratorNext->region)
-            {
-                onSoarOutputIteratorNext = onSoarOutputIteratorNext->next;
-            }
-            if(onSoarOutputIteratorPrev != NULL && region==onSoarOutputIteratorPrev->region)
-            {
-                onSoarOutputIteratorPrev = onSoarOutputIteratorPrev->next;
-            }
-            OnSoarOutputRegions=RemoveRegionFromChain(OnSoarOutputRegions, region);
-			region->OnSoarOutput = 0;
-		}
-#endif
-		else if(!strcmp(handler, "OnAttitude"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnAttitude);
-            // Update iterator if needed
-            if(onAttitudeIterator!=NULL && region==onAttitudeIterator->region)
-            {
-                onAttitudeIterator = onAttitudeIteratorNext; 
-                if(onAttitudeIteratorNext != NULL)
-                    onAttitudeIteratorNext = onAttitudeIteratorNext->next;
-            }
-            if(onAttitudeIteratorNext != NULL && region==onAttitudeIteratorNext->region)
-            {
-                onAttitudeIteratorNext = onAttitudeIteratorNext->next;
-            }
-            OnAttitudeRegions=RemoveRegionFromChain(OnAttitudeRegions, region);
-			region->OnAttitude = 0;
-		}
-		else if(!strcmp(handler, "OnRotation"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnRotation);
-            // Update iterator if needed
-            if(onRotationIterator!=NULL && region==onRotationIterator->region)
-            {
-                onRotationIterator = onRotationIteratorNext; 
-                if(onRotationIteratorNext != NULL)
-                    onRotationIteratorNext = onRotationIteratorNext->next;
-            }
-            if(onRotationIteratorNext != NULL && region==onRotationIteratorNext->region)
-            {
-                onRotationIteratorNext = onRotationIteratorNext->next;
-            }
-            OnRotationRegions=RemoveRegionFromChain(OnRotationRegions, region);
-			region->OnRotation = 0;
-		}
-		else if(!strcmp(handler, "OnHeading"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnHeading);
-            // Update iterator if needed
-            if(onHeadingIterator!=NULL && region==onHeadingIterator->region)
-            {
-                onHeadingIterator = onHeadingIteratorNext; 
-                if(onHeadingIteratorNext != NULL)
-                    onHeadingIteratorNext = onHeadingIteratorNext->next;
-            }
-            if(onHeadingIteratorNext != NULL && region==onHeadingIteratorNext->region)
-            {
-                onHeadingIteratorNext = onHeadingIteratorNext->next;
-            }
-            OnHeadingRegions=RemoveRegionFromChain(OnHeadingRegions, region);
-			region->OnHeading = 0;
-		}
-		else if(!strcmp(handler, "OnLocation"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnLocation);
-            // Update iterator if needed
-            if(onLocationIterator!=NULL && region==onLocationIterator->region)
-            {
-                onLocationIterator = onLocationIteratorNext; 
-                if(onLocationIteratorNext != NULL)
-                    onLocationIteratorNext = onLocationIteratorNext->next;
-            }
-            if(onLocationIteratorNext != NULL && region==onLocationIteratorNext->region)
-            {
-                onLocationIteratorNext = onLocationIteratorNext->next;
-            }
-            OnLocationRegions=RemoveRegionFromChain(OnLocationRegions, region);
-			region->OnLocation = 0;
-		}
-		else if(!strcmp(handler, "OnMicrophone"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnMicrophone);
-            // Update iterator if needed
-            if(onMicrophoneIterator!=NULL && region==onMicrophoneIterator->region)
-            {
-                onMicrophoneIterator = onMicrophoneIteratorNext; 
-                if(onMicrophoneIteratorNext != NULL)
-                    onMicrophoneIteratorNext = onMicrophoneIteratorNext->next;
-            }
-            if(onMicrophoneIteratorNext != NULL && region==onMicrophoneIteratorNext->region)
-            {
-                onMicrophoneIteratorNext = onMicrophoneIteratorNext->next;
-            }
-            OnMicrophoneRegions=RemoveRegionFromChain(OnMicrophoneRegions, region);
-			region->OnMicrophone = 0;
-		}
-		else if(!strcmp(handler, "OnHorizontalScroll"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnHorizontalScroll);
-/*            // Update iterator if needed
-            if(onHorizontalScrollIterator!=NULL && region==onHorizontalScrollIterator->region)
-            {
-                onHorizontalScrollIterator = onHorizontalScrollIteratorNext; 
-                if(onHorizontalScrollIteratorNext != NULL)
-                    onHorizontalScrollIteratorNext = onHorizontalScrollIteratorNext->next;
-            }
-            if(onHorizontalScrollIteratorNext != NULL && region==onHorizontalScrollIteratorNext->region)
-            {
-                onHorizontalScrollIteratorNext = onHorizontalScrollIteratorNext->next;
-            }
-            OnHorizontalScrollRegions=RemoveRegionFromChain(OnHorizontalScrollRegions, region);*/
-			region->OnHorizontalScroll = 0;
-		}
-		else if(!strcmp(handler, "OnVerticalScroll"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnVerticalScroll);
-/*            // Update iterator if needed
-            if(onVerticalScrollIterator!=NULL && region==onVerticalScrollIterator->region)
-            {
-                onVerticalScrollIterator = onVerticalScrollIteratorNext; 
-                if(onVerticalScrollIteratorNext != NULL)
-                    onVerticalScrollIteratorNext = onVerticalScrollIteratorNext->next;
-            }
-            if(onVerticalScrollIteratorNext != NULL && region==onVerticalScrollIteratorNext->region)
-            {
-                onVerticalScrollIteratorNext = onVerticalScrollIteratorNext->next;
-            }
-            OnVerticalScrollRegions=RemoveRegionFromChain(OnVerticalScrollRegions, region);*/
-			region->OnVerticalScroll = 0;
-		}
-		else if(!strcmp(handler, "OnMove"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnMove);
-/*            // Update iterator if needed
-            if(onMoveIterator!=NULL && region==onMoveIterator->region)
-            {
-                onMoveIterator = onMoveIteratorNext; 
-                if(onMoveIteratorNext != NULL)
-                    onMoveIteratorNext = onMoveIteratorNext->next;
-            }
-            if(onMoveIteratorNext != NULL && region==onMoveIteratorNext->region)
-            {
-                onMoveIteratorNext = onMoveIteratorNext->next;
-            }*/
-            OnMoveRegions=RemoveRegionFromChain(OnMoveRegions, region);
-			region->OnMove = 0;
-		}
-		else if(!strcmp(handler, "OnPageEntered"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnPageEntered);
-            // Update iterator if needed
-            if(onPageEnteredIterator != NULL && region==onPageEnteredIterator->region)
-            {
-                onPageEnteredIterator = onPageEnteredIteratorNext; 
-                if(onPageEnteredIteratorNext != NULL)
-                    onPageEnteredIteratorNext = onPageEnteredIteratorNext->next;
-            }
-            if(onPageEnteredIteratorNext != NULL && region==onPageEnteredIteratorNext->region)
-            {
-                onPageEnteredIteratorNext = onPageEnteredIteratorNext->next;
-            }
-            OnPageEnteredRegions=RemoveRegionFromChain(OnPageEnteredRegions, region);
-			region->OnPageEntered = 0;
-		}
-		else if(!strcmp(handler, "OnPageLeft"))
-		{
-			luaL_unref(lua, LUA_REGISTRYINDEX, region->OnPageLeft);
-            // Update iterator if needed
-            if(onPageLeftIterator != NULL && region==onPageLeftIterator->region)
-            {
-                onPageLeftIterator = onPageLeftIteratorNext; 
-                if(onPageLeftIteratorNext != NULL)
-                    onPageLeftIteratorNext = onPageLeftIteratorNext->next;
-            }
-            if(onPageLeftIteratorNext != NULL && region==onPageLeftIteratorNext->region)
-            {
-                onPageLeftIteratorNext = onPageLeftIteratorNext->next;
-            }
-            OnPageLeftRegions=RemoveRegionFromChain(OnPageLeftRegions, region);
-			region->OnPageLeft = 0;
-		}
-		else
+        }
+            
+		if(!found)
+        {
 			luaL_error(lua, "Trying to set a script for an unknown event: %s",handler);
 			return 0; // Error, unknown event
+        }
 		return 1;
 	}
 	else
 	{
-	luaL_argcheck(lua, lua_isfunction(lua,3), 3, "'function' expected");
+        luaL_argcheck(lua, lua_isfunction(lua,3), 3, "'function' expected");
 		if(lua_isfunction(lua,3))
 		{
-/*			char* func     = (char*)lua_topointer(lua,3);
-			// <Also get some other info like function name, argument count>
-	
-			// Load the function to memory
-			luaL_loadbuffer(lua,func,strlen(func),"LuaFunction");
-			lua_pop(lua,1);
-*/	
 			// Store funtion reference
 			lua_pushvalue(lua, 3);
 			int func_ref = luaL_ref(lua, LUA_REGISTRYINDEX);
 			
-			// OnDragStart
-			// OnDragStop
-			// OnEnter
-			// OnEvent
-			// OnHide
-			// OnLeave
-			// OnTouchDown
-			// OnTouchUp
-			// OnReceiveDrag (NYI)
-			// OnShow
-			// OnSizeChanged
-			// OnUpdate
-			// OnDoubleTap (UR!)
-			if(!strcmp(handler, "OnDragStart"))
+            bool found = false;
+            for(int i=0; i<MAX_EVENTS; i++)
             {
-//                OnDragStartRegions=AddRegionToChain(OnDragStartRegions, region);
-				region->OnDragStart = func_ref;
+                if(!strcmp(handler, urEventNames[i]))
+                {
+                       AddRegionToChain(EventChain[i], region);
+                       region->OnEvents[i] = func_ref;
+                       found = true;
+                }
             }
-			else if(!strcmp(handler, "OnDragStop"))
+                   
+            if(!found)
             {
-//                OnDragStopRegions=AddRegionToChain(OnDragStopRegions, region);
-				region->OnDragStop = func_ref;
+                luaL_unref(lua, LUA_REGISTRYINDEX, func_ref);
             }
-			else if(!strcmp(handler, "OnEnter"))
-            {
-                OnEnterRegions=AddRegionToChain(OnEnterRegions, region);
-				region->OnEnter = func_ref;
-            }
-/*			else if(!strcmp(handler, "OnEvent"))
-            {
-                OnEventRegions=AddRegionToChain(OnEventRegions, region);
-				region->OnEvent = func_ref;
-            }*/
-			else if(!strcmp(handler, "OnHide"))
-            {
-//                OnHideRegions=AddRegionToChain(OnHideRegions, region);
-				region->OnHide = func_ref;
-            }
-			else if(!strcmp(handler, "OnLeave"))
-            {
-                OnLeaveRegions=AddRegionToChain(OnLeaveRegions, region);
-				region->OnLeave = func_ref;
-            }
-			else if(!strcmp(handler, "OnTouchDown"))
-            {
-//                OnTouchDownRegions=AddRegionToChain(OnTouchDownRegions, region);
-				region->OnTouchDown = func_ref;
-            }
-			else if(!strcmp(handler, "OnTouchUp"))
-            {
-//                OnTouchUpRegions=AddRegionToChain(OnTouchUpRegions, region);
-				region->OnTouchUp = func_ref;
-            }
-			else if(!strcmp(handler, "OnShow"))
-            {
-//                OnShowRegions=AddRegionToChain(OnShowRegions, region);
-				region->OnShow = func_ref;
-            }
-			else if(!strcmp(handler, "OnSizeChanged"))
-            {
-//                OnSizeChangedRegions=AddRegionToChain(OnSizeChangedRegions, region);
-				region->OnSizeChanged = func_ref;
-            }
-			else if(!strcmp(handler, "OnUpdate"))
-            {
-                OnUpdateRegions=AddRegionToChain(OnUpdateRegions, region);
-				region->OnUpdate = func_ref;
-            }
-			else if(!strcmp(handler, "OnDoubleTap"))
-            {
-//                OnDoubleTapRegions=AddRegionToChain(OnDoubleTapRegions, region);
-				region->OnDoubleTap = func_ref;
-            }
-			else if(!strcmp(handler, "OnAccelerate"))
-            {
-                OnAccelerateRegions=AddRegionToChain(OnAccelerateRegions, region);
-				region->OnAccelerate = func_ref;
-            }
-			else if(!strcmp(handler, "OnNetIn"))
-            {
-                OnNetInRegions=AddRegionToChain(OnNetInRegions, region);
-				region->OnNetIn = func_ref;
-            }
-			else if(!strcmp(handler, "OnNetConnect"))
-            {
-                OnNetConnectRegions=AddRegionToChain(OnNetConnectRegions, region);
-				region->OnNetConnect = func_ref;
-            }
-			else if(!strcmp(handler, "OnNetDisconnect"))
-            {
-                OnNetDisconnectRegions=AddRegionToChain(OnNetDisconnectRegions, region);
-				region->OnNetDisconnect = func_ref;
-            }
-			else if(!strcmp(handler, "OnOSCMessage"))
-            {
-                OnOSCMessageRegions=AddRegionToChain(OnOSCMessageRegions, region);
-				region->OnOSCMessage = func_ref;
-            }
-#ifdef SANDWICH_SUPPORT
-			else if(!strcmp(handler, "OnPressure"))
-            {
-                OnPressureRegions=AddRegionToChain(OnPressureRegions, region);
-				region->OnPressure = func_ref;
-            }
-#endif
-#ifdef SOAR_SUPPORT
-			else if(!strcmp(handler, "OnSoarOutput"))
-            {
-                OnSoarOutputRegions=AddRegionToChain(OnSoarOutputRegions, region);
-				region->OnSoarOutput = func_ref;
-            }
-#endif
-			else if(!strcmp(handler, "OnAttitude"))
-            {
-                OnAttitudeRegions=AddRegionToChain(OnAttitudeRegions, region);
-				region->OnAttitude = func_ref;
-            }
-			else if(!strcmp(handler, "OnRotation"))
-            {
-                OnRotationRegions=AddRegionToChain(OnRotationRegions, region);
-				region->OnRotation = func_ref;
-            }
-			else if(!strcmp(handler, "OnHeading"))
-            {
-                OnHeadingRegions=AddRegionToChain(OnHeadingRegions, region);
-				region->OnHeading = func_ref;
-            }
-			else if(!strcmp(handler, "OnLocation"))
-            {
-                OnLocationRegions=AddRegionToChain(OnLocationRegions, region);
-				region->OnLocation = func_ref;
-            }
-			else if(!strcmp(handler, "OnMicrophone"))
-            {
-                OnMicrophoneRegions=AddRegionToChain(OnMicrophoneRegions, region);
-				region->OnMicrophone = func_ref;
-            }
-			else if(!strcmp(handler, "OnHorizontalScroll"))
-            {
- //               OnHorizontalScrollRegions=AddRegionToChain(OnHorizontalScrollRegions, region);
-				region->OnHorizontalScroll = func_ref;
-            }
-			else if(!strcmp(handler, "OnVerticalScroll"))
-            {
-//                OnVerticalScrollRegions=AddRegionToChain(OnVerticalScrollRegions, region);
-				region->OnVerticalScroll = func_ref;
-            }
-			else if(!strcmp(handler, "OnMove"))
-            {
-                OnMoveRegions=AddRegionToChain(OnMoveRegions, region);
-				region->OnMove = func_ref;
-            }
-			else if(!strcmp(handler, "OnPageEntered"))
-            {
-                OnPageEnteredRegions=AddRegionToChain(OnPageEnteredRegions, region);
-				region->OnPageEntered = func_ref;
-            }
-			else if(!strcmp(handler, "OnPageLeft"))
-            {
-                OnPageLeftRegions=AddRegionToChain(OnPageLeftRegions, region);
-				region->OnPageLeft = func_ref;
-            }
-			else
-				luaL_unref(lua, LUA_REGISTRYINDEX, func_ref);
-			
-			// OK! 
+
+            // OK! 
 			return 1;
 		}
 		return 0;
@@ -2677,8 +1605,8 @@ int region_Show(lua_State* lua)
 	if(visibleparent(region)) // Check visibility change for children
 	{
 		region->isVisible = true;
-		if(region->OnShow != 0)
-			callScript(region->OnShow, region);
+		if(region->OnEvents[OnShow] != 0)
+			callScript(region->OnEvents[OnShow], region);
 		showchildren(region);
 	}
 	return 0;
@@ -2689,8 +1617,8 @@ int region_Hide(lua_State* lua)
 	urAPI_Region_t* region = checkregion(lua,1);
 	region->isVisible = false;
 	region->isShown = false;
-	if(region->OnHide != 0)
-		callScript(region->OnHide, region);
+	if(region->OnEvents[OnHide] != 0)
+		callScript(region->OnEvents[OnHide], region);
 	hidechildren(region); // parent got hidden so hide children too.
 	return 0;
 }
@@ -3111,7 +2039,6 @@ int region_Layer(lua_State* lua)
 	return 1;
 }
 
-// NEW!!
 int region_Lower(lua_State* lua)
 {
 	urAPI_Region_t* region = checkregion(lua,1);
@@ -3193,36 +2120,6 @@ int region_Free(lua_State* lua)
     return 0;
 }
 
-int l_FreeAllRegions(lua_State* lua)
-{
-	urAPI_Region_t* t=lastRegion[currentPage];
-	urAPI_Region_t* p;
-	
-	while(t != nil)
-	{
-		t->isVisible = false;
-		t->isShown = false;
-		t->isMovable = false;
-		t->isResizable = false;
-		t->isTouchEnabled = false;
-		t->isScrollXEnabled = false;
-		t->isScrollYEnabled = false;
-		t->isVisible = false;
-		t->isShown = false;
-		t->isDragged = false;
-		t->isResized = false;
-		t->isClamped = false;
-		t->isClipping = false;
-		
-		p=t->prev;
-		
-		freeRegion(t);
-
-		t = p;
-	}
-	return 0;
-}
-
 int region_IsToplevel(lua_State* lua)
 {
 	urAPI_Region_t* region = checkregion(lua,1);
@@ -3258,8 +2155,6 @@ int region_MoveToTop(lua_State* lua)
 	}
 	return 0;
 }
-
-// ENDNEW!!
 
 void instantiateTexture(urAPI_Region_t* t);
 void instantiateAllTextures(urAPI_Region_t* t);
@@ -3449,280 +2344,11 @@ int region_TextLabel(lua_State* lua)
 	return 1;
 }
 
-#include <vector>
-#include <string>
 
-static std::vector<std::string> ur_log;
 
-void ur_Log(const char * str) {
-	ur_log.push_back(str);
-}
-
-char * ur_GetLog(int since, int *nlog) {
-	if(since<0) since=0;
-	std::string str="";
-	for(int i=since;i<ur_log.size();i++) {
-		str+=ur_log[i];
-		str+="\n";
-	}
-	char *result=(char *)malloc(str.length()+1);
-	strcpy(result, str.c_str());
-	*nlog=ur_log.size();
-	return result;
-}
-
-int l_DPrint(lua_State* lua)
-{
-	const char* str = luaL_checkstring(lua,1);
-	if(str!=nil)
-	{
-		ur_Log(str);
-		errorstr = str;
-		newerror = true;
-	}
-	return 0;
-}
-
-int l_InputFocus(lua_State* lua)
-{
-	// NYI
-	return 0;
-}
-
-int l_HasInput(lua_State* lua)
-{
-	urAPI_Region_t* t = checkregion(lua, 1);
-	bool isover = false;
-	
-	float x,y;
-
-	// NYI
-	
-	if(x >= t->left && x <= t->left+t->width &&
-	   y >= t->bottom && y <= t->bottom+t->height /*&& t->isTouchEnabled*/)
-		isover = true;
-	lua_pushboolean(lua, isover);
-	return 1;
-}
-
-extern int SCREEN_WIDTH;
-extern int SCREEN_HEIGHT;
-
-int l_ScreenHeight(lua_State* lua)
-{
-	lua_pushnumber(lua, SCREEN_HEIGHT);
-	return 1;
-}
-
-int l_ScreenWidth(lua_State* lua)
-{
-	lua_pushnumber(lua, SCREEN_WIDTH);
-	return 1;
-}
-
-extern float cursorpositionx[MAX_FINGERS];
-extern float cursorpositiony[MAX_FINGERS];
-
-// UR: New arg "finger" allows to specify which finger to get position for. nil defaults to 0.
-int l_InputPosition(lua_State* lua)
-{
-	int finger = 0;
-	if(lua_gettop(lua) > 0 && !lua_isnil(lua, 1))
-		finger = luaL_checknumber(lua, 1);
-	lua_pushnumber(lua, cursorpositionx[finger]);
-	lua_pushnumber(lua, SCREEN_HEIGHT-cursorpositiony[finger]);
-	return 2;
-}
-
-int l_Time(lua_State* lua)
-{
-	lua_pushnumber(lua, systimer->elapsedSec());
-	return 1;
-}
-
-int l_RunScript(lua_State* lua)
-{
-	const char* script = luaL_checkstring(lua,1);
-	if(script != NULL)
-		luaL_dostring(lua,script);
-	return 0;
-}
-
-int l_StartHTTPServer(lua_State *lua)
-{
-	NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
-	NSArray *paths;
-	paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-	NSString *documentPath;
-	if ([paths count] > 0)
-		documentPath = [paths objectAtIndex:0];
-
-	// start off http server
-	http_start([resourcePath UTF8String],
-			   [documentPath UTF8String]);
-	return 0;
-}
-
-int l_StopHTTPServer(lua_State *lua)
-{
-	http_stop();
-	return 0;
-}
-
-int l_HTTPServer(lua_State *lua)
-{
-	const char *ip = http_ip_address();
-	if (ip) {
-		lua_pushstring(lua, ip);
-		lua_pushstring(lua, http_ip_port());
-		return 2;
-	} else {
-		return 0;
-	}
-}
-	
-MoNet myoscnet;
-	
-void oscCallBack(osc::ReceivedMessageArgumentStream & argument_stream, void * data)
-{
-//	float num;
-//	argument_stream >> num;
-	callAllOnOSCMessage(argument_stream);
-}	
-	
-void oscCallBack2(osc::ReceivedMessageArgumentStream & argument_stream, void * data)
-{
-	const char *str;
-	argument_stream >> str;
-	callAllOnOSCString(str);
-}	
-
-int l_StartOSCListener(lua_State *lua)
-{
-	myoscnet.addAddressCallback("/urMus/numbers",oscCallBack);
-	myoscnet.addAddressCallback("/urMus/text",oscCallBack2);
-	myoscnet.startListening();
-	lua_pushstring(lua, myoscnet.getMyIPaddress().c_str());
-	lua_pushnumber(lua, myoscnet.getListeningPort());
-	return 2;
-}
-
-int l_StopOSCListener(lua_State *lua)
-{
-	myoscnet.stopListening();
-	return 0;
-}
-	
-int l_SetOSCPort(lua_State *lua)
-{
-	int port = luaL_checknumber(lua,1);
-	myoscnet.setListeningPort(port);
-	return 0;
-}
-
-int l_OSCPort(lua_State *lua)
-{
-	lua_pushnumber(lua, myoscnet.getListeningPort());
-	return 1;
-}
-
-int l_IPAddress(lua_State *lua)
-{
-	lua_pushstring(lua, myoscnet.getMyIPaddress().c_str());
-	return 1;
-}
-	
-//char  types[1] = {'f'};
-char types[255];
-	
-int l_SendOSCMessage(lua_State *lua)
-{
-	const char* ip = luaL_checkstring(lua,1);
-	int port = luaL_checknumber(lua,2);
-	const char* pattern = luaL_checkstring(lua,3);
-
-	myoscnet.startSendStream(ip,port);
-	myoscnet.startSendMessage(pattern);
-	
-	int len = 1;
-	while (lua_isnoneornil(lua,len+3)==0)
-	{
-		if(lua_isnumber(lua, len+3)==1)
-		{
-			myoscnet.addSendFloat(luaL_checknumber(lua,len+3));
-		}
-		else if(lua_isstring(lua, len+3)==1)
-		{
-			myoscnet.addSendString(luaL_checkstring(lua,len+3));
-		}
-		// TODO: handle OSC-blob type, defined in the OSC specs
-		len = len +1;
-	}
-	
-	myoscnet.endSendMessage();
-	myoscnet.closeSendStream();
-		
-	return 0;
-}
-	
-int l_NetAdvertise(lua_State* lua)
-{
-	const char* nsid = luaL_checkstring(lua, 1);
-	int port = luaL_checknumber(lua, 2);
-	
-	Net_Advertise(nsid, port);
-    return 0;
-}
-
-int l_NetFind(lua_State* lua)
-{
-	const char* nsid = luaL_checkstring(lua, 1);
-	
-	Net_Find(nsid);
-    return 0;
-}
-
-int l_StopNetAdvertise(lua_State* lua)
-{
-	const char* nsid = luaL_checkstring(lua, 1);
-	Stop_Net_Advertise(nsid);
-    return 0;
-}
-
-int l_StopNetFind(lua_State* lua)
-{
-	const char* nsid = luaL_checkstring(lua, 1);
-	Stop_Net_Find(nsid);
-    return 0;
-}
-
-static int audio_initialized = false;
-
-int l_StartAudio(lua_State* lua)
-{
-	if(!audio_initialized)
-	{
-		initializeRIOAudioLayer();
-	}
-	else
-		playRIOAudioLayer();
-
-	return 0;
-}
-
-int l_PauseAudio(lua_State* lua)
-{
-	stopRIOAudioLayer();
-
-	return 0;
-}
-
-static int l_setanimspeed(lua_State *lua)
-{
-	double ds = luaL_checknumber(lua, 1);
-	g_glView.animationInterval = ds;
-	return 0;
-}
+//------------------------------------------------------------------------------
+// Texture Member urMus lua API function implementations
+//------------------------------------------------------------------------------
 
 int texture_SetTexture(lua_State* lua)
 {
@@ -4036,7 +2662,7 @@ int texture_SetBlendMode(lua_State* lua)
 			t->blendmode = BLEND_SUB;
 		else
 		{
-			// NYI unknown blend
+			luaL_error(lua, "Unknown blend mode: %s", blendmode);
 		}
 		   
 	return 0;
@@ -4068,8 +2694,7 @@ int texture_BlendMode(lua_State* lua)
 			break;
 		default:
 			luaL_error(lua, "Bogus blend mode found! Please report.");
-			return 0; // Error, unknown event
-//			returnstr = BLENDSTR_DISABLED; // This should never happen!! Error case NYI
+			return 0;
 			break;
 	}
 	lua_pushstring(lua, returnstr);
@@ -4312,7 +2937,7 @@ int textlabel_Font(lua_State* lua)
 int textlabel_SetFont(lua_State* lua)
 {
 	urAPI_TextLabel_t* t = checktextlabel(lua, 1);
-	t->font = luaL_checkstring(lua,2); // NYI
+	t->font = luaL_checkstring(lua,2);
 	return 0;
 }
 
@@ -4505,14 +3130,14 @@ int textlabel_SetColor(lua_State* lua)
 int textlabel_Height(lua_State* lua)
 {
 	urAPI_TextLabel_t* t = checktextlabel(lua, 1);
-	lua_pushnumber(lua, t->stringheight); // NYI
+	lua_pushnumber(lua, t->stringheight);
 	return 1;
 }
 
 int textlabel_Width(lua_State* lua)
 {
 	urAPI_TextLabel_t* t = checktextlabel(lua, 1);
-	lua_pushnumber(lua, t->stringwidth); // NYI
+	lua_pushnumber(lua, t->stringwidth);
 	return 1;
 }
 
@@ -4973,13 +3598,11 @@ static const struct luaL_reg regionfuncs [] =
 	{"Layer", region_Layer},
 	{"Texture", region_Texture},
 	{"TextLabel", region_TextLabel},
-	// NEW!!
 	{"Lower", region_Lower},
 	{"Raise", region_Raise},
 	{"IsToplevel", region_IsToplevel},
 	{"MoveToTop", region_MoveToTop},
 	{"EnableClamping", region_EnableClamping},
-	// ENDNEW!!
 	{"RegionOverlap", region_RegionOverlap},
 	{"UseAsBrush", region_UseAsBrush},
 	{"EnableClipping", region_EnableClipping},
@@ -5057,172 +3680,9 @@ void removeChild(urAPI_Region_t *parent, urAPI_Region_t *child)
 	}
 }
 
-int l_SoarEnabled(lua_State* lua)
-{
-	bool soar_enabled = false;
-	
-#ifdef SOAR_SUPPORT
-	soar_enabled = true;
-#endif
-	
-	lua_pushboolean(lua, soar_enabled);
-	return 1;
-}
-
-static int l_Region(lua_State *lua)
-{
-	const char *regiontype = NULL;
-	const char *regionName = NULL;
-	urAPI_Region_t *parentRegion = NULL;
-
-	if(lua_gettop(lua)>0) // Allow for no arg construction
-	{
-	
-		regiontype = luaL_checkstring(lua, 1);
-		regionName = luaL_checkstring(lua, 2);
-	
-		//	urAPI_Region_t *parentRegion = (urAPI_Region_t*)luaL_checkudata(lua, 4, "URAPI.region");
-		luaL_checktype(lua, 3, LUA_TTABLE);
-		lua_rawgeti(lua, 3, 0);
-		parentRegion = (urAPI_Region_t*)lua_touserdata(lua,4);
-		luaL_argcheck(lua, parentRegion!= NULL, 4, "'region' expected");
-		//	const char *inheritsRegion = luaL_checkstring(lua, 1); //NYI
-	}
-	else
-	{
-		parentRegion = UIParent;
-	}
-		
-	// NEW!! Return region in a table at index 0
-	
-	lua_newtable(lua);
-	luaL_register(lua, NULL, regionfuncs);
-	//	urAPI_Region_t *myregion = (urAPI_Region_t*)lua_newuserdata(lua, sizeof(urAPI_Region_t)); // User data is our value
-	urAPI_Region_t *myregion = (urAPI_Region_t*)malloc(sizeof(urAPI_Region_t)); // User data is our value
-	lua_pushlightuserdata(lua, myregion);
-//	luaL_register(lua, NULL, regionmetas);
-//	luaL_openlib(lua, 0, regionmetas, 0);  /* fill metatable */
-	lua_rawseti(lua, -2, 0); // Set this to index 0
-	myregion->tableref = luaL_ref(lua, LUA_REGISTRYINDEX);
-	lua_rawgeti(lua, LUA_REGISTRYINDEX, myregion->tableref);
-    lua_pushliteral(lua, "__gc");  /* mutex destructor */
-    lua_pushcfunction(lua, region_gc);
-    lua_rawset(lua, -3);
-	
-	// ENDNEW!!
-//	luaL_getmetatable(lua, "URAPI.region");
-//	lua_setmetatable(lua, -2);
-	
-	
-	myregion->next = nil;
-	myregion->parent = parentRegion;
-	myregion->firstchild = NULL;
-	myregion->nextchild = NULL;
-//	addChild(parentRegion, myregion);
-	//	myregion->name = regionName; // NYI
-	
-	// Link it into the global region list
-	
-	myregion->name = regionName;
-	myregion->type = regiontype;
-	myregion->ofsx = 0.0;
-	myregion->ofsy = 0.0;
-	myregion->width = 160.0;
-	myregion->height = 160.0;
-	myregion->bottom = 1.0;
-	myregion->left = 1.0;
-	myregion->top = myregion->bottom + myregion->height;
-	myregion->right = myregion->left + myregion->width;
-	myregion->cx = 80.0;
-	myregion->cy = 80.0;
-	
-	myregion->clipleft = 0.0;
-	myregion->clipbottom = 0.0;
-	myregion->clipwidth = SCREEN_WIDTH;
-	myregion->clipheight = SCREEN_HEIGHT;
-	
-	myregion->alpha = 1.0;
-	
-	myregion->isMovable = false;
-	myregion->isResizable = false;
-	myregion->isTouchEnabled = false;
-	myregion->isScrollXEnabled = false;
-	myregion->isScrollYEnabled = false;
-	myregion->isVisible = false;
-	myregion->isDragged = false;
-	myregion->isClamped = false;
-	myregion->isClipping = false;
-	
-	myregion->entered = false;
-	
-	myregion->strata = STRATA_PARENT;
-	
-	myregion->OnDragStart = 0;
-	myregion->OnDragStop = 0;
-	myregion->OnEnter = 0;
-//	myregion->OnEvent = 0;
-	myregion->OnHide = 0;
-	myregion->OnLeave = 0;
-	myregion->OnTouchDown = 0;
-	myregion->OnTouchUp = 0;
-	myregion->OnShow = 0;
-	myregion->OnSizeChanged = 0; // needs args (NYI)
-	myregion->OnUpdate = 0;
-	myregion->OnDoubleTap = 0; // (UR!)
-	// All UR!
-	myregion->OnAccelerate = 0;
-	myregion->OnNetIn = 0;
-	myregion->OnNetConnect = 0;
-	myregion->OnNetDisconnect = 0;
-	myregion->OnOSCMessage = 0;
-#ifdef SANDWICH_SUPPORT
-	myregion->OnPressure = 0;
-#endif
-#ifdef SOAR_SUPPORT
-	myregion->OnSoarOutput = 0;
-	myregion->soarKernel = NULL;
-	myregion->soarAgent = NULL;
-#endif
-	myregion->OnHeading = 0;
-	myregion->OnRotation = 0;
-	myregion->OnLocation = 0;
-	myregion->OnMicrophone = 0;
-	myregion->OnHorizontalScroll = 0;
-	myregion->OnVerticalScroll = 0;
-	myregion->OnMove = 0;
-	myregion->OnPageEntered = 0;
-	myregion->OnPageLeft = 0;
-	
-	myregion->texture = NULL;
-	myregion->textlabel = NULL;
-	
-	myregion->point = NULL;
-	myregion->relativePoint = NULL;
-	myregion->relativeRegion = NULL;
-	myregion->page = currentPage;
-	
-	if(firstRegion[currentPage] == nil) // first region ever
-	{
-		firstRegion[currentPage] = myregion;
-		lastRegion[currentPage] = myregion;
-		myregion->next = NULL;
-		myregion->prev = NULL;
-	}
-	else
-	{
-		myregion->prev = lastRegion[currentPage];
-		lastRegion[currentPage]->next = myregion;
-		lastRegion[currentPage] = myregion;
-		l_setstrataindex(myregion , myregion->strata);
-	}
-	// NEW!!
-	numRegions[currentPage] ++;
-	// ENDNEW!!
-
-	setParent(myregion, parentRegion);
-	
-	return 1;
-}
+//------------------------------------------------------------------------------
+// Flowbox Member urMus API
+//------------------------------------------------------------------------------
 
 int flowbox_Name(lua_State *lua)
 {
@@ -5237,7 +3697,7 @@ int flowbox_Name(lua_State *lua)
 int flowbox_SetPushLink(lua_State *lua)
 {
 	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
-
+    
 	int outindex = luaL_checknumber(lua,2);
 	ursAPI_FlowBox_t* target = checkflowbox(lua, 3);
 	int inindex = luaL_checknumber(lua, 4);
@@ -5248,7 +3708,7 @@ int flowbox_SetPushLink(lua_State *lua)
 	}
 	
 	fb->object->AddPushOut(outindex, &target->object->ins[inindex]);
-
+    
     lua_pushboolean(lua, 1);
 	return 1;
 }
@@ -5267,13 +3727,13 @@ int flowbox_SetPullLink(lua_State *lua)
 	}
 	
 	fb->object->AddPullIn(inindex, &target->object->outs[outindex]);
-
+    
 	if(!strcmp(fb->object->name,dacobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
 		urActiveDacTickSinkList.AddSink(&target->object->outs[outindex]);
 	
 	if(!strcmp(fb->object->name,visobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
 		urActiveVisTickSinkList.AddSink(&target->object->outs[outindex]);
-
+    
 	if(!strcmp(fb->object->name,netobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
 		urActiveNetTickSinkList.AddSink(&target->object->outs[outindex]);
     
@@ -5288,7 +3748,7 @@ int flowbox_IsPushed(lua_State *lua)
 	int outindex = luaL_checknumber(lua,2);
 	ursAPI_FlowBox_t* target = checkflowbox(lua, 3);
 	int inindex = luaL_checknumber(lua, 4);
-
+    
 	if(outindex >= fb->object->nr_outs || inindex >= target->object->nr_ins)
 	{
 		return 0;
@@ -5325,14 +3785,14 @@ int flowbox_IsPulled(lua_State *lua)
 		return 0;
 }
 
-	
+
 /* UNFINISHED void removeAllPushLinks(ursAPI_FlowBox_t* fb)
-{
-	for
-	fb->object->RemovePushOut(outindex, &target->object->ins[inindex]);
-}	
-	*/
-	
+ {
+ for
+ fb->object->RemovePushOut(outindex, &target->object->ins[inindex]);
+ }	
+ */
+
 int flowbox_RemovePushLink(lua_State *lua)
 {
 	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
@@ -5347,7 +3807,7 @@ int flowbox_RemovePushLink(lua_State *lua)
 	}
 	
 	fb->object->RemovePushOut(outindex, &target->object->ins[inindex]);
-
+    
     lua_pushboolean(lua, 1);
 	return 1;
 }
@@ -5372,7 +3832,7 @@ int flowbox_RemovePullLink(lua_State *lua)
 	
 	if(!strcmp(fb->object->name,visobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
 		urActiveVisTickSinkList.RemoveSink(&target->object->outs[outindex]);
-
+    
 	if(!strcmp(fb->object->name,netobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
 		urActiveNetTickSinkList.RemoveSink(&target->object->outs[outindex]);
 	
@@ -5407,7 +3867,7 @@ int flowbox_IsPlaced(lua_State *lua)
 int flowbox_NumIns(lua_State *lua)
 {
 	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
-
+    
 	lua_pushnumber(lua, fb->object->nr_ins);
 	return 1;
 }
@@ -5426,19 +3886,19 @@ int flowbox_Ins(lua_State *lua)
 	
 	int nrins = fb->object->lastin;
 	for(int j=0; j< nrins; j++)
-//		if(fb->object->ins[j].name!=(void*)0x1)
-			lua_pushstring(lua, fb->object->ins[j].name);
-//		else {
-//			int a=2;
-//		}
-
+        //		if(fb->object->ins[j].name!=(void*)0x1)
+        lua_pushstring(lua, fb->object->ins[j].name);
+    //		else {
+    //			int a=2;
+    //		}
+    
 	return nrins;
 }
 
 int flowbox_Outs(lua_State *lua)
 {
 	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
-
+    
 	int nrouts = fb->object->lastout;
 	for(int j=0; j< nrouts; j++)
 		lua_pushstring(lua, fb->object->outs[j].name);
@@ -5449,21 +3909,21 @@ int flowbox_Push(lua_State *lua)
 {
 	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
 	float indata = luaL_checknumber(lua, 2);
-
+    
 	fb->object->CallAllPushOuts(indata);
-/*	if(fb->object->firstpushout[0]!=NULL)
-	{
-		ursObject* inobject;
-		urSoundPushOut* pushto = fb->object->firstpushout[0];
-		for(;pushto!=NULL; pushto = pushto->next)
-		{	
-			urSoundIn* in = pushto->in;
-			inobject = in->object;
-			in->inFuncTick(inobject, indata);
-		}
-	}*/
-//	callAllPushSources(indata);
-
+    /*	if(fb->object->firstpushout[0]!=NULL)
+     {
+     ursObject* inobject;
+     urSoundPushOut* pushto = fb->object->firstpushout[0];
+     for(;pushto!=NULL; pushto = pushto->next)
+     {	
+     urSoundIn* in = pushto->in;
+     inobject = in->object;
+     in->inFuncTick(inobject, indata);
+     }
+     }*/
+    //	callAllPushSources(indata);
+    
 	return 0;
 }
 
@@ -5481,8 +3941,8 @@ extern double visoutdata;
 
 int flowbox_Get(lua_State *lua)
 {
-//	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
-//	float indata = luaL_checknumber(lua, 2);
+    //	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
+    //	float indata = luaL_checknumber(lua, 2);
 	
 	lua_pushnumber(lua, visoutdata);
 	
@@ -5493,7 +3953,7 @@ int flowbox_AddFile(lua_State *lua)
 {
 	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
 	const char* filename = luaL_checkstring(lua, 2);
-
+    
 	if(!strcmp(fb->object->name, "Sample"))
 	{
 		Sample_AddFile(fb->object, filename);
@@ -5572,29 +4032,29 @@ int flowbox_IsCoupled(lua_State *lua)
 
 static const struct luaL_reg flowboxfuncs [] = 
 {
-{"Name", flowbox_Name},
-{"NumIns", flowbox_NumIns},
-{"NumOuts", flowbox_NumOuts},
-{"Ins", flowbox_Ins},
-{"Outs", flowbox_Outs},
-{"SetPushLink", flowbox_SetPushLink},
-{"SetPullLink", flowbox_SetPullLink},
-{"RemovePushLink", flowbox_RemovePushLink},
-{"RemovePullLink", flowbox_RemovePullLink},
-{"IsPushed", flowbox_IsPushed},
-{"IsPulled", flowbox_IsPulled},
-{"Push", flowbox_Push},
-{"Pull", flowbox_Pull},
-{"Get", flowbox_Get},
-{"AddFile", flowbox_AddFile},
-{"ReadFile", flowbox_ReadFile},
-{"WriteFile", flowbox_WriteFile},
-{"IsInstantiable", flowbox_IsInstantiable},
-{"InstanceNumber", flowbox_InstanceNumber},
-{"NumberInstances", flowbox_NumberInstances},
-{"Couple", flowbox_Couple},
-{"IsCoupled", flowbox_IsCoupled},
-{NULL, NULL}
+    {"Name", flowbox_Name},
+    {"NumIns", flowbox_NumIns},
+    {"NumOuts", flowbox_NumOuts},
+    {"Ins", flowbox_Ins},
+    {"Outs", flowbox_Outs},
+    {"SetPushLink", flowbox_SetPushLink},
+    {"SetPullLink", flowbox_SetPullLink},
+    {"RemovePushLink", flowbox_RemovePushLink},
+    {"RemovePullLink", flowbox_RemovePullLink},
+    {"IsPushed", flowbox_IsPushed},
+    {"IsPulled", flowbox_IsPulled},
+    {"Push", flowbox_Push},
+    {"Pull", flowbox_Pull},
+    {"Get", flowbox_Get},
+    {"AddFile", flowbox_AddFile},
+    {"ReadFile", flowbox_ReadFile},
+    {"WriteFile", flowbox_WriteFile},
+    {"IsInstantiable", flowbox_IsInstantiable},
+    {"InstanceNumber", flowbox_InstanceNumber},
+    {"NumberInstances", flowbox_NumberInstances},
+    {"Couple", flowbox_Couple},
+    {"IsCoupled", flowbox_IsCoupled},
+    {NULL, NULL}
 };
 
 static int addToPatch(ursAPI_FlowBox_t* flowbox)
@@ -5616,7 +4076,528 @@ static int addToPatch(ursAPI_FlowBox_t* flowbox)
 static void removeFlowboxLinks(ursAPI_FlowBox_t* flowbox)
 {
 }
+
+//------------------------------------------------------------------------------
+// Logging support (for HTML editor)
+//------------------------------------------------------------------------------
+
+#include <vector>
+#include <string>
+
+static std::vector<std::string> ur_log;
+
+void ur_Log(const char * str) {
+	ur_log.push_back(str);
+}
+
+char * ur_GetLog(int since, int *nlog) {
+	if(since<0) since=0;
+	std::string str="";
+	for(int i=since;i<ur_log.size();i++) {
+		str+=ur_log[i];
+		str+="\n";
+	}
+	char *result=(char *)malloc(str.length()+1);
+	strcpy(result, str.c_str());
+	*nlog=ur_log.size();
+	return result;
+}
+
+//------------------------------------------------------------------------------
+// Global urMus lua API function implementations
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// Debug Printing
+//------------------------------------------------------------------------------
+
+int l_DPrint(lua_State* lua)
+{
+	const char* str = luaL_checkstring(lua,1);
+	if(str!=nil)
+	{
+		ur_Log(str);
+		errorstr = str;
+		newerror = true;
+	}
+	return 0;
+}
+
+//------------------------------------------------------------------------------
+// Region-related global API
+//------------------------------------------------------------------------------
+
+static int l_Region(lua_State *lua)
+{
+	const char *regiontype = NULL;
+	const char *regionName = NULL;
+	urAPI_Region_t *parentRegion = NULL;
+    
+	if(lua_gettop(lua)>0) // Allow for no arg construction
+	{
+        
+		regiontype = luaL_checkstring(lua, 1);
+		regionName = luaL_checkstring(lua, 2);
+        
+		//	urAPI_Region_t *parentRegion = (urAPI_Region_t*)luaL_checkudata(lua, 4, "URAPI.region");
+		luaL_checktype(lua, 3, LUA_TTABLE);
+		lua_rawgeti(lua, 3, 0);
+		parentRegion = (urAPI_Region_t*)lua_touserdata(lua,4);
+		luaL_argcheck(lua, parentRegion!= NULL, 4, "'region' expected");
+		//	const char *inheritsRegion = luaL_checkstring(lua, 1); //NYI
+	}
+	else
+	{
+		parentRegion = UIParent;
+	}
+    
+	lua_newtable(lua);
+	luaL_register(lua, NULL, regionfuncs);
+	//	urAPI_Region_t *myregion = (urAPI_Region_t*)lua_newuserdata(lua, sizeof(urAPI_Region_t)); // User data is our value
+	urAPI_Region_t *myregion = (urAPI_Region_t*)malloc(sizeof(urAPI_Region_t)); // User data is our value
+	lua_pushlightuserdata(lua, myregion);
+    //	luaL_register(lua, NULL, regionmetas);
+    //	luaL_openlib(lua, 0, regionmetas, 0);  /* fill metatable */
+	lua_rawseti(lua, -2, 0); // Set this to index 0
+	myregion->tableref = luaL_ref(lua, LUA_REGISTRYINDEX);
+	lua_rawgeti(lua, LUA_REGISTRYINDEX, myregion->tableref);
+    lua_pushliteral(lua, "__gc");  /* mutex destructor */
+    lua_pushcfunction(lua, region_gc);
+    lua_rawset(lua, -3);
 	
+    //	luaL_getmetatable(lua, "URAPI.region");
+    //	lua_setmetatable(lua, -2);
+	
+	
+	myregion->next = nil;
+	myregion->parent = parentRegion;
+	myregion->firstchild = NULL;
+	myregion->nextchild = NULL;
+    //	addChild(parentRegion, myregion);
+	//	myregion->name = regionName; // NYI
+	
+	// Link it into the global region list
+	
+	myregion->name = regionName;
+	myregion->type = regiontype;
+	myregion->ofsx = 0.0;
+	myregion->ofsy = 0.0;
+	myregion->width = 160.0;
+	myregion->height = 160.0;
+	myregion->bottom = 1.0;
+	myregion->left = 1.0;
+	myregion->top = myregion->bottom + myregion->height;
+	myregion->right = myregion->left + myregion->width;
+	myregion->cx = 80.0;
+	myregion->cy = 80.0;
+	
+	myregion->clipleft = 0.0;
+	myregion->clipbottom = 0.0;
+	myregion->clipwidth = SCREEN_WIDTH;
+	myregion->clipheight = SCREEN_HEIGHT;
+	
+	myregion->alpha = 1.0;
+	
+	myregion->isMovable = false;
+	myregion->isResizable = false;
+	myregion->isTouchEnabled = false;
+	myregion->isScrollXEnabled = false;
+	myregion->isScrollYEnabled = false;
+	myregion->isVisible = false;
+	myregion->isDragged = false;
+	myregion->isClamped = false;
+	myregion->isClipping = false;
+	
+	myregion->entered = false;
+	
+	myregion->strata = STRATA_PARENT;
+    
+	for(int i =0; i< MAX_EVENTS; i++)
+        myregion->OnEvents[i] = 0;
+	
+	myregion->texture = NULL;
+	myregion->textlabel = NULL;
+	
+	myregion->point = NULL;
+	myregion->relativePoint = NULL;
+	myregion->relativeRegion = NULL;
+	myregion->page = currentPage;
+	
+	if(firstRegion[currentPage] == nil) // first region ever
+	{
+		firstRegion[currentPage] = myregion;
+		lastRegion[currentPage] = myregion;
+		myregion->next = NULL;
+		myregion->prev = NULL;
+	}
+	else
+	{
+		myregion->prev = lastRegion[currentPage];
+		lastRegion[currentPage]->next = myregion;
+		lastRegion[currentPage] = myregion;
+		l_setstrataindex(myregion , myregion->strata);
+	}
+    
+	numRegions[currentPage] ++;
+    
+	setParent(myregion, parentRegion);
+	
+	return 1;
+}
+
+int l_FreeAllRegions(lua_State* lua)
+{
+	urAPI_Region_t* t=lastRegion[currentPage];
+	urAPI_Region_t* p;
+	
+	while(t != nil)
+	{
+		t->isVisible = false;
+		t->isShown = false;
+		t->isMovable = false;
+		t->isResizable = false;
+		t->isTouchEnabled = false;
+		t->isScrollXEnabled = false;
+		t->isScrollYEnabled = false;
+		t->isVisible = false;
+		t->isShown = false;
+		t->isDragged = false;
+		t->isResized = false;
+		t->isClamped = false;
+		t->isClipping = false;
+		
+		p=t->prev;
+		
+		freeRegion(t);
+        
+		t = p;
+	}
+	return 0;
+}
+
+int l_InputFocus(lua_State* lua)
+{
+	// NYI
+	return 0;
+}
+
+int l_HasInput(lua_State* lua)
+{
+	urAPI_Region_t* t = checkregion(lua, 1);
+	bool isover = false;
+	
+	float x,y;
+    
+	// NYI
+	
+	if(x >= t->left && x <= t->left+t->width &&
+	   y >= t->bottom && y <= t->bottom+t->height /*&& t->isTouchEnabled*/)
+		isover = true;
+	lua_pushboolean(lua, isover);
+	return 1;
+}
+
+extern float cursorpositionx[MAX_FINGERS];
+extern float cursorpositiony[MAX_FINGERS];
+
+// UR: New arg "finger" allows to specify which finger to get position for. nil defaults to 0.
+int l_InputPosition(lua_State* lua)
+{
+	int finger = 0;
+	if(lua_gettop(lua) > 0 && !lua_isnil(lua, 1))
+		finger = luaL_checknumber(lua, 1);
+	lua_pushnumber(lua, cursorpositionx[finger]);
+	lua_pushnumber(lua, SCREEN_HEIGHT-cursorpositiony[finger]);
+	return 2;
+}
+
+static int l_NumRegions(lua_State *lua)
+{
+	lua_pushnumber(lua, numRegions[currentPage]);
+	return 1;
+}
+
+static int l_EnumerateRegions(lua_State *lua)
+{
+	urAPI_Region_t* region;
+    
+	if(lua_isnil(lua,1))
+	{
+		region = UIParent->next;
+	}
+	else
+	{
+		region = checkregion(lua,1);
+		if(region!=nil)
+			region = region->next;
+	}
+	
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
+	
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+// Display-related global API
+//------------------------------------------------------------------------------
+
+static int l_setanimspeed(lua_State *lua)
+{
+	double ds = luaL_checknumber(lua, 1);
+	g_glView.animationInterval = ds;
+	return 0;
+}
+
+int l_ScreenHeight(lua_State* lua)
+{
+	lua_pushnumber(lua, SCREEN_HEIGHT);
+	return 1;
+}
+
+int l_ScreenWidth(lua_State* lua)
+{
+	lua_pushnumber(lua, SCREEN_WIDTH);
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+// System-related global API
+//------------------------------------------------------------------------------
+
+int l_Time(lua_State* lua)
+{
+	lua_pushnumber(lua, systimer->elapsedSec());
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+// Lua-related global API
+//------------------------------------------------------------------------------
+
+
+int l_RunScript(lua_State* lua)
+{
+	const char* script = luaL_checkstring(lua,1);
+	if(script != NULL)
+		luaL_dostring(lua,script);
+	return 0;
+}
+
+//------------------------------------------------------------------------------
+// HTTP Server global API
+//------------------------------------------------------------------------------
+
+int l_StartHTTPServer(lua_State *lua)
+{
+	NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
+	NSArray *paths;
+	paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+	NSString *documentPath;
+	if ([paths count] > 0)
+		documentPath = [paths objectAtIndex:0];
+    
+	// start off http server
+	http_start([resourcePath UTF8String],
+			   [documentPath UTF8String]);
+	return 0;
+}
+
+int l_StopHTTPServer(lua_State *lua)
+{
+	http_stop();
+	return 0;
+}
+
+int l_HTTPServer(lua_State *lua)
+{
+	const char *ip = http_ip_address();
+	if (ip) {
+		lua_pushstring(lua, ip);
+		lua_pushstring(lua, http_ip_port());
+		return 2;
+	} else {
+		return 0;
+	}
+}
+
+//------------------------------------------------------------------------------
+// OSC-related global API
+//------------------------------------------------------------------------------
+
+MoNet myoscnet;
+
+void oscCallBack(osc::ReceivedMessageArgumentStream & argument_stream, void * data)
+{
+    //	float num;
+    //	argument_stream >> num;
+	callAllOnOSCMessage(argument_stream);
+}	
+
+void oscCallBack2(osc::ReceivedMessageArgumentStream & argument_stream, void * data)
+{
+	const char *str;
+	argument_stream >> str;
+	callAllOnOSCString(str);
+}	
+
+int l_StartOSCListener(lua_State *lua)
+{
+	myoscnet.addAddressCallback("/urMus/numbers",oscCallBack);
+	myoscnet.addAddressCallback("/urMus/text",oscCallBack2);
+	myoscnet.startListening();
+	lua_pushstring(lua, myoscnet.getMyIPaddress().c_str());
+	lua_pushnumber(lua, myoscnet.getListeningPort());
+	return 2;
+}
+
+int l_StopOSCListener(lua_State *lua)
+{
+	myoscnet.stopListening();
+	return 0;
+}
+
+int l_SetOSCPort(lua_State *lua)
+{
+	int port = luaL_checknumber(lua,1);
+	myoscnet.setListeningPort(port);
+	return 0;
+}
+
+int l_OSCPort(lua_State *lua)
+{
+	lua_pushnumber(lua, myoscnet.getListeningPort());
+	return 1;
+}
+
+int l_IPAddress(lua_State *lua)
+{
+	lua_pushstring(lua, myoscnet.getMyIPaddress().c_str());
+	return 1;
+}
+
+char types[255];
+
+int l_SendOSCMessage(lua_State *lua)
+{
+	const char* ip = luaL_checkstring(lua,1);
+	int port = luaL_checknumber(lua,2);
+	const char* pattern = luaL_checkstring(lua,3);
+    
+	myoscnet.startSendStream(ip,port);
+	myoscnet.startSendMessage(pattern);
+	
+	int len = 1;
+	while (lua_isnoneornil(lua,len+3)==0)
+	{
+		if(lua_isnumber(lua, len+3)==1)
+		{
+			myoscnet.addSendFloat(luaL_checknumber(lua,len+3));
+		}
+		else if(lua_isstring(lua, len+3)==1)
+		{
+			myoscnet.addSendString(luaL_checkstring(lua,len+3));
+		}
+		// TODO: handle OSC-blob type, defined in the OSC specs
+		len = len +1;
+	}
+	
+	myoscnet.endSendMessage();
+	myoscnet.closeSendStream();
+    
+	return 0;
+}
+
+//------------------------------------------------------------------------------
+// ZeroConf-related global API
+//------------------------------------------------------------------------------
+
+int l_NetAdvertise(lua_State* lua)
+{
+	const char* nsid = luaL_checkstring(lua, 1);
+	int port = luaL_checknumber(lua, 2);
+	
+	Net_Advertise(nsid, port);
+    return 0;
+}
+
+int l_NetFind(lua_State* lua)
+{
+	const char* nsid = luaL_checkstring(lua, 1);
+	
+	Net_Find(nsid);
+    return 0;
+}
+
+int l_StopNetAdvertise(lua_State* lua)
+{
+	const char* nsid = luaL_checkstring(lua, 1);
+	Stop_Net_Advertise(nsid);
+    return 0;
+}
+
+int l_StopNetFind(lua_State* lua)
+{
+	const char* nsid = luaL_checkstring(lua, 1);
+	Stop_Net_Find(nsid);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+// Audio-related global API
+//------------------------------------------------------------------------------
+
+static int audio_initialized = false;
+
+int l_StartAudio(lua_State* lua)
+{
+	if(!audio_initialized)
+	{
+#ifdef USEMUMOAUDIO
+        MoAudio::init(SRATE, FRAMESIZE, NUMCHANNELS);
+        MoAudio::start( audioCallback, NULL);
+#else        
+		initializeRIOAudioLayer();
+#endif
+	}
+	else
+#ifdef USEMUMOAUDIO
+        MoAudio::start( audioCallback, NULL);
+#else
+    playRIOAudioLayer();
+#endif
+	return 0;
+}
+
+int l_PauseAudio(lua_State* lua)
+{
+#ifdef USEMUMOAUDIO
+    MoAudio::stop();
+#else
+	stopRIOAudioLayer();
+#endif
+	return 0;
+}
+
+//------------------------------------------------------------------------------
+// SOAR-related global API
+//------------------------------------------------------------------------------
+
+int l_SoarEnabled(lua_State* lua)
+{
+	bool soar_enabled = false;
+	
+#ifdef SOAR_SUPPORT
+	soar_enabled = true;
+#endif
+	
+	lua_pushboolean(lua, soar_enabled);
+	return 1;
+}
+
+//------------------------------------------------------------------------------
+// Flowbox-related global API
+//------------------------------------------------------------------------------
+
 static int l_FreeAllFlowboxes(lua_State* lua)
 {
 	/*
@@ -5651,8 +4632,6 @@ static int l_FlowBox(lua_State* lua)
 	luaL_argcheck(lua, parentFlowBox!= NULL, idx+1, "'flowbox' expected");
 	//	const char *inheritsflowbox = luaL_checkstring(lua, 1); //NYI
 
-	// NEW!! Return flowbox in a table at index 0
-
 	lua_newtable(lua);
 	luaL_register(lua, NULL, flowboxfuncs);
 	ursAPI_FlowBox_t *myflowbox = (ursAPI_FlowBox_t*)malloc(sizeof(ursAPI_FlowBox_t)); // User data is our value
@@ -5666,7 +4645,6 @@ static int l_FlowBox(lua_State* lua)
 		addToPatch(myflowbox);
 //	myflowbox->object->instancenumber = parentFlowBox->object->instancenumber + 1;
 	
-	// ENDNEW!!
 	//	luaL_getmetatable(lua, "URAPI.flowbox");
 	//	lua_setmetatable(lua, -2);
 
@@ -5834,6 +4812,10 @@ int l_GetUrOuts(lua_State *lua)
 }
 #endif
 
+//------------------------------------------------------------------------------
+// Path-related global API
+//------------------------------------------------------------------------------
+
 int l_SystemPath(lua_State *lua)
 {
 	const char* filename = luaL_checkstring(lua,1);
@@ -5862,6 +4844,10 @@ int l_DocumentPath(lua_State *lua)
 	}
 	return 1;
 }
+
+//------------------------------------------------------------------------------
+// Paging-related global API
+//------------------------------------------------------------------------------
 
 int l_NumMaxPages(lua_State *lua)
 {
@@ -5902,6 +4888,10 @@ int l_SetPage(lua_State *lua)
 	return 0;
 }
 
+//------------------------------------------------------------------------------
+// External Display-related global API
+//------------------------------------------------------------------------------
+
 int l_DisplayExternalPage(lua_State *lua)
 {
  	int num = luaL_checknumber(lua,1);
@@ -5920,6 +4910,10 @@ int l_LinkExternalDisplay(lua_State *lua)
     return 0;
 }
     	
+//------------------------------------------------------------------------------
+// Camera-related global API
+//------------------------------------------------------------------------------
+
 int currentCamera = 1;
 	
 int l_SetActiveCamera(lua_State *lua)
@@ -5958,6 +4952,10 @@ int l_SetTorchFlashFrequency(lua_State *lua)
 	return 0;
 }
 	
+//------------------------------------------------------------------------------
+// Media Writing-related global API
+//------------------------------------------------------------------------------
+
 int l_WriteScreenshot(lua_State *lua)
 {
 	const char *infile = luaL_checkstring(lua,1);
@@ -5988,6 +4986,10 @@ int l_FinishMovieMaking(lua_State *lua)
 	return 0;
 }
 	
+//------------------------------------------------------------------------------
+// URL (CURLY)-related global API
+//------------------------------------------------------------------------------
+
 #ifdef CURLY    
 int l_WriteURLData(lua_State *lua)
 {
@@ -6104,7 +5106,7 @@ int l_PutURLData(lua_State *lua)
 }
 #endif
 
-	//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Register our API
 //------------------------------------------------------------------------------
 
@@ -6221,10 +5223,8 @@ void l_setupAPI(lua_State *lua)
 	// Compats
 	lua_pushcfunction(lua, l_Region);
 	lua_setglobal(lua, "Region");
-	// NEW!!
 	lua_pushcfunction(lua, l_NumRegions);
 	lua_setglobal(lua, "NumRegions");
-	// ENDNEW!!
 	lua_pushcfunction(lua, l_InputFocus);
 	lua_setglobal(lua, "InputFocus");
 	lua_pushcfunction(lua, l_HasInput);

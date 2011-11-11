@@ -38,6 +38,22 @@
 #include <map> // <- much disliked around here!
 #endif
 
+// Events registered by ID
+enum eventIDs { OnDragStart, OnDragStop, OnHide, OnShow, OnTouchDown, OnTouchUp, OnDoubleTap, OnSizeChanged, OnEnter, OnLeave, OnUpdate, OnNetIn, OnNetConnect, OnNetDisconnect, OnOSCMessage, 
+#ifdef SANDWICH_SUPPORT
+    OnPressure,
+#endif
+#ifdef SOAR_SUPPORT
+    OnSoarOutput,
+#endif
+    OnAccelerate, OnAttitude, OnRotation, OnHeading, OnLocation, OnMicrophone, OnHorizontalScroll, OnVerticalScroll, OnMove, OnPageEntered, OnPageLeft,
+    
+    EventsCount
+};
+
+//int MAX_EVENTS = EventsCount;
+#define MAX_EVENTS EventsCount
+
 #define BLEND_DISABLED 0
 #define BLEND_BLEND 1
 #define BLEND_ALPHAKEY 2
@@ -181,29 +197,8 @@ typedef struct urAPI_Region
 		
 		int strata;
 		
-		int OnDragStart;
-		int OnDragStop;
-		int OnEnter;
-		int OnEvent;
-		int OnHide;
-		int OnLeave;
-		int OnTouchDown;
-		int OnTouchUp;
-		int OnShow;
-		int OnSizeChanged; // needs args (NYI)
-		int OnUpdate;
-		int OnDoubleTap; // (UR!)
-		// All UR!
-		int OnAccelerate;
-		int OnNetIn;
-		int OnNetConnect;
-		int OnNetDisconnect;
-		int OnOSCMessage;
-#ifdef SANDWICH_SUPPORT
-		int OnPressure;
-#endif
+        int OnEvents[MAX_EVENTS];
 #ifdef SOAR_SUPPORT
-		int OnSoarOutput;
 		
 		sml::Kernel* soarKernel;
 		sml::Agent* soarAgent;
@@ -214,16 +209,6 @@ typedef struct urAPI_Region
 		std::map< int, sml::WMElement* >* soarWMEs;
 		int soarWMEcounter;
 #endif
-        int OnAttitude;
-		int OnRotation;
-		int OnHeading;
-		int OnLocation;
-		int OnMicrophone;
-		int OnHorizontalScroll;
-		int OnVerticalScroll;
-		int OnMove;
-		int OnPageEntered;
-		int OnPageLeft;
 		
 	}urAPI_Region_t;
 
@@ -232,6 +217,14 @@ typedef struct Region_Chain
     urAPI_Region_t* region;
     struct Region_Chain* next;
 } Region_Chain_t;
+
+typedef struct Region_Chain_Iterator
+{
+    Region_Chain_t* first;
+    Region_Chain_t* current;
+    Region_Chain_t* next;
+    Region_Chain_t* prev;
+} Region_Chain_Iterator_t;
 
 /*static int l_setanimspeed(lua_State *lua);
 static int l_Region(lua_State *lua);*/
@@ -261,7 +254,6 @@ bool callAllOnRotRate(float x, float y, float z);
 bool callAllOnHeading(float x, float y, float z, float north);
 bool callAllOnLocation(float latitude, float longitude);
 bool callAllOnMicrophone(SInt16* mic_buffer, UInt32 bufferlen);
-//void callAllOnLeaveRegions(float x, float y);
 void callAllOnLeaveRegions(int nr, float* x, float* y, float* ox, float* oy);
 void callAllOnEnterLeaveRegions(int nr, float* x, float* y, float* ox, float* oy);
 bool callScriptWithOscArgs(int func_ref, urAPI_Region_t* region, osc::ReceivedMessageArgumentStream & s);

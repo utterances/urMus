@@ -72,7 +72,7 @@ function SetAttrs(r,opts)
     end
     if opts.color then 
       make_texture(r)
-      r.t:SetTexture(unpack(ParseColor(opts['color']))) 
+      r.t:SetSolidColor(unpack(ParseColor(opts['color']))) 
     end
     if opts.gradient then
       local g = {opts.gradient[1]}

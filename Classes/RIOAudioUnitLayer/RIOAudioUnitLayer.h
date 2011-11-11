@@ -34,5 +34,7 @@ static OSStatus	PerformThru(
 							AudioBufferList 			*ioData);
 
 void* LoadAudioFileData(const char* filename, UInt32 *outDataSize, UInt32* outSampleRate);
+void* LoadAudioFileData2(const char* filename, UInt32 *outDataSize, UInt32* outSampleRate);
+const char* multiPath(const char* filename);
 
 #endif /* __RIOAUDIOUNITLAYER_H__ */

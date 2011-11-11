@@ -12,7 +12,7 @@ function BrushDown(self,x,y)
 end
 
 function BrushUp(self)
-    self:Handle("OnMove", nil)
+    self:Handle("OnMove", nil).0
 end
 
 function Clear(self)
