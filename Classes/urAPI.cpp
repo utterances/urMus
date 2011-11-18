@@ -1376,7 +1376,7 @@ int region_Handle(lua_State* lua)
         {
             if(!strcmp(handler, urEventNames[i]))
             {
-                RemoveEventRegistry(lua, OnEnter, region);
+                RemoveEventRegistry(lua, (eventIDs)i, region);
                 found = true;
             }
         }
@@ -4207,6 +4207,15 @@ static int l_Region(lua_State *lua)
 	myregion->isDragged = false;
 	myregion->isClamped = false;
 	myregion->isClipping = false;
+	
+#ifdef SOAR_SUPPORT
+    myregion->soarKernel = NULL;
+    myregion->soarAgent = NULL;
+    myregion->soarIds = NULL;
+    myregion->soarIdCounter = 0;
+    myregion->soarWMEs = NULL;
+    myregion->soarWMEcounter = 0;
+#endif
 	
 	myregion->entered = false;
 	
