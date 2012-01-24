@@ -213,10 +213,6 @@
 		778FB5220FEEE8F900F109A7 /* Texture2d.mm in Sources */ = {isa = PBXBuildFile; fileRef = 778FB5210FEEE8F900F109A7 /* Texture2d.mm */; };
 		778FB5350FEEEB7800F109A7 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 778FB5340FEEEB7800F109A7 /* QuartzCore.framework */; };
 		778FB5F80FEEEDEA00F109A7 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 778FB5F70FEEEDEA00F109A7 /* CoreGraphics.framework */; };
-		7795310E142A83CA004AF845 /* urGEAugRel2.lua in Sources */ = {isa = PBXBuildFile; fileRef = 7795310D142A83CA004AF845 /* urGEAugRel2.lua */; };
-		7795310F142A8550004AF845 /* urGEAugRel2.lua in Resources */ = {isa = PBXBuildFile; fileRef = 7795310D142A83CA004AF845 /* urGEAugRel2.lua */; };
-		77953111142A8684004AF845 /* ARConfig.lua in Sources */ = {isa = PBXBuildFile; fileRef = 77953110142A8684004AF845 /* ARConfig.lua */; };
-		77953112142A868B004AF845 /* ARConfig.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77953110142A8684004AF845 /* ARConfig.lua */; };
 		7798DD71124023BC00238912 /* urAnimExample.lua in Sources */ = {isa = PBXBuildFile; fileRef = 7798DD70124023BC00238912 /* urAnimExample.lua */; };
 		7798DD791240246100238912 /* urAnimExample.lua in Resources */ = {isa = PBXBuildFile; fileRef = 7798DD70124023BC00238912 /* urAnimExample.lua */; };
 		779AD4A3104A3B2C007040BF /* button.png in Resources */ = {isa = PBXBuildFile; fileRef = 779AD4A0104A3B2C007040BF /* button.png */; };
@@ -520,8 +516,6 @@
 		77DFD94F1394F46800390EFC /* urSoarAsynch.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77DFD94D1394F44C00390EFC /* urSoarAsynch.lua */; };
 		77E37C2B1306D28100E44393 /* jqueryFileTree.js in Sources */ = {isa = PBXBuildFile; fileRef = 77E37C2A1306D28100E44393 /* jqueryFileTree.js */; };
 		77E5EDE5143ABB3100D08628 /* lightMetal.png in Resources */ = {isa = PBXBuildFile; fileRef = 77E5EDE4143ABB3100D08628 /* lightMetal.png */; };
-		77E5EDE7143ABB3C00D08628 /* urTurntable2.lua in Sources */ = {isa = PBXBuildFile; fileRef = 77E5EDE6143ABB3C00D08628 /* urTurntable2.lua */; };
-		77E5EDE8143ABB6C00D08628 /* urTurntable2.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77E5EDE6143ABB3C00D08628 /* urTurntable2.lua */; };
 		77F01C10112508CB007FD520 /* paddle.png in Resources */ = {isa = PBXBuildFile; fileRef = 77F01C0C112508CB007FD520 /* paddle.png */; };
 		77F01C11112508CB007FD520 /* small-ball.png in Resources */ = {isa = PBXBuildFile; fileRef = 77F01C0D112508CB007FD520 /* small-ball.png */; };
 		77F01C12112508CB007FD520 /* ball.png in Resources */ = {isa = PBXBuildFile; fileRef = 77F01C0E112508CB007FD520 /* ball.png */; };
@@ -771,8 +765,6 @@
 		778FB5210FEEE8F900F109A7 /* Texture2d.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Texture2d.mm; sourceTree = "<group>"; };
 		778FB5340FEEEB7800F109A7 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = /System/Library/Frameworks/QuartzCore.framework; sourceTree = "<absolute>"; };
 		778FB5F70FEEEDEA00F109A7 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
-		7795310D142A83CA004AF845 /* urGEAugRel2.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urGEAugRel2.lua; path = "urMus-Lua/urGEAugRel2.lua"; sourceTree = "<group>"; };
-		77953110142A8684004AF845 /* ARConfig.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = ARConfig.lua; path = "urMus-Lua/ARConfig.lua"; sourceTree = "<group>"; };
 		7798DD70124023BC00238912 /* urAnimExample.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urAnimExample.lua; path = "urMus-Lua/urAnimExample.lua"; sourceTree = "<group>"; };
 		779AD4A0104A3B2C007040BF /* button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = button.png; path = Textures/button.png; sourceTree = "<group>"; };
 		779AD4A1104A3B2C007040BF /* doublearrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = doublearrow.png; path = Textures/doublearrow.png; sourceTree = "<group>"; };
@@ -1158,7 +1150,6 @@
 		77DFD94D1394F44C00390EFC /* urSoarAsynch.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urSoarAsynch.lua; path = "urMus-Lua/urSoarAsynch.lua"; sourceTree = "<group>"; };
 		77E37C2A1306D28100E44393 /* jqueryFileTree.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = jqueryFileTree.js; path = html/js/jqueryFileTree.js; sourceTree = "<group>"; };
 		77E5EDE4143ABB3100D08628 /* lightMetal.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = lightMetal.png; path = Textures/lightMetal.png; sourceTree = "<group>"; };
-		77E5EDE6143ABB3C00D08628 /* urTurntable2.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urTurntable2.lua; path = "urMus-Lua/urTurntable2.lua"; sourceTree = "<group>"; };
 		77F01C0C112508CB007FD520 /* paddle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = paddle.png; path = Textures/paddle.png; sourceTree = "<group>"; };
 		77F01C0D112508CB007FD520 /* small-ball.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "small-ball.png"; path = "Textures/small-ball.png"; sourceTree = "<group>"; };
 		77F01C0E112508CB007FD520 /* ball.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = ball.png; path = Textures/ball.png; sourceTree = "<group>"; };
@@ -1793,9 +1784,6 @@
 		77B9FC5C1194AEF9006D5007 /* urMus-lua */ = {
 			isa = PBXGroup;
 			children = (
-				77E5EDE6143ABB3C00D08628 /* urTurntable2.lua */,
-				77953110142A8684004AF845 /* ARConfig.lua */,
-				7795310D142A83CA004AF845 /* urGEAugRel2.lua */,
 				77DF162613FCB77E00B00815 /* urSelectorDialog.lua */,
 				77DF162713FCB77E00B00815 /* urDeleteFile.lua */,
 				77DF162013FC828200B00815 /* urStringEditBox.lua */,
@@ -2101,9 +2089,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				77E5EDE8143ABB6C00D08628 /* urTurntable2.lua in Resources */,
-				77953112142A868B004AF845 /* ARConfig.lua in Resources */,
-				7795310F142A8550004AF845 /* urGEAugRel2.lua in Resources */,
 				77DF162A13FCB7D500B00815 /* urSelectorDialog.lua in Resources */,
 				77DF162B13FCB7D500B00815 /* urDeleteFile.lua in Resources */,
 				77DF162413FC829600B00815 /* urStringEditBox.lua in Resources */,
@@ -2620,9 +2605,6 @@
 				77DF162313FC828200B00815 /* urFileBrowser.lua in Sources */,
 				77DF162813FCB77E00B00815 /* urSelectorDialog.lua in Sources */,
 				77DF162913FCB77E00B00815 /* urDeleteFile.lua in Sources */,
-				7795310E142A83CA004AF845 /* urGEAugRel2.lua in Sources */,
-				77953111142A8684004AF845 /* ARConfig.lua in Sources */,
-				77E5EDE7143ABB3C00D08628 /* urTurntable2.lua in Sources */,
 				777A0C7214609C690057D748 /* mo_audio.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

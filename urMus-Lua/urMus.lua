@@ -18,9 +18,9 @@ patchdir = "Patches"
 
 pagefile = {
 "urMus",
-"urTurntable2.lua",
+--"urTurntable2.lua",
 "urColors.lua",
-"urGEAugRel2.lua",
+--"urGEAugRel2.lua",
 "urVen2.lua",
 "urLuaEditor.lua",
 "urDeleteFile.lua",
