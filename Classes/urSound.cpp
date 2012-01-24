@@ -1798,7 +1798,7 @@ double Looper_Tick(ursObject* gself)
 	Looper_Data* self = (Looper_Data*)gself->objectdata;
 	gself->FeedAllPullIns(1); // This is decoupled so no forwarding, just pulling to propagate our natural rate
 	double out = 0;
-	if(self->playing)
+	if(self->playing /*&& self->len > 0*/)
 	{
 		out = self->amp*self->samplebuffer[self->position]/32767.0;
 		self->realposition = self->realposition + self->rate;
@@ -1872,7 +1872,7 @@ void Looper_Record(ursObject* gself, double indata)
 void Looper_Play(ursObject* gself, double indata)
 {
 	Looper_Data* self = (Looper_Data*)gself->objectdata;
-	if(indata < VIRTUAL_ZERO)
+	if(indata < VIRTUAL_ZERO || self->reclen == 0)
 	{
 		self->playing = false;
 	}

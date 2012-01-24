@@ -24,6 +24,14 @@
 #include "httpServer.h"
 
 //------------------------------------------------------------------------------
+// Recursive Mutex for ThreadSafety
+//------------------------------------------------------------------------------
+
+#ifdef THREADSAFETY
+extern RMutex luamutex;
+#endif
+
+//------------------------------------------------------------------------------
 // MUMO Audio Callbacks
 //------------------------------------------------------------------------------
 
@@ -1357,6 +1365,16 @@ static ursAPI_FlowBox_t *checkflowbox(lua_State *lua, int nr)
 	lua_pop(lua,1);
 	luaL_argcheck(lua, flowbox!= NULL, nr, "'flowbox' expected");
 	return (ursAPI_FlowBox_t*)flowbox;
+}
+
+static ursAPI_FlowBox_Port_t *checkflowboxport(lua_State *lua, int nr)
+{
+	luaL_checktype(lua, nr, LUA_TTABLE);
+	lua_rawgeti(lua, nr, 0);
+	void *flowbox = lua_touserdata(lua, -1);
+	lua_pop(lua,1);
+	luaL_argcheck(lua, flowbox!= NULL, nr, "'flowboxport' expected");
+	return (ursAPI_FlowBox_Port_t*)flowbox;
 }
 
 //------------------------------------------------------------------------------
@@ -3713,6 +3731,29 @@ int flowbox_SetPushLink(lua_State *lua)
 	return 1;
 }
 
+int flowboxout_SetPush(lua_State *lua)
+{
+	ursAPI_FlowBox_Port_t* fbout = checkflowboxport(lua, 1);
+	ursAPI_FlowBox_Port_t* targetin = checkflowboxport(lua, 2);
+
+    fbout->object->AddPushOut(fbout->index, &targetin->object->ins[targetin->index]);
+    return 0;
+}
+
+void AddPull(ursObject* src, int inindex, ursObject* target, int outindex)
+{
+	src->AddPullIn(inindex, &target->outs[outindex]);
+    
+	if(!strcmp(src->name,dacobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
+		urActiveDacTickSinkList.AddSink(&target->outs[outindex]);
+	
+	if(!strcmp(src->name,visobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
+		urActiveVisTickSinkList.AddSink(&target->outs[outindex]);
+    
+	if(!strcmp(src->name,netobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
+		urActiveNetTickSinkList.AddSink(&target->outs[outindex]);
+}
+
 int flowbox_SetPullLink(lua_State *lua)
 {
 	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
@@ -3725,20 +3766,20 @@ int flowbox_SetPullLink(lua_State *lua)
 	{
 		return 0;
 	}
-	
-	fb->object->AddPullIn(inindex, &target->object->outs[outindex]);
     
-	if(!strcmp(fb->object->name,dacobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
-		urActiveDacTickSinkList.AddSink(&target->object->outs[outindex]);
-	
-	if(!strcmp(fb->object->name,visobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
-		urActiveVisTickSinkList.AddSink(&target->object->outs[outindex]);
-    
-	if(!strcmp(fb->object->name,netobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
-		urActiveNetTickSinkList.AddSink(&target->object->outs[outindex]);
-    
+    AddPull(fb->object, inindex, target->object, outindex);
+
 	lua_pushboolean(lua, 1);
 	return 1;
+}
+
+int flowboxin_SetPull(lua_State *lua)
+{
+	ursAPI_FlowBox_Port_t* fbin = checkflowboxport(lua, 1);
+	ursAPI_FlowBox_Port_t* targetout = checkflowboxport(lua, 2);
+    
+    AddPull(fbin->object, fbin->index, targetout->object, targetout->index);
+    return 0;
 }
 
 int flowbox_IsPushed(lua_State *lua)
@@ -3812,6 +3853,30 @@ int flowbox_RemovePushLink(lua_State *lua)
 	return 1;
 }
 
+int flowboxout_RemovePush(lua_State *lua)
+{
+	ursAPI_FlowBox_Port_t* fbout = checkflowboxport(lua, 1);
+	ursAPI_FlowBox_Port_t* targetin = checkflowboxport(lua, 2);
+	
+	fbout->object->RemovePushOut(fbout->index, &targetin->object->ins[targetin->index]);
+    return 0;
+}
+
+
+void RemovePull(ursObject* src, int inindex, ursObject* target, int outindex)
+{
+	src->RemovePullIn(inindex, &target->outs[outindex]);
+	
+	if(!strcmp(src->name,dacobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
+		urActiveDacTickSinkList.RemoveSink(&target->outs[outindex]);
+	
+	if(!strcmp(src->name,visobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
+		urActiveVisTickSinkList.RemoveSink(&target->outs[outindex]);
+    
+	if(!strcmp(src->name,netobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
+		urActiveNetTickSinkList.RemoveSink(&target->outs[outindex]);    
+}
+
 int flowbox_RemovePullLink(lua_State *lua)
 {
 	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
@@ -3825,19 +3890,19 @@ int flowbox_RemovePullLink(lua_State *lua)
 		return 0;
 	}
 	
-	fb->object->RemovePullIn(inindex, &target->object->outs[outindex]);
-	
-	if(!strcmp(fb->object->name,dacobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
-		urActiveDacTickSinkList.RemoveSink(&target->object->outs[outindex]);
-	
-	if(!strcmp(fb->object->name,visobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
-		urActiveVisTickSinkList.RemoveSink(&target->object->outs[outindex]);
-    
-	if(!strcmp(fb->object->name,netobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
-		urActiveNetTickSinkList.RemoveSink(&target->object->outs[outindex]);
-	
+    RemovePull(fb->object, inindex, target->object, outindex);
+
     lua_pushboolean(lua, 1);
 	return 1;
+}
+
+int flowboxin_RemovePull(lua_State *lua)
+{
+	ursAPI_FlowBox_Port_t* fbin = checkflowboxport(lua, 1);
+	ursAPI_FlowBox_Port_t* targetout = checkflowboxport(lua, 2);
+    
+    RemovePull(fbin->object, fbin->index, targetout->object, targetout->index);
+    return 0;
 }
 
 int flowbox_IsPushing(lua_State *lua)
@@ -4054,6 +4119,20 @@ static const struct luaL_reg flowboxfuncs [] =
     {"NumberInstances", flowbox_NumberInstances},
     {"Couple", flowbox_Couple},
     {"IsCoupled", flowbox_IsCoupled},
+    {NULL, NULL}
+};
+
+static const struct luaL_reg flowboxoutfuncs [] =
+{
+    {"SetPush",flowboxout_SetPush},
+    {"RemovePush", flowboxout_RemovePush},
+    {NULL, NULL}
+};
+
+static const struct luaL_reg flowboxinfuncs [] =
+{
+    {"SetPull",flowboxin_SetPull},
+    {"RemovePull", flowboxin_RemovePull},
     {NULL, NULL}
 };
 
@@ -4623,6 +4702,38 @@ static int l_FreeAllFlowboxes(lua_State* lua)
 	return 0;
 }
 	
+// Service function to add in and out port userdata to a flowbox.
+// This function requires that the table of the flowbox is on top of the stack!!
+static void populateFlowboxPorts(ursAPI_FlowBox_t *myflowbox)
+{
+    for(int i=0; i< myflowbox->object->nr_ins; i++)
+    {
+        lua_pushstring(lua, myflowbox->object->ins[i].name);
+        lua_newtable(lua);
+        luaL_register(lua, NULL, flowboxinfuncs);
+        ursAPI_FlowBox_Port_t *myflowboxport = (ursAPI_FlowBox_Port_t*)malloc(sizeof(ursAPI_FlowBox_Port_t)); // User data is our value
+        lua_pushlightuserdata(lua, myflowboxport);
+        lua_rawseti(lua, -2, 0); // Set this to index 0
+        myflowboxport->tableref = myflowbox->tableref;
+        myflowboxport->index = i;
+        myflowboxport->object = myflowbox->object;
+        lua_settable(lua, -3);
+    }
+    for(int i=0; i< myflowbox->object->nr_outs; i++)
+    {
+        lua_pushstring(lua, myflowbox->object->outs[i].name);
+        lua_newtable(lua);
+        luaL_register(lua, NULL, flowboxoutfuncs);
+        ursAPI_FlowBox_Port_t *myflowboxport = (ursAPI_FlowBox_Port_t*)malloc(sizeof(ursAPI_FlowBox_Port_t)); // User data is our value
+        lua_pushlightuserdata(lua, myflowboxport);
+        lua_rawseti(lua, -2, 0); // Set this to index 0
+        myflowboxport->tableref = myflowbox->tableref;
+        myflowboxport->index = i;
+        myflowboxport->object = myflowbox->object;
+        lua_settable(lua, -3);
+    }
+}
+
 static int l_FlowBox(lua_State* lua)
 {
 	int idx = 1;
@@ -4650,6 +4761,9 @@ static int l_FlowBox(lua_State* lua)
 	lua_rawgeti(lua, LUA_REGISTRYINDEX, myflowbox->tableref);
 
 	myflowbox->object = parentFlowBox->object->Clone();
+
+    populateFlowboxPorts(myflowbox);
+    
 	if(myflowbox->object != parentFlowBox->object) // instanced
 		addToPatch(myflowbox);
 //	myflowbox->object->instancenumber = parentFlowBox->object->instancenumber + 1;
@@ -5175,6 +5289,8 @@ void l_setupAPI(lua_State *lua)
 		strcpy(fbname, "FB");
 		strcat(fbname, myflowbox->object->name);
 		lua_setglobal(lua, fbname);
+        lua_getglobal(lua, fbname);        
+        populateFlowboxPorts(myflowbox);
 	}
 	for(int manipulator=0; manipulator<urmanipulatorobjectlist.Last(); manipulator++)
 	{
@@ -5192,6 +5308,8 @@ void l_setupAPI(lua_State *lua)
 		strcpy(fbname, "FB");
 		strcat(fbname, myflowbox->object->name);
 		lua_setglobal(lua, fbname);
+        lua_getglobal(lua, fbname);
+        populateFlowboxPorts(myflowbox);
 	}
 	for(int sink=0; sink<ursinkobjectlist.Last(); sink++)
 	{
@@ -5209,6 +5327,8 @@ void l_setupAPI(lua_State *lua)
 		strcpy(fbname, "FB");
 		strcat(fbname, myflowbox->object->name);
 		lua_setglobal(lua, fbname);
+        lua_getglobal(lua, fbname);
+        populateFlowboxPorts(myflowbox);
 	}
 	
 	luaL_newmetatable(lua, "URAPI.texture");

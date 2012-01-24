@@ -40,6 +40,7 @@
 		770EBADE13991D6E002A03C3 /* urWaterJug.lua in Sources */ = {isa = PBXBuildFile; fileRef = 770EBADD13991D6E002A03C3 /* urWaterJug.lua */; };
 		770EBAE013991D85002A03C3 /* wj.soar in Resources */ = {isa = PBXBuildFile; fileRef = 770EBADF13991D85002A03C3 /* wj.soar */; };
 		770EBAE113991DA4002A03C3 /* urWaterJug.lua in Resources */ = {isa = PBXBuildFile; fileRef = 770EBADD13991D6E002A03C3 /* urWaterJug.lua */; };
+		770EEFF21483294A00091976 /* settingsButton.png in Resources */ = {isa = PBXBuildFile; fileRef = 770EEFF11483294A00091976 /* settingsButton.png */; };
 		770F779413E6043A000E133D /* urNetDiscoveryTest.lua in Sources */ = {isa = PBXBuildFile; fileRef = 770F779313E6043A000E133D /* urNetDiscoveryTest.lua */; };
 		770F779513E6054F000E133D /* urNetDiscoveryTest.lua in Resources */ = {isa = PBXBuildFile; fileRef = 770F779313E6043A000E133D /* urNetDiscoveryTest.lua */; };
 		770FD84B10AB51CF004B0967 /* flatbutton-64.png in Resources */ = {isa = PBXBuildFile; fileRef = 770FD84A10AB51CF004B0967 /* flatbutton-64.png */; };
@@ -571,6 +572,7 @@
 		7706EBAC1044E0E200E7D656 /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 		770EBADD13991D6E002A03C3 /* urWaterJug.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urWaterJug.lua; path = "urMus-Lua/urWaterJug.lua"; sourceTree = "<group>"; };
 		770EBADF13991D85002A03C3 /* wj.soar */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = wj.soar; path = "urMus-Soar/wj.soar"; sourceTree = "<group>"; };
+		770EEFF11483294A00091976 /* settingsButton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = settingsButton.png; path = Textures/settingsButton.png; sourceTree = "<group>"; };
 		770F779313E6043A000E133D /* urNetDiscoveryTest.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; path = urNetDiscoveryTest.lua; sourceTree = "<group>"; };
 		770FD84A10AB51CF004B0967 /* flatbutton-64.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "flatbutton-64.png"; path = "Textures/flatbutton-64.png"; sourceTree = "<group>"; };
 		7710B7DD13FB014300E3D710 /* unlock.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = unlock.png; path = Textures/unlock.png; sourceTree = "<group>"; };
@@ -721,6 +723,9 @@
 		7778B2F80FED34FB00F491D3 /* urAPI.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = urAPI.cpp; sourceTree = "<group>"; };
 		777A0C7014609C690057D748 /* mo_audio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mo_audio.h; path = "Classes/mopho-api/mo_audio.h"; sourceTree = "<group>"; };
 		777A0C7114609C690057D748 /* mo_audio.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = mo_audio.mm; path = "Classes/mopho-api/mo_audio.mm"; sourceTree = "<group>"; };
+		777ADDF21476F75B00A5612D /* mutex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mutex.h; path = Classes/ThreadSafety/mutex.h; sourceTree = "<group>"; };
+		777ADDF31476F75B00A5612D /* non_copyable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = non_copyable.h; path = Classes/ThreadSafety/non_copyable.h; sourceTree = "<group>"; };
+		777ADDF41476F75B00A5612D /* rmutex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = rmutex.h; path = Classes/ThreadSafety/rmutex.h; sourceTree = "<group>"; };
 		777E0FC00FF19903005882D0 /* MachTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachTimer.h; sourceTree = "<group>"; };
 		777E0FC10FF19903005882D0 /* MachTimer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MachTimer.cpp; sourceTree = "<group>"; };
 		777E5AC71057F5EB007FD908 /* RIOAudioUnitLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RIOAudioUnitLayer.h; path = RIOAudioUnitLayer/RIOAudioUnitLayer.h; sourceTree = "<group>"; };
@@ -1242,6 +1247,7 @@
 		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
 			isa = PBXGroup;
 			children = (
+				777ADDF11476F73F00A5612D /* ThreadSafety */,
 				779BE9CC13A9A010002E36DC /* curl */,
 				7703630C1392C47A0096D9BF /* urMus-Soar */,
 				77E37C2A1306D28100E44393 /* jqueryFileTree.js */,
@@ -1492,6 +1498,16 @@
 				7778B1EA0FED04AF00F491D3 /* print.c */,
 			);
 			name = Lua;
+			sourceTree = "<group>";
+		};
+		777ADDF11476F73F00A5612D /* ThreadSafety */ = {
+			isa = PBXGroup;
+			children = (
+				777ADDF21476F75B00A5612D /* mutex.h */,
+				777ADDF31476F75B00A5612D /* non_copyable.h */,
+				777ADDF41476F75B00A5612D /* rmutex.h */,
+			);
+			name = ThreadSafety;
 			sourceTree = "<group>";
 		};
 		778F140C128A11350010253D /* mopho-api */ = {
@@ -1851,6 +1867,7 @@
 		77F043941123BC3F00CB8C95 /* Textures */ = {
 			isa = PBXGroup;
 			children = (
+				770EEFF11483294A00091976 /* settingsButton.png */,
 				77E5EDE4143ABB3100D08628 /* lightMetal.png */,
 				7710B7DD13FB014300E3D710 /* unlock.png */,
 				7710B7DE13FB014300E3D710 /* lock.png */,
@@ -2099,6 +2116,7 @@
 				778A7FB913F45EF700846B59 /* left.png in Resources */,
 				778A7FBA13F45EF700846B59 /* down.png in Resources */,
 				778A7FBB13F45EF700846B59 /* up.png in Resources */,
+				770EEFF21483294A00091976 /* settingsButton.png in Resources */,
 				778A7FCA13F4691C00846B59 /* urTopBar.lua in Resources */,
 				778A7FCB13F4691D00846B59 /* urLuaEditor.lua in Resources */,
 				778A7FCC13F4691E00846B59 /* urKeyboard.lua in Resources */,

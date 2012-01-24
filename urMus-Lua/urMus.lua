@@ -97,7 +97,7 @@ if SoarEnabled() then
     table.insert( pagefile, "urMusQuenzer.lua" )
     table.insert( pagefile, "urAgents.lua" )
     table.insert( pagefile, "urSoarAsynch.lua" )
-    table.insert( pagefile, "urWaterJug.lua" )
+    table.insert( pagefile, 2, "urWaterJug.lua" )
 end
 
 scrollpage = 29

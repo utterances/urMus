@@ -8,6 +8,18 @@
  */
 #ifndef __URAPI_H__
 #define __URAPI_H__
+
+// Uncomment the line below to get some thread safety using recursive mutex (using lubr
+//#define THREADSAFETY
+#ifdef THREADSAFETY
+#include "rmutex.h"
+
+extern RMutex luamutex;
+
+#define lua_lock luamutex.lock();
+#define lua_unlock luamutex.unlock();
+#endif
+
 #include "lua.h"
 #include "lauxlib.h"
 #include "lualib.h"
@@ -134,6 +146,13 @@ typedef struct ursAPI_FlowBox
 		int tableref; // table reference which contains this flowbox
 		ursObject* object;
 	} ursAPI_FlowBox_t;
+
+typedef struct ursAPI_FlowBox_Port
+    {
+        int tableref; // table reference which contains this flowbox
+        int index; // Port (in/out) index
+        ursObject* object;
+    } ursAPI_FlowBox_Port_t;
 
 // Region user data
 
