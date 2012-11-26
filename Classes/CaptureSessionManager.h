@@ -42,7 +42,7 @@
 - (void) addVideoInput;
 - (void) addVideoDataOutput;
 - (void) autoWhiteBalanceAndExposure:(int)setting;
-- (void) newFrameForDisplay;
+//- (void) newFrameForDisplay;
 - (void) toggleCameraSelection;
 - (void) setTorchToggleFrequency:(float)freq;
 - (void)informViewsOfCameraTexture;

@@ -14,7 +14,8 @@
 #ifdef THREADSAFETY
 #include "rmutex.h"
 
-extern RMutex luamutex;
+#define UISTRINGS
+//extern RMutex luamutex;
 
 #define lua_lock luamutex.lock();
 #define lua_unlock luamutex.unlock();
@@ -26,7 +27,16 @@ extern RMutex luamutex;
 #include "urSound.h"
 #include "mo_net.h"
 
+#import "EAGLView.h"
+
 #import "Texture2d.h"
+#ifndef UISTRINGS
+#include "urTexture.h"
+#endif
+
+#ifdef GPUIMAGE
+#import "GPUImage.h"
+#endif
 
 #undef SANDWICH_SUPPORT
 
@@ -102,14 +112,21 @@ typedef struct urAPI_TextLabel
 	bool drawshadow;
 	float linespacing;
 	float textcolor[4];
+    int outlinemode;
+    int outlinethickness;
 	float textheight;
 	float stringheight;
 	float stringwidth;
 	int wrap;
 	bool updatestring;
 	float rotation;
+    urAPI_Region_t *region;
 	// Private
+#ifdef UISTRINGS
 	Texture2D		*textlabelTex;
+#else
+    urTexture       *textlabelTex;
+#endif
 } urAPI_TextLabel_t;
 
 typedef struct urAPI_Region urAPI_Region_t;
@@ -132,10 +149,17 @@ typedef struct urAPI_Texture
 		float gradientBL[4]; // RGB for 4 corner color magic
 		float gradientBR[4]; // RGB for 4 corner color magic		
 		float texturesolidcolor[4]; // for solid
-		float texturebrushcolor[4]; // for brushes
+		float texturebrushcolor[8]; // for brushes
 		int usecamera;
 		// Private
 		Texture2D	*backgroundTex;
+#ifdef GPUIMAGE
+        GLuint movieTexture;
+        GPUImageMovie *movieTex;
+        urRegionMovie* regionMovie;
+        GPUImageTextureOutput *textureOutput;
+        GPUImageTextureInput *textureInput;
+#endif
 		urAPI_Region_t *region;
 	} urAPI_Texture_t;
 
@@ -199,6 +223,11 @@ typedef struct urAPI_Region
 		float clipwidth;
 		float clipheight;
 		
+		float clampleft;
+		float clampbottom;
+		float clampwidth;
+		float clampheight;
+		
 		float alpha;
 		
 		struct urAPI_Region* relativeRegion;
@@ -250,7 +279,7 @@ static int l_Region(lua_State *lua);*/
 
 void l_setupAPI(lua_State *lua);
 void l_setstrataindex(urAPI_Region_t* region , int strataindex);
-bool callScript(int func_ref, urAPI_Region_t* region);
+bool callScript(enum eventIDs event, int func_ref, urAPI_Region_t* region);
 urAPI_Region_t* findRegionDraggable(float x, float y);
 urAPI_Region_t* findRegionHit(float x, float y);
 urAPI_Region_t* findRegionXScrolled(float x, float y, float dx);
@@ -275,15 +304,15 @@ bool callAllOnLocation(float latitude, float longitude);
 bool callAllOnMicrophone(SInt16* mic_buffer, UInt32 bufferlen);
 void callAllOnLeaveRegions(int nr, float* x, float* y, float* ox, float* oy);
 void callAllOnEnterLeaveRegions(int nr, float* x, float* y, float* ox, float* oy);
-bool callScriptWithOscArgs(int func_ref, urAPI_Region_t* region, osc::ReceivedMessageArgumentStream & s);
-bool callScriptWith5Args(int func_ref, urAPI_Region_t* region ,float a, float b, float c, float d, float e);
-bool callScriptWith4Args(int func_ref, urAPI_Region_t* region ,float a, float b, float c, float d);
-bool callScriptWith3Args(int func_ref, urAPI_Region_t* region ,float a, float b, float c);
-bool callScriptWith2Args(int func_ref, urAPI_Region_t* region ,float a, float b);
-bool callScriptWith1Args(int func_ref, urAPI_Region_t* region ,float a);
-bool callScriptWith1Global(int func_ref, urAPI_Region_t* region, const char* globaldata);
-bool callScriptWith1String(int func_ref, urAPI_Region_t* region, const char* name);
-bool callScriptWith2String(int func_ref, urAPI_Region_t* region, const char* name, const char* btype);
+bool callScriptWithOscArgs(enum eventIDs event, int func_ref, urAPI_Region_t* region, osc::ReceivedMessageArgumentStream & s);
+bool callScriptWith5Args(enum eventIDs event, int func_ref, urAPI_Region_t* region ,float a, float b, float c, float d, float e);
+bool callScriptWith4Args(enum eventIDs event, int func_ref, urAPI_Region_t* region ,float a, float b, float c, float d);
+bool callScriptWith3Args(enum eventIDs event, int func_ref, urAPI_Region_t* region ,float a, float b, float c);
+bool callScriptWith2Args(enum eventIDs event, int func_ref, urAPI_Region_t* region ,float a, float b);
+bool callScriptWith1Args(enum eventIDs event, int func_ref, urAPI_Region_t* region ,float a);
+bool callScriptWith1Global(enum eventIDs event, int func_ref, urAPI_Region_t* region, const char* globaldata);
+bool callScriptWith1String(enum eventIDs event, int func_ref, urAPI_Region_t* region, const char* name);
+bool callScriptWith2String(enum eventIDs event, int func_ref, urAPI_Region_t* region, const char* name, const char* btype);
 
 void addChild(urAPI_Region_t *parent, urAPI_Region_t *child);
 void removeChild(urAPI_Region_t *parent, urAPI_Region_t *child);
@@ -291,7 +320,9 @@ bool layout(urAPI_Region_t* region);
 void changeLayout(urAPI_Region_t* region);
 
 void ur_GetSoundBuffer(SInt16* buffer, int channel, int size);
+void FreeAllFlowboxes(int patch);
 
+void ur_Log(const char * str);
 
 #endif /* __URAPI_H__ */
 

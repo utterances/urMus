@@ -110,7 +110,7 @@ bool VoicForm :: setPhoneme( const char *phoneme )
 
 void VoicForm :: setFilterSweepRate( unsigned int whichOne, StkFloat rate )
 {
-  if ( whichOne < 0 || whichOne > 3 ) {
+  if ( whichOne > 3 ) {
     errorString_ << "VoicForm::setFilterSweepRate: filter select argument outside range 0-3!";
     handleError( StkError::WARNING );
     return;

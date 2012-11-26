@@ -14,6 +14,7 @@
 #include "FileWrite.h"
 #include "FileRead.h"
 
+//#undef LOAD_STK_OBJECTS
 #define LOAD_STK_OBJECTS
 
 // Parameter conversions
@@ -46,6 +47,8 @@ void ursSinkList::AddSink(urSoundOut* sink)
 	else
 	{
 		/* NYI */
+        int a = 0;
+        assert(0);
 	}
 }
 
@@ -65,6 +68,15 @@ void ursSinkList::RemoveSink(urSoundOut* sink)
 	}
 }
 
+void ursSinkList::RemoveObject(ursObject* obj)
+{
+    for(int i=0; i<length; i++)
+    {
+        if(obj == sinks[i]->object)
+            RemoveSink(sinks[i]); // Inefficient
+    }
+}
+
 ursSinkList urActiveDacTickSinkList;
 ursSinkList urActiveDacArraySinkList;
 
@@ -77,11 +89,16 @@ ursSinkList urActiveFlashTickSinkList;
 
 ursSinkList urActiveAudioFrameSinkList;
 
+extern int freePatches[];
+extern int currentPatch;
+
+int FreeAllFlowboxes(int patch);
+
 void urs_PullActiveDacSinks(SInt16 *buff, UInt32 len)
 {
 	ursObject *self;
 	double out = 0.0;
-	
+    
 	for(int i=0; i < urActiveDacArraySinkList.length; i++)
 	{
 		self = urActiveDacArraySinkList.sinks[i]->object;
@@ -109,7 +126,7 @@ void urs_PullActiveTickSinks(ursSinkList& urActiveTickSinkList, SInt16 *buff, UI
 {
 	ursObject *self;
 	double out;
-	
+
 	for(int i=0; i<urActiveTickSinkList.length; i++)
 	{
 		self = urActiveTickSinkList.sinks[i]->object;
@@ -121,16 +138,21 @@ void urs_PullActiveTickSinks(ursSinkList& urActiveTickSinkList, SInt16 *buff, UI
 	}
 }
 
+extern pthread_mutex_t fb_mutex;
+
 double urs_PullActiveSingleTickSinks(ursSinkList& urActiveTickSinkList)
 {
 	ursObject *self;
 	double out=0.0;
-	
+
+    pthread_mutex_lock( &fb_mutex );
 	for(int i=0; i<urActiveTickSinkList.length; i++)
 	{
 		self = urActiveTickSinkList.sinks[i]->object;
-		out = out + urActiveTickSinkList.sinks[i]->outFuncTick(self);
+        out = out + urActiveTickSinkList.sinks[i]->outFuncTick(self);
 	}
+    pthread_mutex_unlock( &fb_mutex );
+
 	return out;
 }
 
@@ -225,11 +247,13 @@ void callAllCameraSources(double brightness, double blueTotal, double greenTotal
 {
 	if(cameraObject)
 	{
+        pthread_mutex_lock( &fb_mutex );
 		cameraObject->CallAllPushOuts(brightness,0);
 		cameraObject->CallAllPushOuts(blueTotal,1);
 		cameraObject->CallAllPushOuts(greenTotal,2);
 		cameraObject->CallAllPushOuts(redTotal,3);
 		cameraObject->CallAllPushOuts(edginess,4);	
+        pthread_mutex_unlock( &fb_mutex );
 	}
 }
 
@@ -237,7 +261,8 @@ void callAllCameraSources(double brightness, double blueTotal, double greenTotal
 void callAllAccelerateSources(double tilt_x, double tilt_y, double tilt_z)
 {
 	double tilt;
-	
+
+    pthread_mutex_lock( &fb_mutex );
 	for(int i=0; i<3; i++) // for all 3 dimensions
 	{
 		switch(i)
@@ -249,12 +274,15 @@ void callAllAccelerateSources(double tilt_x, double tilt_y, double tilt_z)
 		
 		accelobject->CallAllPushOuts(tilt, i);
 	}
+    pthread_mutex_unlock( &fb_mutex );
+
 }
 
 void callAllGyroSources(double rate_x, double rate_y, double rate_z)
 {
 	double rate;
 	
+    pthread_mutex_lock( &fb_mutex );
 	for(int i=0; i<3; i++) // for all 3 dimensions
 	{
 		switch(i)
@@ -266,6 +294,7 @@ void callAllGyroSources(double rate_x, double rate_y, double rate_z)
 		
 		gyroobject->CallAllPushOuts(rate, i);
 	}
+    pthread_mutex_unlock( &fb_mutex );
 }
 
 
@@ -273,6 +302,7 @@ void callAllCompassSources(double heading_x, double heading_y, double heading_z,
 {
 	double heading;
 	
+    pthread_mutex_lock( &fb_mutex );
 	for(int i=0; i<4; i++) // for all 3 dimensions
 	{
 		switch(i)
@@ -285,12 +315,14 @@ void callAllCompassSources(double heading_x, double heading_y, double heading_z,
 		
 		compassobject->CallAllPushOuts(heading, i);
 	}
+    pthread_mutex_unlock( &fb_mutex );
 }
 
 void callAllLocationSources(double latitude, double longitude)
 {
 	double coord;
 	
+    pthread_mutex_lock( &fb_mutex );
 	for(int i=0; i<2; i++) // for all 2 dimensions
 	{
 		switch(i)
@@ -301,12 +333,14 @@ void callAllLocationSources(double latitude, double longitude)
 		
 		locationobject->CallAllPushOuts(coord, i);
 	}
+    pthread_mutex_unlock( &fb_mutex );
 }
 
 void callAllTouchSources(double touch_x, double touch_y, int idx)
 {
 	double touch;
 	
+    pthread_mutex_lock( &fb_mutex );
 	for(int i=0; i<2; i++) // for all 2 dimensions
 	{
 		switch(i)
@@ -317,27 +351,34 @@ void callAllTouchSources(double touch_x, double touch_y, int idx)
 		
 		touchobject->CallAllPushOuts(touch, i+2*idx);
 	}
+    pthread_mutex_unlock( &fb_mutex );
 }
 
 
 void callAllMicSources(SInt16* buff, UInt32 len)
 {
 
+    pthread_mutex_lock( &fb_mutex );
 	for(int i=0; i<len; i++)
 	{
 		micobject->CallAllPushOuts(buff[i]/32768.0);
 	}
+    pthread_mutex_unlock( &fb_mutex );
 }
 
 void callAllMicSingleTickSourcesF(double data)
 {
+    pthread_mutex_lock( &fb_mutex );
     micobject->CallAllPushOuts(data);
+    pthread_mutex_unlock( &fb_mutex );
 }
 
 void callAllMicSingleTickSources(SInt16 data)
 {
 	
+    pthread_mutex_lock( &fb_mutex );
 	micobject->CallAllPushOuts(data/32768.0);
+    pthread_mutex_unlock( &fb_mutex );
 }
 
 
@@ -345,8 +386,10 @@ void callAllNetSingleTickSources(SInt16 data)
 {
     if(netinobject != NULL)
     {
+        pthread_mutex_lock( &fb_mutex );
         netinobject->lastindata[0] = (float)data/128.0;//32768.0;
         netinobject->CallAllPushOuts(data/128.0);//32768.0);
+        pthread_mutex_unlock( &fb_mutex );
     }
 }
 
@@ -375,9 +418,15 @@ ursObject::ursObject(const char* objname, void* (*objconst)(), void (*objdest)(u
 	firstpullin = new urSoundPullIn*[nrins];
 	firstpushout = new urSoundPushOut*[nrouts];
 	for(int i=0; i< nrins ; i++)
+    {
+        ins[i].object = this;
 		firstpullin[i] = NULL;
+    }
 	for(int i=0; i< nrouts; i++)
+    {
+        outs[i].object = this;
 		firstpushout[i] = NULL;
+    }
 	lastin = 0;
 	lastout = 0;
 	lastindata[0] = 0.0;
@@ -416,6 +465,8 @@ ursObject::~ursObject()
 {
 	delete ins;
 	delete outs;
+    delete firstpullin;
+    delete firstpushout;
 }
 
 ursObject* ursObject::Clone()
@@ -441,13 +492,16 @@ void ursObject::AddOut(const char* outname, const char* outsemantics, double (*f
 	{
 		int a = 0;
 		/* NYI gotta grow here */
+        assert(0);
 	}
-	char* str = (char*)malloc(strlen(outname)+1);
+/*	char* str = (char*)malloc(strlen(outname)+1);
 	strcpy(str, outname);
 	outs[lastout].name = str;
 	str = (char *)malloc(strlen(outsemantics)+1);
 	strcpy(str, outsemantics);
-	outs[lastout].semantics = str;
+	outs[lastout].semantics = str;*/
+    outs[lastout].name = outname;
+	outs[lastout].semantics = outsemantics;
 	outs[lastout].outFuncTick = func;
 	outs[lastout].outFuncFillBuffer = func2;
 	outs[lastout].outFuncValue = func3;
@@ -462,6 +516,7 @@ void ursObject::AddIn(const char* inname, const char* insemantics, void (*func)(
 	{
 		int a = 0;
 		/* NYI gotta grow here */
+        assert(0);
 	}
 	ins[lastin].name = inname;
 	ins[lastin].semantics = insemantics;
@@ -475,15 +530,30 @@ void ursObject::CallAllPushOuts(double indata, int idx)
 {
 	if(this == NULL || this->firstpushout == NULL) return;
 	
+#ifdef RELOCATE_FAFB
+    if(this->noninstantiable && freePatches[currentPatch] != 0) return;
+#endif
+    
 	if(this->firstpushout[idx]!=NULL)
 	{
 		ursObject* inobject;
 		urSoundPushOut* pushto = this->firstpushout[idx];
 		for(;pushto!=NULL; pushto = pushto->next)
 		{	
-			urSoundIn* in = pushto->in;
-			inobject = in->object;
-			in->inFuncTick(inobject, indata);
+#ifdef RELOCATE_FAFB
+            if(freePatches[currentPatch] == 0)
+            {
+#endif
+               urSoundIn* in = pushto->in;
+                inobject = in->object;
+
+#ifdef RELOCATE_FAFB
+                if(this->noninstantiable && freePatches[currentPatch] != 0) return;
+#endif
+                in->inFuncTick(inobject, indata);
+#ifdef RELOCATE_FAFB
+            }
+#endif
 		}
 	}
 }
@@ -560,6 +630,16 @@ void ursObject::AddPullIn(int idx, urSoundOut* out)
 		}
 		finder->next = self;
 	}
+    
+    if(!strcmp(this->name,dacobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
+		urActiveDacTickSinkList.AddSink(out);
+	
+	if(!strcmp(this->name,visobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
+		urActiveVisTickSinkList.AddSink(out);
+    
+	if(!strcmp(this->name,netobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
+		urActiveNetTickSinkList.AddSink(out);
+
 }
 
 bool ursObject::IsPushedOut(int idx, urSoundIn* in)
@@ -617,17 +697,80 @@ void ursObject::RemovePushOut(int idx, urSoundIn* in)
 	}
 }
 
-/* UNFINISHED void ursObject::RemoveAllPushOuts()
+void ursObject::RemoveFromSink(urSoundOut* out)
 {
-	for(int i=0; i<nr_outs; i++)
+    if(!strcmp(this->name,dacobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
+		urActiveDacTickSinkList.RemoveSink(out);
+	
+	if(!strcmp(this->name,visobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
+		urActiveVisTickSinkList.RemoveSink(out);
+    
+	if(!strcmp(this->name,netobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
+		urActiveNetTickSinkList.RemoveSink(out);
+   
+}
+
+void ursObject::RemoveFromSinks()
+{
+    urActiveDacTickSinkList.RemoveObject(this);
+    urActiveVisTickSinkList.RemoveObject(this);
+    urActiveNetTickSinkList.RemoveObject(this);
+}
+
+void ursObject::RemovePushOutsByObject(ursObject* src)
+{
+	for(int idx=0; idx<src->nr_outs; idx++)
+	{
+		urSoundPushOut* finder = src->firstpushout[idx];
+        urSoundPushOut* findernext;
+        if(finder)
+            findernext = finder->next;
+        while(finder != NULL)
+		{
+            //			finder = NULL;
+            if(finder->in->object==this)
+            {
+                src->RemovePushOut(idx,finder->in);
+            }
+            finder = findernext;
+            if(finder)
+                findernext = finder->next;
+		}
+        src->firstpushout[idx] = NULL;
+	}
+    
+}
+
+void ursObject::RemoveFromSources()
+{
+    for(int i=0;i<ursourceobjectlist.Last();i++)
+    {
+        RemovePushOutsByObject(ursourceobjectlist[i]);
+    }
+}
+
+void ursObject::RemoveAllPushOuts()
+{
+	for(int idx=0; idx<nr_outs; idx++)
 	{
 		urSoundPushOut* finder = firstpushout[idx];
-		for(;finder != NULL && finder->in != in ; finder = finder->next)
+        urSoundPushOut* findernext;
+        if(finder)
+            findernext = finder->next;
+        while(finder != NULL)
 		{
-			previous = finder;
+//			finder = NULL;
+            delete finder;
+            finder = findernext;
+            if(finder)
+                findernext = finder->next;
 		}
+        firstpushout[idx] = NULL;
 	}
-}*/
+    
+    RemoveFromSinks();
+    RemoveFromSources();
+}
 
 void ursObject::RemovePullIn(int idx, urSoundOut* out)
 {
@@ -649,7 +792,33 @@ void ursObject::RemovePullIn(int idx, urSoundOut* out)
 			firstpullin[idx] = NULL;
 		delete finder;
 	}
+
+    RemoveFromSink(out);
 }
+
+void ursObject::RemoveAllPullIns()
+{
+	for(int idx=0; idx<nr_ins; idx++)
+	{
+		urSoundPullIn* finder = firstpullin[idx];
+        urSoundPullIn* findernext;
+        if(finder)
+            findernext = finder->next;
+        while(finder != NULL)
+		{
+            delete finder;
+            finder = findernext;
+            if(finder)
+                findernext = finder->next;
+		}
+        firstpullin[idx] = NULL;
+
+	}
+    RemoveFromSinks();
+    RemoveFromSources();
+}
+
+
 
 void ursObject::SetCouple(int inidx, int outidx)
 {
@@ -685,6 +854,7 @@ void ursObjectArray::Append(ursObject* object)
 	{
 		max = max*2; // Yes we don't grow exponentially because we want to be kind to memory... and we definitely don't grow enough to make a huge dent in the asymptotic difference here.
 		ursObject** newlist = new ursObject*[max];
+        assert(newlist != NULL);
 		for(int i=0; i<current; i++)
 		{
 			newlist[i] = objectlist[i];
@@ -862,276 +1032,6 @@ void Loop::SetBoundary()
 }
 
 
-ursObject* sinobject;
-ursObject* nopeobject;
-ursObject* sampleobject;
-ursObject* looprhythmobject;
-
-ursObject* cameraObject;
-ursObject* accelobject;
-ursObject* gyroobject;
-ursObject* compassobject;
-ursObject* locationobject;
-ursObject* touchobject;
-ursObject* micobject;
-ursObject* netinobject;
-ursObject* pushobject;
-ursObject* fileobject;
-
-ursObject* dacobject;
-ursObject* visobject;
-ursObject* netobject;
-ursObject* drainobject;
-ursObject* pullobject;
-
-ursObject* object;
-
-void urs_SetupObjects()
-{
-	
-	accelobject = new ursObject("Accel", NULL, NULL, 0, 3, true);
-	accelobject->AddOut("X", "TimeSeries", NULL, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
-	accelobject->AddOut("Y", "TimeSeries", NULL, NULL, NULL); 
-	accelobject->AddOut("Z", "TimeSeries", NULL, NULL, NULL); 
-	ursourceobjectlist.Append(accelobject);
-	cameraObject = new ursObject("Cam",NULL,NULL,0,5,true);
-	cameraObject->AddOut("Bright","TimeSeries",NULL,NULL,NULL);
-	cameraObject->AddOut("Blue","TimeSeries",NULL,NULL,NULL);
-	cameraObject->AddOut("Green","TimeSeries",NULL,NULL,NULL);
-	cameraObject->AddOut("Red","TimeSeries",NULL,NULL,NULL);
-	cameraObject->AddOut("Edge","TimeSeries",NULL,NULL,NULL);
-	ursourceobjectlist.Append(cameraObject);
-	compassobject = new ursObject("Compass", NULL, NULL, 0, 4, true);
-	compassobject->AddOut("X", "TimeSeries", NULL, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
-	compassobject->AddOut("Y", "TimeSeries", NULL, NULL, NULL); 
-	compassobject->AddOut("Z", "TimeSeries", NULL, NULL, NULL); 
-	compassobject->AddOut("North", "TimeSeries", NULL, NULL, NULL); 
-	ursourceobjectlist.Append(compassobject);
-	locationobject = new ursObject("Location", NULL, NULL, 0, 2, true);
-	locationobject->AddOut("Lat", "TimeSeries", NULL, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
-	locationobject->AddOut("Long", "TimeSeries", NULL, NULL, NULL); 
-	ursourceobjectlist.Append(locationobject);
-	micobject = new ursObject("Mic", NULL, NULL, 0, 1, true);
-	micobject->AddOut("Out", "TimeSeries", NULL, NULL, NULL);
-	ursourceobjectlist.Append(micobject);
-	netinobject = new ursObject("NetIn", NULL, NULL, 0, 1, true);
-	netinobject->AddOut("Out", "Event", NetIn_Tick, NetIn_Out, NULL);
-	ursourceobjectlist.Append(netinobject);
-	pushobject = new ursObject("Push", NULL, NULL, 0, 1); // An event based source ("bang" in PD parlance)
-	pushobject->AddOut("Out", "Event", NULL, NULL, NULL);
-	ursourceobjectlist.Append(pushobject);
-	gyroobject = new ursObject("RotRate", NULL, NULL, 0, 3, true);
-	gyroobject->AddOut("X", "TimeSeries", NULL, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
-	gyroobject->AddOut("Y", "TimeSeries", NULL, NULL, NULL); 
-	gyroobject->AddOut("Z", "TimeSeries", NULL, NULL, NULL); 
-	ursourceobjectlist.Append(gyroobject);
-	touchobject = new ursObject("Touch", NULL, NULL, 0, 20, true);
-	touchobject->AddOut("X1", "TimeSeries", NULL, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
-	touchobject->AddOut("Y1", "TimeSeries", NULL, NULL, NULL); 
-	touchobject->AddOut("X2", "TimeSeries", NULL, NULL, NULL); 
-	touchobject->AddOut("Y2", "TimeSeries", NULL, NULL, NULL); 
-	touchobject->AddOut("X3", "TimeSeries", NULL, NULL, NULL); 
-	touchobject->AddOut("Y3", "TimeSeries", NULL, NULL, NULL); 
-	touchobject->AddOut("X4", "TimeSeries", NULL, NULL, NULL); 
-	touchobject->AddOut("Y4", "TimeSeries", NULL, NULL, NULL); 
-	touchobject->AddOut("X5", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("Y5", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("X6", "TimeSeries", NULL, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
-	touchobject->AddOut("Y6", "TimeSeries", NULL, NULL, NULL); 
-	touchobject->AddOut("X7", "TimeSeries", NULL, NULL, NULL); 
-	touchobject->AddOut("Y7", "TimeSeries", NULL, NULL, NULL); 
-	touchobject->AddOut("X8", "TimeSeries", NULL, NULL, NULL); 
-	touchobject->AddOut("Y8", "TimeSeries", NULL, NULL, NULL); 
-	touchobject->AddOut("X9", "TimeSeries", NULL, NULL, NULL); 
-	touchobject->AddOut("Y9", "TimeSeries", NULL, NULL, NULL); 
-	touchobject->AddOut("X10", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("Y10", "TimeSeries", NULL, NULL, NULL); 
-	touchobject->AddOut("X11", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("Y11", "TimeSeries", NULL, NULL, NULL); 
-	ursourceobjectlist.Append(touchobject);
-//	fileobject = new ursObject("File", NULL, NULL, 0, 1); // An file based source
-//	fileobject->AddOut("Out", "Event", NULL, NULL, NULL);
-//	ursourceobjectlist.Append(fileobject);
-	
-    
-/*    ratemasterobhject = new ursObject("RateMaster", RateMaster_Constructor, RateMaster_Destructor,1,2);
-	ratemasterobhject->AddOut("Control", "TimeSeries", RateMaster_ControlTick, RateMaster_ControlOut, NULL);
-	ratemasterobhject->AddOut("Read", "TimeSeries", RateMaster_ReadTick, RateMaster_ReadOut, NULL);
-	ratemasterobject->AddIn("In", "Generic", RateMaster_In);
-	urmanipulatorobjectlist.Append(ratemasterobject);
-*/    
-	sinobject = new ursObject("SinOsc", SinOsc_Constructor, SinOsc_Destructor,4,1);
-	sinobject->AddOut("WaveForm", "TimeSeries", SinOsc_Tick, SinOsc_Out, NULL);
-//	sinobject->AddOut("WaveForm", "TimeSeries", NULL, SinOsc_FillBuffer);
-	sinobject->AddIn("Freq", "Frequency", SinOsc_SetFreq);
-	sinobject->AddIn("Amp", "Amplitude", SinOsc_SetAmp);
-	sinobject->AddIn("SRate", "Rate", SinOsc_SetRate);
-	sinobject->AddIn("Time", "Time", SinOsc_SetPhase);
-	urmanipulatorobjectlist.Append(sinobject);
-//	urmanipulatorobjectlist[lastmanipulatorobj++] = sinobject;
-	
-	object = new ursObject("Avg", Avg_Constructor, Avg_Destructor,2,1);
-	object->AddOut("WaveForm", "TimeSeries", Avg_Tick, Avg_Out, NULL);
-	object->AddIn("In", "TimeSeries", Avg_In);
-	object->AddIn("Len", "Length", Avg_Len);
-	object->SetCouple(0,0);
-	urmanipulatorobjectlist.Append(object);
-	
-	object = new ursObject("Tuner", Tuner_Constructor, Tuner_Destructor,1,1);
-	object->AddOut("WaveForm", "TimeSeries", Tuner_Tick, Tuner_Out, NULL);
-	object->AddIn("In", "TimeSeries", Tuner_In);
-	object->SetCouple(0,0);
-	urmanipulatorobjectlist.Append(object);
-	
-	object = new ursObject("Dist3", ThreeDist_Constructor, ThreeDist_Destructor,4,1);
-	object->AddOut("WaveForm", "TimeSeries", ThreeDist_Tick, ThreeDist_Out, NULL);
-	object->AddIn("In1", "TimeSeries", ThreeDist_In1);
-	object->AddIn("In2", "TimeSeries", ThreeDist_In2);
-	object->AddIn("In3", "TimeSeries", ThreeDist_In3);
-	object->AddIn("Train", "TimeSeries", ThreeDist_Train);
-	urmanipulatorobjectlist.Append(object);
-	
-	object = new ursObject("Min", Min_Constructor, Min_Destructor,2,1);
-	object->AddOut("WaveForm", "TimeSeries", Min_Tick, Min_Out, NULL);
-	object->AddIn("In1", "TimeSeries", Min_In1);
-	object->AddIn("In2", "TimeSeries", Min_In2);
-	urmanipulatorobjectlist.Append(object);
-
-	object = new ursObject("Max", Max_Constructor, Max_Destructor,2,1);
-	object->AddOut("WaveForm", "TimeSeries", Max_Tick, Max_Out, NULL);
-	object->AddIn("In1", "TimeSeries", Max_In1);
-	object->AddIn("In2", "TimeSeries", Max_In2);
-	urmanipulatorobjectlist.Append(object);
-	
-	object = new ursObject("MinS", MinS_Constructor, MinS_Destructor,2,1);
-	object->AddOut("WaveForm", "TimeSeries", MinS_Tick, MinS_Out, NULL);
-	object->AddIn("In1", "TimeSeries", MinS_In1);
-	object->AddIn("In2", "TimeSeries", MinS_In2);
-	urmanipulatorobjectlist.Append(object);
-	
-	object = new ursObject("MaxS", MaxS_Constructor, MaxS_Destructor,2,1);
-	object->AddOut("WaveForm", "TimeSeries", MaxS_Tick, MaxS_Out, NULL);
-	object->AddIn("In1", "TimeSeries", MaxS_In1);
-	object->AddIn("In2", "TimeSeries", MaxS_In2);
-	urmanipulatorobjectlist.Append(object);
-	
-	
-	urSoundAtoms_Setup();
-	
-	object = new ursObject("Oct", Oct_Constructor, Oct_Destructor,2,1);
-	object->AddOut("Out", "Generic", Oct_Out, Oct_Tick, NULL);
-	object->AddIn("In", "Generic", Oct_In);
-    object->AddIn("Freq", "Frequency", Oct_Freq);
-	object->SetCouple(0,0);
-	urmanipulatorobjectlist.Append(object);
-	
-	object = new ursObject("Range", Range_Constructor, Range_Destructor,3,1);
-	object->AddOut("Out", "Generic", Range_Out, Range_Tick, NULL);
-	object->AddIn("In", "Generic", Range_In);
-    object->AddIn("Bottom", "Generic", Range_Bottom);
-    object->AddIn("Top", "Generic", Range_Top);
-	object->SetCouple(0,0);
-	urmanipulatorobjectlist.Append(object);
-	
-	object = new ursObject("Quant", Quant_Constructor, Quant_Destructor,1,1);
-	object->AddOut("Out", "Generic", Quant_Out, Quant_Tick, NULL);
-	object->AddIn("In", "Generic", Quant_In);
-	//	object->AddIn("Base", "Frequency", Quant_Oct);
-	object->SetCouple(0,0);
-	urmanipulatorobjectlist.Append(object);
-	
-	object = new ursObject("Gain", Gain_Constructor, Gain_Destructor,2,1);
-	object->AddOut("Out", "Generic", Gain_Out, Gain_Tick, NULL);
-	object->AddIn("In", "Generic", Gain_In);
-	object->AddIn("Amp", "Amplitude", Gain_Amp);
-	object->SetCouple(0,0);
-	urmanipulatorobjectlist.Append(object);
-	
-	sampleobject = new ursObject("Sample", Sample_Constructor, Sample_Destructor,5,1);
-	sampleobject->AddOut("WaveForm", "TimeSeries", Sample_Tick, Sample_Out, NULL);
-	sampleobject->AddIn("Amp", "Amplitude", Sample_SetAmp);
-	sampleobject->AddIn("Rate", "Rate", Sample_SetRate);
-	sampleobject->AddIn("Pos", "Position", Sample_SetPos);
-	sampleobject->AddIn("Sample", "Sample", Sample_SetSample);
-	sampleobject->AddIn("Loop", "State", Sample_SetLoop);
-//	urmanipulatorobjectlist[lastmanipulatorobj++] = sampleobject;
-	urmanipulatorobjectlist.Append(sampleobject);
-
-#ifdef OFFER_SLEIGH
-	object = new ursObject("Sleigh", Sleigh_Constructor, Sleigh_Destructor,6,1);
-	object->AddOut("WaveForm", "TimeSeries", Sleigh_Tick, Sleigh_Out, NULL);
-	object->AddIn("Amp", "Amplitude", Sleigh_SetAmp);
-	object->AddIn("Rate", "Rate", Sleigh_SetRate);
-	object->AddIn("Pos", "Position", Sleigh_SetPos);
-	object->AddIn("Sleigh", "Sleigh", Sleigh_SetSleigh);
-	object->AddIn("Play", "Play", Sleigh_Play);
-	object->AddIn("Loop", "Loop", Sleigh_Loop);
-	//	urmanipulatorobjectlist[lastmanipulatorobj++] = Sleighobject;
-	urmanipulatorobjectlist.Append(object);
-#endif
-	
-	object = new ursObject("Looper", Looper_Constructor, Looper_Destructor,6,1);
-	object->AddOut("WaveForm", "TimeSeries", Looper_Tick, Looper_Out, NULL);
-	object->AddIn("In", "TimeSeries", Looper_In);
-	object->AddIn("Amp", "Amplitude", Looper_SetAmp);
-	object->AddIn("Rate", "Rate", Looper_SetRate);
-	object->AddIn("Record", "Trigger", Looper_Record);
-	object->AddIn("Play", "Trigger", Looper_Play);
-	object->AddIn("Pos", "Time", Looper_Pos);
-	urmanipulatorobjectlist.Append(object);
-	
-	looprhythmobject = new ursObject("LoopRhythm", LoopRhythm_Constructor, LoopRhythm_Destructor,3,1);
-	looprhythmobject->AddOut("Beats", "TimeSeries", LoopRhythm_Tick, LoopRhythm_Out, NULL);
-	looprhythmobject->AddIn("BMP", "Rate", LoopRhythm_SetHMP);
-	looprhythmobject->AddIn("Now", "Event", LoopRhythm_SetBeatNow);
-	looprhythmobject->AddIn("Pos", "Position", LoopRhythm_Pos);
-//	urmanipulatorobjectlist[lastmanipulatorobj++] = looprhythmobject;
-	urmanipulatorobjectlist.Append(looprhythmobject);
-	
-	object = new ursObject("CMap", CircleMap_Constructor, CircleMap_Destructor,5,1);
-	object->AddOut("WaveForm", "TimeSeries", CircleMap_Tick, CircleMap_Out, NULL);
-	object->AddIn("Freq", "Frequency", CircleMap_SetFreq);
-	object->AddIn("NonL", "Generic", CircleMap_SetNonL);
-	object->AddIn("Amp", "Amplitude", CircleMap_SetAmp);
-	object->AddIn("SRate", "Rate", CircleMap_SetRate);
-	object->AddIn("Time", "Time", CircleMap_SetPhase);
-	urmanipulatorobjectlist.Append(object);
-
-/*	object = new ursObject("OWF", OWF_Constructor, OWF_Destructor,4,1);
-	object->AddOut("WaveForm", "TimeSeries", OWF_Tick, OWF_Out, NULL);
-	object->AddIn("Freq", "Frequency", OWF_SetFreq);
-	object->AddIn("Amp", "Amplitude", OWF_SetAmp);
-	object->AddIn("SRate", "Rate", OWF_SetRate);
-	object->AddIn("Time", "Time", OWF_SetPhase);
-	urmanipulatorobjectlist.Append(object);
-*/
-	
-	dacobject = new ursObject("Dac", NULL, NULL, 1, 0, true);
-	dacobject->AddIn("In", "TimeSeries", Dac_In);
-	ursinkobjectlist.Append(dacobject);
-
-	visobject = new ursObject("Vis", NULL, NULL, 1, 0, true);
-	visobject->AddIn("In", "TimeSeries", Vis_In);
-	ursinkobjectlist.Append(visobject);
-
-	netobject = new ursObject("Net", NULL, NULL, 1, 0, true);
-	netobject->AddIn("In", "Event", Net_In);
-	ursinkobjectlist.Append(netobject);
-	
-	//	drainobject = new ursObject("Drain", NULL, NULL, 1, 0);
-//	drainobject->AddIn("In", "TimeSeries", Drain_In); // A rate based drain
-//	ursinkobjectlist.Append(drainobject);
-	
-/*	pullobject = new ursObject("Pull", NULL, NULL, 1, 0);
-	pullobject->AddIn("In", "Event", Pull_In); // A event based drain ("bang" drain in PD parlance)
-	ursinkobjectlist.Append(pullobject);
-*/
-#ifdef LOAD_STK_OBJECTS
-	urSTK_Setup();
-#endif
-	
-}
-
 // DPS Objects (aka Unit Generators) below
 
 
@@ -1153,13 +1053,15 @@ void Net_In(ursObject* gself, double in)
 	Net_Send(netindata);
 }
 
-void Drain_In(ursObject* gself, double in)
+/*void Drain_In(ursObject* gself, double in)
 {
 }
+*/
 
 void Pull_In(ursObject* gself, double in)
 {
-	pullindata = in;
+    gself->lastindata[0] = in;
+//	pullindata = in;
 }
 
 void* Oct_Constructor()
@@ -1518,7 +1420,7 @@ void* Sample_Constructor()
 void Sample_AddFile(ursObject* gself, const char* filename)
 {
 	Sample_Data* self = (Sample_Data*)gself->objectdata;
-	UInt32 frate;
+//	UInt32 frate;
 	
 	self->numsamples = self->numsamples+1;
 	if(self->numsamples == 1)
@@ -1765,6 +1667,92 @@ void Sleigh_SetSleigh(ursObject* gself, double inSleigh)
 		self->position += self->len[self->activeSleigh];
 }
 
+// Slow
+
+#define MAX_SLOW_DEFAULT 32
+
+void* Slow_Constructor()
+{
+    //	UInt32 frate;
+/*	Slow_Data* self = new Slow_Data;
+	self->samplebuffer = new SInt16[MAX_SLOW_DEFAULT];
+	self->slow = 0;
+	self->amp = 1.0; //64*65535;//2147483647;//32767;
+	self->recpos = 0;
+	self->playpos = 0;
+	self->reclen = 0;
+	self->recording = false;
+	self->playing = false;
+	self->loop = true;
+	return (void*)self;*/
+    return NULL;
+}
+
+void Slow_Destructor(ursObject* gself)
+{
+/*	Slow_Data* self = (Slow_Data*)gself->objectdata;
+	delete (Slow_Data*)self;*/
+}
+
+double Slow_Tick(ursObject* gself)
+{	
+/*	Slow_Data* self = (Slow_Data*)gself->objectdata;
+	gself->FeedAllPullIns(1); // This is decoupled so no forwarding, just pulling to propagate our natural rate
+	double out = 0;
+	if(self->playing)
+	{
+		out = self->amp*self->samplebuffer[self->position]/32767.0;
+		self->realposition = self->realposition + self->rate;
+		self->position = (SInt32)self->realposition;
+		if(self->loop)
+		{
+			self->position = self->position % self->len;
+			while(self->position < 0)
+				self->position += self->len;
+		}
+		else
+		{
+			if(self->position >= self->len || self->position < 0)
+				self->playing = false;
+		}
+	}
+	self->lastout = out;
+	return out;*/
+    return 0.0;
+}
+
+double Slow_Out(ursObject* gself)
+{
+/*	Slow_Data* self = (Slow_Data*)gself->objectdata;
+	return self->lastout;*/
+    return 0.0;
+}
+
+void Slow_SetAmp(ursObject* gself, double inamp)
+{
+/*	Slow_Data* self = (Slow_Data*)gself->objectdata;
+	self->amp = inamp;// *(128*65535/256);*/
+}
+
+
+void Slow_SetRate(ursObject* gself, double inrate)
+{
+/*	Slow_Data* self = (Slow_Data*)gself->objectdata;
+	self->rate = 4.0*inrate;// /128.0;*/
+}
+
+void Slow_In(ursObject* gself, double indata)
+{
+/*	Slow_Data* self = (Slow_Data*)gself->objectdata;
+	if(self->recording)
+	{
+		self->samplebuffer[self->recpos++] = indata*32767.0;
+		if(self->recpos >= MAX_LOOPER_DEFAULT || self->recpos >= self->reclen)
+			self->recording = false;
+	}*/
+}
+
+
 // Looper
 
 // Space for 10 second loop is default
@@ -1798,7 +1786,7 @@ double Looper_Tick(ursObject* gself)
 	Looper_Data* self = (Looper_Data*)gself->objectdata;
 	gself->FeedAllPullIns(1); // This is decoupled so no forwarding, just pulling to propagate our natural rate
 	double out = 0;
-	if(self->playing /*&& self->len > 0*/)
+	if(self->playing && self->reclen > 0)
 	{
 		out = self->amp*self->samplebuffer[self->position]/32767.0;
 		self->realposition = self->realposition + self->rate;
@@ -1872,7 +1860,7 @@ void Looper_Record(ursObject* gself, double indata)
 void Looper_Play(ursObject* gself, double indata)
 {
 	Looper_Data* self = (Looper_Data*)gself->objectdata;
-	if(indata < VIRTUAL_ZERO || self->reclen == 0)
+	if(indata < VIRTUAL_ZERO)
 	{
 		self->playing = false;
 	}
@@ -1915,7 +1903,7 @@ void Looper_ReadFile(ursObject* gself, const char* filename)
 void Looper_WriteFile(ursObject* gself, const char* filename)
 {
 	Looper_Data* self = (Looper_Data*)gself->objectdata;
-	UInt32 frate;
+//	UInt32 frate;
 
     StkFrames frames(self->len,1);
     for(int i=0; i<self->len; i++)
@@ -2241,6 +2229,175 @@ void Tuner_In(ursObject* gself, double indata)
 	}
 }
 
+// Drain
+void* Drain_Constructor()
+{
+	State_Data* self = new State_Data;
+	return (void*)self;
+}
+
+void Drain_Destructor(ursObject* gself)
+{
+	State_Data* self = (State_Data*)gself->objectdata;
+	delete (State_Data*)self;
+}
+
+double Drain_Out(ursObject* gself)
+{
+	State_Data* self = (State_Data*)gself->objectdata;
+	if(gself->firstpullin[0]!=NULL)
+    {
+        float res = gself->CallAllPullIns();
+        self->lastout = res;
+    }
+	return self->lastout;
+}
+
+void Drain_In(ursObject* gself, double indata)
+{
+	State_Data* self = (State_Data*)gself->objectdata;
+    self->lastout = indata;
+    gself->CallAllPushOuts(indata);
+}
+
+double Drain_Time(ursObject* gself)
+{
+	State_Data* self = (State_Data*)gself->objectdata;
+	if(gself->firstpullin[0]!=NULL)
+    {
+        float res = gself->CallAllPullIns();
+        self->lastout = res;
+    }
+    gself->CallAllPushOuts(self->lastout);
+
+    return 0.0; // Not propagating to pumps at the moment, this may change
+}
+
+// Pump
+
+void* Pump_Constructor()
+{
+	State_Data* self = new State_Data;
+	return (void*)self;
+}
+
+void Pump_Destructor(ursObject* gself)
+{
+	State_Data* self = (State_Data*)gself->objectdata;
+	delete (State_Data*)self;
+}
+
+double Pump_Out(ursObject* gself)
+{
+	State_Data* self = (State_Data*)gself->objectdata;
+	if(gself->firstpullin[0]!=NULL)
+    {
+        float res = gself->CallAllPullIns();
+        self->lastout = res;
+    }
+	return self->lastout;
+}
+
+void Pump_In(ursObject* gself, double indata)
+{
+    
+	State_Data* self = (State_Data*)gself->objectdata;
+    self->lastout = indata;
+    gself->CallAllPushOuts(indata);
+}
+
+void Pump_Time(ursObject* gself, double indata)
+{
+    // Currently ignoring the pump's indata. This likely will never change.
+	State_Data* self = (State_Data*)gself->objectdata;
+	if(gself->firstpullin[0]!=NULL)
+    {
+        float res = gself->CallAllPullIns();
+        self->lastout = res;
+    }
+    gself->CallAllPushOuts(self->lastout);
+}
+
+
+// Sniff
+void* Sniff_Constructor()
+{
+	State_Data* self = new State_Data;
+	return (void*)self;
+}
+
+void Sniff_Destructor(ursObject* gself)
+{
+	State_Data* self = (State_Data*)gself->objectdata;
+	delete (State_Data*)self;
+}
+
+double Sniff_Out(ursObject* gself)
+{
+	State_Data* self = (State_Data*)gself->objectdata;
+	if(gself->firstpullin[0]!=NULL)
+    {
+        float res = gself->CallAllPullIns();
+        self->lastout = res;
+    }
+	return self->lastout;
+}
+
+void Sniff_In(ursObject* gself, double indata)
+{
+	State_Data* self = (State_Data*)gself->objectdata;
+    self->lastout = indata;
+    gself->CallAllPushOuts(indata);
+}
+
+double Sniff_Sniff(ursObject* gself)
+{
+	State_Data* self = (State_Data*)gself->objectdata;
+    return self->lastout; // Cheapest form of interpolation
+}
+
+
+// SniffL (linear interpolating)
+void* SniffL_Constructor()
+{
+	TwoState_Data* self = new TwoState_Data;
+	return (void*)self;
+}
+
+void SniffL_Destructor(ursObject* gself)
+{
+	TwoState_Data* self = (TwoState_Data*)gself->objectdata;
+	delete (TwoState_Data*)self;
+}
+
+double SniffL_Out(ursObject* gself)
+{
+	TwoState_Data* self = (TwoState_Data*)gself->objectdata;
+	if(gself->firstpullin[0]!=NULL)
+    {
+        float res = gself->CallAllPullIns();
+        self->lastout = (self->previous + res)/2.0;
+        self->previous = res;
+    }
+	return self->lastout;
+}
+
+void SniffL_In(ursObject* gself, double indata)
+{
+	TwoState_Data* self = (TwoState_Data*)gself->objectdata;
+    self->lastout = (self->previous + indata)/2.0;
+    self->previous = indata;
+    gself->CallAllPushOuts(indata);
+}
+
+double SniffL_Sniff(ursObject* gself)
+{
+	TwoState_Data* self = (TwoState_Data*)gself->objectdata;
+    return self->lastout; // Cheapest form of interpolation
+}
+
+
+
 // k-means (k = 3)
 
 void* ThreeDist_Constructor()
@@ -2336,6 +2493,51 @@ void ThreeDist_Train(ursObject* gself, double indata)
 }
 
 // -- Binary comparators
+
+void* Add_Constructor()
+{
+	Comp_Data* self = new Comp_Data;
+	self->lastin1 = 0.0;
+	self->lastin2 = 0.0;
+	return (void*)self;
+}
+
+void Add_Destructor(ursObject* gself)
+{
+	Comp_Data* self = (Comp_Data*)gself->objectdata;
+	delete self;
+}
+
+double Add_Tick(ursObject* gself)
+{
+	Comp_Data* self = (Comp_Data*)gself->objectdata;
+	gself->FeedAllPullIns();
+	self->lastout = self->lastin1 + self->lastin2;
+	return self->lastout;
+}
+
+double Add_Out(ursObject* gself)
+{
+	Comp_Data* self = (Comp_Data*)gself->objectdata;
+	return self->lastout;
+}
+
+void Add_In1(ursObject* gself, double indata)
+{
+	Comp_Data* self = (Comp_Data*)gself->objectdata;
+	self->lastin1 = indata;
+	double out = self->lastin1 + self->lastin2;
+	gself->CallAllPushOuts(out);
+}
+
+void Add_In2(ursObject* gself, double indata)
+{
+	Comp_Data* self = (Comp_Data*)gself->objectdata;
+	self->lastin2 = indata;
+	double out = self->lastin1 + self->lastin2;
+	gself->CallAllPushOuts(out);
+}
+
 
 void* Min_Constructor()
 {
@@ -2554,4 +2756,321 @@ void MaxS_In2(ursObject* gself, double indata)
 		out = 1.0;
 	
 	gself->CallAllPushOuts(out);
+}
+
+ursObject* sinobject;
+ursObject* nopeobject;
+ursObject* sampleobject;
+ursObject* looprhythmobject;
+
+ursObject* cameraObject;
+ursObject* accelobject;
+ursObject* gyroobject;
+ursObject* compassobject;
+ursObject* locationobject;
+ursObject* touchobject;
+ursObject* micobject;
+ursObject* netinobject;
+ursObject* pushobject;
+ursObject* fileobject;
+
+ursObject* dacobject;
+ursObject* visobject;
+ursObject* netobject;
+ursObject* drainobject;
+ursObject* pullobject;
+
+ursObject* object;
+
+void urs_SetupObjects()
+{
+	
+	accelobject = new ursObject("Accel", NULL, NULL, 0, 3, true);
+	accelobject->AddOut("X", "TimeSeries", NULL, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
+	accelobject->AddOut("Y", "TimeSeries", NULL, NULL, NULL);
+	accelobject->AddOut("Z", "TimeSeries", NULL, NULL, NULL);
+	ursourceobjectlist.Append(accelobject);
+	cameraObject = new ursObject("Cam",NULL,NULL,0,5,true);
+	cameraObject->AddOut("Bright","TimeSeries",NULL,NULL,NULL);
+	cameraObject->AddOut("Blue","TimeSeries",NULL,NULL,NULL);
+	cameraObject->AddOut("Green","TimeSeries",NULL,NULL,NULL);
+	cameraObject->AddOut("Red","TimeSeries",NULL,NULL,NULL);
+	cameraObject->AddOut("Edge","TimeSeries",NULL,NULL,NULL);
+	ursourceobjectlist.Append(cameraObject);
+	compassobject = new ursObject("Compass", NULL, NULL, 0, 4, true);
+	compassobject->AddOut("X", "TimeSeries", NULL, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
+	compassobject->AddOut("Y", "TimeSeries", NULL, NULL, NULL);
+	compassobject->AddOut("Z", "TimeSeries", NULL, NULL, NULL);
+	compassobject->AddOut("North", "TimeSeries", NULL, NULL, NULL);
+	ursourceobjectlist.Append(compassobject);
+	locationobject = new ursObject("Location", NULL, NULL, 0, 2, true);
+	locationobject->AddOut("Lat", "TimeSeries", NULL, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
+	locationobject->AddOut("Long", "TimeSeries", NULL, NULL, NULL);
+	ursourceobjectlist.Append(locationobject);
+	micobject = new ursObject("Mic", NULL, NULL, 0, 1, true);
+	micobject->AddOut("Out", "TimeSeries", NULL, NULL, NULL);
+	ursourceobjectlist.Append(micobject);
+	netinobject = new ursObject("NetIn", NULL, NULL, 0, 1, true);
+	netinobject->AddOut("Out", "Event", NetIn_Tick, NetIn_Out, NULL);
+	ursourceobjectlist.Append(netinobject);
+	pushobject = new ursObject("Push", NULL, NULL, 0, 1); // An event based source ("bang" in PD parlance)
+	pushobject->AddOut("Out", "Event", NULL, NULL, NULL);
+	ursourceobjectlist.Append(pushobject);
+	gyroobject = new ursObject("RotRate", NULL, NULL, 0, 3, true);
+	gyroobject->AddOut("X", "TimeSeries", NULL, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
+	gyroobject->AddOut("Y", "TimeSeries", NULL, NULL, NULL);
+	gyroobject->AddOut("Z", "TimeSeries", NULL, NULL, NULL);
+	ursourceobjectlist.Append(gyroobject);
+	touchobject = new ursObject("Touch", NULL, NULL, 0, 22, true);
+	touchobject->AddOut("X1", "TimeSeries", NULL, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
+	touchobject->AddOut("Y1", "TimeSeries", NULL, NULL, NULL);
+	touchobject->AddOut("X2", "TimeSeries", NULL, NULL, NULL);
+	touchobject->AddOut("Y2", "TimeSeries", NULL, NULL, NULL);
+	touchobject->AddOut("X3", "TimeSeries", NULL, NULL, NULL);
+	touchobject->AddOut("Y3", "TimeSeries", NULL, NULL, NULL);
+	touchobject->AddOut("X4", "TimeSeries", NULL, NULL, NULL);
+	touchobject->AddOut("Y4", "TimeSeries", NULL, NULL, NULL);
+	touchobject->AddOut("X5", "TimeSeries", NULL, NULL, NULL);
+	touchobject->AddOut("Y5", "TimeSeries", NULL, NULL, NULL);
+	touchobject->AddOut("X6", "TimeSeries", NULL, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
+	touchobject->AddOut("Y6", "TimeSeries", NULL, NULL, NULL);
+	touchobject->AddOut("X7", "TimeSeries", NULL, NULL, NULL);
+	touchobject->AddOut("Y7", "TimeSeries", NULL, NULL, NULL);
+	touchobject->AddOut("X8", "TimeSeries", NULL, NULL, NULL);
+	touchobject->AddOut("Y8", "TimeSeries", NULL, NULL, NULL);
+	touchobject->AddOut("X9", "TimeSeries", NULL, NULL, NULL);
+	touchobject->AddOut("Y9", "TimeSeries", NULL, NULL, NULL);
+	touchobject->AddOut("X10", "TimeSeries", NULL, NULL, NULL);
+	touchobject->AddOut("Y10", "TimeSeries", NULL, NULL, NULL);
+	touchobject->AddOut("X11", "TimeSeries", NULL, NULL, NULL);
+	touchobject->AddOut("Y11", "TimeSeries", NULL, NULL, NULL);
+	ursourceobjectlist.Append(touchobject);
+    //	fileobject = new ursObject("File", NULL, NULL, 0, 1); // An file based source
+    //	fileobject->AddOut("Out", "Event", NULL, NULL, NULL);
+    //	ursourceobjectlist.Append(fileobject);
+	
+    
+    /*    ratemasterobhject = new ursObject("RateMaster", RateMaster_Constructor, RateMaster_Destructor,1,2);
+     ratemasterobhject->AddOut("Control", "TimeSeries", RateMaster_ControlTick, RateMaster_ControlOut, NULL);
+     ratemasterobhject->AddOut("Read", "TimeSeries", RateMaster_ReadTick, RateMaster_ReadOut, NULL);
+     ratemasterobject->AddIn("In", "Generic", RateMaster_In);
+     urmanipulatorobjectlist.Append(ratemasterobject);
+     */
+	sinobject = new ursObject("SinOsc", SinOsc_Constructor, SinOsc_Destructor,4,1);
+	sinobject->AddOut("Out", "TimeSeries", SinOsc_Tick, SinOsc_Out, NULL);
+    //	sinobject->AddOut("Out", "TimeSeries", NULL, SinOsc_FillBuffer);
+	sinobject->AddIn("Freq", "Frequency", SinOsc_SetFreq);
+	sinobject->AddIn("Amp", "Amplitude", SinOsc_SetAmp);
+	sinobject->AddIn("SRate", "Rate", SinOsc_SetRate);
+	sinobject->AddIn("Time", "Time", SinOsc_SetPhase);
+	urmanipulatorobjectlist.Append(sinobject);
+    //	urmanipulatorobjectlist[lastmanipulatorobj++] = sinobject;
+	
+	object = new ursObject("Avg", Avg_Constructor, Avg_Destructor,2,1);
+	object->AddOut("Out", "TimeSeries", Avg_Tick, Avg_Out, NULL);
+	object->AddIn("In", "TimeSeries", Avg_In);
+	object->AddIn("Len", "Length", Avg_Len);
+	object->SetCouple(0,0);
+	urmanipulatorobjectlist.Append(object);
+	
+    
+    /*	object = new ursObject("Tuner", Tuner_Constructor, Tuner_Destructor,1,1);
+     object->AddOut("Out", "TimeSeries", Tuner_Tick, Tuner_Out, NULL);
+     object->AddIn("In", "TimeSeries", Tuner_In);
+     object->SetCouple(0,0);
+     urmanipulatorobjectlist.Append(object);
+     */
+    
+    /*
+     object = new ursObject("Pump", Pump_Constructor, Pump_Destructor,2,1);
+     object->AddOut("Out", "TimeSeries", Pump_Out, NULL, NULL);
+     object->AddIn("In", "TimeSeries", Pump_In);
+     object->AddIn("Time", "Timing", Pump_Time);
+     object->SetCouple(0,0);
+     urmanipulatorobjectlist.Append(object);
+     
+     
+     object = new ursObject("Drain", Drain_Constructor, Drain_Destructor,1,2);
+     object->AddOut("Out", "TimeSeries", Drain_Out, NULL, NULL);
+     object->AddOut("Time", "Timing", Drain_Time, NULL, NULL);
+     object->AddIn("In", "TimeSeries", Drain_In);
+     object->SetCouple(0,0);
+     urmanipulatorobjectlist.Append(object);
+     
+     object = new ursObject("Sniff", Sniff_Constructor, Sniff_Destructor,1,2);
+     object->AddOut("Out", "TimeSeries", Sniff_Out, NULL, NULL);
+     object->AddOut("Sniff", "TimeSeries", Sniff_Sniff, NULL, NULL);
+     object->AddIn("In", "TimeSeries", Sniff_In);
+     object->SetCouple(0,0);
+     urmanipulatorobjectlist.Append(object);
+     
+     object = new ursObject("SniffL", SniffL_Constructor, SniffL_Destructor,1,2);
+     object->AddOut("Out", "TimeSeries", SniffL_Out, NULL, NULL);
+     object->AddOut("Sniff", "TimeSeries", SniffL_Sniff, NULL, NULL);
+     object->AddIn("In", "TimeSeries", SniffL_In);
+     object->SetCouple(0,0);
+     urmanipulatorobjectlist.Append(object);
+     */
+    
+	object = new ursObject("Dist3", ThreeDist_Constructor, ThreeDist_Destructor,4,1);
+	object->AddOut("Out", "TimeSeries", ThreeDist_Tick, ThreeDist_Out, NULL);
+	object->AddIn("In1", "TimeSeries", ThreeDist_In1);
+	object->AddIn("In2", "TimeSeries", ThreeDist_In2);
+	object->AddIn("In3", "TimeSeries", ThreeDist_In3);
+	object->AddIn("Train", "TimeSeries", ThreeDist_Train);
+	urmanipulatorobjectlist.Append(object);
+    
+    object = new ursObject("Add", Add_Constructor, Add_Destructor,2,1);
+	object->AddOut("Out", "TimeSeries", Add_Tick, Add_Out, NULL);
+	object->AddIn("In1", "TimeSeries", Add_In1);
+	object->AddIn("In2", "TimeSeries", Add_In2);
+	urmanipulatorobjectlist.Append(object);
+    
+	object = new ursObject("Min", Min_Constructor, Min_Destructor,2,1);
+	object->AddOut("Out", "TimeSeries", Min_Tick, Min_Out, NULL);
+	object->AddIn("In1", "TimeSeries", Min_In1);
+	object->AddIn("In2", "TimeSeries", Min_In2);
+	urmanipulatorobjectlist.Append(object);
+    
+	object = new ursObject("Max", Max_Constructor, Max_Destructor,2,1);
+	object->AddOut("Out", "TimeSeries", Max_Tick, Max_Out, NULL);
+	object->AddIn("In1", "TimeSeries", Max_In1);
+	object->AddIn("In2", "TimeSeries", Max_In2);
+	urmanipulatorobjectlist.Append(object);
+	
+	object = new ursObject("MinS", MinS_Constructor, MinS_Destructor,2,1);
+	object->AddOut("Out", "TimeSeries", MinS_Tick, MinS_Out, NULL);
+	object->AddIn("In1", "TimeSeries", MinS_In1);
+	object->AddIn("In2", "TimeSeries", MinS_In2);
+	urmanipulatorobjectlist.Append(object);
+	
+	object = new ursObject("MaxS", MaxS_Constructor, MaxS_Destructor,2,1);
+	object->AddOut("Out", "TimeSeries", MaxS_Tick, MaxS_Out, NULL);
+	object->AddIn("In1", "TimeSeries", MaxS_In1);
+	object->AddIn("In2", "TimeSeries", MaxS_In2);
+	urmanipulatorobjectlist.Append(object);
+	
+	
+	urSoundAtoms_Setup();
+	
+	object = new ursObject("Oct", Oct_Constructor, Oct_Destructor,2,1);
+	object->AddOut("Out", "Generic", Oct_Out, Oct_Tick, NULL);
+	object->AddIn("In", "Generic", Oct_In);
+    object->AddIn("Freq", "Frequency", Oct_Freq);
+	object->SetCouple(0,0);
+	urmanipulatorobjectlist.Append(object);
+	
+	object = new ursObject("Range", Range_Constructor, Range_Destructor,3,1);
+	object->AddOut("Out", "Generic", Range_Out, Range_Tick, NULL);
+	object->AddIn("In", "Generic", Range_In);
+    object->AddIn("Bottom", "Generic", Range_Bottom);
+    object->AddIn("Top", "Generic", Range_Top);
+	object->SetCouple(0,0);
+	urmanipulatorobjectlist.Append(object);
+	
+	object = new ursObject("Quant", Quant_Constructor, Quant_Destructor,1,1);
+	object->AddOut("Out", "Generic", Quant_Out, Quant_Tick, NULL);
+	object->AddIn("In", "Generic", Quant_In);
+	//	object->AddIn("Base", "Frequency", Quant_Oct);
+	object->SetCouple(0,0);
+	urmanipulatorobjectlist.Append(object);
+	
+	object = new ursObject("Gain", Gain_Constructor, Gain_Destructor,2,1);
+	object->AddOut("Out", "Generic", Gain_Out, Gain_Tick, NULL);
+	object->AddIn("In", "Generic", Gain_In);
+	object->AddIn("Amp", "Amplitude", Gain_Amp);
+	object->SetCouple(0,0);
+	urmanipulatorobjectlist.Append(object);
+    
+    /*
+     object = new ursObject("Slow", Slow_Constructor, Slow_Destructor,2,1);
+     object->AddOut("Out", "TimeSeries", Slow_Tick, Slow_Out, NULL);
+     object->AddIn("In", "TimeSeries", Slow_In);
+     object->AddIn("Rate", "Rate", Slow_SetRate);
+     urmanipulatorobjectlist.Append(object);
+     */
+	
+	sampleobject = new ursObject("Sample", Sample_Constructor, Sample_Destructor,5,1);
+	sampleobject->AddOut("Out", "TimeSeries", Sample_Tick, Sample_Out, NULL);
+	sampleobject->AddIn("Amp", "Amplitude", Sample_SetAmp);
+	sampleobject->AddIn("Rate", "Rate", Sample_SetRate);
+	sampleobject->AddIn("Pos", "Position", Sample_SetPos);
+	sampleobject->AddIn("Sample", "Sample", Sample_SetSample);
+	sampleobject->AddIn("Loop", "State", Sample_SetLoop);
+    //	urmanipulatorobjectlist[lastmanipulatorobj++] = sampleobject;
+	urmanipulatorobjectlist.Append(sampleobject);
+    
+#ifdef OFFER_SLEIGH
+	object = new ursObject("Sleigh", Sleigh_Constructor, Sleigh_Destructor,6,1);
+	object->AddOut("Out", "TimeSeries", Sleigh_Tick, Sleigh_Out, NULL);
+	object->AddIn("Amp", "Amplitude", Sleigh_SetAmp);
+	object->AddIn("Rate", "Rate", Sleigh_SetRate);
+	object->AddIn("Pos", "Position", Sleigh_SetPos);
+	object->AddIn("Sleigh", "Sleigh", Sleigh_SetSleigh);
+	object->AddIn("Play", "Play", Sleigh_Play);
+	object->AddIn("Loop", "Loop", Sleigh_Loop);
+	//	urmanipulatorobjectlist[lastmanipulatorobj++] = Sleighobject;
+	urmanipulatorobjectlist.Append(object);
+#endif
+	
+	object = new ursObject("Looper", Looper_Constructor, Looper_Destructor,6,1);
+	object->AddOut("Out", "TimeSeries", Looper_Tick, Looper_Out, NULL);
+	object->AddIn("In", "TimeSeries", Looper_In);
+	object->AddIn("Amp", "Amplitude", Looper_SetAmp);
+	object->AddIn("Rate", "Rate", Looper_SetRate);
+	object->AddIn("Record", "Trigger", Looper_Record);
+	object->AddIn("Play", "Trigger", Looper_Play);
+	object->AddIn("Pos", "Time", Looper_Pos);
+	urmanipulatorobjectlist.Append(object);
+    /*
+     looprhythmobject = new ursObject("LoopRhythm", LoopRhythm_Constructor, LoopRhythm_Destructor,3,1);
+     looprhythmobject->AddOut("Beats", "TimeSeries", LoopRhythm_Tick, LoopRhythm_Out, NULL);
+     looprhythmobject->AddIn("BMP", "Rate", LoopRhythm_SetHMP);
+     looprhythmobject->AddIn("Now", "Event", LoopRhythm_SetBeatNow);
+     looprhythmobject->AddIn("Pos", "Position", LoopRhythm_Pos);
+     //	urmanipulatorobjectlist[lastmanipulatorobj++] = looprhythmobject;
+     urmanipulatorobjectlist.Append(looprhythmobject);
+     */
+	object = new ursObject("CMap", CircleMap_Constructor, CircleMap_Destructor,5,1);
+	object->AddOut("Out", "TimeSeries", CircleMap_Tick, CircleMap_Out, NULL);
+	object->AddIn("Freq", "Frequency", CircleMap_SetFreq);
+	object->AddIn("NonL", "Generic", CircleMap_SetNonL);
+	object->AddIn("Amp", "Amplitude", CircleMap_SetAmp);
+	object->AddIn("SRate", "Rate", CircleMap_SetRate);
+	object->AddIn("Time", "Time", CircleMap_SetPhase);
+	urmanipulatorobjectlist.Append(object);
+    
+    /*	object = new ursObject("OWF", OWF_Constructor, OWF_Destructor,4,1);
+     object->AddOut("Out", "TimeSeries", OWF_Tick, OWF_Out, NULL);
+     object->AddIn("Freq", "Frequency", OWF_SetFreq);
+     object->AddIn("Amp", "Amplitude", OWF_SetAmp);
+     object->AddIn("SRate", "Rate", OWF_SetRate);
+     object->AddIn("Time", "Time", OWF_SetPhase);
+     urmanipulatorobjectlist.Append(object);
+     */
+	
+	dacobject = new ursObject("Dac", NULL, NULL, 1, 0, true);
+	dacobject->AddIn("In", "TimeSeries", Dac_In);
+	ursinkobjectlist.Append(dacobject);
+    
+	visobject = new ursObject("Vis", NULL, NULL, 1, 0, true);
+	visobject->AddIn("In", "TimeSeries", Vis_In);
+	ursinkobjectlist.Append(visobject);
+    
+	netobject = new ursObject("Net", NULL, NULL, 1, 0, true);
+	netobject->AddIn("In", "Event", Net_In);
+	ursinkobjectlist.Append(netobject);
+	
+	//	drainobject = new ursObject("Drain", NULL, NULL, 1, 0);
+    //	drainobject->AddIn("In", "TimeSeries", Drain_In); // A rate based drain
+    //	ursinkobjectlist.Append(drainobject);
+	
+	pullobject = new ursObject("Pull", NULL, NULL, 1, 0);
+	pullobject->AddIn("In", "Event", Pull_In); // A event based drain ("bang" drain in PD parlance)
+	ursinkobjectlist.Append(pullobject);
+    
+#ifdef LOAD_STK_OBJECTS
+	urSTK_Setup();
+#endif
+	
 }

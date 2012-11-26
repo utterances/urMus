@@ -158,9 +158,9 @@ static lua_CFunction ll_sym (lua_State *L, void *lib, const char *sym) {
 
 static void pusherror (lua_State *L) {
   const char *err_str;
-  const char *err_file;
+//  const char *err_file;
 //  NSLinkEditErrors err; IPHONE DEPRICATED
-  int err_num;
+//  int err_num;
 //  NSLinkEditError(&err, &err_num, &err_file, &err_str);
   lua_pushstring(L, err_str);
 }
@@ -191,8 +191,7 @@ static void ll_unloadlib (void *lib) {
 static void *ll_load (lua_State *L, const char *path) {
 /*  NSObjectFileImage img;
   NSObjectFileImageReturnCode ret;
-  /* this would be a rare case, but prevents crashing if it happens */
-  /*if(!_dyld_present())*/ {
+  if(!_dyld_present())*/ {
     lua_pushliteral(L, "dyld not present");
     return NULL;
   }

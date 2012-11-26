@@ -5,24 +5,41 @@
 //  Created by Georg Essl on 6/20/09.
 //  Copyright Georg Essl 2009. All rights reserved. See LICENSE.txt for license details.
 //
-
 #import <QuartzCore/QuartzCore.h>
-#import <OpenGLES/EAGLDrawable.h>
 
+#include "config.h"
 #import "EAGLView.h"
+
+#ifndef OPENGLES2
+#import <OpenGLES/EAGLDrawable.h>
+#endif
+
 #import "urAPI.h"
 #import "Texture2d.h"
+
+#import "urFont.h"
+#include "urTexture.h"
 
 #import "MachTimer.h"
 #import "urSound.h"
 #import "httpServer.h"
 #include <arpa/inet.h>
 
+
 #define SLEEPER
 #define USECAMERA
+/* If GPUIMAGE is used or not is defined in EAGLView.h" */
 
 #ifdef SANDWICH_SUPPORT
 static float pressure[4] = {0,0,0,0};
+#endif
+
+#ifdef OPENGLES2
+enum { ATTRIB_VERTEX, ATTRIB_COLOR, ATTRIB_TEXTUREPOSITON, NUM_ATTRIBUTES };
+
+GLint _positionSlot;
+GLint _texcoordSlot;
+GLuint _textureUniform;
 #endif
 
 #define USE_DEPTH_BUFFER 0
@@ -35,6 +52,66 @@ extern urAPI_Region_t* lastRegion[];
 extern urAPI_Region_t* UIParent;
 
 MachTimer* mytimer;
+
+// Interfacing with C of the lua API
+extern EAGLView* g_glView;
+
+@implementation urRegionMovie
+
+// Shared GL pipeline fed data structures
+GLfloat squareVertices[] = {
+    -0.5f, -0.5f,
+    0.5f,  -0.5f,
+    -0.5f,  0.5f,
+    0.5f,   0.5f,
+};
+#ifdef OPENGLES2
+GLubyte squareColors[] = {
+    //    GLfloat squareColors[] = {
+    255, 255,   0, 255,
+    0,   255, 255, 255,
+    0,     0,   0,   0,
+    255,   0, 255, 255,
+};
+#else
+GLubyte squareColors[] = {
+    255, 255,   0, 255,
+    0,   255, 255, 255,
+    0,     0,   0,   0,
+    255,   0, 255, 255,
+};
+#endif
+
+GLfloat shadowColors[] = {
+    0.0, 0.0, 0.0, 50.0
+};
+
+// Path to the default font
+string g_fontPath;
+string g_storagePath;
+static string &fontPath=g_fontPath;
+static string &storagePath=g_storagePath;
+string errorfontPath;
+
+#ifdef GPUIMAGE
+#pragma mark -
+#pragma mark GPUImageTextureOutputDelegate delegate method
+
+- (void)newFrameReadyFromTextureOutput:(GPUImageTextureOutput *)callbackTextureOutput;
+{
+//    GLuint texture = callbackTextureOutput.texture;
+#ifdef FREEOVERFLOWTEXTURE  
+    if(region->texture->movieTexture)
+    {
+        glDeleteTextures(1,&(region->texture->movieTexture));
+        region->texture->movieTexture = 0;
+    }
+#endif
+    region->texture->movieTexture = callbackTextureOutput.texture;
+}
+#endif
+
+@end
 
 // A class extension to declare private methods
 @interface EAGLView ()
@@ -81,7 +158,6 @@ MachTimer* mytimer;
 @synthesize searchtype;
 
 @synthesize captureManager;
-
 
 // You must implement this method
 + (Class)layerClass {
@@ -273,8 +349,11 @@ float arg2coordx[MAX_FINGERS];
 float arg2coordy[MAX_FINGERS];
 
 // This is the texture to hold DPrint and lua error messages.
+#ifdef UISTRINGS
 Texture2D       *errorStrTex = nil;
-
+#else
+urTexture       *errorStrTex = nil;
+#endif
 std::string errorstr = "";
 bool newerror = true;
 
@@ -282,9 +361,1020 @@ bool newerror = true;
 // Main drawing loop. This does everything but brew coffee.
 extern lua_State *lua;
 
+// Only run video capture if the data is actually used somewhere.
+// This is a global camera instance counter combining both dataflow pipeline and graphical texture loads.
+long camerause = 0;
+
+// Obj-C interface Camera Instance counter
+- (void)IncCameraUse
+{
+    if(camerause <= 0)
+    {
+#ifdef USECAMERA
+#ifdef GPUIMAGE
+        [videoCamera startCameraCapture];
+#else
+        [captureManager.captureSession startRunning];
+#endif
+#endif
+    }
+    camerause++;
+}
+
+- (void)DecCameraUse
+{
+    if(camerause > 0)
+    {  
+        camerause--;
+#ifdef USECAMERA
+        if(camerause == 0)
+#ifdef GPUIMAGE
+            [videoCamera stopCameraCapture];
+#else
+            [captureManager.captureSession stopRunning];
+#endif
+#endif
+    }
+}
+
+- (void)DecCameraUseBy:(int)dec
+{
+    if(camerause > 0)
+    {  
+        camerause=camerause-dec;
+#ifdef USECAMERA
+        if(camerause == 0)
+#ifdef GPUIMAGE
+            [videoCamera stopCameraCapture];
+#else
+            [captureManager.captureSession stopRunning];
+#endif
+#endif
+    }
+}
+
+
+
+// C interface Camera Instance counter
+void incCameraUse()
+{
+    [g_glView IncCameraUse];
+}
+
+void decCameraUse()
+{
+    [g_glView DecCameraUse];
+}
+
+void decCameraUseBy(int dec)
+{
+    [g_glView DecCameraUseBy:dec];
+}
+
+#ifdef GPUIMAGE
+#pragma mark -
+#pragma mark GPUImageTextureOutputDelegate delegate method
+
+- (void)newFrameReadyFromTextureOutput:(GPUImageTextureOutput *)callbackTextureOutput;
+{
+    GLuint texture = callbackTextureOutput.texture;
+    _cameraTexture = texture;
+    cameraTexture = texture;
+    
+/*    
+    GLubyte *rawImagePixels = (GLubyte *)malloc(totalBytesForImage);
+    glReadPixels(0, 0, (int)currentFBOSize.width, (int)currentFBOSize.height, GL_RGBA, GL_UNSIGNED_BYTE, rawImagePixels);
+    // Do something with the image
+    free(rawImagePixels);
+    
+    CVPixelBufferLockBaseAddress( pixelBuffer, 0 );
+	
+	int bufferHeight = CVPixelBufferGetHeight(pixelBuffer);
+	int bufferWidth = CVPixelBufferGetWidth(pixelBuffer);
+	int bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer);
+	unsigned char *rowBase = (unsigned char *)CVPixelBufferGetBaseAddress(pixelBuffer);
+	
+	////////////////////////////////////////////////////////////////
+	
+	//GLint	saveName;
+	//glGetIntegerv(GL_TEXTURE_BINDING_2D, &saveName);
+	
+	//Create the texture if it doesn't exist
+	if (!_cameraTexture) {
+		glGenTextures(1, &_cameraTexture);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, _cameraTexture);
+		
+		// Set appropriate parameters for when the texture is resized
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bufferWidth, bufferHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, CVPixelBufferGetBaseAddress(pixelBuffer));
+		
+		[self performSelectorOnMainThread:@selector(informViewsOfCameraTexture) withObject:nil waitUntilDone:NO];
+		
+	} else {
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, _cameraTexture);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, bufferWidth, bufferHeight, GL_BGRA, GL_UNSIGNED_BYTE,  CVPixelBufferGetBaseAddress(pixelBuffer));
+	}
+    
+	
+	//glBindTexture(GL_TEXTURE_2D, saveName);
+	
+	////////////////////////////////////////////////////////////////
+	
+	// Color initializations
+	int64_t redTotal = 0;
+	int64_t greenTotal = 0;
+	int64_t blueTotal = 0;
+	double totalTotal = 0;
+	
+	// Mid-level vision initializations
+	int gradientX = 0;
+	int gradientY = 0;
+	double edginess = 0;
+	
+	// We don't look at every single pixel. Doing so would cause unneccesary load on the
+	//	system for such basic features. This MUST be a factor of both the bufferHeight
+	//	and bufferWidth.
+	int downSampleFactor = 8;
+	
+	// Parse the image from left to right, bottom to top.
+	for( int row = 0; row < bufferHeight; row += downSampleFactor ) {
+		for( int column = 0; column < bufferWidth; column += downSampleFactor ) {
+			
+			unsigned char *pixel = rowBase + (row * bytesPerRow) + (column * BYTES_PER_PIXEL);
+			
+			// Reassignment is done here both to cast the unsigned char into the 8-bit integer
+			//	as well as to remain compatible with helper functions above and to keep original
+			//	memory buffer in tact.
+			uint8_t pixelColor[3];
+			for (int j = 0; j < 3; j++)
+				pixelColor[j] = (uint8_t)pixel[j];
+			
+			//pixelColor now contains the BGR values of the current pixel
+			
+			blueTotal += pixelColor[0];
+			greenTotal += pixelColor[1];
+			redTotal += pixelColor[2];
+			
+			
+			// Ensure we are not at the boundaries of the image so we can use the Roberts edge detector
+			if (row < (bufferHeight-2*downSampleFactor) && column < (bufferWidth-2*downSampleFactor)) {
+				
+				// Access the other pixels in the neighborhood to calculate the gradient
+				unsigned char *pixel9 = rowBase + ((row+downSampleFactor) * bytesPerRow) + ((column+downSampleFactor) * BYTES_PER_PIXEL);
+				unsigned char *pixel8 = rowBase + ((row+downSampleFactor) * bytesPerRow) + (column * BYTES_PER_PIXEL);
+				unsigned char *pixel6 = rowBase + (row * bytesPerRow) + ((column+downSampleFactor) * BYTES_PER_PIXEL);
+				
+				//Average of pixel 9 minus the average of the current pixel
+				gradientX = (((uint8_t)pixel9[0]+(uint8_t)pixel9[1]+(uint8_t)pixel9[2])/3) - ((pixelColor[0]+pixelColor[1]+pixelColor[2])/3);
+				gradientY = (((uint8_t)pixel8[0]+(uint8_t)pixel8[1]+(uint8_t)pixel8[2])/3) - (((uint8_t)pixel6[0]+(uint8_t)pixel6[1]+(uint8_t)pixel6[2])/3);
+				edginess += pow(gradientX/255.0,2) + pow(gradientY/255.0,2);
+			}
+			
+			
+		}
+		
+	}
+	
+	// Normalize the sums into the 0 to 255 range 
+	blueTotal = blueTotal/((bufferWidth/downSampleFactor)*(bufferHeight/downSampleFactor));
+	greenTotal = greenTotal/((bufferWidth/downSampleFactor)*(bufferHeight/downSampleFactor));
+	redTotal = redTotal/((bufferWidth/downSampleFactor)*(bufferHeight/downSampleFactor));
+	
+	totalTotal = ((double)blueTotal+(double)greenTotal+(double)redTotal)/3;
+	
+	// Normalize the edginess between 0 and 1
+	edginess = log10(edginess)/log10(((bufferWidth/downSampleFactor)-1)*((bufferHeight/downSampleFactor)-1));
+	
+	// and then the 0 to 1 range
+	callAllCameraSources(totalTotal/255.0,blueTotal/255.0,greenTotal/255.0,redTotal/255.0, edginess);
+	
+	//printf("The new red value is %f\n",redTotal/255.);
+	
+	CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
+*/
+    
+}
+#endif
+
+
+- (BOOL)loadShaders
+{
+    [self setupShaders];
+    return YES;
+}
+
+
+- (void)awakeFromNib3
+{
+    EAGLContext *aContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+    
+    if (!aContext)
+    {
+        aContext = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
+    }
+    
+    if (!aContext)
+        NSLog(@"Failed to create ES context");
+    else if (![EAGLContext setCurrentContext:aContext])
+        NSLog(@"Failed to set ES context current");
+    
+	self.context = aContext;
+	[aContext release];
+	
+    [self setContext:context];
+    [self setFramebuffer];
+    
+    if ([context API] == kEAGLRenderingAPIOpenGLES2) {
+        [self loadShaders];
+		[self setupView];
+	}
+    
+    animating = FALSE;
+    displayLinkSupported = FALSE;
+    animationFrameInterval = 1;
+    displayLink = nil;
+    animationTimer = nil;
+    
+    // Use of CADisplayLink requires iOS version 3.1 or greater.
+	// The NSTimer object is used as fallback when it isn't available.
+    NSString *reqSysVer = @"3.1";
+    NSString *currSysVer = [[UIDevice currentDevice] systemVersion];
+    if ([currSysVer compare:reqSysVer options:NSNumericSearch] != NSOrderedAscending)
+        displayLinkSupported = TRUE;
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [self startAnimation];
+    
+    [super viewWillAppear:animated];
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [self stopAnimation];
+    
+    [super viewWillDisappear:animated];
+}
+
+#ifdef GPUIMAGE
+- (void)writeMovieFromTexture:(GLuint)textureID ofSize:(CGSize)size
+{
+    if(textureInput == NULL)
+        textureInput = [[GPUImageTextureInput alloc] initWithTexture:textureID size:size];
+    else
+        [textureInput initWithTexture:textureID size:size];
+    
+    // Configure this for video from the movie file, where we want to preserve all video frames and audio samples
+    //    movieWriter.shouldPassthroughAudio = YES;
+    
+    // Recording from another movie stream
+    if(movieFile != nil)
+    {
+        //        movieFile.audioEncodingTarget = movieWriter;
+        //        [movieFile enableSynchronizedEncodingUsingMovieWriter:movieWriter];
+    }
+//    [textureInput addTarget:movieWriter];
+    if(rotateFilter != NULL)
+    {
+        [rotateFilter dealloc];
+        rotateFilter = NULL;
+    }
+    rotateFilter = [[GPUImageTransformFilter alloc] init];
+    [rotateFilter setAffineTransform:CGAffineTransformMakeRotation(0)];
+    [textureInput addTarget:rotateFilter];
+    [rotateFilter addTarget:movieWriter];
+    // kGPUImageRotateRightFlipVertical
+    //    [textureInput addTarget:movieWriter];
+//    [movieWriter setInputRotation:kGPUImageFlipVertical atIndex:0];
+    [movieWriter startRecording];
+    
+    [movieWriter setCompletionBlock:^{
+//        [textureInput removeTarget:movieWriter];
+        [textureInput removeAllTargets];
+        [movieWriter finishRecording];
+//        [textureInput dealloc];
+        [movieWriter dealloc];
+        [rotateFilter dealloc];
+        rotateFilter = NULL;
+    }];
+}
+
+- (void)writeMovieFromTexture:(GLuint)textureID ofSize:(CGSize)size withCrop:(CGRect)crop
+{
+    if(textureInput == NULL)
+        textureInput = [[GPUImageTextureInput alloc] initWithTexture:textureID size:size];
+    else
+        [textureInput initWithTexture:textureID size:size];
+    
+    // Configure this for video from the movie file, where we want to preserve all video frames and audio samples
+    //    movieWriter.shouldPassthroughAudio = YES;
+    
+    // Recording from another movie stream
+    if(movieFile != nil)
+    {
+        //        movieFile.audioEncodingTarget = movieWriter;
+//        [movieFile enableSynchronizedEncodingUsingMovieWriter:movieWriter];
+    }
+    if(cropfilter != NULL)
+    {
+        [cropfilter dealloc];
+        cropfilter = NULL;
+    }
+    cropfilter = [[GPUImageCropFilter alloc] initWithCropRegion:CGRectMake(0.0,0.0,1.0,1.0)];
+    [cropfilter setCropRegion:crop];
+    [textureInput addTarget:cropfilter];
+    [cropfilter addTarget:movieWriter];
+    // kGPUImageRotateRightFlipVertical
+//    [textureInput addTarget:movieWriter];
+    [movieWriter setInputRotation:kGPUImageFlipVertical atIndex:0];
+    [movieWriter startRecording];
+    
+    [movieWriter setCompletionBlock:^{
+        [textureInput removeAllTargets];
+//        [textureInput removeTarget:movieWriter];
+        [movieWriter finishRecording];
+//        [textureInput dealloc];
+//        [textureInput removeAllTargets];
+        [movieWriter dealloc];
+        [cropfilter dealloc];
+        cropfilter = NULL;
+    }];
+}
+
+- (void)writeMovie:(NSString*)filename ofSize:(CGSize)size fromTexture:(GLuint)textureID
+{
+    // write out a processed version of the movie to disk
+    unlink([filename UTF8String]); // If a file already exists, AVAssetWriter won't let you record new frames, so delete the old movie
+    NSURL *movieURL = [NSURL fileURLWithPath:filename];
+    
+    long w=size.width;
+    long h=size.height;
+    
+    assert(!movieWriter);
+    
+    movieWriter = [[GPUImageMovieWriter alloc] initWithMovieURL:movieURL size:CGSizeMake(w,h)];
+    
+    
+    if(textureID > 0)
+        [self writeMovieFromTexture:textureID ofSize:size];
+    else
+    {   
+        if(movieFile != nil)
+        {
+            recordfrom = SOURCE_MOVIE;
+        }
+        else 
+        {
+            recordfrom = SOURCE_CAMERA;
+        }
+        latelaunchmovie = true;
+    }
+    sourcesize = size;
+}
+
+- (void)writeMovie:(NSString*)filename ofSize:(CGSize)size withCrop:(CGRect)crop fromTexture:(GLuint)textureID
+{
+    // write out a processed version of the movie to disk
+    unlink([filename UTF8String]); // If a file already exists, AVAssetWriter won't let you record new frames, so delete the old movie
+    NSURL *movieURL = [NSURL fileURLWithPath:filename];
+    
+    long w=size.width*crop.size.width;
+    long h=size.height*crop.size.height;
+    
+    if(w < 128) w = 128; // Crash prevention initiative (donate to "UsingBuggyLibraryFund")
+    if(h < 128) h = 128;
+    
+    assert(!movieWriter);
+
+    movieWriter = [[GPUImageMovieWriter alloc] initWithMovieURL:movieURL size:CGSizeMake(w,h)];
+
+    
+    if(textureID > 0)
+    {
+        [self writeMovieFromTexture:textureID ofSize:size withCrop:crop];
+        latelaunchmovie = false;
+    }
+    else
+    {   
+        if(movieFile != nil)
+        {
+            recordfrom = SOURCE_MOVIE;
+        }
+        else 
+        {
+            recordfrom = SOURCE_CAMERA;
+        }
+        latelaunchmovie = true;
+    }
+    sourcesize = size;
+}
+
+- (void)finishMovie
+{
+    if(textureInput)
+    {
+        [textureInput removeAllTargets];
+        [textureInput initWithTexture:0 size:CGSizeMake(1,1)];
+    }
+//        [textureInput removeTarget:movieWriter];
+    
+    [movieWriter finishRecording];
+    
+//    if(textureInput)
+//        [textureInput dealloc];
+    [movieWriter dealloc];
+    movieWriter = NULL;
+    
+    if(cropfilter)
+    {
+        [cropfilter dealloc];
+        cropfilter = NULL;
+    }
+    if(rotateFilter != NULL)
+    {
+        [rotateFilter dealloc];
+        rotateFilter = NULL;
+    }
+
+    recordfrom = SOURCE_TEXTURE;
+}
+
+- (GPUImageMovie *)loadMovie:(NSString*)filename
+{
+    NSString *filePath;
+    BOOL fileExists = [[NSFileManager defaultManager] fileExistsAtPath:texturepathstr];
+
+    if(fileExists)
+    {
+        filePath = filename;
+    }
+    else
+    {
+        NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
+        filePath = [resourcePath stringByAppendingPathComponent:filename];
+        
+        fileExists = [[NSFileManager defaultManager] fileExistsAtPath:filePath];
+        if(!fileExists)
+            return nil;
+    }
+//    NSURL *movieURL = [[NSBundle mainBundle] URLForResource:filename withExtension:nil];
+    NSURL *movieURL = [NSURL fileURLWithPath:filePath];
+    
+    movieFile = [[GPUImageMovie alloc] initWithURL:movieURL];
+//    movieFile.runBenchmark = YES;
+    //    filter = [[GPUImagePixellateFilter alloc] init];
+    return movieFile;
+}
+
+// Based on GPUImage example code
+
+- (void)setCameraFilterParameter:(double)value;
+{
+    value = (value+1)/2.0;
+     switch(currentfiltertype)
+    {
+        case GPUIMAGE_SEPIA: [(GPUImageSepiaFilter *)inputFilter setIntensity:value]; break;
+        case GPUIMAGE_PIXELLATE: [(GPUImagePixellateFilter *)inputFilter setFractionalWidthOfAPixel:value]; break;
+        case GPUIMAGE_POLARPIXELLATE: [(GPUImagePolarPixellateFilter *)inputFilter setPixelSize:CGSizeMake(value, value)]; break;
+        case GPUIMAGE_SATURATION: [(GPUImageSaturationFilter *)inputFilter setSaturation:value]; break;
+        case GPUIMAGE_CONTRAST: [(GPUImageContrastFilter *)inputFilter setContrast:value]; break;
+        case GPUIMAGE_BRIGHTNESS: [(GPUImageBrightnessFilter *)inputFilter setBrightness:value]; break;
+        case GPUIMAGE_EXPOSURE: [(GPUImageExposureFilter *)inputFilter setExposure:value]; break;
+        case GPUIMAGE_RGB: [(GPUImageRGBFilter *)inputFilter setGreen:value]; break;
+        case GPUIMAGE_SHARPEN: [(GPUImageSharpenFilter *)inputFilter setSharpness:value]; break;
+        case GPUIMAGE_UNSHARPMASK: [(GPUImageUnsharpMaskFilter *)inputFilter setIntensity:value]; break;
+            //        case GPUIMAGE_UNSHARPMASK: [(GPUImageUnsharpMaskFilter *)inputFilter setBlurSize:value]; break;
+        case GPUIMAGE_GAMMA: [(GPUImageGammaFilter *)inputFilter setGamma:value]; break;
+        case GPUIMAGE_CROSSHATCH: [(GPUImageCrosshatchFilter *)inputFilter setCrossHatchSpacing:(value)/3.0]; break;
+        case GPUIMAGE_POSTERIZE: [(GPUImagePosterizeFilter *)inputFilter setColorLevels:round((value)*20)]; break;
+		case GPUIMAGE_HAZE: [(GPUImageHazeFilter *)inputFilter setDistance:value]; break;
+		case GPUIMAGE_THRESHOLD: [(GPUImageLuminanceThresholdFilter *)inputFilter setThreshold:value]; break;
+        case GPUIMAGE_ADAPTIVETHRESHOLD: [(GPUImageAdaptiveThresholdFilter *)inputFilter setBlurSize:value]; break;
+        case GPUIMAGE_DISSOLVE: [(GPUImageDissolveBlendFilter *)inputFilter setMix:value]; break;
+        case GPUIMAGE_CHROMAKEY: [(GPUImageChromaKeyBlendFilter *)inputFilter setThresholdSensitivity:value]; break;
+//        case GPUIMAGE_KUWAHARA: [(GPUImageKuwaharaFilter *)inputFilter setRadius:round(value)]; break;
+        case GPUIMAGE_SWIRL: [(GPUImageSwirlFilter *)inputFilter setAngle:value*3]; break;
+        case GPUIMAGE_EMBOSS: [(GPUImageEmbossFilter *)inputFilter setIntensity:value]; break;
+        case GPUIMAGE_CANNYEDGEDETECTION: [(GPUImageCannyEdgeDetectionFilter *)inputFilter setBlurSize:value]; break;
+            //        case GPUIMAGE_CANNYEDGEDETECTION: [(GPUImageCannyEdgeDetectionFilter *)inputFilter setLowerThreshold:value]; break;
+//        case GPUIMAGE_HARRISCORNERDETECTION: [(GPUImageHarrisCornerDetectionFilter *)inputFilter setThreshold:value]; break;
+//        case GPUIMAGE_NOBLECORNERDETECTION: [(GPUImageNobleCornerDetectionFilter *)inputFilter setThreshold:value]; break;
+//        case GPUIMAGE_SHITOMASIFEATUREDETECTION: [(GPUImageShiTomasiFeatureDetectionFilter *)inputFilter setThreshold:value]; break;
+            //        case GPUIMAGE_HARRISCORNERDETECTION: [(GPUImageHarrisCornerDetectionFilter *)inputFilter setSensitivity:value]; break;
+        case GPUIMAGE_SMOOTHTOON: [(GPUImageSmoothToonFilter *)inputFilter setBlurSize:value]; break;
+            //        case GPUIMAGE_BULGE: [(GPUImageBulgeDistortionFilter *)inputFilter setRadius:value]; break;
+        case GPUIMAGE_BULGE: [(GPUImageBulgeDistortionFilter *)inputFilter setScale:value*3]; break;
+        case GPUIMAGE_TONECURVE: [(GPUImageToneCurveFilter *)inputFilter setBlueControlPoints:[NSArray arrayWithObjects:[NSValue valueWithCGPoint:CGPointMake(0.0, 0.0)], [NSValue valueWithCGPoint:CGPointMake(0.5, value)], [NSValue valueWithCGPoint:CGPointMake(1.0, 0.75)], nil]]; break;
+        case GPUIMAGE_PINCH: [(GPUImagePinchDistortionFilter *)inputFilter setScale:value*2]; break;
+        case GPUIMAGE_PERLINNOISE:  [(GPUImagePerlinNoiseFilter *)inputFilter setScale:value]; break;
+        case GPUIMAGE_MOSAIC:  [(GPUImageMosaicFilter *)inputFilter setDisplayTileSize:CGSizeMake(value, value)]; break;
+        case GPUIMAGE_VIGNETTE: [(GPUImageVignetteFilter *)inputFilter setVignetteEnd:value]; break;
+        case GPUIMAGE_GAUSSIAN: [(GPUImageGaussianBlurFilter *)inputFilter setBlurSize:value]; break;
+        case GPUIMAGE_BILATERAL: [(GPUImageBilateralFilter *)inputFilter setBlurSize:value]; break;
+        case GPUIMAGE_FASTBLUR: [(GPUImageFastBlurFilter *)inputFilter setBlurPasses:round(value)]; break;
+        case GPUIMAGE_GAUSSIAN_SELECTIVE: [(GPUImageGaussianSelectiveBlurFilter *)inputFilter setExcludeCircleRadius:value]; break;
+        case GPUIMAGE_FILTERGROUP: [(GPUImagePixellateFilter *)[(GPUImageFilterGroup *)inputFilter filterAtIndex:1] setFractionalWidthOfAPixel:value]; break;
+        case GPUIMAGE_CROP: [(GPUImageCropFilter *)inputFilter setCropRegion:CGRectMake(0.0, 0.0, 1.0, value)]; break;
+        case GPUIMAGE_TRANSFORM: [(GPUImageTransformFilter *)inputFilter setAffineTransform:CGAffineTransformMakeRotation(value)]; break;
+        case GPUIMAGE_TRANSFORM3D:
+        {
+            CATransform3D perspectiveTransform = CATransform3DIdentity;
+            perspectiveTransform.m34 = 0.4;
+            perspectiveTransform.m33 = 0.4;
+            perspectiveTransform = CATransform3DScale(perspectiveTransform, 0.75, 0.75, 0.75);
+            perspectiveTransform = CATransform3DRotate(perspectiveTransform, value, 0.0, 1.0, 0.0);
+            
+            [(GPUImageTransformFilter *)inputFilter setTransform3D:perspectiveTransform];
+            
+        }; break;
+        case GPUIMAGE_TILTSHIFT:
+        {
+            CGFloat midpoint = value;
+            [(GPUImageTiltShiftFilter *)inputFilter setTopFocusLevel:midpoint - 0.1];
+            [(GPUImageTiltShiftFilter *)inputFilter setBottomFocusLevel:midpoint + 0.1];
+        }; break;
+        case GPUIMAGE_POLKADOT: [(GPUImagePolkaDotFilter *)inputFilter setFractionalWidthOfAPixel:value]; break;
+        case GPUIMAGE_HALFTONE: [(GPUImageHalftoneFilter *)inputFilter setFractionalWidthOfAPixel:value]; break;
+        case GPUIMAGE_LEVELS:
+        {
+            [(GPUImageLevelsFilter *)inputFilter setRedMin:value gamma:1.0 max:1.0 minOut:0.0 maxOut:1.0];
+            [(GPUImageLevelsFilter *)inputFilter setGreenMin:value gamma:1.0 max:1.0 minOut:0.0 maxOut:1.0];
+            [(GPUImageLevelsFilter *)inputFilter setBlueMin:value gamma:1.0 max:1.0 minOut:0.0 maxOut:1.0];
+        }; break;
+        case GPUIMAGE_MONOCHROME: [(GPUImageMonochromeFilter *)inputFilter setIntensity:value]; break;
+        case GPUIMAGE_HUE: [(GPUImageHueFilter *)inputFilter setHue:(value+1.0)*180.0]; break;
+        case GPUIMAGE_WHITEBALANCE: [(GPUImageWhiteBalanceFilter *)inputFilter setTemperature:value]; break;
+        case GPUIMAGE_LOWPASS: [(GPUImageLowPassFilter *)inputFilter setFilterStrength:value]; break;
+        case GPUIMAGE_HIGHPASS: [(GPUImageHighPassFilter *)inputFilter setFilterStrength:value]; break;
+        case GPUIMAGE_MOTIONDETECTOR: [(GPUImageMotionDetector *)inputFilter setLowPassFilterStrength:value]; break;
+        case GPUIMAGE_THRESHOLDSKETCH: [(GPUImageThresholdSketchFilter *)inputFilter setThreshold:value]; break;
+        case GPUIMAGE_SPHEREREFRACTION: [(GPUImageSphereRefractionFilter *)inputFilter setRadius:value]; break;
+        case GPUIMAGE_GLASSSPHERE: [(GPUImageGlassSphereFilter *)inputFilter setRadius:value]; break;
+        case GPUIMAGE_HIGHLIGHTSHADOW: [(GPUImageHighlightShadowFilter *)inputFilter setHighlights:value]; break;
+        case GPUIMAGE_LOCALBINARYPATTERN:
+        {
+                [(GPUImageLocalBinaryPatternFilter *)inputFilter setTexelWidth:value];
+                [(GPUImageLocalBinaryPatternFilter *)inputFilter setTexelHeight:value];
+        }; break;
+        default: break;
+    }
+}
+
+- (void)setCameraFilter:(GPUImageFilterType)filterType
+{
+    if(inputFilter == nil)
+    {
+        [videoCamera removeTarget:textureOutput];
+    }
+    else
+    {
+        [videoCamera removeTarget:inputFilter];
+        [inputFilter removeTarget:textureOutput];
+    }
+
+    currentfiltertype = filterType;
+    
+    switch (filterType)
+    {
+        case GPUIMAGE_SEPIA:
+        {
+            inputFilter = [[GPUImageSepiaFilter alloc] init];
+        }; break;
+        case GPUIMAGE_PIXELLATE:
+        {
+            inputFilter = [[GPUImagePixellateFilter alloc] init];
+        }; break;
+        case GPUIMAGE_POLARPIXELLATE:
+        {
+            inputFilter = [[GPUImagePolarPixellateFilter alloc] init];
+        }; break;
+        case GPUIMAGE_CROSSHATCH:
+        {
+            inputFilter = [[GPUImageCrosshatchFilter alloc] init];
+        }; break;
+        case GPUIMAGE_COLORINVERT:
+        {
+            inputFilter = [[GPUImageColorInvertFilter alloc] init];
+        }; break;
+        case GPUIMAGE_GRAYSCALE:
+        {
+            inputFilter = [[GPUImageGrayscaleFilter alloc] init];
+        }; break;
+        case GPUIMAGE_SATURATION:
+        {
+            inputFilter = [[GPUImageSaturationFilter alloc] init];
+        }; break;
+        case GPUIMAGE_CONTRAST:
+        {
+            inputFilter = [[GPUImageContrastFilter alloc] init];
+        }; break;
+        case GPUIMAGE_BRIGHTNESS:
+        {
+            inputFilter = [[GPUImageBrightnessFilter alloc] init];
+        }; break;
+        case GPUIMAGE_RGB:
+        {
+            inputFilter = [[GPUImageRGBFilter alloc] init];
+        }; break;
+        case GPUIMAGE_EXPOSURE:
+        {
+            inputFilter = [[GPUImageExposureFilter alloc] init];
+        }; break;
+        case GPUIMAGE_SHARPEN:
+        {
+            inputFilter = [[GPUImageSharpenFilter alloc] init];
+        }; break;
+        case GPUIMAGE_UNSHARPMASK:
+        {
+            inputFilter = (GPUImageFilter*)[[GPUImageUnsharpMaskFilter alloc] init];
+        }; break;
+        case GPUIMAGE_GAMMA:
+        {
+            inputFilter = [[GPUImageGammaFilter alloc] init];
+        }; break;
+        case GPUIMAGE_TONECURVE:
+        {
+            inputFilter = [[GPUImageToneCurveFilter alloc] init];
+            [(GPUImageToneCurveFilter *)inputFilter setBlueControlPoints:[NSArray arrayWithObjects:[NSValue valueWithCGPoint:CGPointMake(0.0, 0.0)], [NSValue valueWithCGPoint:CGPointMake(0.5, 0.5)], [NSValue valueWithCGPoint:CGPointMake(1.0, 0.75)], nil]];
+        }; break;
+		case GPUIMAGE_HAZE:
+        {
+            inputFilter = [[GPUImageHazeFilter alloc] init];
+        }; break;
+		case GPUIMAGE_THRESHOLD:
+        {
+            inputFilter = [[GPUImageLuminanceThresholdFilter alloc] init];
+        }; break;
+		case GPUIMAGE_ADAPTIVETHRESHOLD:
+        {
+            inputFilter = (GPUImageFilter*)[[GPUImageAdaptiveThresholdFilter alloc] init];
+        }; break;
+        case GPUIMAGE_CROP:
+        {
+            inputFilter = [[GPUImageCropFilter alloc] initWithCropRegion:CGRectMake(0.0, 0.0, 1.0, 0.25)];
+        }; break;
+		case GPUIMAGE_MASK:
+		{
+			[(GPUImageFilter*)inputFilter setBackgroundColorRed:0.0 green:1.0 blue:0.0 alpha:1.0];
+        }; break;
+        case GPUIMAGE_TRANSFORM:
+        {
+            inputFilter = [[GPUImageTransformFilter alloc] init];
+            [(GPUImageTransformFilter *)inputFilter setAffineTransform:CGAffineTransformMakeRotation(2.0)];
+            //            [(GPUImageTransformFilter *)inputFilter setIgnoreAspectRatio:YES];
+        }; break;
+        case GPUIMAGE_TRANSFORM3D:
+        {
+            inputFilter = [[GPUImageTransformFilter alloc] init];
+            CATransform3D perspectiveTransform = CATransform3DIdentity;
+            perspectiveTransform.m34 = 0.4;
+            perspectiveTransform.m33 = 0.4;
+            perspectiveTransform = CATransform3DScale(perspectiveTransform, 0.75, 0.75, 0.75);
+            perspectiveTransform = CATransform3DRotate(perspectiveTransform, 0.75, 0.0, 1.0, 0.0);
+            
+            [(GPUImageTransformFilter *)inputFilter setTransform3D:perspectiveTransform];
+		}; break;
+        case GPUIMAGE_SOBELEDGEDETECTION:
+        {
+            inputFilter = [[GPUImageSobelEdgeDetectionFilter alloc] init];
+        }; break;
+        case GPUIMAGE_XYGRADIENT:
+        {
+            inputFilter = [[GPUImageXYDerivativeFilter alloc] init];
+        }; break;
+/*        case GPUIMAGE_HARRISCORNERDETECTION:
+        {
+            inputFilter = (GPUImageFilter*)[[GPUImageHarrisCornerDetectionFilter alloc] init];
+            [(GPUImageHarrisCornerDetectionFilter *)inputFilter setThreshold:0.20];            
+        }; break;
+        case GPUIMAGE_NOBLECORNERDETECTION:
+        {
+            inputFilter = (GPUImageFilter*)[[GPUImageNobleCornerDetectionFilter alloc] init];
+            [(GPUImageNobleCornerDetectionFilter *)inputFilter setThreshold:0.20];            
+        }; break;
+        case GPUIMAGE_SHITOMASIFEATUREDETECTION:
+        {
+            inputFilter = (GPUImageFilter*)[[GPUImageShiTomasiFeatureDetectionFilter alloc] init];
+            [(GPUImageShiTomasiFeatureDetectionFilter *)inputFilter setThreshold:0.20];            
+        }; break;*/
+        case GPUIMAGE_PREWITTEDGEDETECTION:
+        {
+            inputFilter = [[GPUImagePrewittEdgeDetectionFilter alloc] init];
+        }; break;
+        case GPUIMAGE_CANNYEDGEDETECTION:
+        {
+            inputFilter = (GPUImageFilter*)[[GPUImageCannyEdgeDetectionFilter alloc] init];
+        }; break;
+            
+        case GPUIMAGE_SKETCH:
+        {
+            inputFilter = [[GPUImageSketchFilter alloc] init];
+        }; break;
+        case GPUIMAGE_TOON:
+        {
+            inputFilter = [[GPUImageToonFilter alloc] init];
+        }; break;            
+        case GPUIMAGE_SMOOTHTOON:
+        {
+            inputFilter = (GPUImageFilter*)[[GPUImageSmoothToonFilter alloc] init];
+        }; break;            
+        case GPUIMAGE_TILTSHIFT:
+        {
+            inputFilter = (GPUImageFilter*)[[GPUImageTiltShiftFilter alloc] init];
+            [(GPUImageTiltShiftFilter *)inputFilter setTopFocusLevel:0.4];
+            [(GPUImageTiltShiftFilter *)inputFilter setBottomFocusLevel:0.6];
+            [(GPUImageTiltShiftFilter *)inputFilter setFocusFallOffRate:0.2];
+        }; break;
+        case GPUIMAGE_CGA:
+        {
+            inputFilter = [[GPUImageCGAColorspaceFilter alloc] init];
+        }; break;
+        case GPUIMAGE_CONVOLUTION:
+        {
+            inputFilter = [[GPUImage3x3ConvolutionFilter alloc] init];
+            [(GPUImage3x3ConvolutionFilter *)inputFilter setConvolutionKernel:(GPUMatrix3x3){
+                {-1.0f,  0.0f, 1.0f},
+                {-2.0f, 0.0f, 2.0f},
+                {-1.0f,  0.0f, 1.0f}
+            }];
+            
+        }; break;
+        case GPUIMAGE_EMBOSS:
+        {
+            inputFilter = [[GPUImageEmbossFilter alloc] init];
+        }; break;
+        case GPUIMAGE_POSTERIZE:
+        {
+            inputFilter = [[GPUImagePosterizeFilter alloc] init];
+        }; break;
+        case GPUIMAGE_SWIRL:
+        {
+            inputFilter = [[GPUImageSwirlFilter alloc] init];
+        }; break;
+        case GPUIMAGE_BULGE:
+        {
+            inputFilter = [[GPUImageBulgeDistortionFilter alloc] init];
+        }; break;
+        case GPUIMAGE_PINCH:
+        {
+            inputFilter = [[GPUImagePinchDistortionFilter alloc] init];
+        }; break;
+        case GPUIMAGE_STRETCH:
+        {
+            inputFilter = [[GPUImageStretchDistortionFilter alloc] init];
+        }; break;
+        case GPUIMAGE_DILATION:
+        {
+            inputFilter = [[GPUImageRGBDilationFilter alloc] initWithRadius:4];
+		}; break;
+        case GPUIMAGE_EROSION:
+        {
+            inputFilter = [[GPUImageRGBErosionFilter alloc] initWithRadius:4];
+		}; break;
+        case GPUIMAGE_OPENING:
+        {
+            inputFilter = (GPUImageFilter*)[[GPUImageRGBOpeningFilter alloc] initWithRadius:4];
+		}; break;
+        case GPUIMAGE_CLOSING:
+        {
+            inputFilter = (GPUImageFilter*)[[GPUImageRGBClosingFilter alloc] initWithRadius:4];
+		}; break;
+            
+        case GPUIMAGE_PERLINNOISE:
+        {
+            inputFilter = [[GPUImagePerlinNoiseFilter alloc] init];
+        }; break;
+/*        case GPUIMAGE_VORONI: 
+        {
+            GPUImageJFAVoroniFilter *jfa = [[GPUImageJFAVoroniFilter alloc] init];
+            [jfa setSizeInPixels:CGSizeMake(1024.0, 1024.0)];
+            
+            sourcePicture = [[GPUImagePicture alloc] initWithImage:[UIImage imageNamed:@"voroni_points2.png"]];
+            
+            [sourcePicture addTarget:jfa];
+            
+            inputFilter = [[GPUImageVoroniConsumerFilter alloc] init];
+            
+            [jfa setSizeInPixels:CGSizeMake(1024.0, 1024.0)];
+            [(GPUImageVoroniConsumerFilter *)inputFilter setSizeInPixels:CGSizeMake(1024.0, 1024.0)];
+            
+            [videoCamera addTarget:filter];
+            [jfa addTarget:filter];
+            [sourcePicture processImage];
+            
+        }; break; */
+        case GPUIMAGE_MOSAIC:
+        {
+            inputFilter = [[GPUImageMosaicFilter alloc] init];
+            [(GPUImageMosaicFilter *)inputFilter setTileSet:@"Ornament1.png"];
+            [(GPUImageMosaicFilter *)inputFilter setColorOn:NO];
+            //[(GPUImageMosaicFilter *)inputFilter setTileSet:@"dotletterstiles.png"];
+            //[(GPUImageMosaicFilter *)inputFilter setTileSet:@"curvies.png"]; 
+            
+            [inputFilter setInputRotation:kGPUImageRotateRight atIndex:0];
+            
+        }; break;
+        case GPUIMAGE_CHROMAKEY:
+        {
+            inputFilter = [[GPUImageChromaKeyBlendFilter alloc] init];
+            [(GPUImageChromaKeyBlendFilter *)inputFilter setColorToReplaceRed:0.0 green:1.0 blue:0.0];
+        }; break;
+        case GPUIMAGE_MULTIPLY:
+        {
+            inputFilter = [[GPUImageMultiplyBlendFilter alloc] init];
+        }; break;
+        case GPUIMAGE_OVERLAY:
+        {
+            inputFilter = [[GPUImageOverlayBlendFilter alloc] init];
+        }; break;
+        case GPUIMAGE_LIGHTEN:
+        {
+            inputFilter = [[GPUImageLightenBlendFilter alloc] init];
+        }; break;
+        case GPUIMAGE_DARKEN:
+        {
+            inputFilter = [[GPUImageDarkenBlendFilter alloc] init];
+        }; break;
+        case GPUIMAGE_DISSOLVE:
+        {
+            inputFilter = [[GPUImageDissolveBlendFilter alloc] init];
+        }; break;
+        case GPUIMAGE_SCREENBLEND:
+        {
+            inputFilter = [[GPUImageScreenBlendFilter alloc] init];
+        }; break;
+        case GPUIMAGE_COLORBURN:
+        {
+            inputFilter = [[GPUImageColorBurnBlendFilter alloc] init];
+        }; break;
+        case GPUIMAGE_COLORDODGE:
+        {
+            inputFilter = [[GPUImageColorDodgeBlendFilter alloc] init];
+        }; break;
+        case GPUIMAGE_EXCLUSIONBLEND:
+        {
+            inputFilter = [[GPUImageExclusionBlendFilter alloc] init];
+        }; break;
+        case GPUIMAGE_DIFFERENCEBLEND:
+        {
+            inputFilter = [[GPUImageDifferenceBlendFilter alloc] init];
+        }; break;
+		case GPUIMAGE_SUBTRACTBLEND:
+        {
+            inputFilter = [[GPUImageSubtractBlendFilter alloc] init];
+        }; break;
+        case GPUIMAGE_HARDLIGHTBLEND:
+        {
+            inputFilter = [[GPUImageHardLightBlendFilter alloc] init];
+        }; break;
+        case GPUIMAGE_SOFTLIGHTBLEND:
+        {
+            inputFilter = [[GPUImageSoftLightBlendFilter alloc] init];
+        }; break;
+/*        case GPUIMAGE_CUSTOM:
+        {
+            inputFilter = [[GPUImageFilter alloc] initWithFragmentShaderFromFile:@"CustomFilter"];
+        }; break;*/
+/*        case GPUIMAGE_KUWAHARA:
+        {
+            inputFilter = [[GPUImageKuwaharaFilter alloc] init];
+        }; break;*/
+            
+        case GPUIMAGE_VIGNETTE:
+        {
+            inputFilter = [[GPUImageVignetteFilter alloc] init];
+        }; break;
+        case GPUIMAGE_GAUSSIAN:
+        {
+            inputFilter = [[GPUImageGaussianBlurFilter alloc] init];
+        }; break;
+        case GPUIMAGE_FASTBLUR:
+        {
+            inputFilter = [[GPUImageFastBlurFilter alloc] init];
+		}; break;
+        case GPUIMAGE_BOXBLUR:
+        {
+            inputFilter = [[GPUImageBoxBlurFilter alloc] init];
+		}; break;
+        case GPUIMAGE_MEDIAN:
+        {
+            inputFilter = [[GPUImageMedianFilter alloc] init];
+		}; break;
+        case GPUIMAGE_GAUSSIAN_SELECTIVE:
+        {
+            inputFilter = (GPUImageFilter*)[[GPUImageGaussianSelectiveBlurFilter alloc] init];
+            [(GPUImageGaussianSelectiveBlurFilter*)inputFilter setExcludeCircleRadius:40.0/320.0];
+        }; break;
+        case GPUIMAGE_BILATERAL:
+        {
+            inputFilter = [[GPUImageBilateralFilter alloc] init];
+        }; break;
+        case GPUIMAGE_FILTERGROUP:
+        {
+            inputFilter = (GPUImageFilter*)[[GPUImageFilterGroup alloc] init];
+            
+            GPUImageSepiaFilter *sepiainputFilter = [[GPUImageSepiaFilter alloc] init];
+            [(GPUImageFilterGroup *)inputFilter addFilter:sepiainputFilter];
+            
+            GPUImagePixellateFilter *pixellateinputFilter = [[GPUImagePixellateFilter alloc] init];
+            [(GPUImageFilterGroup *)inputFilter addFilter:pixellateinputFilter];
+            
+            [sepiainputFilter addTarget:pixellateinputFilter];
+            [(GPUImageFilterGroup *)inputFilter setInitialFilters:[NSArray arrayWithObject:sepiainputFilter]];
+            [(GPUImageFilterGroup *)inputFilter setTerminalFilter:pixellateinputFilter];
+        }; break;
+        case GPUIMAGE_POLKADOT:
+        {
+            inputFilter = [[GPUImagePolkaDotFilter alloc] init];
+        }; break;
+        case GPUIMAGE_HALFTONE:
+        {
+            inputFilter = [[GPUImageHalftoneFilter alloc] init];
+        }; break;
+        case GPUIMAGE_LEVELS:
+        {
+            inputFilter = [[GPUImageLevelsFilter alloc] init];
+        }; break;
+        case GPUIMAGE_MONOCHROME:
+        {
+            inputFilter = [[GPUImageMonochromeFilter alloc] init];
+            [(GPUImageMonochromeFilter *)filter setColor:(GPUVector4){0.0f, 0.0f, 1.0f, 1.f}];
+        }; break;            
+        case GPUIMAGE_HUE:
+        {
+            inputFilter = [[GPUImageHueFilter alloc] init];
+        }; break;
+        case GPUIMAGE_WHITEBALANCE:
+        {
+            inputFilter = [[GPUImageWhiteBalanceFilter alloc] init];
+        }; break;
+        case GPUIMAGE_LOWPASS:
+        {
+            inputFilter = [[GPUImageLowPassFilter alloc] init];
+        }; break;
+        case GPUIMAGE_HIGHPASS:
+        {
+            inputFilter = [[GPUImageHighPassFilter alloc] init];
+        }; break;
+        case GPUIMAGE_MOTIONDETECTOR:
+        {
+            inputFilter = [[GPUImageMotionDetector alloc] init];
+        }; break;
+        case GPUIMAGE_THRESHOLDSKETCH:
+        {
+            inputFilter = [[GPUImageThresholdSketchFilter alloc] init];
+        }; break;
+        case GPUIMAGE_SPHEREREFRACTION:
+        {
+            inputFilter = [[GPUImageSphereRefractionFilter alloc] init];
+        }; break;
+        case GPUIMAGE_GLASSSPHERE:
+        {
+            inputFilter = [[GPUImageGlassSphereFilter alloc] init];
+        }; break;
+        case GPUIMAGE_HIGHLIGHTSHADOW:
+        {
+            inputFilter = [[GPUImageHighlightShadowFilter alloc] init];
+        }; break;
+        case GPUIMAGE_LOCALBINARYPATTERN:
+        {
+            inputFilter = [[GPUImageLocalBinaryPatternFilter alloc] init];
+        }; break;
+            
+            
+        default: 
+/*            inputFilter = nil; 
+            currentfiltertype = GPUIMAGE_NONE;
+            [videoCamera addTarget:textureOutput];
+            return;*/
+            inputFilter = [[GPUImageSaturationFilter alloc] init];
+            break;
+    }
+    [inputFilter addTarget:textureOutput];
+    [videoCamera addTarget:inputFilter];
+//    [videoCamera addTarget:filter];
+        
+//    GPUImageView *filterView = (GPUImageView *)self.view;
+//    [filter addTarget:filterView];
+
+}
+#endif
+
 - (void)awakeFromNib
 {
-	// Hide top navigation bar
+	NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
+	// path to the default font
+    g_storagePath = [resourcePath UTF8String];
+    errorfontPath = storagePath + "/arial.ttf";
+    
+    // Hide top navigation bar
 	[[UIApplication sharedApplication] setStatusBarHidden:YES animated:NO];
 	// To notes here: First I also added this to info.plist to make it vanish faster, which just looks nicer.
 	// More importantly there is a bug with the statusbar still intercepting when hidden.
@@ -385,13 +1475,40 @@ extern lua_State *lua;
     }
 	
 #ifdef USECAMERA
+#ifdef GPUIMAGE
+
+    videoCamera = [[GPUImageVideoCamera alloc] initWithSessionPreset:AVCaptureSessionPreset640x480 cameraPosition:AVCaptureDevicePositionBack];
+    videoCamera.outputImageOrientation = UIInterfaceOrientationPortrait;
+//    videoCamera.outputImageOrientation = UIInterfaceOrientationLandscapeLeft;
+    inputFilter = nil;
+
+    textureOutput = [[GPUImageTextureOutput alloc] init];
+    textureOutput.delegate = self;
+    
+    inputFilter = [[GPUImageSaturationFilter alloc] init];
+    averageFilter = [[GPUImageAverageColor alloc] init];
+    [averageFilter setColorAverageProcessingFinishedBlock:^(CGFloat redComponent, CGFloat greenComponent, CGFloat blueComponent, CGFloat alphaComponent, CMTime frameTime) {
+        callAllCameraSources((redComponent+greenComponent+blueComponent)/3.0,blueComponent,greenComponent,redComponent, 0.0);
+//        NSLog(@"Average color: %f, %f, %f, %f", redComponent, greenComponent, blueComponent, alphaComponent);
+    }];
+    
+    [videoCamera addTarget:inputFilter];
+    [inputFilter addTarget:textureOutput];
+    [inputFilter addTarget:averageFilter];
+//    [videoCamera addTarget:textureOutput];
+    currentfiltertype = GPUIMAGE_NONE;
+    
+#else /* Non GPUImage camera handlibng */
 	// Initiate the camera initiation sequence. <-- Whoa.
 	captureManager = [[CaptureSessionManager alloc] init];
 	captureManager.delegate = self;
 	[captureManager addVideoInput];
 	[captureManager addVideoDataOutput];
 	[captureManager autoWhiteBalanceAndExposure:0];
-	[captureManager.captureSession startRunning];
+    camerause = 0;
+//	[captureManager.captureSession startRunning];
+//    [captureManager.captureSession stopRunning];
+#endif
 #endif	
 	//Create and advertise networking and discover others
 //	[self setup];
@@ -485,26 +1602,368 @@ static bool cameraBeingUsedAsBrush = false;
 
 static EAGLSharegroup* theSharegroup = nil;
 
+#ifdef OPENGLES2
+
+- (BOOL)linkProgram:(GLuint)prog
+{
+    GLint status;
+    glLinkProgram(prog);
+    
+#if defined(DEBUG)
+    GLint logLength;
+    glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &logLength);
+    if (logLength > 0) {
+        GLchar *log = (GLchar *)malloc(logLength);
+        glGetProgramInfoLog(prog, logLength, &logLength, log);
+        NSLog(@"Program link log:\n%s", log);
+        free(log);
+    }
+#endif
+    
+    glGetProgramiv(prog, GL_LINK_STATUS, &status);
+    if (status == 0) {
+        return NO;
+    }
+    
+    return YES;
+}
+
+- (BOOL)validateProgram:(GLuint)prog
+{
+    GLint logLength, status;
+    
+    glValidateProgram(prog);
+    glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &logLength);
+    if (logLength > 0) {
+        GLchar *log = (GLchar *)malloc(logLength);
+        glGetProgramInfoLog(prog, logLength, &logLength, log);
+        NSLog(@"Program validate log:\n%s", log);
+        free(log);
+    }
+    
+    glGetProgramiv(prog, GL_VALIDATE_STATUS, &status);
+    if (status == 0) {
+        return NO;
+    }
+    
+    return YES;
+}
+
+- (BOOL)compileShader:(GLuint *)shader type:(GLenum)type file:(NSString *)file
+{
+    GLint status;
+    const GLchar *source;
+    
+    source = (GLchar *)[[NSString stringWithContentsOfFile:file encoding:NSUTF8StringEncoding error:nil] UTF8String];
+    if (!source) {
+        NSLog(@"Failed to load vertex shader");
+        return NO;
+    }
+#if defined(SHADERDEBUG)
+    else
+        NSLog(@"Source:\n%s",source);
+#endif
+    
+    *shader = glCreateShader(type);
+    GLenum err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    glShaderSource(*shader, 1, &source, NULL);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    glCompileShader(*shader);
+    
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    GLint logLength=0;
+    glGetShaderiv(*shader, GL_INFO_LOG_LENGTH, &logLength);
+    if (logLength > 0) {
+        GLchar *log = (GLchar *)malloc(logLength);
+        glGetShaderInfoLog(*shader, logLength, &logLength, log);
+        NSLog(@"Shader compile log:\n%s", log);
+        free(log);
+    }
+    
+    glGetShaderiv(*shader, GL_COMPILE_STATUS, &status);
+    if (status == 0) {
+        glDeleteShader(*shader);
+        return NO;
+    }
+    
+    return YES;
+}
+
+
+- (void)setupShaders
+{
+    if(!shaderProgram)
+    {
+    NSString *vertShaderPathname, *fragShaderPathname;
+    GLuint vertShader=0, fragShader=0;
+
+    // Create and compile vertex shader.
+    vertShaderPathname = [[NSBundle mainBundle] pathForResource:@"Shader" ofType:@"vsh"];
+    if (![self compileShader:&vertShader type:GL_VERTEX_SHADER file:vertShaderPathname]) {
+        NSLog(@"Failed to compile vertex shader");
+        assert(0);
+        return;
+//        return NO;
+    }
+    
+    // Create and compile fragment shader.
+    fragShaderPathname = [[NSBundle mainBundle] pathForResource:@"Shader" ofType:@"fsh"];
+    if (![self compileShader:&fragShader type:GL_FRAGMENT_SHADER file:fragShaderPathname]) {
+        NSLog(@"Failed to compile fragment shader");
+        assert(0);
+        return;
+//        return NO;
+    }
+    // Create shaders, link in source and compile
+    shaderProgram = glCreateProgram();
+    GLenum err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    
+    // create program, attack, link and use
+//    shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertShader);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    glAttachShader(shaderProgram, fragShader);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+
+    glBindAttribLocation(shaderProgram, ATTRIB_VERTEX, "a_Position");
+    glBindAttribLocation(shaderProgram, ATTRIB_COLOR, "a_Color");
+    glBindAttribLocation(shaderProgram, ATTRIB_TEXTUREPOSITON, "a_TexCoord");
+
+    // Link program.
+    if (![self linkProgram:shaderProgram]) {
+        NSLog(@"Failed to link program: %d", shaderProgram);
+        
+        if (vertShader) {
+            glDeleteShader(vertShader);
+            vertShader = 0;
+        }
+        if (fragShader) {
+            glDeleteShader(fragShader);
+            fragShader = 0;
+        }
+        if (shaderProgram) {
+            glDeleteProgram(shaderProgram);
+            shaderProgram = 0;
+        }
+        
+        assert(0);
+        return;
+//        return NO;
+    }
+//    glLinkProgram(shaderProgram);
+
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    
+    // Validate program
+    glValidateProgram(shaderProgram);
+    
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    
+#if defined(SHADERDEBUG)
+    GLint idx1,idx2,idx3 = -2;
+    idx1 = glGetAttribLocation(shaderProgram,"a_Position");
+    idx2 = glGetAttribLocation(shaderProgram,"a_Color");
+    idx3 = glGetAttribLocation(shaderProgram,"a_TexCoord");
+    
+
+    GLint infoLength=0;
+    glGetProgramiv(shaderProgram, GL_INFO_LOG_LENGTH, &infoLength);
+    
+    if (infoLength > 0)
+    {
+        
+        char infoLog[512];
+        
+        glGetProgramInfoLog(shaderProgram, infoLength, NULL, infoLog);
+        NSLog(@"Program compile log:\n%s", infoLog);
+    }
+    
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+#endif
+        
+    _textureUniform = glGetUniformLocation(shaderProgram, "u_Texture");
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+	_modelviewprojUniform = glGetUniformLocation(shaderProgram, "u_ModelViewProjMatrix");
+    uniformColour = glGetUniformLocation(shaderProgram, "colour");
+
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+
+    // Release vertex and fragment shaders.
+    if (vertShader)
+        glDeleteShader(vertShader);
+    if (fragShader)
+        glDeleteShader(fragShader);
+
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+
+    glUseProgram(shaderProgram);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    
+    int total = -1;
+    glGetProgramiv( shaderProgram, GL_ACTIVE_UNIFORMS, &total ); 
+    
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    
+#if defined(SHADERDEBUG)
+    for(int i=0; i<total; ++i)  {
+        int name_len=-1, num=-1;
+        GLenum type = GL_ZERO;
+        char name[100];
+        glGetActiveUniform( shaderProgram, GLuint(i), sizeof(name)-1,
+                           &name_len, &num, &type, name );
+        name[name_len] = 0;
+        GLuint location = glGetUniformLocation( shaderProgram, name );
+        NSLog(@"Active uniforms:\n%s", name);
+    }
+#endif
+    
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+        GLubyte whitepixel[4] = {255,255,255,255};
+        
+        glGenTextures( 1, &whiteTexture);
+        glBindTexture(GL_TEXTURE_2D, whiteTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, whitepixel);
+
+    }
+}
+#endif
+
 - (EAGLContext*)createContext
 {
     //EAGLContext* context = nil;
 	
     if (theSharegroup)
     {
+#ifdef OPENGLES2
+        context = [[EAGLContext alloc] 
+				   initWithAPI:kEAGLRenderingAPIOpenGLES2
+				   sharegroup:theSharegroup];
+#else
         context = [[EAGLContext alloc] 
 				   initWithAPI:kEAGLRenderingAPIOpenGLES1
 				   sharegroup:theSharegroup];
+#endif
 		displaynumber = 2;
+        [self setFramebuffer];
+        [self setupView];
+        [self setupShaders];
     }
     else
     {
+#ifdef OPENGLES2
+#ifdef GPUIMAGE
+        context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2 sharegroup:[[[GPUImageOpenGLESContext sharedImageProcessingOpenGLESContext] context] sharegroup]];
+#else
+        context = [[EAGLContext alloc]
+				   initWithAPI:kEAGLRenderingAPIOpenGLES2];
+#endif
+		displaynumber = 1;
+        [self setFramebuffer];
+        [self setupView];
+        [self setupShaders];
+
+/*
+ //        const GLfloat zNear = 1, zFar = 600, fieldOfView = 40*M_PI/180.0;
+        
+        esMatrixLoadIdentity(&projection);
+//        GLfloat size = zNear * tanf(fieldOfView / 2.0); 
+        esOrtho(&projection, 0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);
+//        glOrthof(0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);
+  //      esFrustum(&projection, -size, size, -size / (SCREEN_WIDTH / SCREEN_HEIGHT), size / (SCREEN_WIDTH / SCREEN_HEIGHT), zNear, zFar); 
+        
+        esMatrixLoadIdentity(&modelView);
+        // translate back into the screen by 6 units and down by 1 unit  
+        esTranslate(&modelView, 0.0f , -1.0f, -6.0f);  
+//        glRotatef(0.0f, 0.0f, 0.0f, 1.0f);
+        esRotate(&modelView, 0.0f, 0.0f, 0.0f, 1.0f);
+        glUseProgram(shaderProgram);
+ */
+#else
         context = [[EAGLContext alloc]
 				   initWithAPI:kEAGLRenderingAPIOpenGLES1];
+#endif
+//#endif
         theSharegroup = context.sharegroup;
 		displaynumber = 1;
     }
 	
     return context;
+}
+
+- (id)initWithCoder2:(NSCoder*)coder
+{
+    self = [super initWithCoder:coder];
+	if (self)
+    {
+        CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
+        
+        eaglLayer.opaque = TRUE;
+        eaglLayer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys:
+                                        [NSNumber numberWithBool:FALSE], kEAGLDrawablePropertyRetainedBacking,
+                                        kEAGLColorFormatRGBA8, kEAGLDrawablePropertyColorFormat,
+                                        nil];
+    }
+    
+    return self;
 }
 
 
@@ -526,7 +1985,14 @@ static EAGLSharegroup* theSharegroup = nil;
             [self release];
             return nil;
         }
-        
+ 
+#ifdef OPENGLES2
+        if ([context API] == kEAGLRenderingAPIOpenGLES2) {
+            [self setFramebuffer];
+            [self setupView];
+            [self setupShaders];
+        }
+#endif
         animationInterval = 1.0 / 60.0; // We look for 60 FPS
 
     }
@@ -562,7 +2028,6 @@ static EAGLSharegroup* theSharegroup = nil;
 	return self;
 }
 		
-		
 - (id)initWithFrame:(CGRect)frame andContextSharegroup:(EAGLContext*)passedContext {
     
     NSLog(@"Special initWithFrame:andContextSharegroup: call");
@@ -581,7 +2046,9 @@ static EAGLSharegroup* theSharegroup = nil;
 //        context = [[EAGLContext alloc] 
 //				   initWithAPI:kEAGLRenderingAPIOpenGLES1
 //				   sharegroup:passedContext.sharegroup];
-        context = passedContext;
+		context = [self createContext];
+
+//        context = passedContext;
 		displaynumber = 2;
         
         if (!context || ![EAGLContext setCurrentContext:context]) {
@@ -615,10 +2082,16 @@ int EXT_SCREEN_HEIGHT = 480;
 #undef DEBUG_TOUCH
 
 // Various texture font strongs
+#ifdef UISTRINGS
 NSString *textlabelstr = @"";
 NSString *fontname = @"";
 NSString *texturepathstr; // = @"Ship.png";
-
+#else
+string textlabelstr = "";
+string fontname = "";
+NSString *texturepathstr; // = @"Ship.png";
+//string texturepathstr; // = @"Ship.png";
+#endif
 // Below is modeled after GLPaint
 
 #define kBrushOpacity		(1.0 / 3.0)
@@ -628,10 +2101,8 @@ NSString *texturepathstr; // = @"Ship.png";
 #define kSaturation			1.0
 
 static Texture2D* brushtexture = NULL;
+static urAPI_Texture* brushtexturedata = NULL;
 static float brushsize = 1;
-
-// Interfacing with C of the lua API
-extern EAGLView* g_glView;
 
 // 2D Painting functionality
 
@@ -641,11 +2112,26 @@ void SetBrushAsCamera(bool s) {
     cameraBeingUsedAsBrush = s;
 }
 
-void SetBrushTexture(Texture2D * texture)
+bool UsesTextureBrush()
+{
+    if(brushtexture)
+        return true;
+    else
+        return false;
+}
+
+void SetBrushTexture(urAPI_Texture * t)
+{
+	brushtexture = t->backgroundTex;
+	brushsize = brushtexture.pixelsWide;
+    brushtexturedata = t;
+}
+
+/*void SetBrushTexture(Texture2D * texture)
 {
 	brushtexture = texture;
 	brushsize = texture.pixelsWide;
-}
+}*/
 
 void SetBrushSize(float size)
 {
@@ -663,20 +2149,152 @@ float BrushSize()
 	return brushsize;
 }
 
+#ifdef OPENGLES2
+ESMatrix *matrixstack;
+int stacksize = 1;
+int maxstack = 1;
+
+- (void) urInitMatrixStack
+{
+    matrixstack = (ESMatrix*)malloc(sizeof(ESMatrix));
+    matrixstack[0] = modelView;
+}
+
+-(void) urLoadIdentity
+{
+    esMatrixLoadIdentity(&modelView);
+    // translate back into the screen by 6 units and down by 1 unit
+    esMatrixMultiply(&mvp, &modelView, &projection );
+}
+
+void urLoadIdentity()
+{
+    [g_glView urLoadIdentity];
+}
+
+- (void) urPushMatrix
+{
+//    glUseProgram(shaderProgram);
+    stacksize++;
+    if(stacksize > maxstack)
+    {
+        matrixstack = (ESMatrix*)realloc(matrixstack,sizeof(ESMatrix)*stacksize);
+        maxstack++;
+    }
+    
+    matrixstack[stacksize-1] = modelView;
+    
+//    esMatrixLoadIdentity(&modelView);
+}
+
+void urPushMatrix()
+{
+	[g_glView urPushMatrix];
+}
+
+- (void) urPopMatrix
+{
+    modelView = matrixstack[stacksize-1];
+    stacksize--;
+    
+    // reset our modelview
+    esMatrixMultiply(&mvp, &modelView, &projection );
+    glUniformMatrix4fv(_modelviewprojUniform, 1, GL_FALSE, (GLfloat*) &mvp.m[0][0] );
+}
+
+void urPopMatrix()
+{
+	[g_glView urPopMatrix];
+}
+
+- (void) urTranslatef:(GLfloat) x withY:(GLfloat) y withZ:(GLfloat) z
+{
+    esTranslate(&modelView, x, y, z);
+    esMatrixMultiply(&mvp, &modelView, &projection );
+    glUniformMatrix4fv(_modelviewprojUniform, 1, GL_FALSE, (GLfloat*) &mvp.m[0][0] );
+}
+
+void urTranslatef(GLfloat x, GLfloat y, GLfloat z)
+{
+	[g_glView urTranslatef:x withY:y withZ:z];
+}
+
+- (void) urScalef:(GLfloat) sx withY:(GLfloat) sy withZ:(GLfloat) sz
+{
+    esScale(&modelView, sx,sy,sz);
+    esMatrixMultiply(&mvp, &modelView, &projection );
+    glUniformMatrix4fv(_modelviewprojUniform, 1, GL_FALSE, (GLfloat*) &mvp.m[0][0] );
+}
+
+void urScalef(GLfloat sx, GLfloat sy, GLfloat sz)
+{
+    [g_glView urScalef:sx withY:sy withZ:sz];
+
+}
+
+- (void) urRotatef:(GLfloat)angle withX:(GLfloat) x withY:(GLfloat) y withZ:(GLfloat) z
+{
+    esRotate(&modelView, angle, x, y, z);
+    esMatrixMultiply(&mvp, &modelView, &projection );
+    glUniformMatrix4fv(_modelviewprojUniform, 1, GL_FALSE, (GLfloat*) &mvp.m[0][0] );
+
+}
+
+void urRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z)
+{
+    [g_glView urRotatef:angle withX:x withY:y withZ:z];
+}
+#endif
+
+
 void SetupBrush()
 {
+    GLenum err = glGetError();
 	if(brushtexture != NULL || cameraBeingUsedAsBrush)
 	{
 
+#ifdef OPENGLES2
+        glActiveTexture(GL_TEXTURE0);
+        glUniform1i(_textureUniform,0);
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+#endif
+        
         if (cameraBeingUsedAsBrush) {
             glBindTexture(GL_TEXTURE_2D, cameraTexture);
         } else {
             glBindTexture(GL_TEXTURE_2D, brushtexture.name);
         }
         
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
 		glDisable(GL_DITHER);
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+#ifndef OPENGLES2
+        glBindFramebufferOES(GL_FRAMEBUFFER_OES, g_glView->viewFramebuffer);
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+#endif
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Multiplicative "blending", color of background mixes with brush alpha. Can never saturate if either one or the other is not 1.
+#ifndef OPENGLES2
 		glEnable(GL_TEXTURE_2D);
-		glEnable(GL_BLEND);
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
 //		glDisable(GL_BLEND);
         
 		// Make the current material colour track the current color
@@ -707,31 +2325,136 @@ void SetupBrush()
 				break;
 		}*/
 //		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // Additive "blending", color keeps being applied weight by alpha of the brush 
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Multiplicative "blending", color of background mixes with brush alpha. Can never saturate if either one or the other is not 1.
 //		glDisable(GL_BLEND); // Solid color mode
 		glEnable(GL_POINT_SPRITE_OES);
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
 		glTexEnvf(GL_POINT_SPRITE_OES, GL_COORD_REPLACE_OES, GL_TRUE);
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+#endif
 	}	
 	else
 	{
+        GLenum err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
 		glEnable(GL_DITHER);
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+#ifdef OPENGLES2
+        glActiveTexture(GL_TEXTURE0);
+        glUniform1i(_textureUniform,0);
+        glBindTexture(GL_TEXTURE_2D, g_glView->whiteTexture);
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+#else
 		glDisable(GL_TEXTURE_2D);
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+#endif
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // Additive "blending", color keeps being applied weight by alpha of the brush 
 //		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Multiplicative "blending", color of background mixes with brush alpha. Can never saturate if either one or the other is not 1.
 //		glDisable(GL_BLEND); // Solid color mode
+#ifndef OPENGLES2
         glDisable(GL_POINT_SPRITE_OES);
+#endif
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
 	}
+#ifndef OPENGLES2
 	glPointSize(brushsize);
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+#endif
 }
 
 GLuint textureFrameBuffer=-1;
+GLuint bgtextureFrameBuffer=-1;
+GLuint bgname=-1;
+
+#define RENDERTOTEXTURE
 
 void CreateFrameBuffer()
 {
 	// create framebuffer
 	glGenFramebuffersOES(1, &textureFrameBuffer);
 }
+
+// Joint opengl functions to set up brush drawing
+
+#ifdef OPENGLES2
+GLubyte pointColors[4*4];
+GLfloat coordinates[8];
+
+void initBrushColor(urAPI_Texture* texture)
+{
+    for(int i=0;i<4;i++)
+    {
+        pointColors[i*4+0]=texture->texturebrushcolor[0];
+        pointColors[i*4+1]=texture->texturebrushcolor[1];
+        pointColors[i*4+2]=texture->texturebrushcolor[2];
+        pointColors[i*4+3]=texture->texturebrushcolor[3];
+    }
+    
+    glVertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, pointColors);
+    glEnableVertexAttribArray(ATTRIB_COLOR);
+}
+
+void initBrushRotation()
+{
+/*   GLfloat coordinates[] = {
+        brushtexturedata->texcoords[0], brushtexturedata->texcoords[1],
+        brushtexturedata->texcoords[2], brushtexturedata->texcoords[3],
+        brushtexturedata->texcoords[4], brushtexturedata->texcoords[5],
+        brushtexturedata->texcoords[6], brushtexturedata->texcoords[7]
+    };*/
+    
+    coordinates[0] = brushtexturedata->texcoords[0];
+    coordinates[1] = brushtexturedata->texcoords[1];
+    coordinates[2] = brushtexturedata->texcoords[2];
+    coordinates[3] = brushtexturedata->texcoords[3];
+    coordinates[4] = brushtexturedata->texcoords[4];
+    coordinates[5] = brushtexturedata->texcoords[5];
+    coordinates[6] = brushtexturedata->texcoords[6];
+    coordinates[7] = brushtexturedata->texcoords[7];
+    
+    /*
+     GLfloat         coordinates[] = { 
+     0,  0, 
+     1.0f,  0,
+     0,              1.0f,
+     1.0f,    1.0f,
+     };
+     */
+    
+    glVertexAttribPointer(ATTRIB_TEXTUREPOSITON, 2, GL_FLOAT, 0, 0, coordinates);
+    glEnableVertexAttribArray(ATTRIB_TEXTUREPOSITON);
+}
+#endif
 
 // Render point drawing into a texture
 
@@ -742,13 +2465,15 @@ void drawPointToTexture(urAPI_Texture_t *texture, float x, float y)
     glBindFramebufferOES(GL_FRAMEBUFFER_OES, g_glView->viewFramebuffer);
     glViewport(0, 0, g_glView->backingWidth, g_glView->backingHeight);
 	
+#ifndef OPENGLES2
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     
     glOrthof(0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);
     glMatrixMode(GL_MODELVIEW);
     glRotatef(0.0f, 0.0f, 0.0f, 1.0f);
-
+#endif
+    
 	Texture2D *bgtexture = texture->backgroundTex;
 	y = texture->backgroundTex->_height - y;
 
@@ -763,17 +2488,65 @@ void drawPointToTexture(urAPI_Texture_t *texture, float x, float y)
 	
 	SetupBrush();
 	
+    GLenum err = glGetError();
+#ifdef OPENGLES2
+    glUseProgram(g_glView->shaderProgram);
+    
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    
+//    glDisable(GL_BLEND);
+//    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // Additive "blending", color keeps being applied weight by alpha of the brush 
+//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Multiplicative "blending", color of background mixes with brush alpha. 
+    
+//    glActiveTexture(GL_TEXTURE0);
+//    glUniform1i(_textureUniform,0);
+//    glBindTexture(GL_TEXTURE_2D, g_glView->whiteTexture);
+    
+    initBrushColor(texture);
+#else
 	glDisableClientState(GL_COLOR_ARRAY);
 	glColor4ub(texture->texturebrushcolor[0], texture->texturebrushcolor[1], texture->texturebrushcolor[2], texture->texturebrushcolor[3]);		
+#endif
 
+	
+	//Render the vertex array
+#ifdef OPENGLES2    
+/*    glVertexAttribPointer(ATTRIB_VERTEX, 2, GL_FLOAT, GL_FALSE, 0, vertexBuffer);
+    glEnableVertexAttribArray(ATTRIB_VERTEX);
+    //                        glVertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, vertices);
+    //                        glEnableVertexAttribArray(ATTRIB_VERTEX);
+    // set the position vertex attribute with our quads vertices
+ */
+	const GLfloat pointVertices[] = {
+		x-brushsize/2, y-brushsize/2, 0.0f,
+		x+brushsize/2, y-brushsize/2, 0.0f,
+		x-brushsize/2, y+brushsize/2, 0.0f,
+		x+brushsize/2, y+brushsize/2, 0.0f
+	};
+    glVertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, GL_FALSE, 0, pointVertices);
+    glEnableVertexAttribArray(ATTRIB_VERTEX);
+
+    initBrushRotation();
+    
+    // and finally tell the GPU to draw our triangle!
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);		
+#else
 	static GLfloat		vertexBuffer[2];
 	
 	vertexBuffer[0] = (int)x;
 	vertexBuffer[1] = (int)y;
-	
-	//Render the vertex array
-	glVertexPointer(2, GL_FLOAT, 0, vertexBuffer);
+
+    glVertexPointer(2, GL_FLOAT, 0, vertexBuffer);
 	glDrawArrays(GL_POINTS, 0, 1);
+#endif
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
 
 	// unbind frame buffer
 	glBindFramebufferOES(GL_FRAMEBUFFER_OES, 0);
@@ -798,21 +2571,72 @@ int prepareBrushedLine(float startx, float starty, float endx, float endy, int v
 	return vertexCount;
 }
 
+bool drawactive = false;
+
+#ifdef OPENGLES2
+void drawTexturedLineToTexture(float startx, float starty, float endx, float endy)
+{
+    NSUInteger			vertexCount = 0,
+    count,
+    i;
+    float x,y;
+    count = MAX(ceilf(sqrtf((endx - startx) * (endx - startx) + (endy - starty) * (endy - starty)) / kBrushPixelStep), 1);
+    for(i = 0; i < count; ++i) {
+        
+        x = startx + (endx - startx) * ((GLfloat)i / (GLfloat)count);
+        y = starty + (endy - starty) * ((GLfloat)i / (GLfloat)count);
+        
+        const GLfloat pointVertices[] = {
+            x-brushsize/2, y-brushsize/2, 0.0f,
+            x+brushsize/2, y-brushsize/2, 0.0f,
+            x-brushsize/2, y+brushsize/2, 0.0f,
+            x+brushsize/2, y+brushsize/2, 0.0f
+        };
+        
+        glVertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, GL_FALSE, 0, pointVertices);
+        glEnableVertexAttribArray(ATTRIB_VERTEX);
+        // and finally tell the GPU to draw our triangle!
+        glEnable(GL_BLEND);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);	
+    }
+}
+#endif
+
 // Render a quadrangle to a texture
 void drawQuadToTexture(urAPI_Texture_t *texture, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
 {
+#ifdef OPENGLES2
+    glUseProgram(g_glView->shaderProgram);
+#endif
+    GLenum err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
     [EAGLContext setCurrentContext:g_glView->context];
-    
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+#ifndef OPENGLES2    
     glBindFramebufferOES(GL_FRAMEBUFFER_OES, g_glView->viewFramebuffer);
     glViewport(0, 0, g_glView->backingWidth, g_glView->backingHeight);
-	
+#endif
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+#ifndef OPENGLES2
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     
     glOrthof(0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);
     glMatrixMode(GL_MODELVIEW);
     glRotatef(0.0f, 0.0f, 0.0f, 1.0f);
-
+#endif
+    
 	Texture2D *bgtexture = texture->backgroundTex;
 	y1 = texture->backgroundTex->_height - y1;
 	y2 = texture->backgroundTex->_height - y2;
@@ -826,13 +2650,33 @@ void drawQuadToTexture(urAPI_Texture_t *texture, float x1, float y1, float x2, f
 	glBindFramebufferOES(GL_FRAMEBUFFER_OES, textureFrameBuffer);
 	
 	// attach renderbuffer
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
 	glFramebufferTexture2DOES(GL_FRAMEBUFFER_OES, GL_COLOR_ATTACHMENT0_OES, GL_TEXTURE_2D, bgtexture.name, 0);
 	
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
 	SetupBrush();
-	
+
+#ifdef OPENGLES2
+    glVertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, texture->texturebrushcolor);
+    glEnableVertexAttribArray(ATTRIB_COLOR);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+#else
 	glEnable(GL_LINE_SMOOTH);
 	glDisableClientState(GL_COLOR_ARRAY);
 	glColor4ub(texture->texturebrushcolor[0], texture->texturebrushcolor[1], texture->texturebrushcolor[2], texture->texturebrushcolor[3]);		
+#endif
 
 	if(brushtexture==NULL && !cameraBeingUsedAsBrush)
 	{
@@ -848,16 +2692,81 @@ void drawQuadToTexture(urAPI_Texture_t *texture, float x1, float y1, float x2, f
 		vertexBuffer[7] = y4;
 		
 		glLineWidth(brushsize);
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
 		//Render the vertex array
-		glVertexPointer(2, GL_FLOAT, 0, vertexBuffer);
+#ifdef OPENGLES2    
+        static GLubyte colorBuffer[16];
+        colorBuffer[0]=texture->texturebrushcolor[0];
+        colorBuffer[1]=texture->texturebrushcolor[1];
+        colorBuffer[2]=texture->texturebrushcolor[2];
+        colorBuffer[3]=texture->texturebrushcolor[3];
+        colorBuffer[4]=texture->texturebrushcolor[0];
+        colorBuffer[5]=texture->texturebrushcolor[1];
+        colorBuffer[6]=texture->texturebrushcolor[2];
+        colorBuffer[7]=texture->texturebrushcolor[3];
+        colorBuffer[8]=texture->texturebrushcolor[0];
+        colorBuffer[9]=texture->texturebrushcolor[1];
+        colorBuffer[10]=texture->texturebrushcolor[2];
+        colorBuffer[11]=texture->texturebrushcolor[3];
+        colorBuffer[12]=texture->texturebrushcolor[0];
+        colorBuffer[13]=texture->texturebrushcolor[1];
+        colorBuffer[14]=texture->texturebrushcolor[2];
+        colorBuffer[15]=texture->texturebrushcolor[3];
+        
+        glUseProgram(g_glView->shaderProgram);
+        
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+        
+        glActiveTexture(GL_TEXTURE0);
+        glUniform1i(_textureUniform,0);
+        glBindTexture(GL_TEXTURE_2D, g_glView->whiteTexture);
+        
+        glVertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, colorBuffer);
+        glEnableVertexAttribArray(ATTRIB_COLOR);
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+        glVertexAttribPointer(ATTRIB_VERTEX, 2, GL_FLOAT, 0, 0, vertexBuffer);
+        glEnableVertexAttribArray(ATTRIB_VERTEX);
+        //                        glVertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, vertices);
+        //                        glEnableVertexAttribArray(ATTRIB_VERTEX);
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+#else
+        glVertexPointer(2, GL_FLOAT, 0, vertexBuffer);
+#endif
 		if(texture->fill)
 			glDrawArrays(GL_TRIANGLE_FAN,0,4);
 		else
 			glDrawArrays(GL_LINE_LOOP, 0, 4);
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
 	}
 	else
 	{
-		
+#ifdef OPENGLES2
+        initBrushColor(texture);
+        initBrushRotation();
+
+        drawTexturedLineToTexture(x1,y1,x2,y2);
+        drawTexturedLineToTexture(x2,y2,x3,y3);
+        drawTexturedLineToTexture(x3,y3,x4,y4);
+        drawTexturedLineToTexture(x4,y4,x1,y1);
+#else
 		static GLfloat*		vertexBuffer = NULL;
 		static NSUInteger	vertexMax = sqrt(SCREEN_HEIGHT*SCREEN_HEIGHT+SCREEN_WIDTH*SCREEN_WIDTH); //577; // Sqrt(480^2+320^2)
 		NSUInteger			vertexCount = 0;
@@ -873,8 +2782,9 @@ void drawQuadToTexture(urAPI_Texture_t *texture, float x1, float y1, float x2, f
 		vertexCount = prepareBrushedLine(x4,y4,x1,y1,vertexCount,vertexMax,vertexBuffer);
 		
 		//Render the vertex array
-		glVertexPointer(2, GL_FLOAT, 0, vertexBuffer);
+        glVertexPointer(2, GL_FLOAT, 0, vertexBuffer);
 		glDrawArrays(GL_POINTS, 0, vertexCount);
+#endif
 	}
 	
 	// unbind frame buffer
@@ -891,13 +2801,15 @@ void drawEllipseToTexture(urAPI_Texture_t *texture, float x, float y, float w, f
     glBindFramebufferOES(GL_FRAMEBUFFER_OES, g_glView->viewFramebuffer);
     glViewport(0, 0, g_glView->backingWidth, g_glView->backingHeight);
 	
+#ifndef OPENGLES2
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     
     glOrthof(0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);
     glMatrixMode(GL_MODELVIEW);
     glRotatef(0.0f, 0.0f, 0.0f, 1.0f);
-
+#endif
+    
 	Texture2D *bgtexture = texture->backgroundTex;
 	y = texture->backgroundTex->_height - y;
 	
@@ -912,10 +2824,12 @@ void drawEllipseToTexture(urAPI_Texture_t *texture, float x, float y, float w, f
 		
 	SetupBrush();
 	
+#ifndef OPENGLES2
 	glEnable(GL_LINE_SMOOTH);
 	glDisableClientState(GL_COLOR_ARRAY);
 	glColor4ub(texture->texturebrushcolor[0], texture->texturebrushcolor[1], texture->texturebrushcolor[2], texture->texturebrushcolor[3]);		
-
+#endif
+    
 	if(brushtexture==NULL && !cameraBeingUsedAsBrush)
 	{
 		GLfloat vertices[720];
@@ -928,7 +2842,41 @@ void drawEllipseToTexture(urAPI_Texture_t *texture, float x, float y, float w, f
 		}
 		glLineWidth(brushsize);
 		//Render the vertex array
-		glVertexPointer(2, GL_FLOAT, 0, vertices);
+#ifdef OPENGLES2    
+        static GLubyte colorBuffer[360*4];
+        for(int i=0;i<360*4;i +=4)
+        {
+            colorBuffer[i]=texture->texturebrushcolor[0];
+            colorBuffer[i+1]=texture->texturebrushcolor[1];
+            colorBuffer[i+2]=texture->texturebrushcolor[2];
+            colorBuffer[i+3]=texture->texturebrushcolor[3];
+        }
+        
+        glUseProgram(g_glView->shaderProgram);
+        
+        GLenum err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+        
+        glActiveTexture(GL_TEXTURE0);
+        glUniform1i(_textureUniform,0);
+        glBindTexture(GL_TEXTURE_2D, g_glView->whiteTexture);
+        
+        glVertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, colorBuffer);
+        glEnableVertexAttribArray(ATTRIB_COLOR);
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+        glVertexAttribPointer(ATTRIB_VERTEX, 2, GL_FLOAT, 0, 0, vertices);
+        glEnableVertexAttribArray(ATTRIB_VERTEX);
+        //                        glVertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, vertices);
+        //                        glEnableVertexAttribArray(ATTRIB_VERTEX);
+#else
+        glVertexPointer(2, GL_FLOAT, 0, vertices);
+#endif
 		if(texture->fill)
 			glDrawArrays(GL_TRIANGLE_FAN,0,360);
 		else
@@ -941,7 +2889,33 @@ void drawEllipseToTexture(urAPI_Texture_t *texture, float x, float y, float w, f
 //		static NSUInteger	vertexMax = sqrt(SCREEN_HEIGHT*SCREEN_HEIGHT+SCREEN_WIDTH*SCREEN_WIDTH); //577; // Sqrt(480^2+320^2)
 //		NSUInteger			i;
 		
-		GLfloat vertices[720];
+
+		
+#ifdef OPENGLES2 
+        initBrushColor(texture);
+        initBrushRotation();
+        
+        float cx,cy;
+		for (int i = 0; i < 720; i += 2) {
+            
+			// x value
+			cx   = x+w*cos(2.0*PI*i/360.0);
+			// y value
+			cy = y+h*sin(2.0*PI*i/360.0);
+            
+            const GLfloat pointVertices[] = {
+                cx-brushsize/2, cy-brushsize/2, 0.0f,
+                cx+brushsize/2, cy-brushsize/2, 0.0f,
+                cx-brushsize/2, cy+brushsize/2, 0.0f,
+                cx+brushsize/2, cy+brushsize/2, 0.0f
+            };
+            glVertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, GL_FALSE, 0, pointVertices);
+            glEnableVertexAttribArray(ATTRIB_VERTEX);
+            // and finally tell the GPU to draw our triangle!
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);	
+        }
+#else
+        GLfloat vertices[720];
 		
 		for (int i = 0; i < 720; i += 2) {
 			// x value
@@ -951,9 +2925,10 @@ void drawEllipseToTexture(urAPI_Texture_t *texture, float x, float y, float w, f
 		}
 		
 		//Render the vertex array
-		glVertexPointer(2, GL_FLOAT, 0, vertices);
+        glVertexPointer(2, GL_FLOAT, 0, vertices);
 		//		glDrawArrays(GL_LINES, 0, vertexCount);
 		glDrawArrays(GL_POINTS, 0, 360);
+#endif
 	}
 	
 	// unbind frame buffer
@@ -968,14 +2943,26 @@ void drawLineToTexture(urAPI_Texture_t *texture, float startx, float starty, flo
     [EAGLContext setCurrentContext:g_glView->context];
     
     glBindFramebufferOES(GL_FRAMEBUFFER_OES, g_glView->viewFramebuffer);
+    GLenum err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
     glViewport(0, 0, g_glView->backingWidth, g_glView->backingHeight);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
 	
+#ifndef OPENGLES2
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     
     glOrthof(0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);
     glMatrixMode(GL_MODELVIEW);
     glRotatef(0.0f, 0.0f, 0.0f, 1.0f);
+#endif
     
 	Texture2D *bgtexture = texture->backgroundTex;
 	
@@ -986,96 +2973,293 @@ void drawLineToTexture(urAPI_Texture_t *texture, float startx, float starty, flo
 		CreateFrameBuffer();
 	// bind frame buffer
 	glBindFramebufferOES(GL_FRAMEBUFFER_OES, textureFrameBuffer);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
 	
 	// attach renderbuffer
 	glFramebufferTexture2DOES(GL_FRAMEBUFFER_OES, GL_COLOR_ATTACHMENT0_OES, GL_TEXTURE_2D, bgtexture.name, 0);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
 	
 	SetupBrush();
 
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
 //	if(bgtexture==NULL)
 	if(brushtexture==NULL && !cameraBeingUsedAsBrush)
 	{
+/*#ifdef OPENGLES2
+		static GLfloat		vertexBuffer[6];
+		
+		vertexBuffer[0] = startx;
+		vertexBuffer[1] = starty;
+        vertexBuffer[2] = 0;
+		vertexBuffer[3] = endx;
+		vertexBuffer[4] = endy;
+        vertexBuffer[5] = 0;
+#else   */     
 		static GLfloat		vertexBuffer[4];
 		
 		vertexBuffer[0] = startx;
 		vertexBuffer[1] = starty;
 		vertexBuffer[2] = endx;
 		vertexBuffer[3] = endy;
+/*#endif*/
 
+#ifdef OPENGLES2
+        static GLubyte colorBuffer[8];
+/*
+        colorBuffer[0]=texture->gradientUL[0]; // R
+        colorBuffer[0]=texture->gradientUL[1]; // G
+        colorBuffer[0]=texture->gradientUL[2]; // B
+        colorBuffer[0]=texture->gradientUL[3]; // A
+        colorBuffer[0]=texture->gradientUR[0]; // R
+        colorBuffer[0]=texture->gradientUR[1]; // G
+        colorBuffer[0]=texture->gradientUR[2]; // B
+        colorBuffer[0]=texture->gradientUR[3]; // A
+ */
+
+        colorBuffer[0]=texture->texturebrushcolor[0];
+        colorBuffer[1]=texture->texturebrushcolor[1];
+        colorBuffer[2]=texture->texturebrushcolor[2];
+        colorBuffer[3]=texture->texturebrushcolor[3];
+        colorBuffer[4]=texture->texturebrushcolor[4];
+        colorBuffer[5]=texture->texturebrushcolor[5];
+        colorBuffer[6]=texture->texturebrushcolor[6];
+        colorBuffer[7]=texture->texturebrushcolor[7];
+        
+        glUseProgram(g_glView->shaderProgram);
+        
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+/*
+        glActiveTexture(GL_TEXTURE0);
+        glUniform1i(_textureUniform,0);
+        glBindTexture(GL_TEXTURE_2D, g_glView->whiteTexture);
+*/
+        glVertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, colorBuffer);
+        glEnableVertexAttribArray(ATTRIB_COLOR);
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+		glLineWidth(brushsize);
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+#else
 		glEnable(GL_LINE_SMOOTH);
+        err = glGetError();
 		glDisableClientState(GL_COLOR_ARRAY);
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
 		glColor4ub(texture->texturebrushcolor[0], texture->texturebrushcolor[1], texture->texturebrushcolor[2], texture->texturebrushcolor[3]);		
 		//		glColor4ub(0,0,255,30);
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+
 		glLineWidth(brushsize);
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+#endif
+        
 		//Render the vertex array
-		glVertexPointer(2, GL_FLOAT, 0, vertexBuffer);
+#ifdef OPENGLES2    
+/*        glUseProgram(g_glView->shaderProgram);
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }*/
+        glVertexAttribPointer(ATTRIB_VERTEX, 2, GL_FLOAT, GL_FALSE, 0, vertexBuffer);
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+        glEnableVertexAttribArray(ATTRIB_VERTEX);
+        //                        glVertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, vertices);
+        //                        glEnableVertexAttribArray(ATTRIB_VERTEX);
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+		glDrawArrays(GL_LINE_STRIP, 0, 2);
+#else
+        glVertexPointer(2, GL_FLOAT, 0, vertexBuffer);
 		glDrawArrays(GL_LINES, 0, 2);
+#endif
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
 	}
 	else
 	{
+		
+#ifdef OPENGLES2
+/*        glUseProgram(g_glView->shaderProgram);
+        
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+        
+        glActiveTexture(GL_TEXTURE0);
+        glUniform1i(_textureUniform,0);
+        glBindTexture(GL_TEXTURE_2D, brushtexture.name);
+*/        
+        initBrushColor(texture);
+        initBrushRotation();
+        
+        drawTexturedLineToTexture(startx,starty,endx,endy);
+#else
+            
+            static GLfloat*		vertexBuffer = NULL;
+            static NSUInteger	vertexMax = sqrt(SCREEN_HEIGHT*SCREEN_HEIGHT+SCREEN_WIDTH*SCREEN_WIDTH); //577; // Sqrt(480^2+320^2)
+            NSUInteger			vertexCount = 0,
+            count,
+            i;
+            
+            //Allocate vertex array buffer
+            if(vertexBuffer == NULL)
+                vertexBuffer = (GLfloat*)malloc(vertexMax * 2 * sizeof(GLfloat));
+            
+            //Add points to the buffer so there are drawing points every X pixels
+            count = MAX(ceilf(sqrtf((endx - startx) * (endx - startx) + (endy - starty) * (endy - starty)) / kBrushPixelStep), 1);
+            for(i = 0; i < count; ++i) {
+                if(vertexCount == vertexMax) {
+                    vertexMax = 2 * vertexMax;
+                    vertexBuffer = (GLfloat*)realloc(vertexBuffer, vertexMax * 2 * sizeof(GLfloat));
+                }
+                
+                vertexBuffer[2 * vertexCount + 0] = startx + (endx - startx) * ((GLfloat)i / (GLfloat)count);
+                vertexBuffer[2 * vertexCount + 1] = starty + (endy - starty) * ((GLfloat)i / (GLfloat)count);
+                vertexCount += 1;
+            }
 
-		static GLfloat*		vertexBuffer = NULL;
-		static NSUInteger	vertexMax = sqrt(SCREEN_HEIGHT*SCREEN_HEIGHT+SCREEN_WIDTH*SCREEN_WIDTH); //577; // Sqrt(480^2+320^2)
-		NSUInteger			vertexCount = 0,
-		count,
-		i;
-		
-		//Allocate vertex array buffer
-		if(vertexBuffer == NULL)
-			vertexBuffer = (GLfloat*)malloc(vertexMax * 2 * sizeof(GLfloat));
-		
-		//Add points to the buffer so there are drawing points every X pixels
-		count = MAX(ceilf(sqrtf((endx - startx) * (endx - startx) + (endy - starty) * (endy - starty)) / kBrushPixelStep), 1);
-		for(i = 0; i < count; ++i) {
-			if(vertexCount == vertexMax) {
-				vertexMax = 2 * vertexMax;
-				vertexBuffer = (GLfloat*)realloc(vertexBuffer, vertexMax * 2 * sizeof(GLfloat));
-			}
-			
-			vertexBuffer[2 * vertexCount + 0] = startx + (endx - startx) * ((GLfloat)i / (GLfloat)count);
-			vertexBuffer[2 * vertexCount + 1] = starty + (endy - starty) * ((GLfloat)i / (GLfloat)count);
-			vertexCount += 1;
-		}
-		
-		glDisableClientState(GL_COLOR_ARRAY);
-		glColor4ub(texture->texturebrushcolor[0], texture->texturebrushcolor[1], texture->texturebrushcolor[2], texture->texturebrushcolor[3]);		
-		//Render the vertex array
-		glVertexPointer(2, GL_FLOAT, 0, vertexBuffer);
-		glDrawArrays(GL_POINTS, 0, vertexCount);
+            glDisableClientState(GL_COLOR_ARRAY);
+            err = glGetError();
+            if(err != GL_NO_ERROR)
+            {
+                int a = err;
+            }
+            glColor4ub(texture->texturebrushcolor[0], texture->texturebrushcolor[1], texture->texturebrushcolor[2], texture->texturebrushcolor[3]);		
+            //Render the vertex array
+            err = glGetError();
+            if(err != GL_NO_ERROR)
+            {
+                int a = err;
+            }
+            
+            glVertexPointer(2, GL_FLOAT, 0, vertexBuffer);
+            glDrawArrays(GL_POINTS, 0, vertexCount);
+        }
+#endif
+        
 	}
 	
 	// unbind frame buffer
 	glBindFramebufferOES(GL_FRAMEBUFFER_OES, 0);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+#ifndef OPENGLES2
     glDisable(GL_POINT_SPRITE_OES);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+#endif
 }
 
 // Clear a texture with a given RGB color
 
 void clearTexture(Texture2D* texture, float r, float g, float b, float a)
 {
+    GLenum err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
     [EAGLContext setCurrentContext:g_glView->context];
     
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
     glBindFramebufferOES(GL_FRAMEBUFFER_OES, g_glView->viewFramebuffer);
     glViewport(0, 0, g_glView->backingWidth, g_glView->backingHeight);
-	
+
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+#ifndef OPENGLES2
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     
     glOrthof(0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);
     glMatrixMode(GL_MODELVIEW);
     glRotatef(0.0f, 0.0f, 0.0f, 1.0f);
-
+#endif
+    
 	if(textureFrameBuffer == -1)
 		CreateFrameBuffer();
 	glBindFramebufferOES(GL_FRAMEBUFFER_OES, textureFrameBuffer);
 	
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
 	// attach renderbuffer
 	glFramebufferTexture2DOES(GL_FRAMEBUFFER_OES, GL_COLOR_ATTACHMENT0_OES, GL_TEXTURE_2D, texture.name, 0);
 	
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+
 	glClearColor(r, g, b, a);
 	glClear(GL_COLOR_BUFFER_BIT);
 	// unbind frame buffer
 	glBindFramebufferOES(GL_FRAMEBUFFER_OES, 0);
+
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+
 }
 
 // Create a texture instance for a given region
@@ -1089,16 +3273,70 @@ Texture2D* createBlankTexture(float width, float height)
 	return [[Texture2D alloc] initWithSize:size];
 }
 
+void freeMovieTexture(urAPI_Region_t* t)
+{
+#ifdef GPUIMAGE
+    [t->texture->movieTex removeAllTargets];
+    urRegionMovie* rm = (urRegionMovie*)t->texture->textureOutput.delegate;
+    [rm dealloc];
+    [t->texture->textureOutput dealloc];
+    t->texture->textureOutput = NULL;
+    [t->texture->movieTex dealloc];
+    t->texture->movieTex = NULL;
+    t->texture->texturepath = TEXTURE_SOLID;
+#endif
+}
+
 void instantiateTexture(urAPI_Region_t* t)
 {
+//#ifdef UISTRINGS
 	texturepathstr = [[NSString alloc] initWithUTF8String:t->texture->texturepath];
 //	NSString *filePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:texturepathstr]; // Leak here, fix.
 //	UIImage* textureimage = [UIImage imageNamed:texturepathstr];
+    
+    // Try as image file
 	UIImage* textureimage = [UIImage imageWithContentsOfFile:texturepathstr];
 	if(textureimage==NULL)
 		textureimage = [UIImage imageNamed:texturepathstr];
-	
-	if(textureimage)
+//#else
+//	texturepathstr = storagePath+"/"+t->texture->texturepath;
+//	urImage *textureimage = new urImage(texturepathstr.c_str());
+//#endif
+    
+    if(textureimage==NULL)
+    {
+#ifdef GPUIMAGE
+        GPUImageMovie* texturemovie = [g_glView loadMovie:texturepathstr];
+        if(texturemovie!=NULL)
+        {
+            urRegionMovie* rm = [[urRegionMovie alloc] init];
+            t->texture->textureOutput = [[GPUImageTextureOutput alloc] init];
+            t->texture->regionMovie = rm;
+            rm->region  = t;
+                       
+            t->texture->textureOutput.delegate = rm;
+            
+            [texturemovie addTarget:t->texture->textureOutput];
+            t->texture->movieTex = texturemovie;
+            t->texture->movieTexture = 0;
+#undef PERFRAME
+#ifdef PERFRAME
+            [t->texture->movieTex enableManualFrameTrigger];
+#endif
+            [t->texture->movieTex startProcessing];
+#ifdef PERFRAME
+            /*
+            if(![t->texture->movieTex processNextFrame])
+            {
+                freeMovieTexture(t);
+            }
+             */
+#endif
+        }
+#endif
+
+    }
+	else
 	{
 		CGSize rectsize;
 		rectsize.width = t->width;
@@ -1129,6 +3367,9 @@ void instantiateAllTextures(urAPI_Region_t* t)
 	}
 }
 
+// TextLabels
+//------------------------------------------
+
 // Convert line break modes to UILineBreakMode enums
 
 UILineBreakMode tolinebreakmode(int wrap)
@@ -1145,6 +3386,145 @@ UILineBreakMode tolinebreakmode(int wrap)
 	return UILineBreakModeWordWrap;
 }
 
+// Compute Y Alignment
+
+int refreshLabelYAlign(urAPI_Region_t* t)
+{
+    int fontheight = t->textlabel->textlabelTex->getFontBlockHeight(); // NYI
+    int lineheight = t->textlabel->textlabelTex->getLineHeight();
+    int linegap = t->textlabel->textlabelTex->getLineGap();
+    int justify = 0;
+    switch(t->textlabel->justifyv)
+    {
+            /*
+             case JUSTIFYV_MIDDLE:
+             justify = -t->height+fontheight/2;
+             break;
+             case JUSTIFYV_TOP:
+             justify = -t->height/2;
+             break;
+             case JUSTIFYV_BOTTOM:
+             justify = -3*t->height/2+fontheight;
+             break;
+             */
+        case JUSTIFYV_MIDDLE:
+            justify = -(fontheight+linegap)/2;
+            break;
+        case JUSTIFYV_TOP:
+            justify = t->height/2.0-fontheight-linegap/2;
+            break;
+        case JUSTIFYV_BOTTOM:
+            justify = -t->height/2.0;
+            break;
+    }
+    
+    if(t->textlabel->textlabelTex)
+    {
+        t->textlabel->textlabelTex->setYAlign(justify);
+    }
+    return justify;
+}
+
+
+// Render TextLabel
+
+void renderTextLabel(urAPI_Region_t* t)
+{
+    // text will need blending
+    glDisable(GL_BLEND);
+    
+    for(int i=0;i<4;i++) // default regions are white
+    {
+        squareColors[4*i] = 255;
+        squareColors[4*i+1] = 255;
+        squareColors[4*i+2] = 255;
+        squareColors[4*i+3] = 255;
+    }
+#ifdef OPENGLES2
+    glVertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, squareColors);
+    glEnableVertexAttribArray(ATTRIB_COLOR);
+#else
+    glColorPointer(4, GL_UNSIGNED_BYTE, 0, squareColors);
+    glEnableClientState(GL_COLOR_ARRAY);
+#endif
+    GLenum err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    
+    if(t->textlabel->textlabelTex)
+#ifdef UISTRINGS
+        [t->textlabel->textlabelTex dealloc];
+#else
+    if(t->textlabel->textlabelTex)
+        delete t->textlabel->textlabelTex; //[t->textlabel->textlabelTex dealloc];
+#endif
+    UITextAlignment align = UITextAlignmentCenter;
+    switch(t->textlabel->justifyh)
+    {
+        case JUSTIFYH_CENTER:
+            align = UITextAlignmentCenter;
+            break;
+        case JUSTIFYH_LEFT:
+            align = UITextAlignmentLeft;
+            break;
+        case JUSTIFYH_RIGHT:
+            align = UITextAlignmentRight;
+            break;
+    }
+#ifdef UISTRINGS
+    textlabelstr = [[NSString alloc] initWithUTF8String:t->textlabel->text]; // Leak here. Fix.
+    fontname = [[NSString alloc] initWithUTF8String:t->textlabel->font];
+#else
+    textlabelstr = t->textlabel->text; // Leak here. Fix.
+    fontname = t->textlabel->font;
+    fontPath = storagePath + "/" + fontname;
+    if(fontPath.substr(fontPath.find_last_of(".") + 1) != "ttf") {
+        fontPath = fontPath + ".ttf";
+    }
+#endif
+    t->textlabel->updatestring = false;
+    if(t->textlabel->drawshadow==false)
+    {
+#ifdef UISTRINGS
+        t->textlabel->textlabelTex = [[Texture2D alloc] initWithString:textlabelstr
+                                                            dimensions:CGSizeMake(t->width, t->height) alignment:align
+                                                              fontName:fontname fontSize:t->textlabel->textheight lineBreakMode:tolinebreakmode(t->textlabel->wrap)];
+#else
+        t->textlabel->textlabelTex = new urTexture(textlabelstr.c_str(),fontPath.c_str(),t->textlabel->textheight,t->width,t->height,align,tolinebreakmode(t->textlabel->wrap),
+                                                   CGSizeMake(t->textlabel->shadowoffset[0],t->textlabel->shadowoffset[1]),
+                                                   t->textlabel->shadowblur,t->textlabel->shadowcolor,
+                                                   t->textlabel->outlinemode,t->textlabel->outlinethickness);
+#endif
+    }
+    else
+    {
+        shadowColors[0] = t->textlabel->shadowcolor[0];
+        shadowColors[1] = t->textlabel->shadowcolor[1];
+        shadowColors[2] = t->textlabel->shadowcolor[2];
+        shadowColors[3] = t->textlabel->shadowcolor[3];
+#ifdef UISTRINGS
+        t->textlabel->textlabelTex = [[Texture2D alloc] initWithString:textlabelstr
+                                                            dimensions:CGSizeMake(t->width, t->height) alignment:align
+                                                              fontName:fontname fontSize:t->textlabel->textheight lineBreakMode:tolinebreakmode(t->textlabel->wrap)
+                                                          shadowOffset:CGSizeMake(t->textlabel->shadowoffset[0],t->textlabel->shadowoffset[1]) shadowBlur:t->textlabel->shadowblur shadowColor:t->textlabel->shadowcolor];
+#else
+        //                        t->textlabel->textlabelTex->labelx =
+        t->textlabel->textlabelTex = new urTexture(textlabelstr.c_str(),fontPath.c_str(),t->textlabel->textheight,t->width,t->height,
+                                                   align,tolinebreakmode(t->textlabel->wrap),
+                                                   CGSizeMake(t->textlabel->shadowoffset[0],t->textlabel->shadowoffset[1]),
+                                                   t->textlabel->shadowblur,t->textlabel->shadowcolor,
+                                                   t->textlabel->outlinemode,t->textlabel->outlinethickness);
+#endif
+    }
+#ifdef UISTRINGS
+    [fontname release];
+    [textlabelstr release];
+#endif
+    refreshLabelYAlign(t);
+}
+
 -(void) startMovieWriter:(const char*)fname
 {
 	NSError *error = nil;
@@ -1155,6 +3535,8 @@ UILineBreakMode tolinebreakmode(int wrap)
 	NSString *documentPath;
 	if ([paths count] > 0)
 		documentPath = [paths objectAtIndex:0];
+    else
+        assert(false);
 	NSString  *movPath = [documentPath stringByAppendingPathComponent:file];
 	videoWriter = [[AVAssetWriter alloc] initWithURL:
 								  [NSURL fileURLWithPath:movPath] fileType:AVFileTypeQuickTimeMovie
@@ -1225,9 +3607,13 @@ UILineBreakMode tolinebreakmode(int wrap)
 
 -(void) closeMovieWriter
 {
+#ifdef GPUIMAGE
+    [textureInput removeTarget:movieWriter];
 	[writerInput markAsFinished];
 //	[videoWriter endSessionAtSourceTime:…];
 	[videoWriter finishWriting];
+    [textureInput dealloc];
+#endif
 }
 
 -(void) writeScreenshotToMovie:(float)duration
@@ -1303,6 +3689,9 @@ UILineBreakMode tolinebreakmode(int wrap)
 	NSString *documentPath;
 	if ([paths count] > 0)
 		documentPath = [paths objectAtIndex:0];
+    else {
+        assert(false);
+    }
 	NSString  *pngPath = [documentPath stringByAppendingPathComponent:file];
 //	NSString  *jpgPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/Test.jpg"];
 	
@@ -1435,57 +3824,126 @@ UILineBreakMode tolinebreakmode(int wrap)
 	[image release];
 }
 
-bool drawactive = false;
-
 - (void)drawView {
   
+    GLenum err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
     drawactive = true;
     
-	if(displaynumber == 1)
+    float elapsedtime = 0;
+	
+    if(displaynumber == 1)
 	{
 	// eval http buffer
 		eval_buffer_exec(lua);
   
 		urs_PullVis(); // update vis data before we call events, this way we have a rate based pulling that is available in all events.
 		// Clock ourselves.
-		float elapsedtime = mytimer->elapsedSec();
+		elapsedtime = mytimer->elapsedSec();
+        totalelapsedtime = totalelapsedtime + elapsedtime;
 		mytimer->start();
 		callAllOnUpdate(elapsedtime); // Call lua APIs OnUpdates when we render a new region. We do this first so that stuff can still be drawn for this region.
 #ifdef SOAR_SUPPORT
         callAllOnSoarOutput();
 #endif
+      	if(newerror)
+        {
+            ur_Log(errorstr.c_str());
+        }
+  
 	}	
 	CGRect  bounds = [self bounds];
 	
     // Replace the implementation of this method to do your own custom drawing
     
-    GLfloat squareVertices[] = {
-        -0.5f, -0.5f,
-        0.5f,  -0.5f,
-        -0.5f,  0.5f,
-        0.5f,   0.5f,
-    };
-    GLubyte squareColors[] = {
-        255, 255,   0, 255,
-        0,   255, 255, 255,
-        0,     0,   0,   0,
-        255,   0, 255, 255,
-    };
-	
-	GLfloat shadowColors[] = {
-		0.0, 0.0, 0.0, 50.0
-	};
-    
     [EAGLContext setCurrentContext:context];
     
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glBindFramebufferOES(GL_FRAMEBUFFER_OES, viewFramebuffer);
     glViewport(0, 0, backingWidth, backingHeight);
+//	glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+#ifdef RENDERTOTEXTURE
+    if(bgtextureFrameBuffer == -1)
+        glGenFramebuffersOES(1, &bgtextureFrameBuffer);
+	glBindFramebufferOES(GL_FRAMEBUFFER_OES, bgtextureFrameBuffer);
 	
+	// attach renderbuffer
+//    static GLubyte bgpixel[1024*1024*4];
+    if(bgname == -1)
+    {
+        glGenTextures(1, &bgname);
+       
+        
+//        for(int i=0;i<1024*1024*4; i++)
+//            bgpixel[i] = 255;
+    }
+    
+    glBindTexture(GL_TEXTURE_2D, bgname);
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, backingWidth, backingHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glFramebufferTexture2DOES(GL_FRAMEBUFFER_OES, GL_COLOR_ATTACHMENT0_OES, GL_TEXTURE_2D, bgname, 0);
+    
+    GLenum errf = glCheckFramebufferStatus(GL_FRAMEBUFFER_OES);
+    if(errf!= GL_FRAMEBUFFER_COMPLETE)
+    {
+        NSLog(@"Frame buffer incomplete: %d",errf);
+        int a=0;
+    }
+#endif
+    
+#ifndef OPENGLES2    
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-
+#endif
+    
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    
+#ifdef OPENGLES2 
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    
+    // reset our modelview to identity
+    esMatrixLoadIdentity(&modelView);
+    // translate back into the screen by 6 units and down by 1 unit
+    esMatrixMultiply(&mvp, &modelView, &projection );
+    // set the mvp uniform
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    glUniformMatrix4fv(_modelviewprojUniform, 1, GL_FALSE, (GLfloat*) &mvp.m[0][0] );
+//    glUniformMatrix4fv(uniformMvp, 1, GL_FALSE, (GLfloat*) &mvp.m[0][0] );
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    
+#else
 	if(displaynumber == 1)
         glOrthof(0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);
     else
@@ -1493,12 +3951,16 @@ bool drawactive = false;
 //	glOrthof(0.0f, w, 0.0f, h, -1.0f, 1.0f);
     glMatrixMode(GL_MODELVIEW);
     glRotatef(0.0f, 0.0f, 0.0f, 1.0f);
+#endif
     
+//    glClearColor(0, 104.0/255.0, 55.0/255.0, 1.0);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Background color
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	
-	// Render all (visible and unclipped) regions on a given page.
+    // Render all (visible and unclipped) regions on a given page.
 	
+//    [self drawTest];
+    
 	CGRect screendimensions = [self bounds];
 	
 	int cw = screendimensions.size.width;
@@ -1510,8 +3972,19 @@ bool drawactive = false;
     else
         page = currentExternalPage;
     
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    
 	for(urAPI_Region_t* t=firstRegion[page]; t != nil; t=t->next)
 	{
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
 		if(t->isClipping)
 		{
 			glScissor(t->clipleft*(float)cw/(float)SCREEN_WIDTH,t->clipbottom*(float)ch/(float)SCREEN_HEIGHT,t->clipwidth*(float)cw/(float)SCREEN_WIDTH,t->clipheight*(float)ch/(float)SCREEN_HEIGHT);
@@ -1522,7 +3995,13 @@ bool drawactive = false;
 			glDisable(GL_SCISSOR_TEST);
 		}
 		
-		if(t->isVisible)
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+
+		if(t->isVisible && t->left <= SCREEN_WIDTH && t->right >= 0 && t->bottom <= SCREEN_HEIGHT && t->top >= 0)
 		{
 			squareVertices[0] = t->left;
 			squareVertices[1] = t->bottom;
@@ -1533,10 +4012,28 @@ bool drawactive = false;
 			squareVertices[6] = t->left+t->width;
 			squareVertices[7] = t->bottom+t->height;
 			
-			glVertexPointer(2, GL_FLOAT, 0, squareVertices);
+#ifdef OPENGLES2
+            /*            for(int i=0;i<4;i++)
+            {
+                squareVertices[2*i] = squareVertices[2*i]/backingWidth;
+                squareVertices[2*i+1] = squareVertices[2*i+1]/backingHeight;
+            }*/
+//            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_U, GL_CLAMP_TO_EDGE);
+//            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_V, GL_CLAMP_TO_EDGE); 
+            glVertexAttribPointer(ATTRIB_VERTEX, 2, GL_FLOAT, 0, 0, squareVertices);
+            glEnableVertexAttribArray(ATTRIB_VERTEX);
+#else
+            glVertexPointer(2, GL_FLOAT, 0, squareVertices);
 			glEnableClientState(GL_VERTEX_ARRAY);
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 			glEnableClientState(GL_VERTEX_ARRAY);
+#endif
+            err = glGetError();
+            if(err != GL_NO_ERROR)
+            {
+                int a = err;
+            }
+
 			float alpha = t->alpha;
 			if(t->texture!=NULL)
 			{
@@ -1584,14 +4081,37 @@ bool drawactive = false;
 					squareColors[14] = t->texture->gradientUR[2];
 					squareColors[15] = t->texture->gradientUR[3]*alpha;
 //				}
+#ifdef OPENGLES2
+
+                glVertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, squareColors)             ;
+//                glVertexAttribPointer(ATTRIB_COLOR, 4, GL_FLOAT, GL_FALSE, 0, squareColors);
+                
+                glEnableVertexAttribArray(ATTRIB_COLOR);
+#else
 				glColorPointer(4, GL_UNSIGNED_BYTE, 0, squareColors);
 				glEnableClientState(GL_COLOR_ARRAY);
-				
-				if(t->texture->backgroundTex == nil && t->texture->texturepath != TEXTURE_SOLID)
+#endif				
+                err = glGetError();
+                if(err != GL_NO_ERROR)
+                {
+                    int a = err;
+                }
+
+#ifdef GPUIMAGE
+				if(t->texture->backgroundTex == nil && t->texture->movieTex == nil && t->texture->texturepath != TEXTURE_SOLID)
+#else
+                    if(t->texture->backgroundTex == nil && t->texture->texturepath != TEXTURE_SOLID)
+#endif
 				{
 					instantiateTexture(t);
 				}
 				
+                err = glGetError();
+                if(err != GL_NO_ERROR)
+                {
+                    int a = err;
+                }
+
 				switch(t->texture->blendmode)
 				{
 					case BLEND_DISABLED:
@@ -1602,8 +4122,10 @@ bool drawactive = false;
 						break;
 					case BLEND_ALPHAKEY:
 						// NYI
+#ifndef OPENGLES2
 						glAlphaFunc(GL_GEQUAL, 0.5f); // UR! This may be different
 						glEnable(GL_ALPHA_TEST);
+#endif
 						break;
 					case BLEND_ADD:
 						glBlendFunc(GL_ONE, GL_ONE);
@@ -1616,17 +4138,62 @@ bool drawactive = false;
 						break;
 				}
 
-				if(t->texture->backgroundTex || t->texture->usecamera)
+                err = glGetError();
+                if(err != GL_NO_ERROR)
+                {
+                    int a = err;
+                }
+               
+#ifdef GPUIMAGE
+				if(t->texture->backgroundTex || t->texture->usecamera || t->texture->movieTex)
+#else
+                    if(t->texture->backgroundTex || t->texture->usecamera )
+#endif
 				{
-					glEnable(GL_TEXTURE_2D);
-
-					glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 					GLfloat  coordinates[] = {  t->texture->texcoords[0],          t->texture->texcoords[1],
 						t->texture->texcoords[2],  t->texture->texcoords[3],
 						t->texture->texcoords[4],              t->texture->texcoords[5],
-					t->texture->texcoords[6],  t->texture->texcoords[7]  };
+                        t->texture->texcoords[6],  t->texture->texcoords[7]  };
+
+#ifdef OPENGLES2
+                    glUseProgram(shaderProgram);
+                    glActiveTexture(GL_TEXTURE0);
+//                    glBindTexture(GL_TEXTURE_2D, videoFrameTexture);
+
+                    glUniform1i(_textureUniform,0);
+                    
+                    
+                    err = glGetError();
+                    if(err != GL_NO_ERROR)
+                    {
+                        int a = err;
+                    }
+                    
+                    glEnableVertexAttribArray(ATTRIB_TEXTUREPOSITON);
+                    err = glGetError();
+                    if(err != GL_NO_ERROR)
+                    {
+                        int a = err;
+                    }
+                    
+                    glVertexAttribPointer(ATTRIB_TEXTUREPOSITON, 2, GL_FLOAT, GL_FALSE, 0, coordinates);
+                    err = glGetError();
+                    if(err != GL_NO_ERROR)
+                    {
+                        int a = err;
+                    }
+                    
+//                    glEnableVertexAttribArray(ATTRIB_TEXTUREPOSITON);
+//                    glVertexAttribPointer(ATTRIB_TEXTUREPOSITON, 2, GL_FLOAT, GL_FALSE, 0, coordinates);
+#else
+                    glEnable(GL_TEXTURE_2D);
+
+					glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
 					glTexCoordPointer(2, GL_FLOAT, 0, coordinates);
+#endif
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 					if(t->texture->usecamera)
 					{
 						CGRect rect = CGRectMake(t->left,t->bottom,t->width,t->height);
@@ -1635,12 +4202,120 @@ bool drawactive = false;
 							rect.origin.x,                                                  rect.origin.y + rect.size.height,               0.0,
 							rect.origin.x + rect.size.width,                rect.origin.y + rect.size.height,               0.0 };
 						
-						glBindTexture(GL_TEXTURE_2D, _cameraTexture);
+						glBindTexture(GL_TEXTURE_2D, cameraTexture);
+
+#ifdef DEBUGSHOWFRAMECOUNT
+                        char errorstrbuf[16];
+                        sprintf(errorstrbuf,"Frame %d",cameraTexture);
+                        errorstr = errorstrbuf;
+                        newerror = true;
+#endif
+
+#ifdef OPENGLES2    
+                        glVertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, vertices);
+                        glEnableVertexAttribArray(ATTRIB_VERTEX);
+//                        glVertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, vertices);
+//                        glEnableVertexAttribArray(ATTRIB_VERTEX);
+#else
 						glVertexPointer(3, GL_FLOAT, 0, vertices);
+#endif
 						//	glTexCoordPointer(2, GL_FLOAT, 0, coordinates);
 						glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+#ifdef GPUIMAGE
+                        if(/*textureInput==nil*/ latelaunchmovie && recordfrom == SOURCE_CAMERA)
+                        {
+//                            [self writeMovieFromTexture:_cameraTexture ofSize:sourcesize withCrop:CGRectMake(0.0,0.0,1.0,1.0)];
+                            [self writeMovieFromTexture:_cameraTexture ofSize:sourcesize];
+                            [textureInput processTextureWithFrameTime:CMTimeMake(totalelapsedtime*1000,1000)];
+                            latelaunchmovie = false;
+                        }
+#endif
 					}
-					else
+#ifdef GPUIMAGE
+					else if(t->texture->movieTex)
+                    {
+                        if(t->texture->movieTexture)
+                        {
+
+						CGRect rect = CGRectMake(t->left,t->bottom,t->width,t->height);
+						GLfloat vertices[] = {  rect.origin.x,                                                  rect.origin.y,                                                  0.0,
+							rect.origin.x + rect.size.width,                rect.origin.y,                                                  0.0,
+							rect.origin.x,                                                  rect.origin.y + rect.size.height,               0.0,
+							rect.origin.x + rect.size.width,                rect.origin.y + rect.size.height,               0.0 };
+						
+						glBindTexture(GL_TEXTURE_2D, t->texture->movieTexture);
+//						glBindTexture(GL_TEXTURE_2D, 490);
+                        err = glGetError();
+                        if(err != GL_NO_ERROR)
+                        {
+                            int a = err;
+                        }
+#ifdef OPENGLES2    
+                        glVertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, vertices);
+                        err = glGetError();
+                        if(err != GL_NO_ERROR)
+                        {
+                            int a = err;
+                        }
+                        glEnableVertexAttribArray(ATTRIB_VERTEX);
+                        //                        glVertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, vertices);
+                        //                        glEnableVertexAttribArray(ATTRIB_VERTEX);
+                        err = glGetError();
+                        if(err != GL_NO_ERROR)
+                        {
+                            int a = err;
+                        }
+#else
+						glVertexPointer(3, GL_FLOAT, 0, vertices);
+#endif
+						//	glTexCoordPointer(2, GL_FLOAT, 0, coordinates);
+						glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+                        err = glGetError();
+                        if(err != GL_NO_ERROR)
+                        {
+                            int a = err;
+                        }
+                        }
+                        if(/*textureInput==nil*/ latelaunchmovie && recordfrom == SOURCE_MOVIE)
+                        {
+                            [self writeMovieFromTexture:t->texture->movieTexture ofSize:sourcesize withCrop:CGRectMake(0.0,0.0,1.0,1.0)];
+                            latelaunchmovie = false;
+                            err = glGetError();
+                            if(err != GL_NO_ERROR)
+                            {
+                                int a = err;
+                            }
+                        }
+//                        [t->texture->movieTex flushTexture];
+#ifdef OPENGLES2
+#ifdef PERFRAME
+                        if(![t->texture->movieTex processNextFrame])
+                        {
+                            freeMovieTexture(t);
+                        }
+                        
+#ifdef FREEOVERFLOWTEXTURE
+                        glDeleteTextures(1,&(t->texture->movieTexture));
+                        err = glGetError();
+                        if(err != GL_NO_ERROR)
+                        {
+                            int a = err;
+                        }
+                        t->texture->movieTexture = 0;
+#endif
+#else
+                        if([t->texture->movieTex playStatus] == GPUMOVIE_FINISHED)
+                        {
+                            glDeleteTextures(1,&(t->texture->movieTexture));
+                            t->texture->movieTexture = 0;
+                            freeMovieTexture(t);
+                        }
+#endif
+#endif	
+                    }
+#endif
+                    else
 					{
 						[t->texture->backgroundTex drawInRect:CGRectMake(t->left,t->bottom,t->width,t->height)];
 					}
@@ -1648,25 +4323,68 @@ bool drawactive = false;
 					if(t->texture->isTiled)
 					{
 						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                        err = glGetError();
+                        if(err != GL_NO_ERROR)
+                        {
+                            int a = err;
+                        }
 						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);					
+                        err = glGetError();
+                        if(err != GL_NO_ERROR)
+                        {
+                            int a = err;
+                        }
 					}
 					else {
 						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);					
 					}
-					
 					glEnable(GL_BLEND);
+                    err = glGetError();
+                    if(err != GL_NO_ERROR)
+                    {
+                        int a = err;
+                    }
+#ifndef OPENGLES2
 					glDisable(GL_ALPHA_TEST);
+#endif
 				}
 				else
 				{
+#ifdef OPENGLES2	
+//                    glUseProgram(plainshaderProgram);
+                    err = glGetError();
+                    if(err != GL_NO_ERROR)
+                    {
+                        int a = err;
+                    }
+                    glActiveTexture(GL_TEXTURE0);
+                    glUniform1i(_textureUniform,0);
+                    glBindTexture(GL_TEXTURE_2D, whiteTexture);
+                    
+/*                    glVertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, squareColors);
+                    glEnableVertexAttribArray(ATTRIB_COLOR);*/
+#else
 					glDisable(GL_TEXTURE_2D);
 					glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 					glColorPointer(4, GL_UNSIGNED_BYTE, 0, squareColors);
 					glEnableClientState(GL_COLOR_ARRAY);
+#endif
+                    err = glGetError();
+                        if(err != GL_NO_ERROR)
+                    {
+                        int a = err;
+                    }
 					glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+                    err = glGetError();
+                    if(err != GL_NO_ERROR)
+                    {
+                        int a = err;
+                    }
 					glEnable(GL_BLEND);
+#ifndef OPENGLES2
 					glDisable(GL_ALPHA_TEST);
+#endif
 				}
 				// switch it back to GL_ONE for other types of images, rather than text because Texture2D uses CG to load, which premultiplies alpha
 				glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -1675,59 +4393,38 @@ bool drawactive = false;
 			{
 			}
 			
+            err = glGetError();
+            if(err != GL_NO_ERROR)
+            {
+                int a = err;
+            }
+
 			if(t->textlabel!=NULL)
 			{
 				// texturing will need these
+#ifdef OPENGLES2
+                glUseProgram(shaderProgram);
+                glActiveTexture(GL_TEXTURE0);
+                glUniform1i(_textureUniform,0);
+#else
 				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 				glEnableClientState(GL_VERTEX_ARRAY);
 				glEnable(GL_TEXTURE_2D);
+#endif
 				
 				if(t->textlabel->updatestring)
 				{
-					if(t->textlabel->textlabelTex)
-						[t->textlabel->textlabelTex dealloc];
-					UITextAlignment align = UITextAlignmentCenter;
-					switch(t->textlabel->justifyh)
-					{
-						case JUSTIFYH_CENTER:
-							align = UITextAlignmentCenter;
-							break;
-						case JUSTIFYH_LEFT:
-							align = UITextAlignmentLeft;
-							break;
-						case JUSTIFYH_RIGHT:
-							align = UITextAlignmentRight;
-							break;
-					}
-					textlabelstr = [[NSString alloc] initWithUTF8String:t->textlabel->text]; // Leak here. Fix.
-					fontname = [[NSString alloc] initWithUTF8String:t->textlabel->font];
-					t->textlabel->updatestring = false;
-					if(t->textlabel->drawshadow==false)
-					{
-						t->textlabel->textlabelTex = [[Texture2D alloc] initWithString:textlabelstr
-																			  dimensions:CGSizeMake(t->width, t->height) alignment:align
-																			  fontName:fontname fontSize:t->textlabel->textheight lineBreakMode:tolinebreakmode(t->textlabel->wrap)];
-					}
-					else
-					{
-						shadowColors[0] = t->textlabel->shadowcolor[0];
-						shadowColors[1] = t->textlabel->shadowcolor[1];
-						shadowColors[2] = t->textlabel->shadowcolor[2];
-						shadowColors[3] = t->textlabel->shadowcolor[3];
-						t->textlabel->textlabelTex = [[Texture2D alloc] initWithString:textlabelstr
-																			  dimensions:CGSizeMake(t->width, t->height) alignment:align
-																				fontName:fontname fontSize:t->textlabel->textheight lineBreakMode:tolinebreakmode(t->textlabel->wrap)
-																			shadowOffset:CGSizeMake(t->textlabel->shadowoffset[0],t->textlabel->shadowoffset[1]) shadowBlur:t->textlabel->shadowblur shadowColor:t->textlabel->shadowcolor];
-					}
-					[fontname release];
-					[textlabelstr release];
+                    renderTextLabel(t);
 				}
 				
 				// text will need blending
 				glEnable(GL_BLEND);
+//                glDisable(GL_BLEND);
 				
 				// text from Texture2D uses A8 tex format, so needs GL_SRC_ALPHA
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//                glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
 				for(int i=0;i<4;i++) // default regions are white
 				{
 					squareColors[4*i] = t->textlabel->textcolor[0];
@@ -1735,9 +4432,20 @@ bool drawactive = false;
 					squareColors[4*i+2] = t->textlabel->textcolor[2];
 					squareColors[4*i+3] = t->textlabel->textcolor[3]*t->alpha;
 				}
-				glColorPointer(4, GL_UNSIGNED_BYTE, 0, squareColors);
+#ifdef OPENGLES2		
+                glVertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, squareColors);
+                glEnableVertexAttribArray(ATTRIB_COLOR);
+#else
+                glColorPointer(4, GL_UNSIGNED_BYTE, 0, squareColors);
 				glEnableClientState(GL_COLOR_ARRAY);
+#endif
+                err = glGetError();
+                if(err != GL_NO_ERROR)
+                {
+                    int a = err;
+                }
 				
+#ifdef UISTRINGS
 				int fontheight = [t->textlabel->textlabelTex fontblockHeight];
 				int justify = 0;
 				switch(t->textlabel->justifyv)
@@ -1752,76 +4460,319 @@ bool drawactive = false;
 						justify = -3*t->height/2+fontheight;
 						break;
 				}
+#else
+/*                int bottom = t->bottom;
+				int fontheight = t->textlabel->textlabelTex->getFontBlockHeight(); // NYI fontblockheight
+				switch(t->textlabel->justifyv)
+				{
+					case JUSTIFYV_MIDDLE:
+						bottom -= t->height/2-fontheight/2;
+						break;
+					case JUSTIFYV_TOP:
+						bottom = bottom;
+						break;
+					case JUSTIFYV_BOTTOM:
+						bottom -= t->height-fontheight;
+						break;
+				}
+                */
+                
+                int justify = refreshLabelYAlign(t);
+
+                
+#endif
 				
+#ifdef OPENGLES2
+                glUseProgram(shaderProgram);
+                urPushMatrix();
+//                esMatrixLoadIdentity(&modelView);
+#ifdef UISTRINGS
+                urTranslatef(t->left+t->width/2, t->bottom+t->height/2, 0.0f);
+//                esTranslate(&modelView, t->left+t->width/2, t->bottom+t->height/2, 0.0f);
+#else
+//                esTranslate(&modelView, t->left/*+t->width/2*/, t->bottom+t->height/2, 0.0f);
+                urTranslatef(t->left+t->width/2, t->bottom+t->height/2, 0.0f);
+//                esTranslate(&modelView, t->left+t->width/2, t->bottom+t->height/2, 0.0f);
+//               esTranslate(&modelView, t->left+t->width/2, bottom+t->height, 0.0f);
+#endif
+                urRotatef(t->textlabel->rotation, 0.0f, 0.0f, 1.0f);
+//                esRotate(&modelView, t->textlabel->rotation, 0.0f, 0.0f, 1.0f);
+                // create our new mvp matrix
+//                esMatrixMultiply(&mvp, &modelView, &projection );
+                // update the mvp uniform
+//                glUniformMatrix4fv(_modelviewprojUniform, 1, GL_FALSE, (GLfloat*) &mvp.m[0][0] );
+#ifdef UISTRINGS
+				[t->textlabel->textlabelTex drawAtPoint:CGPointMake(-t->width/2, justify) tile:true];
+#else
+//                t->textlabel->textlabelTex->labely = justify+3*t->height/2-fontheight;
+//                t->textlabel->textlabelTex->drawAtPoint(CGPointMake(-t->width/2, justify), true);
+                t->textlabel->textlabelTex->drawAtPoint(CGPointMake(-t->width/2, justify), true);
+//				t->textlabel->textlabelTex->drawAtPoint(CGPointMake(t->left,bottom), true);
+#endif
+                err = glGetError();
+                if(err != GL_NO_ERROR)
+                {
+                    int a = err;
+                }
+                
+                // reset our modelview to identity
+                urPopMatrix();
+//                esMatrixLoadIdentity(&modelView);
+//                esMatrixMultiply(&mvp, &modelView, &projection );
+//                glUniformMatrix4fv(_modelviewprojUniform, 1, GL_FALSE, (GLfloat*) &mvp.m[0][0] );
+#else
 				glPushMatrix();
 				glTranslatef(t->left+t->width/2, t->bottom+t->height/2, 0);
 				glRotatef(t->textlabel->rotation, 0.0f, 0.0f, 1.0f);
 				[t->textlabel->textlabelTex drawAtPoint:CGPointMake(-t->width/2, justify) tile:true];
 				glPopMatrix();
 				
+#endif
 				// switch it back to GL_ONE for other types of images, rather than text because Texture2D uses CG to load, which premultiplies alpha
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			}
 		}
-	}
+    }
 	
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+
 	glDisable(GL_SCISSOR_TEST);
 	
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    
+#ifndef OPENGLES2
 	glDisable(GL_TEXTURE_2D);
+#endif	
 #ifdef RENDERERRORSTRTEXTUREFONT
 	// texturing will need these
+#ifndef OPENGLES2
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
+#endif
+    
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    
+#ifndef OPENGLES2
 	glEnable(GL_TEXTURE_2D);
-	
-	if (errorStrTex == nil)
+#endif	
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+
+    if(errorStrTex == nil || newerror)
+    {
+        for(int i=0;i<16;i++) // default regions are white
+            squareColors[i] = 255;
+#ifdef OPENGLES2
+        glVertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, squareColors);
+        glEnableVertexAttribArray(ATTRIB_COLOR);
+#else
+        glColorPointer(4, GL_UNSIGNED_BYTE, 0, squareColors);
+        glEnableClientState(GL_COLOR_ARRAY);
+#endif
+    }
+    if (errorStrTex == nil)
 	{
 		newerror = false;
-		errorStrTex = [[Texture2D alloc] initWithString:[[NSString alloc] initWithCString:errorstr.c_str()]
-										 dimensions:CGSizeMake(SCREEN_WIDTH, 128) alignment:UITextAlignmentCenter
-										   fontName:@"Helvetica" fontSize:14 lineBreakMode:UILineBreakModeWordWrap ];
+//		errorStrTex = [[Texture2D alloc] initWithString:[NSString stringWithUTF8String:errorstr.c_str()]
+//										 dimensions:CGSizeMake(SCREEN_WIDTH, 128) alignment:UITextAlignmentCenter
+//										   fontName:@"Helvetica" fontSize:14 lineBreakMode:UILineBreakModeWordWrap ];
+#ifdef UISTRINGS
+        shadowColors[0] = 80;
+        shadowColors[1] = 80;
+        shadowColors[2] = 80;
+        shadowColors[3] = 80;
+        errorStrTex = [[Texture2D alloc] initWithString:[NSString stringWithUTF8String:errorstr.c_str()]
+                                                            dimensions:CGSizeMake(SCREEN_WIDTH, 128) alignment:UITextAlignmentCenter
+                                                              fontName:@"Helvetica" fontSize:14 lineBreakMode:UILineBreakModeWordWrap
+                                                          shadowOffset:CGSizeMake(0,0) shadowBlur:2 shadowColor:shadowColors];
+#else
+        errorStrTex = new urTexture(errorstr.c_str(),errorfontPath.c_str(),20,SCREEN_WIDTH,128);
+#endif
+
 	}
 	else if(newerror)
 	{
+#ifdef UISTRINGS
 		[errorStrTex dealloc];
+#else
+        delete errorStrTex;
+#endif
 		newerror = false;
-		errorStrTex = [[Texture2D alloc] initWithString:[[NSString alloc] initWithCString:errorstr.c_str()]
-										 dimensions:CGSizeMake(SCREEN_WIDTH, 128) alignment:UITextAlignmentCenter
-										   fontName:@"Helvetica" fontSize:14 lineBreakMode:UILineBreakModeWordWrap];
+//		errorStrTex = [[Texture2D alloc] initWithString:[NSString stringWithUTF8String:errorstr.c_str()]
+//										 dimensions:CGSizeMake(SCREEN_WIDTH, 128) alignment:UITextAlignmentCenter
+//										   fontName:@"Helvetica" fontSize:14 lineBreakMode:UILineBreakModeWordWrap];
+#ifdef UISTRINGS
+        shadowColors[0] = 80;
+        shadowColors[1] = 80;
+        shadowColors[2] = 80;
+        shadowColors[3] = 80;
+        errorStrTex = [[Texture2D alloc] initWithString:[NSString stringWithUTF8String:errorstr.c_str()]
+                                             dimensions:CGSizeMake(SCREEN_WIDTH, 128) alignment:UITextAlignmentCenter
+                                               fontName:@"Helvetica" fontSize:14 lineBreakMode:UILineBreakModeWordWrap
+                                           shadowOffset:CGSizeMake(0,0) shadowBlur:2 shadowColor:shadowColors];
+#else
+        errorStrTex = new urTexture(errorstr.c_str(),errorfontPath.c_str(),20,SCREEN_WIDTH,128);
+#endif
 	}
 	
 	// text will need blending
 	glEnable(GL_BLEND);
 	
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+
 	// text from Texture2D uses A8 tex format, so needs GL_SRC_ALPHA
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	for(int i=0;i<16;i++) // default regions are white
-		squareColors[i] = 200;
-	glColorPointer(4, GL_UNSIGNED_BYTE, 0, squareColors);
-	glEnableClientState(GL_COLOR_ARRAY);
+//    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+
+    for(int i=0;i<16;i++) // default regions are white
+        squareColors[i] = 255;
+#ifdef OPENGLES2
+    glVertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, squareColors);
+    glEnableVertexAttribArray(ATTRIB_COLOR);
+#else
+    glColorPointer(4, GL_UNSIGNED_BYTE, 0, squareColors);
+    glEnableClientState(GL_COLOR_ARRAY);
+#endif
+    
+#ifdef UISTRINGS
 	[errorStrTex drawAtPoint:CGPointMake(0.0,
 									 bounds.size.height * 0.5f) tile:true];
+#else
+//	urPushMatrix();
+//	urTranslatef(SCREEN_WIDTH*0.5f,SCREEN_HEIGHT*0.5f+64,0.0);
+	errorStrTex->drawAtPoint(CGPointMake(0, SCREEN_HEIGHT*0.5f), true);
+//    urPopMatrix();
+#endif
 	
 	// switch it back to GL_ONE for other types of images, rather than text because Texture2D uses CG to load, which premultiplies alpha
 	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	
 #endif
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    
+#ifdef RENDERTOTEXTURE
+    glDisable(GL_BLEND);
+    glBindFramebufferOES(GL_FRAMEBUFFER_OES, viewFramebuffer);
+
+    glBindTexture(GL_TEXTURE_2D, bgname);
+    
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    
+    for(int i=0;i<16;i++) // default regions are white
+		squareColors[i] = 255;
+    glVertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, squareColors);
+    glEnableVertexAttribArray(ATTRIB_COLOR);
+    
+	GLfloat         coordinates[] = { 0,              0,
+        1.0,  0,
+        0,    1.0,
+		1.0,  1.0,
+		
+         };
 	
-	
-	
+	GLfloat         vertices[] = {  0.0,                        0.0,        0.0,
+		backingWidth,        0.0,        0.0,
+		0.0,                        backingHeight,      0.0,
+        backingWidth,        backingHeight,      0.0 };
+    
+    glVertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, vertices);
+    glEnableVertexAttribArray(ATTRIB_VERTEX);
+    glVertexAttribPointer(ATTRIB_TEXTUREPOSITON, 2, GL_FLOAT, 0, 0, coordinates);
+    glEnableVertexAttribArray(ATTRIB_TEXTUREPOSITON);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+#endif
+
+    if (context)
+    {
+        isRendering_PATCH_VARIABLE = YES;
+        
+        [EAGLContext setCurrentContext:context];
+#ifdef OPENGLES2
+    glBindRenderbuffer(GL_RENDERBUFFER, viewRenderbuffer);
+    
+    [context presentRenderbuffer:GL_RENDERBUFFER];
+#else
     glBindRenderbufferOES(GL_RENDERBUFFER_OES, viewRenderbuffer);
     [context presentRenderbuffer:GL_RENDERBUFFER_OES];
+#endif
+        isRendering_PATCH_VARIABLE = NO;
+    }
+#ifdef GPUIMAGE
+    if(movieWriter)// && movieFile == nil) // Write texture to movie
+    {
+        static int subsample = 0;
+        if(subsample > 1)
+        {
+            subsample = 0;
+#ifdef DEBUGSHOWFRAMECOUNT
+            char errorstrbuf[16];
+            sprintf(errorstrbuf,"Frame %d",framecnt);
+            framecnt ++;
+            errorstr = errorstrbuf;
+            newerror = true;
+#endif
+            [textureInput processTextureWithFrameTime:CMTimeMake(totalelapsedtime*1000,1000)];
+        }
+        else
+            subsample ++;;
+    }
+#endif
     
+    glEnable(GL_BLEND);
     drawactive = false;
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
 	
 }
 
-
 - (void)layoutSubviews {
+ 
     [EAGLContext setCurrentContext:context];
     [self destroyFramebuffer];
-    [self createFramebuffer];
+//    [self createFramebuffer];
+    [self createFramebuffer2];
     [self drawView];
+  
 }
 
 
@@ -1860,10 +4811,27 @@ bool drawactive = false;
         }
     }
         
-        
+#ifdef OPENGLES2
+    glGenFramebuffers(1, &viewFramebuffer);
+    glGenRenderbuffers(1, &viewRenderbuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, viewFramebuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, viewRenderbuffer);
+    [context renderbufferStorage:GL_RENDERBUFFER fromDrawable:(CAEAGLLayer*)self.layer];
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, viewRenderbuffer);
+    
+    glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &backingWidth);
+    glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &backingHeight);
+
+    glGenRenderbuffers(1, &depthRenderbuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, depthRenderbuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, backingWidth, backingHeight);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer);				
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        NSLog(@"Failed to make complete framebuffer object %x", glCheckFramebufferStatus(GL_FRAMEBUFFER));
+#else
     glGenFramebuffersOES(1, &viewFramebuffer);
     glGenRenderbuffersOES(1, &viewRenderbuffer);
-    
     glBindFramebufferOES(GL_FRAMEBUFFER_OES, viewFramebuffer);
     glBindRenderbufferOES(GL_RENDERBUFFER_OES, viewRenderbuffer);
     [context renderbufferStorage:GL_RENDERBUFFER_OES fromDrawable:(CAEAGLLayer*)self.layer];
@@ -1871,6 +4839,10 @@ bool drawactive = false;
     
     glGetRenderbufferParameterivOES(GL_RENDERBUFFER_OES, GL_RENDERBUFFER_WIDTH_OES, &backingWidth);
     glGetRenderbufferParameterivOES(GL_RENDERBUFFER_OES, GL_RENDERBUFFER_HEIGHT_OES, &backingHeight);
+    
+#endif
+    
+    
     
     if (USE_DEPTH_BUFFER) {
         glGenRenderbuffersOES(1, &depthRenderbuffer);
@@ -1887,8 +4859,170 @@ bool drawactive = false;
     return YES;
 }
 
+- (void)createFramebuffer2
+{
+	CGRect screendimensions = [[UIScreen mainScreen] bounds];
+    //	CGRect screendimensions = [self bounds];
+    
+    if(displaynumber <= 1)
+    {
+        SCREEN_WIDTH = self.frame.size.width;
+        SCREEN_HEIGHT = self.frame.size.height;
+//        SCREEN_WIDTH = screendimensions.size.width;
+//        SCREEN_HEIGHT = screendimensions.size.height;
+        HALF_SCREEN_WIDTH = SCREEN_WIDTH/2;
+        HALF_SCREEN_HEIGHT = SCREEN_HEIGHT/2;
+    }
+    else
+    {
+        UIWindow* externalWindow = [self window];
+        
+        float extScreenWidth = externalWindow.frame.size.width;
+        float extScreenHeight = externalWindow.frame.size.height;
+        NSArray			*screens;
+        
+        screens = [UIScreen screens];
+        
+        float deviceScreenRatio = [[screens objectAtIndex:0] bounds].size.width/[[screens objectAtIndex:0] bounds].size.height;
+        CGRect finalExtFrame;
+        
+        if (extScreenHeight < extScreenWidth) {
+            // Height is limiting factor
+            
+            EXT_SCREEN_WIDTH = extScreenHeight*deviceScreenRatio;
+            EXT_SCREEN_HEIGHT = extScreenHeight;
+        } else {
+            EXT_SCREEN_WIDTH = extScreenWidth;
+            EXT_SCREEN_HEIGHT = extScreenWidth/deviceScreenRatio;
+        }
+    }
+    
+    if (context && !viewFramebuffer)
+    {
+        [EAGLContext setCurrentContext:context];
+        
+        glGenFramebuffers(1, &viewFramebuffer);
+        glGenRenderbuffers(1, &viewRenderbuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, viewFramebuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, viewRenderbuffer);
+        [context renderbufferStorage:GL_RENDERBUFFER fromDrawable:(CAEAGLLayer*)self.layer];
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, viewRenderbuffer);
+        
+        glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &backingWidth);
+        glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &backingHeight);
+        
+		glGenRenderbuffers(1, &depthRenderbuffer);
+		glBindRenderbuffer(GL_RENDERBUFFER, depthRenderbuffer);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, backingWidth, backingHeight);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer);				
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            NSLog(@"Failed to make complete framebuffer object %x", glCheckFramebufferStatus(GL_FRAMEBUFFER));
+    }
+}
+
+/*
+- (void) setupView {
+	const GLfloat zNear = 1, zFar = 600, fieldOfView = 40*M_PI/180.0;
+	
+	esMatrixLoadIdentity(&projection);
+	GLfloat size = zNear * tanf(fieldOfView / 2.0); 
+	esFrustum(&projection, -size, size, -size / (backingWidth / backingHeight), size / (backingWidth / backingHeight), zNear, zFar); 
+	
+	esMatrixLoadIdentity(&modelView);
+	
+	glViewport(0, 0, backingWidth, backingHeight);  
+}
+*/
+
+- (void) setupView {
+//	const GLfloat zNear = 1, zFar = 600, fieldOfView = 40*M_PI/180.0;
+	
+/*	esMatrixLoadIdentity(&projection);
+	GLfloat size = zNear * tanf(fieldOfView / 2.0); 
+	esFrustum(&projection, -size, size, -size / (self.frame.size.width / self.frame.size.height), size / (self.frame.size.width / self.frame.size.height), zNear, zFar); 
+*/
+    esMatrixLoadIdentity(&projection);
+//	GLfloat size = zNear * tanf(fieldOfView / 2.0); 
+/*    const GLfloat zNear = -10, zFar = 10, fieldOfView = 40*M_PI/180.0;
+    GLfloat size = 1;
+	esOrtho(&projection, -size, size, -size / (self.frame.size.width / self.frame.size.height), size / (self.frame.size.width / self.frame.size.height), zNear, zFar); 
+ */
+//    SCREEN_WIDTH = self.frame.size.width;
+//    SCREEN_HEIGHT = self.frame.size.height;
+//    esOrtho(&projection, 0.0f, backingWidth, 0.0f, backingHeight, -1.0f, 1.0f);
+//    esOrtho(&projection, 0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);
+    if(displaynumber == 2)
+    {
+
+        double scalex = 1;//SCREEN_WIDTH/backingWidth;
+        double scaley = 1;//SCREEN_HEIGHT/backingHeight;
+        esOrtho(&projection, 0.0f, SCREEN_WIDTH*scalex, 0.0f, SCREEN_HEIGHT*scaley, -1.0f, 1.0f);
+        esMatrixLoadIdentity(&modelView);
+        glViewport(0, 0, backingWidth, backingHeight);
+
+        /*
+        esOrtho(&projection, 0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);
+        esMatrixLoadIdentity(&modelView);
+        glViewport(0, 0, backingWidth, backingHeight);
+         */
+    }
+    else
+    {
+        esOrtho(&projection, 0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);
+        esMatrixLoadIdentity(&modelView);
+        glViewport(0, 0, backingWidth, backingHeight);
+    }
+    
+	
+//    glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+//	glViewport(0, 0, self.frame.size.width, self.frame.size.height);
+}
+
+
+
+- (void)setFramebuffer
+{
+    if (context)
+    {
+        [EAGLContext setCurrentContext:context];
+        
+        if (!viewFramebuffer)
+            [self createFramebuffer2];
+        
+        glBindFramebuffer(GL_FRAMEBUFFER, viewFramebuffer);
+        
+        glViewport(0, 0, backingWidth, backingHeight);
+    }
+}
+
+- (BOOL)presentFramebuffer
+{
+    BOOL success = FALSE;
+    
+    if (context)
+    {
+        [EAGLContext setCurrentContext:context];
+        
+        glBindRenderbuffer(GL_RENDERBUFFER, viewRenderbuffer);
+        
+        success = [context presentRenderbuffer:GL_RENDERBUFFER];
+    }
+    
+    return success;
+}
+
+
+
 
 - (void)destroyFramebuffer {
+    if (isRendering_PATCH_VARIABLE)
+    {
+        NSLog(@"GOTCHA - CRASH AVOIDED");
+    }
+    
+    if (context && !isRendering_PATCH_VARIABLE)
+    {
     
     glDeleteFramebuffersOES(1, &viewFramebuffer);
     viewFramebuffer = 0;
@@ -1898,6 +5032,8 @@ bool drawactive = false;
     if(depthRenderbuffer) {
         glDeleteRenderbuffersOES(1, &depthRenderbuffer);
         depthRenderbuffer = 0;
+    }
+        
     }
 }
 
@@ -1940,6 +5076,7 @@ bool drawactive = false;
 
 - (void)stopAnimation {
     self.animationTimer = nil;
+    glFinish();
 }
 
 
@@ -2032,7 +5169,7 @@ void onTouchDownParse(int t, int numTaps, float posx, float posy)
 			// A double tap.
 			if (numTaps == 2 && hitregion[t]->OnEvents[OnDoubleTap]) 
 			{
-				callScript(hitregion[t]->OnEvents[OnDoubleTap], hitregion[t]);
+				callScript(OnDoubleTap,hitregion[t]->OnEvents[OnDoubleTap], hitregion[t]);
 				//					callScript(hitregion[t]->OnTouchUp, hitregion[t]);
 			}
 			else if (numTaps == 3 && false)
@@ -2040,10 +5177,10 @@ void onTouchDownParse(int t, int numTaps, float posx, float posy)
 				// Tripple Tap NYI
 			}
 			else if (numTaps == 1)
-				callScriptWith2Args(hitregion[t]->OnEvents[OnTouchDown], hitregion[t],x,y);
+				callScriptWith2Args(OnTouchDown,hitregion[t]->OnEvents[OnTouchDown], hitregion[t],x,y);
 			else {
-				callScriptWith2Args(hitregion[t]->OnEvents[OnTouchDown], hitregion[t],x,y);
-//				callScriptWith2Args(hitregion[t]->OnTouchUp, hitregion[t],x,y); // GESSL: Double Tap issue.
+				callScriptWith2Args(OnTouchDown,hitregion[t]->OnEvents[OnTouchDown], hitregion[t],x,y);
+//				callScriptWith2Args(OnTouchDown,hitregion[t]->OnTouchUp, hitregion[t],x,y); // GESSL: Double Tap issue.
 			}
 		}
 	}
@@ -2077,7 +5214,7 @@ void onTouchEnds(int numTaps, float oposx, float oposy, float posx, float posy)
 	urAPI_Region_t* hitregion = findRegionHit(posx, SCREEN_HEIGHT-posy);
 	if(hitregion /* && numTaps <= 1 */) // GESSL: Double tab issue
 	{
-		callScriptWith2Args(hitregion->OnEvents[OnTouchUp], hitregion,hitregion->lastinputx,hitregion->lastinputy);
+		callScriptWith2Args(OnTouchUp,hitregion->OnEvents[OnTouchUp], hitregion,hitregion->lastinputx,hitregion->lastinputy);
 		//		callAllOnLeaveRegions(posx, SCREEN_HEIGHT-posy); // GESSL: Double tab issue
 
 	}
@@ -2094,14 +5231,33 @@ void onTouchEnds(int numTaps, float oposx, float oposy, float posx, float posy)
 
 void ClampRegion(urAPI_Region_t*region)
 {
-	if(region->left < 0) region->left = 0;
-	if(region->bottom < 0) region->bottom = 0;
-//    if(region->ofsx < 0) region->ofsx = 0;
-//    if(region->ofsy < 0) region->ofsy = 0;
-	if(region->width > SCREEN_WIDTH) region->width = SCREEN_WIDTH;
-	if(region->height > SCREEN_HEIGHT) region->height = SCREEN_HEIGHT;
-	if(region->left+region->width > SCREEN_WIDTH) region->left = SCREEN_WIDTH-region->width;
-	if(region->bottom+region->height > SCREEN_HEIGHT) region->bottom = SCREEN_HEIGHT-region->height;
+    
+	if(region->left < region->clampleft)
+    {
+        float dx = region->clampleft - region->left;
+        region->ofsx = region->ofsx + dx; // adjust anchor
+        region->left = region->clampleft;
+    }
+	if(region->bottom < region->clampbottom)
+    {
+        float dy = region->clampbottom - region->bottom;
+        region->ofsy = region->ofsy + dy; // adjust anchor
+        region->bottom = region->clampbottom;
+    }
+	if(region->width > region->clampwidth) region->width = region->clampwidth;
+	if(region->height > region->clampheight) region->height = region->clampheight;
+	if(region->left+region->width > region->clampleft + region->clampwidth)
+    {
+        float dx = region->left+region->width - (region->clampleft + region->clampwidth);
+        region->ofsx = region->ofsx - dx; // adjust anchor
+        region->left = (region->clampleft + region->clampwidth)-region->width;
+    }
+	if(region->bottom+region->height > region->clampbottom + region->clampheight)
+    {
+        float dy = region->bottom+region->height - (region->clampbottom + region->clampheight);
+        region->ofsy = region->ofsy - dy; // adjust anchor
+        region->bottom = (region->clampbottom + region->clampheight)-region->height;
+    }
 //    if(region->ofsx+region->width > SCREEN_WIDTH) region->ofsx = SCREEN_WIDTH-region->width;;
 //    if(region->ofsy+region->height > SCREEN_HEIGHT) region->ofsy = SCREEN_HEIGHT-region->height;
 }
@@ -2115,34 +5271,36 @@ void onTouchDoubleDragUpdate(int t, int dragidx, float pos1x, float pos1y, float
 		float dy = -(cursorscrollspeedy[t]);
 		if( dx !=0 || dy != 0)
 		{
-			urAPI_Region_t* dragregion = dragtouches[dragidx].dragregion;
-			dragregion->left += dx;
-			dragregion->bottom += dy;
-			float cursorpositionx2 = pos2x;
-			float cursorpositiony2 = pos2y;
-			if(dragregion->isResizable)
-			{
-				float deltanewwidth = fabs(cursorpositionx2-pos1x);
-				float deltanewheight = fabs(cursorpositiony2-pos1y);
-				dragregion->width = dragtouches[dragidx].dragwidth + deltanewwidth;
-				dragregion->height = dragtouches[dragidx].dragheight + deltanewheight;
-                if(dragregion->textlabel != NULL)
-                    dragregion->textlabel->updatestring = true;
-			}
-			dragregion->right = dragregion->left + dragregion->width;
-			dragregion->top = dragregion->bottom + dragregion->height;
-			if(dragregion->isClamped) ClampRegion(dragregion);
-            dragregion->ofsx += dx;
-            dragregion->ofsy += dy;
-            changeLayout(dragregion);
-			callScript(dragregion->OnEvents[OnSizeChanged], dragregion);
+            urAPI_Region_t* dragregion = dragtouches[dragidx].dragregion;
+            if(dragregion->isMovable)
+            {
+                dragregion->left += dx;
+                dragregion->bottom += dy;
+                float cursorpositionx2 = pos2x;
+                float cursorpositiony2 = pos2y;
+                if(dragregion->isResizable)
+                {
+                    float deltanewwidth = fabs(cursorpositionx2-pos1x);
+                    float deltanewheight = fabs(cursorpositiony2-pos1y);
+                    dragregion->width = dragtouches[dragidx].dragwidth + deltanewwidth;
+                    dragregion->height = dragtouches[dragidx].dragheight + deltanewheight;
+                }
+                dragregion->right = dragregion->left + dragregion->width;
+                dragregion->top = dragregion->bottom + dragregion->height;
+                dragregion->ofsx += dx;
+                dragregion->ofsy += dy;
+                if(dragregion->isClamped) ClampRegion(dragregion);
+                changeLayout(dragregion);
+            }
+            if(dragregion->isResizable)
+                callScriptWith4Args(OnSizeChanged,dragregion->OnEvents[OnSizeChanged], dragregion, pos1x,pos1y,pos2x,pos2y);
 		}
 	}
 }
 
 bool testDoubleDragStart(int t1, int t2)
 {
-	if(hitregion[t1] != NULL && hitregion[t1] == hitregion[t2] && hitregion[t1]->isMovable && hitregion[t1]->isResizable) // Pair of fingers on draggable region?
+	if(hitregion[t1] != NULL && hitregion[t1] == hitregion[t2] && (hitregion[t1]->isMovable || hitregion[t1]->isResizable)) // Pair of fingers on draggable region?
 		return true;
 	else
 		return false;
@@ -2166,7 +5324,7 @@ void doTouchDoubleDragStart(int t1,int t2,int touch1, int touch2)
 
 bool testSingleDragStart(int t)
 {
-	if(hitregion[t]!=nil && hitregion[t]->isMovable)
+	if(hitregion[t]!=nil && (hitregion[t]->isMovable || hitregion[t]->isResizable))
 		return true;
 	else 
 		return false;
@@ -2213,13 +5371,16 @@ void onTouchSingleDragUpdate(int t, int dragidx)
 		if( dx !=0 || dy != 0)
 		{
 			urAPI_Region_t* dragregion = dragtouches[dragidx].dragregion;
-			dragregion->left += dx;
-			dragregion->bottom += dy;
-			dragregion->right += dx;
-			dragregion->top += dy;
-            dragregion->ofsx += dx;
-            dragregion->ofsy += dy;
-            changeLayout(dragregion);
+            if(dragregion->isMovable)
+            {
+                dragregion->left += dx;
+                dragregion->bottom += dy;
+                dragregion->right += dx;
+                dragregion->top += dy;
+                dragregion->ofsx += dx;
+                dragregion->ofsy += dy;
+                changeLayout(dragregion);
+            }
 		}
 	}
 }
@@ -2229,24 +5390,21 @@ void onTouchScrollUpdate(int t)
 	urAPI_Region_t* scrollregion = findRegionXScrolled(cursorpositionx[t],SCREEN_HEIGHT-cursorpositiony[t],cursorscrollspeedx[t]);
 	if(scrollregion != nil)
 	{
-		callScriptWith1Args(scrollregion->OnEvents[OnHorizontalScroll], scrollregion, cursorscrollspeedx[t]);
+		callScriptWith1Args(OnHorizontalScroll,scrollregion->OnEvents[OnHorizontalScroll], scrollregion, cursorscrollspeedx[t]);
 	}
+
 	scrollregion = findRegionYScrolled(cursorpositionx[t],SCREEN_HEIGHT-cursorpositiony[t],-cursorscrollspeedy[t]);
 	if(scrollregion != nil)
 	{
-		callScriptWith1Args(scrollregion->OnEvents[OnVerticalScroll], scrollregion, -cursorscrollspeedy[t]);
+		callScriptWith1Args(OnVerticalScroll,scrollregion->OnEvents[OnVerticalScroll], scrollregion, -cursorscrollspeedy[t]);
 	}
-	
+
 	scrollregion = findRegionMoved(cursorpositionx[t],SCREEN_HEIGHT-cursorpositiony[t],cursorscrollspeedx[t],-cursorscrollspeedy[t]);
 	
 	if(scrollregion != nil)
 	{
         
-        if(drawactive)
-        {
-            int a=0;
-        }
-		callScriptWith5Args(scrollregion->OnEvents[OnMove], scrollregion, cursorpositionx[t]-scrollregion->left-cursorscrollspeedx[t],SCREEN_HEIGHT-cursorpositiony[t]-scrollregion->bottom+cursorscrollspeedy[t], cursorscrollspeedx[t], -cursorscrollspeedy[t],t+1);
+		callScriptWith5Args(OnMove,scrollregion->OnEvents[OnMove], scrollregion, cursorpositionx[t]-scrollregion->left-cursorscrollspeedx[t],SCREEN_HEIGHT-cursorpositiony[t]-scrollregion->bottom+cursorscrollspeedy[t], cursorscrollspeedx[t], -cursorscrollspeedy[t],t+1);
 	}
 }
 
@@ -2276,7 +5434,7 @@ void onTouchDragEnd(int t,int touch, float posx, float posy)
 			{
 				dragtouches[dragidx].active = false;
 				dragtouches[dragidx].dragregion->isDragged = false;
-				callScript(dragtouches[dragidx].dragregion->OnEvents[OnDragStop], dragtouches[dragidx].dragregion);
+				callScript(OnDragStop,dragtouches[dragidx].dragregion->OnEvents[OnDragStop], dragtouches[dragidx].dragregion);
 			}
 			else if(dragtouches[dragidx].touch2 != -1)
 			{
@@ -2429,6 +5587,7 @@ void onTouchDragEnd(int t,int touch, float posx, float posy)
 			else
 			{
 				onTouchSingleDragUpdate(t, dragidx);
+//                onTouchScrollUpdate(t); CONFLICT: Resolve. Needed for video edit, but messes with drag over scroll
 			}
 		}
 		else 
@@ -2559,6 +5718,25 @@ void Net_Advertise(const char* nsid, int port)
 	NSString *nsid2 =  [[NSString alloc] initWithUTF8String: nsid];
 	NSString *fullnsid = [NSString stringWithFormat:@"_%@urMus._udp.", nsid2];
 	[g_glView advertiseService:[[UIDevice currentDevice] name] withID:fullnsid atPort:port];
+//    [nsid2 release];
+}
+
+- (void) stopAdvertisingService
+{
+    [self.netService stop];
+    [self.netService release];
+}
+
+- (void) stopFindService:(NSString *)btype
+{
+    NSString *fullnsid = [NSString stringWithFormat:@"_%@urMus._udp.", btype];
+    NSNetServiceBrowser *aNetServiceBrowser = [searchtype objectForKey:fullnsid];
+    if(aNetServiceBrowser!=NULL)
+    {
+        [aNetServiceBrowser stop];
+    }
+    //    [self.netServiceBrowser stop];
+    //	[self.services removeAllObjects];
 }
 
 void Stop_Net_Advertise(const char* nsid)
@@ -2592,25 +5770,6 @@ void Net_Find(const char* nsid)
 	[self.netService setDelegate:self];
 	[self.netService publish];
 	[self.netService retain];
-}
-
-- (void) stopAdvertisingService
-{
-    [self.netService stop];
-    [self.netService release];
-}
-
-
-- (void) stopFindService:(NSString *)btype
-{
-    NSString *fullnsid = [NSString stringWithFormat:@"_%@urMus._udp.", btype];
-    NSNetServiceBrowser *aNetServiceBrowser = [searchtype objectForKey:fullnsid];
-    if(aNetServiceBrowser!=NULL)
-    {
-        [aNetServiceBrowser stop];
-    }
-//    [self.netServiceBrowser stop];
-//	[self.services removeAllObjects];
 }
 
 #define MAX_THROTTLE 1
@@ -2760,4 +5919,14 @@ void oscCallBack3(osc::ReceivedMessageArgumentStream & argument_stream, void * d
 	[service retain];
 }
 
+/*- (void)stopCurrentResolve {
+	
+	self.needsActivityIndicator = NO;
+	self.timer = nil;
+	
+	[self.currentResolve stop];
+	self.currentResolve = nil;
+}*/
+
 @end
+

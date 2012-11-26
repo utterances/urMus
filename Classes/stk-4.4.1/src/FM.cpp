@@ -99,12 +99,7 @@ void FM :: setFrequency( StkFloat frequency )
 
 void FM :: setRatio( unsigned int waveIndex, StkFloat ratio )
 {
-  if ( waveIndex < 0 ) {
-    errorString_ << "FM::setRatio: waveIndex parameter is less than zero!";
-    handleError( StkError::WARNING );
-    return;
-  }
-  else if ( waveIndex >= nOperators_ ) {
+  if ( waveIndex >= nOperators_ ) {
     errorString_ << "FM:setRatio: waveIndex parameter is greater than the number of operators!";
     handleError( StkError::WARNING );
     return;
@@ -119,12 +114,7 @@ void FM :: setRatio( unsigned int waveIndex, StkFloat ratio )
 
 void FM :: setGain( unsigned int waveIndex, StkFloat gain )
 {
-  if ( waveIndex < 0 ) {
-    errorString_ << "FM::setGain: waveIndex parameter is less than zero!";
-    handleError( StkError::WARNING );
-    return;
-  }
-  else if ( waveIndex >= nOperators_ ) {
+  if ( waveIndex >= nOperators_ ) {
     errorString_ << "FM::setGain: waveIndex parameter is greater than the number of operators!";
     handleError( StkError::WARNING );
     return;

@@ -18,7 +18,7 @@
 @implementation SandwichUpdateListener
 @synthesize iSocket;
 @synthesize running;
-//@synthesize manager;
+@synthesize manager;
 + (void) initializeWithServerPort: (int) aPortNr andDelegate: (id<SandwichUpdateDelegate>) aDelegate;
 {
 	// initialize a single instance variable of the rear listener!

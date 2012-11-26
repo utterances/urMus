@@ -362,6 +362,7 @@ http_ip_address(void)
 	struct ifaddrs *interfaces = NULL;
 	struct ifaddrs *temp_addr = NULL;
 	int success = 0;
+    const char* ipaddr;
 	
 	// retrieve the current interfaces - returns 0 on success
 	success = getifaddrs(&interfaces);
@@ -376,8 +377,9 @@ http_ip_address(void)
 			// Check if interface is en0 which is the wifi connection on the iPhone
 			if(!strcmp(temp_addr->ifa_name,"en0"))
 			{
+                ipaddr = inet_ntoa(((struct sockaddr_in *)temp_addr->ifa_addr)->sin_addr);
 				freeifaddrs(interfaces);
-				return inet_ntoa(((struct sockaddr_in *)temp_addr->ifa_addr)->sin_addr);
+				return ipaddr;
 			}
 		}
 		

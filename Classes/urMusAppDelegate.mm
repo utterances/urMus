@@ -84,8 +84,10 @@ extern int SCREEN_HEIGHT;
             [externalWindow addSubview:glView2];
             
             
+#ifdef CAPTUREMANAGER
             glView.captureManager.delegateTwo = glView2;
             [glView.captureManager informViewsOfCameraTexture];
+#endif
             
             [glView2 startAnimation];
             [glView2 drawView];
@@ -101,11 +103,15 @@ extern int SCREEN_HEIGHT;
 		
 		self.externalWindow = nil;
         
+#ifdef CAPTUREMANAGER
         glView.captureManager.delegateTwo = nil;
+#endif
         
     }
 }
 
+extern std::string g_fontPath;
+extern std::string g_storagePath;
 
 - (void)applicationDidFinishLaunching:(UIApplication *)application {
     
@@ -120,7 +126,7 @@ extern int SCREEN_HEIGHT;
 												 name:UIScreenDidDisconnectNotification 
 											   object:nil];
 
-    
+
 	g_glView = glView;
 	/* Declare a Lua State, open the Lua State and load the libraries (see above). */
 	lua = lua_open();
@@ -145,17 +151,27 @@ extern int SCREEN_HEIGHT;
 //		NSLog(@"Fail :(");  
 	};
 #endif
-	
+
+#ifndef UISTRINGS
+	NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
+	// path to the default font
+    g_storagePath = [resourcePath UTF8String];
+	g_fontPath=g_storagePath+"/arial.ttf";
+#endif
+    
 	[glView startAnimation];
 	[glView drawView];
     
     // Catches a launch with two screens and sets reasonable default values otherwise
     [self screenDidChange:nil];
-    
+
 #ifdef EARLY_LAUNCH
+#ifdef UISTRINGS
 	NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
+#endif
 #ifndef SLEEPER
 	NSString *filePath = [resourcePath stringByAppendingPathComponent:@"urMus.lua"];
+//	NSString *filePath = [resourcePath stringByAppendingPathComponent:@"urSmudge.lua"];
 #else
 	NSString *filePath = [resourcePath stringByAppendingPathComponent:@"urSleeperLaunch.lua"];
 #endif
@@ -165,9 +181,12 @@ extern int SCREEN_HEIGHT;
 	NSString *documentPath;
 	if ([paths count] > 0)
 		documentPath = [paths objectAtIndex:0];
+    else {
+        assert(false);
+    }
 		
 	// start off http server
-#define HTTP_EDITING
+//#define HTTP_EDITING
 #ifdef HTTP_EDITING
 	http_start([resourcePath UTF8String],
 			   [documentPath UTF8String]);
@@ -182,6 +201,7 @@ extern int SCREEN_HEIGHT;
 		newerror = true;
 	}
 #endif	
+
 }
 
 #ifdef SANDWICH_SUPPORT
@@ -201,17 +221,29 @@ extern int SCREEN_HEIGHT;
 }
 #endif
 
-- (void)applicationWillResignActive:(UIApplication *)application {
+- (void)applicationDidEnterBackground:(UIApplication *)application
+{
+    [glView stopAnimation];
+}
+- (void)applicationWillEnterForeground:(UIApplication *)application
+{
+    [glView startAnimation];
 }
 
-- (void)applicationDidBecomeActive:(UIApplication *)application {
+- (void)applicationWillResignActive:(UIApplication *)application
+{
+}
+
+- (void)applicationDidBecomeActive:(UIApplication *)application
+{
 }
 
 
 - (void)dealloc {
 	/* Remember to destroy the Lua State */
 	http_stop();
-	lua_close(lua);
+    if(lua != NULL) 
+        lua_close(lua);
 	
 	[window release];
 	[glView release];

@@ -428,10 +428,14 @@ void ZPulse_In(ursObject* gself, double in)
 {
 	float out = 0.0;
 	if(sgn(in) != sgn(gself->lastindata[0]))
+    {
 		out = 1.0;
+    }
+    
+    gself->CallAllPushOuts(out);
+
 	gself->lastindata[0] = in;
 	
-	gself->CallAllPushOuts(out);
 }
 
 double Hold_Tick(ursObject* gself)
@@ -499,9 +503,7 @@ double PosSqr_Out(ursObject* gself)
 void PosSqr_In(ursObject* gself, double in)
 {
 	gself->CallAllPushOuts(evenPolyOriented(in,2));
-}
-
-
+} 
 
 void urSoundAtoms_Setup()
 {

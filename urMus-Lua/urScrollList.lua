@@ -10,21 +10,21 @@
 
 -- Height to reserve for title
 local titleHeight = 40
-local titleFont = "Trebuchet MS"
+local titleFont = urfont
 local titleColor = { 255 ,255, 255, 255}
 local normativeScrollRegionHeight = 55
 local maxVisiblescrollRegions = (ScreenHeight()-titleHeight)/normativeScrollRegionHeight
 local scrollRegionGap = 1
 local scrollRegionHeight = (ScreenHeight() - titleHeight - maxVisiblescrollRegions*scrollRegionGap)/maxVisiblescrollRegions
-local text1Font = "Trebuchet MS"
+local text1Font = urfont
 local text1Width = ScreenWidth()*2/3
 local text1Size = 20
 local text1Color = { 255, 255, 255, 255 }
-local text2Font = "Trebuchet MS"
+local text2Font = urfont
 local text2Width = ScreenWidth()/2
 local text2Size = 14
 local text2Color = { 255, 255, 0, 255 }
-local text3Font = "Trebuchet MS"
+local text3Font = urfont
 local text3Width = ScreenWidth()/2
 local text3Size = 16
 local text3Color = { 255, 0, 0, 255 }

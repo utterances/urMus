@@ -42,12 +42,13 @@ static void mo_log(const char *s, ...)
     va_list ap;
     va_start(ap, s);
     
-    NSString *str = [[NSString alloc] initWithCString:s];
+    NSString *str = [[NSString alloc] initWithUTF8String:s];
     
     NSLogv(str, ap);
-    
+
+#ifdef NONARC
     [str release];
-    
+#endif
     va_end(ap);
 }
     

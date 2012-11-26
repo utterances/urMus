@@ -50,12 +50,6 @@ void TapDelay :: setMaximumDelay( unsigned long delay )
 {
   if ( delay < inputs_.size() ) return;
 
-  if ( delay < 0 ) {
-    errorString_ << "TapDelay::setMaximumDelay: argument (" << delay << ") less than zero!\n";
-    handleError( StkError::WARNING );
-    return;
-  }
-
   for ( unsigned int i=0; i<delays_.size(); i++ ) {
     if ( delay < delays_[i] ) {
       errorString_ << "TapDelay::setMaximumDelay: argument (" << delay << ") less than a current tap delay setting (" << delays_[i] << ")!\n";
@@ -84,13 +78,6 @@ void TapDelay :: setTapDelays( std::vector<unsigned long> taps )
       outPoint_[i] = inPoint_ + 1;
       if ( outPoint_[i] == inputs_.size() ) outPoint_[i] = 0;
       delays_[i] = inputs_.size() - 1;
-    }
-    else if ( taps[i] < 0 ) {
-      errorString_ << "TapDelay::setDelay: argument (" << taps[i] << ") less than zero ... setting to zero!\n";
-      handleError( StkError::WARNING );
-
-      outPoint_[i] = inPoint_;
-      delays_[i] = 0;
     }
     else { // read chases write
       if ( inPoint_ >= taps[i] ) outPoint_[i] = inPoint_ - taps[i];

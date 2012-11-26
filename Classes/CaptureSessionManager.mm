@@ -230,7 +230,8 @@ double lastframe = 0;
 	durTime.flags = 0;
 	durTime.epoch = 0;
 	
-	[videoOut setMinFrameDuration:durTime];
+    AVCaptureConnection *connection = [videoOut connectionWithMediaType:AVMediaTypeVideo];
+	[connection setVideoMinFrameDuration:durTime];
 	dispatch_queue_t my_queue = dispatch_queue_create("com.urMus.subsystem.taskCV", NULL);
 	[videoOut setSampleBufferDelegate:self queue:my_queue];
 	//[videoOut setSampleBufferDelegate:self queue:dispatch_get_main_queue()];

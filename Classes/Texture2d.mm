@@ -68,6 +68,14 @@
 
 #import "Texture2D.h"
 
+#ifdef OPENGLES2
+enum { ATTRIB_VERTEX, ATTRIB_COLOR, ATTRIB_TEXTUREPOSITON, NUM_ATTRIBUTES };
+
+extern GLint _positionSlot;
+extern GLint _texcoordSlot;
+extern GLuint _textureUniform;
+#endif
+
 
 //CONSTANTS:
 
@@ -134,6 +142,11 @@
 	free(data);
 
 	return self;
+}
+
+- (GLuint) getTextureID
+{
+    return _name;
 }
 
 - (id) initWithData:(const void*)data pixelFormat:(Texture2DPixelFormat)pixelFormat pixelsWide:(NSUInteger)width pixelsHigh:(NSUInteger)height contentSize:(CGSize)size
@@ -325,8 +338,6 @@
 //	colorComponents[0] = b;
 //	colorComponents[0] = alpha;
 	
-	font = [UIFont fontWithName:name size:size];
-	
 	width = dimensions.width;
 	if((width != 1) && (width & (width - 1))) {
 		i = 1;
@@ -341,13 +352,22 @@
 			i *= 2;
 		height = i;
 	}
+	font = [UIFont fontWithName:name size:size];
 	
-	colorSpace = CGColorSpaceCreateDeviceGray();
-	data = calloc(height, width);
-	context = CGBitmapContextCreate(data, width, height, 8, width, colorSpace, kCGImageAlphaNone);
+    colorSpace = CGColorSpaceCreateDeviceRGB();
+    data = calloc(1, width * height*4);
+    context = CGBitmapContextCreate(data, width, height, 8, width * 4, colorSpace, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    CGColorSpaceRelease(colorSpace);
+	
+    CGContextSetRGBFillColor(context, 1.0, 1.0, 1.0,1.0);
+/*	colorSpace = CGColorSpaceCreateDeviceGray();
+	data = calloc(height, width*4);
+//	context = CGBitmapContextCreate(data, width, height, 8, width, colorSpace, kCGImageAlphaNone);
+	context = CGBitmapContextCreate(data, width, height, 8, width*4, colorSpace, kCGImageAlphaNone);
 	CGColorSpaceRelease(colorSpace);
-	
 	CGContextSetGrayFillColor(context, 1.0, 1.0);
+ */	
+
 //	CGContextSetFillColor(context, colorComponents);
 	CGContextTranslateCTM(context, 0.0, height);
 	CGContextScaleCTM(context, 1.0, -1.0); //NOTE: NSString draws in UIKit referential i.e. renders upside-down compared to CGBitmapContext referential
@@ -361,7 +381,8 @@
 	CGFloat fontblockheight = fontblocksize.height;
 	_fontblockheight = fontblockheight;
 	
-	self = [self initWithData:data pixelFormat:kTexture2DPixelFormat_A8 pixelsWide:width pixelsHigh:height contentSize:dimensions];
+//	self = [self initWithData:data pixelFormat:kTexture2DPixelFormat_A8 pixelsWide:width pixelsHigh:height contentSize:dimensions];
+    self = [self initWithData:data pixelFormat:kTexture2DPixelFormat_RGBA8888 pixelsWide:width pixelsHigh:height contentSize:dimensions];
 	
 	CGContextRelease(context);
 	free(data);
@@ -407,6 +428,7 @@
     CGContextScaleCTM(context, 1.0, -1.0);
     if(shadowColor)
     {
+//        CGColorSpaceRef cspace = CGColorSpaceCreateDeviceRGB();
         CGColorRef color = CGColorCreate(CGColorSpaceCreateDeviceRGB(), shadowColor);
         CGContextSetShadowWithColor (
 									 context,
@@ -415,6 +437,7 @@
 									 color
 									 );
         CGColorRelease(color);
+//        CGColorSpaceRelease(cspace);
     }
     UIGraphicsPushContext(context);
 	[string drawInRect:CGRectMake(shadowBlur, 0, dimensions.width, dimensions.height) withFont:font lineBreakMode:lineBreakMode alignment:alignment];
@@ -467,9 +490,32 @@
 	width + point.x,        height  + point.y,      0.0 };
 #endif
 	
+    GLenum err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
 	glBindTexture(GL_TEXTURE_2D, _name);
+    
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+#ifdef OPENGLES2    
+    glVertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, vertices);
+    glEnableVertexAttribArray(ATTRIB_VERTEX);
+    err = glGetError();
+    glVertexAttribPointer(ATTRIB_TEXTUREPOSITON, 2, GL_FLOAT, 0, 0, coordinates);
+    glEnableVertexAttribArray(ATTRIB_TEXTUREPOSITON);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+#else
 	glVertexPointer(3, GL_FLOAT, 0, vertices);
 	glTexCoordPointer(2, GL_FLOAT, 0, coordinates);
+#endif
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
@@ -484,16 +530,36 @@
 		rect.origin.x + rect.size.width,                rect.origin.y,                                                  0.0,
 		rect.origin.x,                                                  rect.origin.y + rect.size.height,               0.0,
 	rect.origin.x + rect.size.width,                rect.origin.y + rect.size.height,               0.0 };
-	
+
+    GLenum err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
 	glBindTexture(GL_TEXTURE_2D, _name);
+#ifdef OPENGLES2    
+    glVertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, vertices);
+    glEnableVertexAttribArray(ATTRIB_VERTEX);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+#else
 	glVertexPointer(3, GL_FLOAT, 0, vertices);
+#endif
 //	glTexCoordPointer(2, GL_FLOAT, 0, coordinates);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
 }
 
-- (float) getHeight
+/*- (float) getHeight
 {
 	return _height;
-}
+}*/
 
 @end

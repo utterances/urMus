@@ -195,7 +195,6 @@ void Granulate :: calculateGrain( Granulate::Grain& grain )
   offset += (int) ( seconds * Stk::sampleRate() );
   grain.pointer += offset;
   while ( grain.pointer >= data_.frames() ) grain.pointer -= data_.frames();
-  if ( grain.pointer <  0 ) grain.pointer = 0;
   grain.startPointer = grain.pointer;
 }
 

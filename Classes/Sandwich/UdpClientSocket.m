@@ -101,7 +101,7 @@ BOOL clientConnect(const char* ipaddr, int port)
 - (BOOL) clientConnect;
 {
 	NSLog(@"starting connection to %@ port %d", self.serverAddress, self.portNr);
-	if (clientConnect([self.serverAddress cString], self.portNr)) {
+	if (clientConnect([self.serverAddress UTF8String], self.portNr)) {
 		return true;  
 	} else {
 		NSLog(@"connection failed");

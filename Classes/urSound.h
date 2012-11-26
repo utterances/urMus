@@ -71,6 +71,12 @@ public:
 	bool IsPulledIn(int idx, urSoundOut* out);
 	void RemovePushOut(int idx, urSoundIn* in);
 	void RemovePullIn(int idx, urSoundOut* out);
+    void RemoveAllPushOuts();
+    void RemoveAllPullIns();
+    void RemoveFromSink(urSoundOut* out);
+    void RemovePushOutsByObject(ursObject* src);
+    void RemoveFromSources();
+    void RemoveFromSinks();
 	void SetCouple(int inidx, int outidx);
 	void FeedAllPullIns(int minidx = 0);
 	void CallAllPushOuts(double indata, int idx=0);
@@ -104,7 +110,7 @@ public:
 class ursObjectArray
 {
 public:
-	ursObjectArray(int initmax = 10);
+	ursObjectArray(int initmax = 256);
 	~ursObjectArray();
 	void Append(ursObject*);
 	ursObject* Get(int);
@@ -180,6 +186,19 @@ struct urSoundOut
 
 #define URSOUND_DEFAULTSRATE 48000
 //#define PI 3.1415926535
+
+struct State_Data
+{
+    double lastout;
+    State_Data() { lastout = 0.0; }
+};
+
+struct TwoState_Data
+{
+    double previous;
+    double lastout;
+    TwoState_Data() { lastout = 0.0; previous = 0.0;}
+};
 
 struct SinOsc_Data
 {
@@ -349,6 +368,7 @@ public:
 		~ursSinkList();
 		void AddSink(urSoundOut* sink);
 		void RemoveSink(urSoundOut* sink);
+        void RemoveObject(ursObject* obj);
 private:
 		int allocsize;
 };
@@ -400,6 +420,14 @@ void Sleigh_SetPos(ursObject* gself, double inpos);
 void Sleigh_SetSleigh(ursObject* gself, double inSleigh);
 void Sleigh_Play(ursObject* gself, double inplay);
 void Sleigh_Loop(ursObject* gself, double indata);
+
+void* Slow_Constructor();
+void Slow_Destructor(ursObject* gself);
+double Slow_Tick(ursObject* gself);
+double Slow_Out(ursObject* gself);
+void Slow_SetAmp(ursObject* gself, double inamp);
+void Slow_SetRate(ursObject* gself, double inrate);
+void Slow_In(ursObject* gself, double indata);
 
 void* Looper_Constructor();
 void Looper_Destructor(ursObject* gself);
@@ -479,6 +507,30 @@ void Tuner_Destructor(ursObject* gself);
 double Tuner_Tick(ursObject* gself);
 double Tuner_Out(ursObject* gself);
 void Tuner_In(ursObject* gself, double indata);
+
+void* Drain_Constructor();
+void Drain_Destructor(ursObject* gself);
+double Drain_Out(ursObject* gself);
+void Drain_In(ursObject* gself, double indata);
+double Drain_Time(ursObject* gself);
+
+void* Pump_Constructor();
+void Pump_Destructor(ursObject* gself);
+double Pump_Out(ursObject* gself);
+void Pump_In(ursObject* gself, double indata);
+void Pump_Time(ursObject* gself, double indata);
+
+void* Sniff_Constructor();
+void Sniff_Destructor(ursObject* gself);
+double Sniff_Out(ursObject* gself);
+void Sniff_In(ursObject* gself, double indata);
+double Sniff_Sniff(ursObject* gself);
+
+void* SniffL_Constructor();
+void SniffL_Destructor(ursObject* gself);
+double SniffL_Out(ursObject* gself);
+void SniffL_In(ursObject* gself, double indata);
+double SniffL_Sniff(ursObject* gself);
 
 void* ThreeDist_Constructor();
 void ThreeDist_Destructor(ursObject* gself);

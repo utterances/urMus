@@ -242,6 +242,27 @@ static void rioInterruptionListener( void * inUserData, UInt32 inInterruption )
 static void propListener( void * inClientData, AudioSessionPropertyID inID,
                           UInt32 inDataSize, const void * inData )
 {
+    // Detect mic appearing
+    if ( inID == kAudioSessionProperty_AudioInputAvailable ) {
+        UInt32 *inputAvailable = (UInt32*)inData;
+        UInt32 sessionCategory;
+        if ( *inputAvailable ) {
+            // Set the audio session category for simultaneous play and record
+            sessionCategory = kAudioSessionCategory_PlayAndRecord;
+        } else {
+            // Just playback
+            sessionCategory = kAudioSessionCategory_MediaPlayback;
+        }
+        
+        OSStatus err = AudioSessionSetProperty (kAudioSessionProperty_AudioCategory,
+                                                   sizeof (sessionCategory),
+                                                   &sessionCategory);    
+        if( err )
+        {
+            // TODO: "couldn't change audio category"
+            return;
+        }
+    }
     // detect audio route change
     if( inID == kAudioSessionProperty_AudioRouteChange )
     {
@@ -493,9 +514,29 @@ bool MoAudio::init( Float64 srate, UInt32 frameSize, UInt32 numChannels )
         return false;
     }
 
-    UInt32 category = kAudioSessionCategory_PlayAndRecord;
+    
+    OSStatus status;
+    
+    UInt32 inputAvailable=0;
+    UInt32 size = sizeof(inputAvailable);
+    AudioSessionGetProperty(kAudioSessionProperty_AudioInputAvailable, 
+                            &size, 
+                            &inputAvailable);
+    UInt32 sessionCategory;
+    if ( inputAvailable ) {
+        // Set the audio session category for simultaneous play and record
+        sessionCategory = kAudioSessionCategory_PlayAndRecord;
+    } else {
+        // Just playback
+        sessionCategory = kAudioSessionCategory_MediaPlayback;
+    }
+    
+    err = AudioSessionSetProperty (kAudioSessionProperty_AudioCategory,
+                                      sizeof (sessionCategory),
+                                      &sessionCategory);    
+//    UInt32 category = kAudioSessionCategory_PlayAndRecord;
     // set audio category
-    err = AudioSessionSetProperty( kAudioSessionProperty_AudioCategory, sizeof(category), &category );
+//    err = AudioSessionSetProperty( kAudioSessionProperty_AudioCategory, sizeof(category), &category );
     if( err )
     {
         // TODO: "couldn't set audio category"
@@ -574,7 +615,7 @@ bool MoAudio::init( Float64 srate, UInt32 frameSize, UInt32 numChannels )
         return false;
     }
     
-    UInt32 size = sizeof(MoAudio::m_hwSampleRate);
+    size = sizeof(MoAudio::m_hwSampleRate);
     // get sample rate
     err = AudioSessionGetProperty( kAudioSessionProperty_CurrentHardwareSampleRate, &size, &MoAudio::m_hwSampleRate );
     if ( err )

@@ -1,4 +1,4 @@
-/*
+ /*
  *  urAPI.c
  *  urMus
  *
@@ -6,6 +6,8 @@
  *  Copyright 2009-11 Georg Essl. All rights reserved. See LICENSE.txt for license details.
  *
  */
+#define FULL3
+#ifdef FULL3
 
 #define USEMUMOAUDIO
 
@@ -23,6 +25,7 @@
 #include "urSound.h"
 #include "httpServer.h"
 
+
 //------------------------------------------------------------------------------
 // Recursive Mutex for ThreadSafety
 //------------------------------------------------------------------------------
@@ -30,6 +33,12 @@
 #ifdef THREADSAFETY
 extern RMutex luamutex;
 #endif
+
+//------------------------------------------------------------------------------
+// Mutex for Event Safety
+//------------------------------------------------------------------------------
+pthread_mutex_t fb_mutex = PTHREAD_MUTEX_INITIALIZER; // Flowbox, safeguards freeing flowboxes
+pthread_mutex_t r_mutex = PTHREAD_MUTEX_INITIALIZER; // Region, safeguards freeing regions
 
 //------------------------------------------------------------------------------
 // MUMO Audio Callbacks
@@ -105,13 +114,14 @@ extern int SCREEN_HEIGHT;
 // This is to transport error and print messages to EAGLview
 extern std::string errorstr;
 extern bool newerror;
+enum eventIDs currenterrorevent;
 
 //------------------------------------------------------------------------------
 // Sharing global lua state
 //------------------------------------------------------------------------------
 
 // Global lua state
-lua_State *lua;
+lua_State *lua= NULL;
 
 // Region based API below, this is inspired by WoW's frame API with many modifications and expansions.
 // Our engine supports paging, region horizontal and vertical scrolling, full multi-touch and more.
@@ -147,6 +157,7 @@ ursAPI_FlowBox_t* FBNope = nil;
 int currentPatch = 0;
 ursAPI_FlowBox_t** firstFlowbox[MAX_PATCHES] = {nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil};
 int numFlowBoxes[MAX_PATCHES] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+int freePatches[MAX_PATCHES] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 MachTimer* systimer;
 
@@ -185,6 +196,14 @@ const char* urEventNames[] = { "OnDragStart", "OnDragStop", "OnHide", "OnShow", 
     "OnAccelerate", "OnAttitude", "OnRotation", "OnHeading", "OnLocation", "OnMicrophone", "OnHorizontalScroll", "OnVerticalScroll", "OnMove", "OnPageEntered", "OnPageLeft"
 };
 
+
+//------------------------------------------------------------------------------
+// Page Camera Usage
+//------------------------------------------------------------------------------
+
+// Camera chain keeps track of which regions use the camera
+
+int page_camerause=0;
 
 //------------------------------------------------------------------------------
 // Event Chains
@@ -264,6 +283,13 @@ void PopulateAllChains(urAPI_Region_t* first)
                 AddRegionToChain(EventChain[i], region);
             }
         }
+        // Populate Camera Chain for performance reasons here.
+        if(region->texture != NULL && region->texture->usecamera != 0)
+        {
+            page_camerause++;
+//            AddRegionToChain(CameraChain, region);
+            incCameraUse();
+        }
     }
 }
 
@@ -289,7 +315,7 @@ void RemoveEventRegistry(lua_State* lua, enum eventIDs event, urAPI_Region_t* re
 // Event Service functions (single region argument calls)
 //------------------------------------------------------------------------------
 
-bool callScriptWithOscArgs(int func_ref, urAPI_Region_t* region, osc::ReceivedMessageArgumentStream & s)
+bool callScriptWithOscArgs(enum eventIDs event, int func_ref, urAPI_Region_t* region, osc::ReceivedMessageArgumentStream & s)
 {
 	if(func_ref == 0) return false;
 	
@@ -307,8 +333,10 @@ bool callScriptWithOscArgs(int func_ref, urAPI_Region_t* region, osc::ReceivedMe
 	if(lua_pcall(lua,len+1,0,0) != 0)
 	{
 		// Error!!
+        
 		const char* error = lua_tostring(lua, -1);
-		errorstr = error; // DPrinting errors for now
+        std::string eventstr(urEventNames[event]);
+		errorstr = eventstr+error; // DPrinting errors for now
 		newerror = true;
 		return false;
 	}
@@ -317,7 +345,7 @@ bool callScriptWithOscArgs(int func_ref, urAPI_Region_t* region, osc::ReceivedMe
 	return true;
 }
 
-bool callScriptWith5Args(int func_ref, urAPI_Region_t* region, float a, float b, float c, float d, float e)
+bool callScriptWith5Args(enum eventIDs event, int func_ref, urAPI_Region_t* region, float a, float b, float c, float d, float e)
 {
 	if(func_ref == 0) return false;
 	
@@ -342,7 +370,7 @@ bool callScriptWith5Args(int func_ref, urAPI_Region_t* region, float a, float b,
 	return true;
 }
 
-bool callScriptWith4Args(int func_ref, urAPI_Region_t* region, float a, float b, float c, float d)
+bool callScriptWith4Args(enum eventIDs event, int func_ref, urAPI_Region_t* region, float a, float b, float c, float d)
 {
 	if(func_ref == 0) return false;
     
@@ -357,6 +385,8 @@ bool callScriptWith4Args(int func_ref, urAPI_Region_t* region, float a, float b,
 	{
 		// Error!!
 		const char* error = lua_tostring(lua, -1);
+        std::string eventstr(urEventNames[event]);
+		errorstr = eventstr+": "+error; // DPrinting errors for now
 		errorstr = error; // DPrinting errors for now
 		newerror = true;
 		return false;
@@ -366,7 +396,7 @@ bool callScriptWith4Args(int func_ref, urAPI_Region_t* region, float a, float b,
 	return true;
 }
 
-bool callScriptWith3Args(int func_ref, urAPI_Region_t* region, float a, float b, float c)
+bool callScriptWith3Args(enum eventIDs event, int func_ref, urAPI_Region_t* region, float a, float b, float c)
 {
 	if(func_ref == 0) return false;
 	
@@ -380,7 +410,8 @@ bool callScriptWith3Args(int func_ref, urAPI_Region_t* region, float a, float b,
 	{
 		// Error!!
 		const char* error = lua_tostring(lua, -1);
-		errorstr = error; // DPrinting errors for now
+        std::string eventstr(urEventNames[event]);
+		errorstr = eventstr+": "+error; // DPrinting errors for now
 		newerror = true;
 		return false;
 	}
@@ -389,7 +420,7 @@ bool callScriptWith3Args(int func_ref, urAPI_Region_t* region, float a, float b,
 	return true;
 }
 
-bool callScriptWith2Args(int func_ref, urAPI_Region_t* region, float a, float b)
+bool callScriptWith2Args(enum eventIDs event, int func_ref, urAPI_Region_t* region, float a, float b)
 {
 	if(func_ref == 0) return false;
 	
@@ -402,7 +433,11 @@ bool callScriptWith2Args(int func_ref, urAPI_Region_t* region, float a, float b)
 	{
 		//<return Error>
 		const char* error = lua_tostring(lua, -1);
-		errorstr = error; // DPrinting errors for now
+        std::string eventstr(urEventNames[event]);
+        if(error)
+            errorstr = eventstr+": "+error; // DPrinting errors for now
+        else
+            errorstr = eventstr+": Unknown error";
 		newerror = true;
 		return false;
 	}
@@ -411,7 +446,7 @@ bool callScriptWith2Args(int func_ref, urAPI_Region_t* region, float a, float b)
 	return true;
 }
 
-bool callScriptWith1Args(int func_ref, urAPI_Region_t* region, float a)
+bool callScriptWith1Args(enum eventIDs event, int func_ref, urAPI_Region_t* region, float a)
 {
 	if(func_ref == 0) return false;
 	
@@ -424,7 +459,8 @@ bool callScriptWith1Args(int func_ref, urAPI_Region_t* region, float a)
 	{
 		//<return Error>
 		const char* error = lua_tostring(lua, -1);
-		errorstr = error; // DPrinting errors for now
+        std::string eventstr(urEventNames[event]);
+		errorstr = eventstr+": "+error; // DPrinting errors for now
 		newerror = true;
 		return false;
 	}
@@ -433,7 +469,7 @@ bool callScriptWith1Args(int func_ref, urAPI_Region_t* region, float a)
 	return true;
 }
 
-bool callScriptWith1Global(int func_ref, urAPI_Region_t* region, const char* globaldata)
+bool callScriptWith1Global(enum eventIDs event, int func_ref, urAPI_Region_t* region, const char* globaldata)
 {
 	if(func_ref == 0) return false;
 	
@@ -446,7 +482,8 @@ bool callScriptWith1Global(int func_ref, urAPI_Region_t* region, const char* glo
 	{
 		//<return Error>
 		const char* error = lua_tostring(lua, -1);
-		errorstr = error; // DPrinting errors for now
+        std::string eventstr(urEventNames[event]);
+		errorstr = eventstr+": "+error; // DPrinting errors for now
 		newerror = true;
 		return false;
 	}
@@ -455,7 +492,7 @@ bool callScriptWith1Global(int func_ref, urAPI_Region_t* region, const char* glo
 	return true;
 }
 
-bool callScriptWith1String(int func_ref, urAPI_Region_t* region, const char* name)
+bool callScriptWith1String(enum eventIDs event, int func_ref, urAPI_Region_t* region, const char* name)
 {
 	if(func_ref == 0) return false;
 	
@@ -468,7 +505,8 @@ bool callScriptWith1String(int func_ref, urAPI_Region_t* region, const char* nam
 	{
 		//<return Error>
 		const char* error = lua_tostring(lua, -1);
-		errorstr = error; // DPrinting errors for now
+        std::string eventstr(urEventNames[event]);
+		errorstr = eventstr+": "+error; // DPrinting errors for now
 		newerror = true;
 		return false;
 	}
@@ -477,7 +515,7 @@ bool callScriptWith1String(int func_ref, urAPI_Region_t* region, const char* nam
 	return true;
 }
 
-bool callScriptWith2String(int func_ref, urAPI_Region_t* region, const char* name, const char* btype)
+bool callScriptWith2String(enum eventIDs event, int func_ref, urAPI_Region_t* region, const char* name, const char* btype)
 {
 	if(func_ref == 0) return false;
 	
@@ -491,7 +529,8 @@ bool callScriptWith2String(int func_ref, urAPI_Region_t* region, const char* nam
 	{
 		//<return Error>
 		const char* error = lua_tostring(lua, -1);
-		errorstr = error; // DPrinting errors for now
+        std::string eventstr(urEventNames[event]);
+		errorstr = eventstr+": "+error; // DPrinting errors for now
 		newerror = true;
 		return false;
 	}
@@ -500,7 +539,7 @@ bool callScriptWith2String(int func_ref, urAPI_Region_t* region, const char* nam
 	return true;
 }
 
-bool callScript(int func_ref, urAPI_Region_t* region)
+bool callScript(enum eventIDs event, int func_ref, urAPI_Region_t* region)
 {
 	if(func_ref == 0) return false;
 	
@@ -511,7 +550,8 @@ bool callScript(int func_ref, urAPI_Region_t* region)
 	{
 		//<return Error>
 		const char* error = lua_tostring(lua, -1);
-		errorstr = error; // DPrinting errors for now
+        std::string eventstr(urEventNames[event]);
+		errorstr = eventstr+": "+error; // DPrinting errors for now
 		newerror = true;
 		return false;
 	}
@@ -534,7 +574,7 @@ bool callAllOn1Args(enum eventIDs event, float data)
         while(EventChain[event].next != NULL)
         {
             urAPI_Region_t* t = EventChain[event].next->region;
-            callScriptWith1Args(t->OnEvents[event], t, data);
+            callScriptWith1Args(event,t->OnEvents[event], t, data);
             EventChain[event].next = EventChain[event].next;
             if(EventChain[event].next != NULL)
                 EventChain[event].next = EventChain[event].next->next;
@@ -554,7 +594,7 @@ bool callAllOn1Global(enum eventIDs event, const char* data)
         while(EventChain[event].next != NULL)
         {
             urAPI_Region_t* t = EventChain[event].next->region;
-            callScriptWith1Global(t->OnEvents[event], t, data);
+            callScriptWith1Global(event,t->OnEvents[event], t, data);
             EventChain[event].next = EventChain[event].next;
             if(EventChain[event].next != NULL)
                 EventChain[event].next = EventChain[event].next->next;
@@ -574,7 +614,7 @@ bool callAllOn2Args(enum eventIDs event, float data, float data2)
         while(EventChain[event].next != NULL)
         {
             urAPI_Region_t* t = EventChain[event].next->region;
-            callScriptWith2Args(t->OnEvents[event], t, data, data2);
+            callScriptWith2Args(event,t->OnEvents[event], t, data, data2);
             EventChain[event].next = EventChain[event].next;
             if(EventChain[event].next != NULL)
                 EventChain[event].next = EventChain[event].next->next;
@@ -594,7 +634,7 @@ bool callAllOn3Args(enum eventIDs event, float data, float data2, float data3)
         while(EventChain[event].next != NULL)
         {
             urAPI_Region_t* t = EventChain[event].next->region;
-            callScriptWith3Args(t->OnEvents[event], t, data, data2, data3);
+            callScriptWith3Args(event,t->OnEvents[event], t, data, data2, data3);
             EventChain[event].next = EventChain[event].next;
             if(EventChain[event].next != NULL)
                 EventChain[event].next = EventChain[event].next->next;
@@ -614,7 +654,7 @@ bool callAllOn4Args(enum eventIDs event, float data, float data2, float data3, f
         while(EventChain[event].next != NULL)
         {
             urAPI_Region_t* t = EventChain[event].next->region;
-            callScriptWith4Args(t->OnEvents[event], t, data, data2, data3, data4);
+            callScriptWith4Args(event,t->OnEvents[event], t, data, data2, data3, data4);
             EventChain[event].next = EventChain[event].next;
             if(EventChain[event].next != NULL)
                 EventChain[event].next = EventChain[event].next->next;
@@ -634,7 +674,7 @@ bool callAllOn1String(enum eventIDs event, const char* data)
         while(EventChain[event].next != NULL)
         {
             urAPI_Region_t* t = EventChain[event].next->region;
-            callScriptWith1String(t->OnEvents[event],t,data);
+            callScriptWith1String(event,t->OnEvents[event],t,data);
             EventChain[event].next = EventChain[event].next;
             if(EventChain[event].next != NULL)
                 EventChain[event].next = EventChain[event].next->next;
@@ -653,7 +693,7 @@ bool callAllOn2Strings(enum eventIDs event, const char* data, const char* data2)
         while(EventChain[event].next != NULL)
         {
             urAPI_Region_t* t = EventChain[event].next->region;
-            callScriptWith2String(t->OnEvents[event],t,data,data2);
+            callScriptWith2String(event,t->OnEvents[event],t,data,data2);
             EventChain[event].next = EventChain[event].next;
             if(EventChain[event].next != NULL)
                 EventChain[event].next = EventChain[event].next->next;
@@ -672,7 +712,7 @@ bool callAllOnOSCArgs(enum eventIDs event, osc::ReceivedMessageArgumentStream & 
         while(EventChain[event].next != NULL)
         {
             urAPI_Region_t* t = EventChain[event].next->region;
-            callScriptWithOscArgs(t->OnEvents[event],t,argument_stream);
+            callScriptWithOscArgs(event,t->OnEvents[event],t,argument_stream);
             EventChain[event].next = EventChain[event].next;
             if(EventChain[event].next != NULL)
                 EventChain[event].next = EventChain[event].next->next;
@@ -727,7 +767,7 @@ bool callAllOnSoarOutput()
                     
                     free(EventChain[event].current);
                     
-                    callScript(callback_id, t);
+                    callScript(event,callback_id, t);
                 }
             }
             EventChain[event].current = EventChain[event].next;
@@ -756,7 +796,7 @@ bool callAllOnPageLeft(float page)
 }
 
 #ifdef SOAR_SUPPORT
-bool callScriptWith2ActionTableArgs(int func_ref, urAPI_Region_t* region)
+bool callScriptWith2ActionTableArgs(enum eventIDs event, int func_ref, urAPI_Region_t* region)
 {
 	if(func_ref == 0) return false;
 	
@@ -911,7 +951,7 @@ void callAllOnLeaveRegions(int nr, float* x, float* y, float* ox, float* oy)
                    && t->OnEvents[event] != 0)
                 {
                     t->entered = false;
-                    callScriptWith2Args(t->OnEvents[event], t,x[i]-t->left,y[i]-t->bottom);
+                    callScriptWith2Args(event,t->OnEvents[event], t,x[i]-t->left,y[i]-t->bottom);
                 }
             }
             EventChain[event].current = EventChain[event].next;
@@ -941,7 +981,7 @@ void callAllOnEnterLeaveRegions(int nr, float* x, float* y, float* ox, float* oy
                    && t->OnEvents[event] != 0)
                 {
                     t->entered = false;
-                    callScriptWith2Args(t->OnEvents[event], t,x[i]-t->left,y[i]-t->bottom);
+                    callScriptWith2Args(event,t->OnEvents[event], t,x[i]-t->left,y[i]-t->bottom);
                 }
                 EventChain[event].current = EventChain[event].next;
                 if(EventChain[event].next != NULL)
@@ -967,7 +1007,7 @@ void callAllOnEnterLeaveRegions(int nr, float* x, float* y, float* ox, float* oy
                    && t->OnEvents[event] != 0)
                 {
                     t->entered = true;
-                    callScriptWith2Args(t->OnEvents[event], t, x[i]-t->left, y[i]-t->bottom);
+                    callScriptWith2Args(event,t->OnEvents[event], t, x[i]-t->left, y[i]-t->bottom);
                 }
                 EventChain[event].current = EventChain[event].next;
                 if(EventChain[event].next != NULL)
@@ -1041,7 +1081,7 @@ urAPI_Region_t* findRegionMoved(float x, float y, float dx, float dy)
     {
         urAPI_Region_t* t = c->region;
 		if(x >= t->left && x <= t->left+t->width &&
-		   y >= t->bottom && y <= t->bottom+t->height && t->isTouchEnabled && t->OnEvents[OnMove] != NULL)
+		   y >= t->bottom && y <= t->bottom+t->height && t->isTouchEnabled && t->OnEvents[OnMove] != 0)
 			if(t->isClipping==false || (x >= t->clipleft && x <= t->clipleft+t->clipwidth &&
 										y >= t->clipbottom && y <= t->clipbottom+t->clipheight))
 				return t;
@@ -1091,7 +1131,7 @@ void showchildren(urAPI_Region_t* region)
 		{
 			child->isVisible = true;
 			if(region->OnEvents[OnShow] != 0)
-				callScript(region->OnEvents[OnShow], region);
+				callScript(OnShow,region->OnEvents[OnShow], region);
 			showchildren(child);
 		}
 		child = child->nextchild;
@@ -1107,7 +1147,7 @@ void hidechildren(urAPI_Region_t* region)
 		{
 			child->isVisible = false;
 			if(region->OnEvents[OnHide] != 0)
-				callScript(region->OnEvents[OnHide], region);
+				callScript(OnHide,region->OnEvents[OnHide], region);
 			hidechildren(child);
 		}
 		child = child->nextchild;
@@ -1132,6 +1172,9 @@ bool layout(urAPI_Region_t* region)
 	}
 		
 	if(!update) return false;
+
+/*	if(region->textlabel!=NULL)
+		region->textlabel->updatestring = true; */
 
 	float left, right, top, bottom, width, height, cx, cy,x,y;
 
@@ -1301,7 +1344,11 @@ bool layout(urAPI_Region_t* region)
 	
 	if(left != region->left || bottom != region->bottom || width != region->width || height != region->height)
 		update = true;
-	
+
+	if(region->textlabel!=NULL && (width != region->width || height != region->height))
+        region->textlabel->updatestring = true;
+
+    
 	region->left = left;
 	region->bottom = bottom;
 	region->width = width;
@@ -1402,6 +1449,7 @@ int region_Handle(lua_State* lua)
 		if(!found)
         {
 			luaL_error(lua, "Trying to set a script for an unknown event: %s",handler);
+            newerror = true;
 			return 0; // Error, unknown event
         }
 		return 1;
@@ -1429,6 +1477,9 @@ int region_Handle(lua_State* lua)
             if(!found)
             {
                 luaL_unref(lua, LUA_REGISTRYINDEX, func_ref);
+                luaL_error(lua, "Trying to set a script for an unknown event: %s",handler);
+                newerror = true;
+                return 0; // Error, unknown event
             }
 
             // OK! 
@@ -1442,8 +1493,6 @@ void ClampRegion(urAPI_Region_t* region);
 
 void changeLayout(urAPI_Region_t* region)
 {
-	if(region->textlabel!=NULL)
-		region->textlabel->updatestring = true;
 	region->update = true;
 
 	if(region->isClamped)
@@ -1544,8 +1593,8 @@ int region_SetAnchor(lua_State* lua)
 {
 	urAPI_Region_t* region = checkregion(lua,1);
 	if(region==UIParent) return 0;
-	lua_Number ofsx;
-	lua_Number ofsy;
+	lua_Number ofsx=0;
+	lua_Number ofsy=0;
 	urAPI_Region_t* relativeRegion = UIParent; 
 	
 	const char* point = luaL_checkstring(lua, 2);
@@ -1624,7 +1673,7 @@ int region_Show(lua_State* lua)
 	{
 		region->isVisible = true;
 		if(region->OnEvents[OnShow] != 0)
-			callScript(region->OnEvents[OnShow], region);
+			callScript(OnShow,region->OnEvents[OnShow], region);
 		showchildren(region);
 	}
 	return 0;
@@ -1636,7 +1685,7 @@ int region_Hide(lua_State* lua)
 	region->isVisible = false;
 	region->isShown = false;
 	if(region->OnEvents[OnHide] != 0)
-		callScript(region->OnEvents[OnHide], region);
+		callScript(OnHide,region->OnEvents[OnHide], region);
 	hidechildren(region); // parent got hidden so hide children too.
 	return 0;
 }
@@ -2087,6 +2136,12 @@ int region_Raise(lua_State* lua)
 
 void removeRegion(urAPI_Region_t* region)
 {
+
+    for(int i=0; i<MAX_EVENTS; i++)
+    {
+        RemoveEventRegistry(lua, (eventIDs)i, region);
+    }
+
 	int currentPage = region->page;
 	
 	if(firstRegion[currentPage] == region)
@@ -2100,12 +2155,18 @@ void removeRegion(urAPI_Region_t* region)
 
 	if(lastRegion[currentPage] == region)
 		lastRegion[currentPage] = region->prev;
+    
+    assert(!region->parent);
+    assert(!region->firstchild);
 	
 	numRegions[currentPage]--;
 }
 
 void freeTexture(urAPI_Texture_t* texture)
 {
+    if(texture->usecamera != 0)
+        decCameraUse();
+    
 	if(texture->backgroundTex!= NULL)
 //		delete texture->backgroundTex;
         free(texture->backgroundTex);
@@ -2119,9 +2180,25 @@ void freeTextLabel(urAPI_TextLabel_t* textlabel)
 //	delete textlabel; // GC should take care of this ... maybe
 }
 
+void loseChildren(urAPI_Region_t* region)
+{
+    urAPI_Region_t *findlast = region->firstchild;
+    urAPI_Region_t *findlast2;
+
+    while(findlast)
+    {
+        findlast->parent = NULL;
+        findlast2 = findlast->nextchild;
+        findlast->nextchild = NULL;
+        findlast = findlast2;
+    }
+    region->firstchild = NULL;
+}
+
 void freeRegion(urAPI_Region_t* region)
 {
 	removeChild(region->parent, region);
+    loseChildren(region);
 	removeRegion(region);
 	if(region->texture != NULL)
 		freeTexture(region->texture);
@@ -2207,7 +2284,7 @@ void textureColorCopyToGradient(urAPI_Texture_t* mytexture)
 int region_Texture(lua_State* lua)
 {
 	urAPI_Region_t* region = checkregion(lua,1);
-	const char* texturename;
+	const char* texturename = NULL;
 	const char* texturelayer;
 	int texturelayerindex=1;
 	
@@ -2291,6 +2368,13 @@ int region_Texture(lua_State* lua)
 	textureColorCopyToGradient(mytexture);
 	
 	mytexture->backgroundTex = NULL;
+#ifdef GPUIMAGE
+    mytexture->movieTex = NULL;
+    mytexture->regionMovie = NULL;
+    mytexture->textureOutput = NULL;
+    mytexture->textureInput = NULL;
+#endif
+   
 	mytexture->usecamera = 0;
 	
 	region->texture = mytexture; // HACK
@@ -2353,8 +2437,12 @@ int region_TextLabel(lua_State* lua)
 	mytextlabel->textheight = 12;
 	mytextlabel->wrap = WRAP_WORD;
 	mytextlabel->rotation = 0.0;
+    mytextlabel->outlinemode = 0; // Default is no outline
+    mytextlabel->outlinethickness = 0; // Default outline thickness is 1
 	
 	mytextlabel->textlabelTex = nil;
+    
+    mytextlabel->region = region;
 	
 	luaL_getmetatable(lua, "URAPI.textlabel");
 	lua_setmetatable(lua, -2);
@@ -2397,9 +2485,50 @@ int texture_SetTexture(lua_State* lua)
 		instantiateTexture(t->region);
 	}
     
+    if(t->usecamera>0)
+    {
+//        RemoveRegionFromChain(CameraChain,t->region);
+        page_camerause--;
+        decCameraUse();
+    }
+//        [g_glView DecCameraUse];
     t->usecamera = 0;
 	
 	return 0;
+}
+
+int texture_SaveMovie(lua_State *lua)
+{
+	urAPI_Texture_t* t = checktexture(lua, 1);
+	const char* filename = luaL_checkstring(lua, 2);
+#ifdef GPUIMAGE
+    NSString* filename2 = [NSString stringWithUTF8String:filename];
+	NSArray *paths;
+	paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+	if ([paths count] > 0) {
+		NSString *filePath = [paths objectAtIndex:0];
+		NSString *resultPath = [NSString stringWithFormat:@"%@/%@", filePath, filename2];
+        
+        GLuint textureID;
+        if(t->usecamera)
+            textureID = t->textureOutput.texture;
+        else
+            textureID = [t->backgroundTex getTextureID];
+                
+//        [g_glView writeMovie:resultPath ofSize:CGSizeMake(t->region->width, t->region->height) fromTexture:textureID];
+        [g_glView writeMovie:resultPath ofSize:CGSizeMake(t->region->width, t->region->height) fromTexture:textureID];
+    }
+#endif
+    return 0;
+}
+
+int texture_FinishMovie(lua_State *lua)
+{
+	urAPI_Texture_t* t = checktexture(lua, 1);
+#ifdef GPUIMAGE
+    [g_glView finishMovie];
+#endif
+    return 0;
 }
 
 int texture_SetGradientColor(lua_State* lua)
@@ -2608,6 +2737,26 @@ int region_EnableClamping(lua_State* lua)
 	bool clamped = lua_toboolean(lua,2); //!lua_isnil(lua,2);
 	region->isClamped = clamped;
 	return 0;
+}
+
+int region_SetClampRegion(lua_State* lua)
+{
+	urAPI_Region_t* t = checkregion(lua, 1);
+	t->clampleft = luaL_checknumber(lua, 2);
+	t->clampbottom = luaL_checknumber(lua, 3);
+	t->clampwidth = luaL_checknumber(lua, 4);
+	t->clampheight = luaL_checknumber(lua, 5);
+	return 0;
+}
+
+int region_ClampRegion(lua_State* lua)
+{
+	urAPI_Region_t* t = checkregion(lua, 1);
+	lua_pushnumber(lua, t->clampleft);
+	lua_pushnumber(lua, t->clampbottom);
+	lua_pushnumber(lua, t->clampwidth);
+	lua_pushnumber(lua, t->clampheight);
+	return 4;
 }
 
 int region_RegionOverlap(lua_State* lua)
@@ -2876,7 +3025,7 @@ void SetBrushSize(float size);
 
 int texture_SetBrushSize(lua_State* lua)
 {
-	urAPI_Texture_t* t = checktexture(lua, 1);
+//	urAPI_Texture_t* t = checktexture(lua, 1);
 	float size = luaL_checknumber(lua, 2);
 	SetBrushSize(size);
 	return 0;
@@ -2890,12 +3039,25 @@ int texture_SetBrushColor(lua_State* lua)
 	float vertG = luaL_checknumber(lua, 3);
 	float vertB = luaL_checknumber(lua, 4);
 	float vertA = 255;
-	if(lua_gettop(lua)==5)
+	if(lua_gettop(lua)>=5)
 		vertA = luaL_checknumber(lua, 5);
 	t->texturebrushcolor[0] = vertR;
 	t->texturebrushcolor[1] = vertG;
 	t->texturebrushcolor[2] = vertB;
 	t->texturebrushcolor[3] = vertA;
+    if(lua_gettop(lua)>=8)
+    {
+        vertR = luaL_checknumber(lua, 6);
+        vertG = luaL_checknumber(lua, 7);
+        vertB = luaL_checknumber(lua, 8);
+        vertA = 255;
+        if(lua_gettop(lua)==9)
+            vertA = luaL_checknumber(lua, 9);
+    }
+    t->texturebrushcolor[4] = vertR;
+    t->texturebrushcolor[5] = vertG;
+    t->texturebrushcolor[6] = vertB;
+    t->texturebrushcolor[7] = vertA;
 	return 0;
 }
 
@@ -2903,27 +3065,37 @@ float BrushSize();
 
 int texture_BrushSize(lua_State* lua)
 {
-	urAPI_Texture_t* t = checktexture(lua, 1);
+//	urAPI_Texture_t* t = checktexture(lua, 1);
 	float size = BrushSize();
 	lua_pushnumber(lua, size);
 	return 1;
 }
 
-
+bool UsesTextureBrush();
+//void SetBrushTexture(Texture2D* t);
+void SetBrushTexture(urAPI_Texture* t);
+void SetBrushAsCamera(bool asdf);
 
 int texture_UseCamera(lua_State* lua)
 {
 	urAPI_Texture_t* t = checktexture(lua, 1);
 	if(t->backgroundTex == nil)
 		instantiateAllTextures(t->region);
+    if(t->usecamera == 0)
+    {
+//        AddRegionToChain(CameraChain,t->region);
+        page_camerause++;
+        incCameraUse();
+    }
+//        [g_glView IncCameraUse];
 	t->usecamera = 1;
 	t->isTiled = false; // Camera textures cannot be tiled
+    
+    if(UsesTextureBrush())
+        SetBrushAsCamera(true);
 	return 0;
 }
 	
-void SetBrushTexture(Texture2D* t);
-void SetBrushAsCamera(bool asdf);
-    
 int region_UseAsBrush(lua_State* lua)
 {
 	urAPI_Region_t* t = checkregion(lua, 1);
@@ -2939,7 +3111,8 @@ int region_UseAsBrush(lua_State* lua)
         SetBrushAsCamera(false);
     }
     
-    SetBrushTexture(t->texture->backgroundTex);
+//    SetBrushTexture(t->texture->backgroundTex);
+    SetBrushTexture(t->texture);
 
 
 	return 0;
@@ -2972,7 +3145,7 @@ const char JUSTIFYV_STRING_BOTTOM[] = "BOTTOM";
 int textlabel_HorizontalAlign(lua_State* lua)
 {
 	urAPI_TextLabel_t* t = checktextlabel(lua, 1);
-	const char* justifyh;
+	const char* justifyh = JUSTIFYH_STRING_CENTER;;
 	switch(t->justifyh)
 	{
 		case JUSTIFYH_CENTER:
@@ -3001,13 +3174,15 @@ int textlabel_SetHorizontalAlign(lua_State* lua)
 		t->justifyh = JUSTIFYH_LEFT;
 	else if(!strcmp(justifyh, JUSTIFYH_STRING_RIGHT))
 		t->justifyh = JUSTIFYH_RIGHT;
+    
+    t->updatestring = true;
 	return 0;
 }
 
 int textlabel_VerticalAlign(lua_State* lua)
 {
 	urAPI_TextLabel_t* t = checktextlabel(lua, 1);
-	const char* justifyv;
+	const char* justifyv= JUSTIFYV_STRING_MIDDLE;
 	switch(t->justifyv)
 	{
 		case JUSTIFYV_MIDDLE:
@@ -3057,6 +3232,125 @@ int textlabel_Wrap(lua_State* lua)
 	return 1;
 }
 
+int textlabel_CharPosition(lua_State* lua)
+{
+    urAPI_TextLabel_t* textlabel = checktextlabel(lua,1);
+    lua_Number x = luaL_checknumber(lua,2);
+    lua_Number y = luaL_checknumber(lua,3);
+
+#ifndef UISTRINGS
+    lua_pushnumber(lua, textlabel->textlabelTex->charIndexAtPos(x,y));
+#endif
+    return 1;
+}
+
+int textlabel_LabelChar(lua_State* lua)
+{
+    urAPI_TextLabel_t* textlabel = checktextlabel(lua,1);
+    lua_Number start_l = 0;
+    lua_Number end_l = strlen(textlabel->text);
+    if(lua_gettop(lua)==3)
+    {
+        start_l = luaL_checknumber(lua,2);
+        end_l = luaL_checknumber(lua,3);
+    }
+    
+}
+
+int textlabel_LabelBounds(lua_State* lua)
+{
+    urAPI_TextLabel_t* textlabel = checktextlabel(lua,1);
+    lua_Number start_l = 0;
+    lua_Number end_l = strlen(textlabel->text);
+    if(lua_gettop(lua)==3)
+    {
+        start_l = luaL_checknumber(lua,2);
+        end_l = luaL_checknumber(lua,3);
+    }
+    
+    if(textlabel->textlabelTex == NULL)
+        return 0;
+#ifndef UISTRINGS
+    charPos**  &charPosLines = textlabel->textlabelTex->charPosLines; //getCharPosLines();
+    int start = (int)start_l;
+    int end = (int)end_l;
+    
+    int pos=0;
+    int returncnt = 0;
+    bool started = false;
+    assert((returncnt%2)==0);
+    for(int i=0;i< textlabel->textlabelTex->charLines(); i++)
+    {
+        assert((returncnt%2)==0);
+        int linelen = charPosLines[i][0].len + 1;
+        if(start<pos+linelen && !started)
+        {
+            lua_pushnumber(lua, charPosLines[i][start-pos].x);
+            lua_pushnumber(lua, charPosLines[i][start-pos].y + textlabel->textlabelTex->yalign);
+            NSLog(@"Label Start: %d %d (%d)- %d %d: %c (%d)", start, start-pos, i, charPosLines[i][start-pos].x,charPosLines[i][start-pos].y + textlabel->textlabelTex->yalign, charPosLines[i][start-pos].value, charPosLines[i][start-pos].width);
+            returncnt = returncnt + 2;
+            started = true;
+        }
+
+        if(end<pos+linelen)
+        {
+            lua_pushnumber(lua, charPosLines[i][end-pos].x);
+            lua_pushnumber(lua, charPosLines[i][end-pos].y+charPosLines[i][end-pos].height + textlabel->textlabelTex->yalign);
+            NSLog(@"Label End: %d %d (%d)- %d %d: %c (%d)", end, end-pos, i, charPosLines[i][end-pos].x,charPosLines[i][end-pos].y + textlabel->textlabelTex->yalign, charPosLines[i][end-pos].value, charPosLines[i][end-pos].width);
+            returncnt = returncnt + 2;
+            started = false;
+            assert((returncnt%2)==0);
+            break;
+        }
+        
+        pos = pos + linelen;
+        assert((returncnt%2)==0);
+        if(started)
+        {
+            lua_pushnumber(lua, charPosLines[i][linelen].x); // Old line end
+            lua_pushnumber(lua, charPosLines[i][linelen].y+charPosLines[i][linelen].height + textlabel->textlabelTex->yalign);
+            returncnt = returncnt + 2;
+            if(i+1< textlabel->textlabelTex->charLines())
+            {
+                lua_pushnumber(lua, charPosLines[i+1][0].x); // New Line start
+                lua_pushnumber(lua, charPosLines[i+1][0].y + textlabel->textlabelTex->yalign);
+                returncnt = returncnt + 2;
+                
+            }
+        }
+        assert((returncnt%2)==0);
+    }
+    assert((returncnt%2)==0);
+    if(started)
+    {
+        int i = textlabel->textlabelTex->charLines()-1;
+        assert(i>=0);
+        int linelen = charPosLines[i][0].len;
+        lua_pushnumber(lua, charPosLines[i][linelen].x); // Old line end
+        lua_pushnumber(lua, charPosLines[i][linelen].y+charPosLines[i][linelen].height + textlabel->textlabelTex->yalign);
+        assert((returncnt%2)==0);
+        returncnt = returncnt + 2;
+        assert((returncnt%2)==0);
+    }
+    assert((returncnt%4)==0);
+    return returncnt;
+#else
+    return 0;
+#endif
+}
+
+
+/*
+int textlabel_LabelAnchor(lua_State* lua)
+{
+    urAPI_TextLabel_t* textlabel = checktextlabel(lua,1);
+    if(textlabel->textlabelTex == NULL)
+        return 0;
+    lua_pushnumber(lua, textlabel->textlabeTex->labelx);
+    lua_pushnumber(lua, textlabel->textlabeTex->labely);
+    return 2;
+}
+*/
 int textlabel_ShadowColor(lua_State* lua)
 {
 	urAPI_TextLabel_t* t = checktextlabel(lua, 1);
@@ -3180,6 +3474,8 @@ int textlabel_Label(lua_State* lua)
 	return 1;
 }
 
+void renderTextLabel(urAPI_Region_t *t);
+
 int textlabel_SetLabel(lua_State* lua)
 {
 	urAPI_TextLabel_t* t = checktextlabel(lua, 1);
@@ -3190,7 +3486,8 @@ int textlabel_SetLabel(lua_State* lua)
 	t->text = (char*)malloc(strlen(text)+1);
 	strcpy(t->text, text);
 
-	t->updatestring = true;
+//	t->updatestring = true;
+    renderTextLabel(t->region);
 	return 0;
 }
 
@@ -3223,6 +3520,28 @@ int textlabel_Rotation(lua_State* lua)
 	return 1;
 }
 
+int textlabel_SetOutline(lua_State* lua)
+{
+	urAPI_TextLabel_t* t = checktextlabel(lua, 1);
+	t->outlinemode = luaL_checknumber(lua,2);
+    if(lua_gettop(lua)>2)
+    {
+        t->outlinethickness = luaL_checknumber(lua,3);
+    }
+    else if( t->outlinemode > 0 )
+        t->outlinethickness = 1; // 1 thickness if we have an outline
+    t->updatestring = true;
+}
+
+int textlabel_Outline(lua_State* lua)
+{
+	urAPI_TextLabel_t* t = checktextlabel(lua, 1);
+	lua_pushnumber(lua, t->outlinemode);
+	lua_pushnumber(lua, t->outlinethickness);
+    
+    return 6;
+}
+
 // SOAR support API
 
 #ifdef SOAR_SUPPORT
@@ -3236,8 +3555,8 @@ void soar_MyPrintEventHandler(sml::smlPrintEventId id, void* pUserData, sml::Age
 
 const char* region_SoarAgentFile(const char* name, const char* ext)
 {
-	NSString* nsName = [NSString stringWithCString:name length:strlen(name)];
-	NSString* nsExt = [NSString stringWithCString:ext length:strlen(ext)];
+	NSString* nsName = [NSString stringWithUTF8String:name];
+	NSString* nsExt = [NSString stringWithUTF8String:ext];
 	
 	return [[[NSBundle mainBundle] pathForResource:nsName ofType:nsExt] UTF8String];
 }
@@ -3513,6 +3832,8 @@ static const struct luaL_reg textlabelfuncs [] =
 	{"SetShadowColor", textlabel_SetShadowColor},
 	{"SetShadowOffset", textlabel_SetShadowOffset},
 	{"SetShadowBlur", textlabel_SetShadowBlur},
+    {"SetOutline", textlabel_SetOutline},
+    {"Outline", textlabel_Outline},
 	{"SetSpacing", textlabel_SetSpacing},
 	{"SetColor", textlabel_SetColor},
 	{"Height", textlabel_Height},
@@ -3521,6 +3842,9 @@ static const struct luaL_reg textlabelfuncs [] =
 	{"SetFormattedText", textlabel_SetFormattedText},
 	{"SetWrap", textlabel_SetWrap},
 	{"Wrap", textlabel_Wrap},
+    {"CharPosition", textlabel_CharPosition},
+    {"LabelBounds", textlabel_LabelBounds},
+//    {"LabelAnchor", testlabel_LabelAnchor},
 	{"SetLabel", textlabel_SetLabel},
 	{"SetFontHeight", textlabel_SetFontHeight},
 	{"FontHeight", textlabel_FontHeight},
@@ -3532,7 +3856,7 @@ static const struct luaL_reg textlabelfuncs [] =
 int texture_gc(lua_State* lua)
 {
 //	urAPI_Texture_t* region = checktexture(lua,1);
-	int a = 0;
+//	int a = 0;
     // NYI
 	return 0;
 }
@@ -3540,6 +3864,8 @@ int texture_gc(lua_State* lua)
 static const struct luaL_reg texturefuncs [] =
 {
 	{"SetTexture", texture_SetTexture},
+    {"WriteMovie", texture_SaveMovie},
+    {"FinishMovie", texture_FinishMovie},
 //	{"SetGradient", texture_SetGradient},
 	{"SetGradientColor", texture_SetGradientColor},
 	{"Texture", texture_Texture},
@@ -3578,7 +3904,7 @@ int region_gc(lua_State* lua)
 {
 //	urAPI_Region_t* region = checkregion(lua,1);
     // NYI
-	int a = 0;
+//	int a = 0;
 	return 0;
 }
 
@@ -3621,6 +3947,8 @@ static const struct luaL_reg regionfuncs [] =
 	{"IsToplevel", region_IsToplevel},
 	{"MoveToTop", region_MoveToTop},
 	{"EnableClamping", region_EnableClamping},
+    {"SetClampRegion", region_SetClampRegion},
+    {"ClampRegion", region_ClampRegion},
 	{"RegionOverlap", region_RegionOverlap},
 	{"UseAsBrush", region_UseAsBrush},
 	{"EnableClipping", region_EnableClipping},
@@ -3654,7 +3982,15 @@ static const luaL_reg regionmetas[] = {
 void addChild(urAPI_Region_t *parent, urAPI_Region_t *child)
 {
 	if(parent->firstchild == NULL)
+    {
 		parent->firstchild = child;
+        if(child->nextchild != NULL)
+        {
+            child->nextchild = NULL;
+//            child->parent = parent;
+//            assert(0);
+        }
+    }
 	else
 	{
         child->nextchild = parent->firstchild;
@@ -3672,11 +4008,12 @@ void addChild(urAPI_Region_t *parent, urAPI_Region_t *child)
 
 void removeChild(urAPI_Region_t *parent, urAPI_Region_t *child)
 {
-	if(parent->firstchild != NULL)
+	if(parent != NULL && parent->firstchild != NULL)
 	{
 		if(parent->firstchild == child)
 		{
 			parent->firstchild = parent->firstchild->nextchild;
+            child->parent = NULL;
 		}
 		else
 		{
@@ -3689,13 +4026,11 @@ void removeChild(urAPI_Region_t *parent, urAPI_Region_t *child)
 			{
 				findlast->nextchild = findlast->nextchild->nextchild;	
 				child->nextchild = NULL;
-			}
-			else
-			{
-				int a = 0;
+                child->parent = NULL;
 			}
 		}
 	}
+    child->parent = NULL;
 }
 
 //------------------------------------------------------------------------------
@@ -3726,6 +4061,10 @@ int flowbox_SetPushLink(lua_State *lua)
 	}
 	
 	fb->object->AddPushOut(outindex, &target->object->ins[inindex]);
+    if(fb->object == cameraObject)
+    {
+        incCameraUse();
+    }
     
     lua_pushboolean(lua, 1);
 	return 1;
@@ -3737,6 +4076,10 @@ int flowboxout_SetPush(lua_State *lua)
 	ursAPI_FlowBox_Port_t* targetin = checkflowboxport(lua, 2);
 
     fbout->object->AddPushOut(fbout->index, &targetin->object->ins[targetin->index]);
+    if(fbout->object == cameraObject)
+    {
+        incCameraUse();
+    }
     return 0;
 }
 
@@ -3744,6 +4087,7 @@ void AddPull(ursObject* src, int inindex, ursObject* target, int outindex)
 {
 	src->AddPullIn(inindex, &target->outs[outindex]);
     
+    /*
 	if(!strcmp(src->name,dacobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
 		urActiveDacTickSinkList.AddSink(&target->outs[outindex]);
 	
@@ -3752,6 +4096,7 @@ void AddPull(ursObject* src, int inindex, ursObject* target, int outindex)
     
 	if(!strcmp(src->name,netobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
 		urActiveNetTickSinkList.AddSink(&target->outs[outindex]);
+     */
 }
 
 int flowbox_SetPullLink(lua_State *lua)
@@ -3832,7 +4177,7 @@ int flowbox_IsPulled(lua_State *lua)
  for
  fb->object->RemovePushOut(outindex, &target->object->ins[inindex]);
  }	
- */
+*/
 
 int flowbox_RemovePushLink(lua_State *lua)
 {
@@ -3848,6 +4193,10 @@ int flowbox_RemovePushLink(lua_State *lua)
 	}
 	
 	fb->object->RemovePushOut(outindex, &target->object->ins[inindex]);
+    if(fb->object == cameraObject)
+    {
+        decCameraUse();
+    }
     
     lua_pushboolean(lua, 1);
 	return 1;
@@ -3859,6 +4208,11 @@ int flowboxout_RemovePush(lua_State *lua)
 	ursAPI_FlowBox_Port_t* targetin = checkflowboxport(lua, 2);
 	
 	fbout->object->RemovePushOut(fbout->index, &targetin->object->ins[targetin->index]);
+    if(fbout->object == cameraObject)
+    {
+        decCameraUse();
+    }
+
     return 0;
 }
 
@@ -3866,7 +4220,8 @@ int flowboxout_RemovePush(lua_State *lua)
 void RemovePull(ursObject* src, int inindex, ursObject* target, int outindex)
 {
 	src->RemovePullIn(inindex, &target->outs[outindex]);
-	
+
+	/*
 	if(!strcmp(src->name,dacobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
 		urActiveDacTickSinkList.RemoveSink(&target->outs[outindex]);
 	
@@ -3874,7 +4229,8 @@ void RemovePull(ursObject* src, int inindex, ursObject* target, int outindex)
 		urActiveVisTickSinkList.RemoveSink(&target->outs[outindex]);
     
 	if(!strcmp(src->name,netobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
-		urActiveNetTickSinkList.RemoveSink(&target->outs[outindex]);    
+		urActiveNetTickSinkList.RemoveSink(&target->outs[outindex]);  
+     */
 }
 
 int flowbox_RemovePullLink(lua_State *lua)
@@ -3995,11 +4351,12 @@ int flowbox_Push(lua_State *lua)
 int flowbox_Pull(lua_State *lua)
 {
 	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
-	float indata = luaL_checknumber(lua, 2);
 	
-	fb->object->CallAllPushOuts(indata);
+	fb->object->lastindata[0] = fb->object->CallAllPullIns();
 	
-	return 0;
+    lua_pushnumber(lua, fb->object->lastindata[0]);
+    
+	return 1;
 }
 
 extern double visoutdata;
@@ -4093,6 +4450,14 @@ int flowbox_IsCoupled(lua_State *lua)
 	return 1;
 }
 
+int flowbox_gc(lua_State* lua)
+{
+    //	urAPI_Region_t* region = checkregion(lua,1);
+    // NYI
+    //	int a = 0;
+	return 0;
+}
+
 // Methods table for the flowbox API
 
 static const struct luaL_reg flowboxfuncs [] = 
@@ -4119,6 +4484,7 @@ static const struct luaL_reg flowboxfuncs [] =
     {"NumberInstances", flowbox_NumberInstances},
     {"Couple", flowbox_Couple},
     {"IsCoupled", flowbox_IsCoupled},
+    {"__gc",       flowbox_gc},
     {NULL, NULL}
 };
 
@@ -4154,6 +4520,9 @@ static int addToPatch(ursAPI_FlowBox_t* flowbox)
 
 static void removeFlowboxLinks(ursAPI_FlowBox_t* flowbox)
 {
+    flowbox->object->RemoveAllPullIns();
+    flowbox->object->RemoveAllPushOuts();
+
 }
 
 //------------------------------------------------------------------------------
@@ -4275,6 +4644,11 @@ static int l_Region(lua_State *lua)
 	myregion->clipwidth = SCREEN_WIDTH;
 	myregion->clipheight = SCREEN_HEIGHT;
 	
+	myregion->clampleft = 0.0;
+	myregion->clampbottom = 0.0;
+	myregion->clampwidth = SCREEN_WIDTH;
+	myregion->clampheight = SCREEN_HEIGHT;
+	
 	myregion->alpha = 1.0;
 	
 	myregion->isMovable = false;
@@ -4335,6 +4709,7 @@ static int l_Region(lua_State *lua)
 
 int l_FreeAllRegions(lua_State* lua)
 {
+    pthread_mutex_lock( &r_mutex );
 	urAPI_Region_t* t=lastRegion[currentPage];
 	urAPI_Region_t* p;
 	
@@ -4360,6 +4735,8 @@ int l_FreeAllRegions(lua_State* lua)
         
 		t = p;
 	}
+    pthread_mutex_unlock( &r_mutex );
+
 	return 0;
 }
 
@@ -4408,6 +4785,8 @@ static int l_NumRegions(lua_State *lua)
 static int l_EnumerateRegions(lua_State *lua)
 {
 	urAPI_Region_t* region;
+    
+    // NYI
     
 	if(lua_isnil(lua,1))
 	{
@@ -4482,11 +4861,16 @@ int l_StartHTTPServer(lua_State *lua)
 	paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
 	NSString *documentPath;
 	if ([paths count] > 0)
+    {
 		documentPath = [paths objectAtIndex:0];
     
 	// start off http server
 	http_start([resourcePath UTF8String],
 			   [documentPath UTF8String]);
+    }
+    else {
+        assert(false); // No document path
+    }
 	return 0;
 }
 
@@ -4686,19 +5070,37 @@ int l_SoarEnabled(lua_State* lua)
 // Flowbox-related global API
 //------------------------------------------------------------------------------
 
+void FreeAllFlowboxes(int patch)
+{
+	for(int i=0; i < numFlowBoxes[patch]; i++)
+	{
+        assert(firstFlowbox[patch][i]);
+        removeFlowboxLinks(firstFlowbox[patch][i]);
+        if(!firstFlowbox[patch][i]->object->noninstantiable) // instanced
+            delete firstFlowbox[patch][i]->object;
+        else
+        {
+            int a=0;
+        }
+		free(firstFlowbox[patch][i]);
+        firstFlowbox[patch][i] = NULL;
+ 
+	}
+	free(firstFlowbox[patch]);
+	firstFlowbox[patch] = NULL;
+	numFlowBoxes[patch] = 0;
+}
+
 static int l_FreeAllFlowboxes(lua_State* lua)
 {
-	/*
-	for(int i=0; i < numFlowBoxes[currentPatch]; i++)
-	{
-		delete firstFlowbox[currentPatch][i]->object;
-//		removeFlowboxLinks(firstFlowbox[currentPatch][i]);
-		free(firstFlowbox[currentPatch][i]);
-	}
-	free(firstFlowbox[currentPatch]);
-	firstFlowbox[currentPatch] = NULL;
-	numFlowBoxes[currentPatch] = 0;
-	 */
+    pthread_mutex_lock( &fb_mutex );
+#ifdef RELOCATE_FAFB
+    if(freePatches[currentPatch]==0)
+        freePatches[currentPatch]=1;
+#else
+    FreeAllFlowboxes(currentPatch);
+#endif
+    pthread_mutex_unlock( &fb_mutex );
 	return 0;
 }
 	
@@ -4736,6 +5138,8 @@ static void populateFlowboxPorts(ursAPI_FlowBox_t *myflowbox)
 
 static int l_FlowBox(lua_State* lua)
 {
+    pthread_mutex_lock( &fb_mutex );
+
 	int idx = 1;
 	if(lua_gettop(lua)>1) // Allow for no arg construction
 	{
@@ -4765,11 +5169,12 @@ static int l_FlowBox(lua_State* lua)
     populateFlowboxPorts(myflowbox);
     
 	if(myflowbox->object != parentFlowBox->object) // instanced
-		addToPatch(myflowbox);
+        addToPatch(myflowbox);
 //	myflowbox->object->instancenumber = parentFlowBox->object->instancenumber + 1;
 	
 	//	luaL_getmetatable(lua, "URAPI.flowbox");
 	//	lua_setmetatable(lua, -2);
+    pthread_mutex_unlock( &fb_mutex );
 
 	return 1;
 
@@ -4942,17 +5347,18 @@ int l_GetUrOuts(lua_State *lua)
 int l_SystemPath(lua_State *lua)
 {
 	const char* filename = luaL_checkstring(lua,1);
-	NSString *filename2 = [[NSString alloc] initWithCString:filename]; 
+	NSString *filename2 = [[NSString alloc] initWithUTF8String:filename]; 
 	NSString *filePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:filename2];
 	const char* filestr = [filePath UTF8String];
 	lua_pushstring(lua, filestr);
+//    [filename2 release]; LEAK
 	return 1;
 }
 
 int l_DocumentPath(lua_State *lua)
 {
 	const char* filename = luaL_checkstring(lua,1);
-	NSString *filename2 = [[NSString alloc] initWithCString:filename]; 
+	NSString *filename2 = [[NSString alloc] initWithUTF8String:filename]; 
 	NSArray *paths;
 	paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
 	if ([paths count] > 0) {
@@ -4965,6 +5371,7 @@ int l_DocumentPath(lua_State *lua)
 	{
 		luaL_error(lua, "Cannot find the Document path.");
 	}
+//    [filename2 release]; LEAK
 	return 1;
 }
 
@@ -4994,6 +5401,9 @@ int l_SetPage(lua_State *lua)
 		callAllOnPageLeft(num-1);
 		oldcurrent = currentPage;
         FreeAllChains();
+//        FreeCameraChain();
+        decCameraUseBy(page_camerause);
+        page_camerause = 0;
 		currentPage = num-1;
         if(linkExternal)
             currentExternalPage = currentPage;
@@ -5045,7 +5455,12 @@ int l_SetActiveCamera(lua_State *lua)
 	
 	if(currentCamera != cam)
 	{
+#ifdef GPUIMAGE
+        [g_glView->videoCamera rotateCamera];
+#else
 		[g_glView->captureManager toggleCameraSelection];
+#endif
+        currentCamera = cam;
 	}
 	
 	return 0;
@@ -5074,7 +5489,47 @@ int l_SetTorchFlashFrequency(lua_State *lua)
 
 	return 0;
 }
-	
+
+const char* urFilterModeNames[] = { "NONE", "SATURATION", "CONTRAST", "BRIGHTNESS", "EXPOSURE", "RGB", "SHARPEN", "UNSHARPMASK", 
+"TRANSFORM", "TRANSFORM3D", "CROP", "MASK", "GAMMA", "TONECURVE", "HAZE", "SEPIA", "COLORINVERT", "GRAYSCALE", 
+"THRESHOLD", "ADAPTIVETHRESHOLD", "PIXELLATE", "POLARPIXELLATE", "CROSSHATCH", "SOBELEDGEDETECTION",
+"PREWITTEDGEDETECTION", "CANNYEDGEDETECTION", "XYGRADIENT", /*"HARRISCORNERDETECTION", "NOBLECORNERDETECTION", 
+"SHITOMASIFEATUREDETECTION",*/ "SKETCH", "TOON", "SMOOTHTOON", "TILTSHIFT", "CGA", "POSTERIZE", "CONVOLUTION", 
+"EMBOSS", /*"KUWAHARA",*/ "VIGNETTE", "GAUSSIAN", "GAUSSIAN_SELECTIVE", "FASTBLUR", "BOXBLUR", "MEDIAN", "BILATERAL",
+"SWIRL", "BULGE", "PINCH", "STRETCH", "DILATION", "EROSION", "OPENING", "CLOSING", 
+"PERLINNOISE", /*"VORONI",*/  "MOSAIC", "DISSOLVE", "CHROMAKEY", "MULTIPLY", "OVERLAY", "LIGHTEN", "DARKEN", "COLORBURN",
+"COLORDODGE", "SCREENBLEND", "DIFFERENCEBLEND", "SUBTRACTBLEND", "EXCLUSIONBLEND", "HARDLIGHTBLEND", "SOFTLIGHTBLEND", 
+/*"CUSTOM",*/ "FILTERGROUP",
+    "POLKADOT", "HALFTONE", "LEVELS", "MONOCHROME", "HUE",
+    "WHITEBALANCE", "LOWPASS", "HIGHPASS", "MOTIONDETECTOR", "THRESHOLDSKETCH",
+    "SPHEREREFRACTION", "GLASSSPHERE", "HIGHLIGHTSHADOW", "LOCALBINARYPATTERN"
+};
+
+int l_SetCameraFilter(lua_State *lua)
+{
+	const char* filtermode = luaL_checkstring(lua, 1);
+#ifdef GPUIMAGE
+    for(int i=0; i<maxFilterMode; i++)
+    {
+        if(!strcmp(filtermode,urFilterModeNames[i]))
+        {
+            [g_glView setCameraFilter:(GPUImageFilterType)i];
+            return 0;
+        }
+    }
+#endif
+    luaL_error(lua, "Unknown camera filter mode: %s", filtermode);
+    return 0;
+}
+
+int l_SetCameraFilterParameter(lua_State *lua)
+{
+	double value = luaL_checknumber(lua,1);
+#ifdef GPUIMAGE
+    [g_glView setCameraFilterParameter:value];
+#endif
+    return 0;
+}
 //------------------------------------------------------------------------------
 // Media Writing-related global API
 //------------------------------------------------------------------------------
@@ -5108,6 +5563,49 @@ int l_FinishMovieMaking(lua_State *lua)
 	[g_glView closeMovieWriter];
 	return 0;
 }
+
+#ifdef GPUIMAGE
+extern GLuint bgname;
+#endif
+
+int l_SaveMovie(lua_State *lua)
+{
+	const char* filename = luaL_checkstring(lua, 1);
+#ifdef GPUIMAGE
+    float cropleft = 0.0;
+    float cropbottom = 0.0;
+    float cropright = 1.0;
+    float croptop = 1.0;
+    
+    if(lua_gettop(lua)==5)
+    {
+        cropleft = luaL_checknumber(lua, 2)/SCREEN_WIDTH;
+        cropbottom = luaL_checknumber(lua, 3)/SCREEN_HEIGHT;
+        cropright = luaL_checknumber(lua, 4)/SCREEN_WIDTH;
+        croptop = luaL_checknumber(lua, 5)/SCREEN_HEIGHT;
+    }
+    
+    NSString* filename2 = [NSString stringWithUTF8String:filename];
+	NSArray *paths;
+	paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+	if ([paths count] > 0) {
+		NSString *filePath = [paths objectAtIndex:0];
+		NSString *resultPath = [NSString stringWithFormat:@"%@/%@", filePath, filename2];
+        
+        [g_glView writeMovie:resultPath ofSize:CGSizeMake(SCREEN_WIDTH, SCREEN_HEIGHT) withCrop:CGRectMake(cropleft,cropbottom,cropright-cropleft,croptop-cropbottom) fromTexture:bgname];
+    }
+#endif
+    return 0;
+}
+
+int l_FinishMovie(lua_State *lua)
+{
+#ifdef GPUIMAGE
+    [g_glView finishMovie];
+#endif
+    return 0;
+}
+
 	
 //------------------------------------------------------------------------------
 // URL (CURLY)-related global API
@@ -5267,6 +5765,10 @@ void l_setupAPI(lua_State *lua)
 	myregion->firstchild = NULL;
 	myregion->point = NULL;
 	myregion->relativePoint = NULL;
+    myregion->next = nil;
+	myregion->parent = NULL;
+	myregion->firstchild = NULL;
+	myregion->nextchild = NULL;
 	UIParent = myregion;
 	lua_setglobal(lua, "UIParent");
 
@@ -5465,6 +5967,10 @@ void l_setupAPI(lua_State *lua)
 	lua_setglobal(lua, "SetTorchFlashFrequency");
 	lua_pushcfunction(lua, l_SetCameraAutoBalance);
     lua_setglobal(lua, "SetCameraAutoBalance");
+    lua_pushcfunction(lua, l_SetCameraFilter);
+    lua_setglobal(lua, "SetCameraFilter");
+    lua_pushcfunction(lua, l_SetCameraFilterParameter);
+    lua_setglobal(lua, "SetCameraFilterParameter");
     
 	lua_pushcfunction(lua, l_WriteScreenshot);
 	lua_setglobal(lua, "WriteScreenshot");
@@ -5475,6 +5981,11 @@ void l_setupAPI(lua_State *lua)
 	lua_setglobal(lua, "AddScreenshot");
 	lua_pushcfunction(lua, l_FinishMovieMaking);
 	lua_setglobal(lua, "FinishMovieMaking");
+    
+    lua_pushcfunction(lua, l_SaveMovie);
+    lua_setglobal(lua, "WriteMovie");
+    lua_pushcfunction(lua, l_FinishMovie);
+    lua_setglobal(lua, "FinishMovie");
 	
 	lua_pushcfunction(lua, l_FreeAllRegions);
 	lua_setglobal(lua, "FreeAllRegions");
@@ -5506,3 +6017,5 @@ void l_setupAPI(lua_State *lua)
 	systimer = new MachTimer();
 	systimer->start();
 }
+
+#endif

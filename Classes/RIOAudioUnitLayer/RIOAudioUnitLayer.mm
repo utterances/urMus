@@ -104,7 +104,7 @@ void rioInterruptionListener(void *inClientData, UInt32 inInterruption)
 {
 //	printf("Session interrupted! --- %s ---", inInterruption == kAudioSessionBeginInterruption ? "Begin Interruption" : "End Interruption");
 	
-	rioClientData_t *THIS = (rioClientData_t*)inClientData;
+//	rioClientData_t *THIS = (rioClientData_t*)inClientData;
 	
 	// Restart the stream after an interruption
 	if (inInterruption == kAudioSessionEndInterruption) {
@@ -232,7 +232,7 @@ static OSStatus	PerformThru(
 							AudioBufferList 			*ioData)
 {
 	rioClientData_t *THIS = (rioClientData_t *)inRefCon;
-	OSStatus err;
+	OSStatus err=0;
 	if(gotMic)
 		err = AudioUnitRender(THIS->rioUnit, ioActionFlags, inTimeStamp, 1, inNumberFrames, ioData);
 	if (err) { printf("PerformThru: error %d\n", (int)err); return err; }
@@ -500,7 +500,7 @@ void* LoadAudioFileData(const char *filename, UInt32 *outDataSize, UInt32*	outSa
 		{
 			// success
 			*outDataSize = theFileLengthInFrames; //dataSize;
-			//*outDataFormat = (theOutputFormat.mChannelsPerFrame > 1) ? AL_FORMAT_STEREO16 : AL_FORMAT_MONO16;
+			// *outDataFormat = (theOutputFormat.mChannelsPerFrame > 1) ? AL_FORMAT_STEREO16 : AL_FORMAT_MONO16;
 			*outSampleRate = theOutputFormat.mSampleRate;
 		}
 		else 
@@ -528,7 +528,7 @@ const char* multiPath(const char* filename)
     const char* filestr = filename;
     FILE *fd = fopen( filename, "rb" );
     if ( !fd ) {
-        NSString *filename2 = [[NSString alloc] initWithCString:filename]; 
+        NSString *filename2 = [[NSString alloc] initWithUTF8String:filename]; 
         NSString *filePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:filename2];
         filestr = [filePath UTF8String];
     }
@@ -538,7 +538,7 @@ const char* multiPath(const char* filename)
 void* LoadAudioFileData2(const char *filename, UInt32 *outDataSize, UInt32*	outSampleRate)
 {
     OSStatus err = noErr;
-    UInt32 propertySize;
+//    UInt32 propertySize;
     AudioFileID fileId = 0;
     
 	NSString *filename2 = [[NSString alloc] initWithUTF8String:filename]; // Leak here, fix.

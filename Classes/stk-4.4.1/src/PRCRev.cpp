@@ -81,8 +81,7 @@ StkFrames& PRCRev :: tick( StkFrames& frames, unsigned int channel )
   unsigned int hop = frames.channels();
   for ( unsigned int i=0; i<frames.frames(); i++, samples += hop ) {
     *samples = tick( *samples );
-    *samples++;
-    *samples = lastFrame_[1];
+    *(samples+1) = lastFrame_[1];
   }
 
   return frames;
