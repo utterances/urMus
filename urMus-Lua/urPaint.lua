@@ -12,7 +12,7 @@ function BrushDown(self,x,y)
 end
 
 function BrushUp(self)
-    self:Handle("OnMove", nil).0
+    self:Handle("OnMove", nil)
 end
 
 function Clear(self)
@@ -37,6 +37,8 @@ smudgebackdropregion:Handle("OnTouchDown", BrushDown)
 smudgebackdropregion:Handle("OnTouchUp", BrushUp)
 smudgebackdropregion:EnableInput(true)
 smudgebackdropregion:Show()
+
+local pi = math.pi
 
 brush1=Region('region','brush',UIParent)
 brush1.t=brush1:Texture()

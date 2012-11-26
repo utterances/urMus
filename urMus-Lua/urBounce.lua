@@ -185,7 +185,7 @@ end
 _G["FBMic"]:SetPushLink(0,_G["FBVis"],0)
 
 backdrop = Region('Region','backdrop',UIParent)
-backdrop:SetLayer("TOOPTIP")
+backdrop:SetLayer("TOOLTIP")
 backdrop:SetWidth(ScreenWidth());
 backdrop:SetHeight(ScreenHeight());
 backdrop:SetAnchor("BOTTOMLEFT",0,0)

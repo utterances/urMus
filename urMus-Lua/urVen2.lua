@@ -1,16 +1,34 @@
 -- urVen2.lua
+-- Version 1
 -- By Aaven Jin, July-August 2011
+-- Version 2 
+-- By Taylor Cronk, July-August 2012
 -- University of Michigan Ann Arbor
 
--- Components: 
--- v1.backdrop v2.notification(not working) v3.hold button v4.color wheel v5.moving controller 
--- v6.moving dialog v7.Menu class v8.menu function list v9.global menubar v10. Keyboard class 
--- v11.edit/release mode v12.trashbin v13.anchorv v14.pagebutton
+-- A multipurpose non-programming environment aimed towards giving the user the ability
+-- To create a increasingly more complex application without any coding on the users side.
+-- The basis of the script is contained in this file while most of the features are contained
+-- the accompianing scripts, listed below.
+
 
 FreeAllRegions()
 SetPage(38)
-DPrint("Welcome to urVen2 =)")
+DPrint("Welcome to urVen2 V2.0 INDEV")
+--------------Modular Scripts-----------------
 
+dofile(SystemPath("urVen2_urKeyboard.lua"))
+dofile(SystemPath("urVen2_urGradient.lua"))
+dofile(SystemPath("urVen2_urMovingController.lua"))
+dofile(SystemPath("urVen2_urMoving.lua"))
+dofile(SystemPath("urVen2_urColorWheel.lua"))
+dofile(SystemPath("urVen2_urPictureLoading.lua"))
+dofile(SystemPath("urVen2_urPicture.lua"))
+dofile(SystemPath("urVen2_urMenu.lua"))
+dofile(SystemPath("urVen2_urAnimation.lua"))
+dofile(SystemPath("urVen2_urGeneration.lua"))
+dofile(SystemPath("urVen2_urCollisions.lua"))
+dofile(SystemPath("urVen2_urBackground.lua"))
+dofile(SystemPath("urVen2_urProjectileController.lua"))
 ---------------- constants -------------------
 MIN_WIDTH_MENU = 100
 MAX_WIDTH_MENU = 200
@@ -18,26 +36,26 @@ WIDTH_MODE = 120
 HEIGHT_LINE = 40
 STICK_MARGIN = 20 -- auto-stick when two regions are within STICK_MARGIN
 
-local regions = {}
-local recycledregions = {}
+regions = {}
+recycledregions = {}
 
-local auto_stick_enabled = 0
-local pics = {"vinyl.png","Ornament1.png","Pirate1.png","Play.png","Right.png"} -- for random pictures
+auto_stick_enabled = 0
+pics = {"vinyl.png","Ornament1.png",DocumentPath("Pirate1.png"),"Play.png","Right.png"} -- for random pictures
 
-local moving_default_speed = "8" -- 3 to 10, slow to fast
-local moving_default_dir = "45" -- direction by degree
-local boundary = {0,ScreenHeight(),0,ScreenWidth()} -- boundary coordinates to bounce from {minx,maxx,miny,maxy}
-local pboundary = {0,ScreenHeight(),0,ScreenWidth()} -- boundary coordinates for player regions to bounce from {minx,maxx,miny,maxy}
+moving_default_speed = "8" -- 3 to 10, slow to fast
+moving_default_dir = "45" -- direction by degree
+boundary = {0,ScreenHeight(),0,ScreenWidth()} -- boundary coordinates to bounce from {minx,maxx,miny,maxy}
+pboundary = {0,ScreenHeight(),0,ScreenWidth()} -- boundary coordinates for player regions to bounce from {minx,maxx,miny,maxy}
 
-local modes = {"EDIT","RELEASE"}
-local current_mode = modes[1]
+modes = {"EDIT","RELEASE"}
+current_mode = modes[1]
 
-local global_text_senders = {}
-local global_text_receiver = -1 -- currently global_text_receiver allows only one receiver
+global_text_senders = {}
+global_text_receiver = -1 -- currently global_text_receiver allows only one receiver
 
-local SixteenPositions = {} -- SixteenPositions(p1)(p2): stickee:SetAnchor(p2,sticker,p1)
-                            -- divide a region into 4 parts, divide the remaining space into 12 parts
-                            -- used for auto-stick checking
+SixteenPositions = {} -- SixteenPositions(p1)(p2): stickee:SetAnchor(p2,sticker,p1)
+-- divide a region into 4 parts, divide the remaining space into 12 parts
+-- used for auto-stick checking
 function InitializeUrStick()  
     local k = 1
     for i = 1,4 do
@@ -65,7 +83,13 @@ InitializeUrStick()
 ----------- global helper functions ------------
 function VSetTexture(v)
     v.t:SetSolidColor(v.r,v.g,v.b,v.a)
-    v.t:SetTexture(v.bkg)
+    if v.bkg ~= "" then
+        v.t:SetTexture(v.bkg)
+    end
+    if v.r1 ~= nil then
+        v.t:SetGradientColor("TOP",v.r1,v.g1,v.b1,v.a1,v.r2,v.g2,v.b2,v.a2)
+        v.t:SetGradientColor("BOTTOM",v.r3,v.g3,v.b3,v.a3,v.r4,v.g4,v.b4,v.a4)
+    end
 end
 
 function VVSetTexture(newv,oldv) -- copy oldv's texture and blendmode to newv
@@ -102,10 +126,12 @@ function EnableMove(vv)
     vv:EnableResizing(true)
 end
 
+
+
 ------------------ v1.backdrop ---------------------
 function TouchDown(self)
     CloseSharedStuff(nil)
-        
+    
     local region = CreateorRecycleregion('region', 'backdrop', UIParent)
     local x,y = InputPosition()
     region:Show()
@@ -114,72 +140,73 @@ function TouchDown(self)
 end
 
 function TouchUp(self)
---    DPrint("MU")
+    --    DPrint("MU")
 end
 
 function DoubleTap(self)
---      DPrint("DT")
+    --      DPrint("DT")
 end
 
 function Enter(self)
---    DPrint("EN")
+    --    DPrint("EN")
 end
 
 function Leave(self)
---    DPrint("LV")
+    --    DPrint("LV")
 end
 
 function Move(self,x,y,dx,dy) -- in release mode, when backdrop receives OnMove signal, it moves regions in backdrop's player list within pboundary
-        local player_w = 0
-        local player_h = 0
-        if self.player["bottom"] ~= nil then
-            player_w = self.player["bottom"]:Width()
-            if x < pboundary[3] + player_w/2 then
-                self.player["bottom"]:SetAnchor("BOTTOMLEFT",pboundary[3],pboundary[1])
-            elseif x > pboundary[4] - player_w/2 then
-                self.player["bottom"]:SetAnchor("BOTTOMRIGHT",pboundary[4],pboundary[1])
-            else
-                self.player["bottom"]:SetAnchor("BOTTOM",x,pboundary[1])
-            end
+    local player_w = 0
+    local player_h = 0
+    if self.player["bottom"] ~= nil then
+        player_w = self.player["bottom"]:Width()
+        if x < pboundary[3] + player_w/2 then
+            self.player["bottom"]:SetAnchor("BOTTOMLEFT",pboundary[3],pboundary[1])
+        elseif x > pboundary[4] - player_w/2 then
+            self.player["bottom"]:SetAnchor("BOTTOMRIGHT",pboundary[4],pboundary[1])
+        else
+            self.player["bottom"]:SetAnchor("BOTTOM",x,pboundary[1])
         end
-        
-        if self.player["top"] ~= nil then
-            player_w = self.player["top"]:Width()
-            if x < pboundary[3] + player_w/2 then
-                self.player["top"]:SetAnchor("TOPLEFT",pboundary[3],pboundary[2])
-            elseif x > pboundary[4] - player_w/2 then
-                self.player["top"]:SetAnchor("TOPRIGHT",pboundary[4],pboundary[2])
-            else
-                self.player["top"]:SetAnchor("TOP",x,pboundary[2])
-            end
+    end
+    
+    if self.player["top"] ~= nil then
+        player_w = self.player["top"]:Width()
+        if x < pboundary[3] + player_w/2 then
+            self.player["top"]:SetAnchor("TOPLEFT",pboundary[3],pboundary[2])
+        elseif x > pboundary[4] - player_w/2 then
+            self.player["top"]:SetAnchor("TOPRIGHT",pboundary[4],pboundary[2])
+        else
+            self.player["top"]:SetAnchor("TOP",x,pboundary[2])
         end
-        
-        if self.player["left"] ~= nil then
-            player_h = self.player["left"]:Height()
-            if y < pboundary[1] + player_h/2 then
-                self.player["left"]:SetAnchor("BOTTOMLEFT",pboundary[3],pboundary[1])
-            elseif y > pboundary[2] - player_h/2 then
-                self.player["left"]:SetAnchor("TOPLEFT",pboundary[3],pboundary[2])
-            else
-                self.player["left"]:SetAnchor("LEFT",pboundary[3],y)
-            end
+    end
+    
+    if self.player["left"] ~= nil then
+        player_h = self.player["left"]:Height()
+        if y < pboundary[1] + player_h/2 then
+            self.player["left"]:SetAnchor("BOTTOMLEFT",pboundary[3],pboundary[1])
+        elseif y > pboundary[2] - player_h/2 then
+            self.player["left"]:SetAnchor("TOPLEFT",pboundary[3],pboundary[2])
+        else
+            self.player["left"]:SetAnchor("LEFT",pboundary[3],y)
         end
-        
-        if self.player["right"] ~= nil then
-            player_h = self.player["right"]:Height()
-            if y < pboundary[1] + player_h/2 then
-                self.player["right"]:SetAnchor("BOTTOMRIGHT",pboundary[4],pboundary[1])
-            elseif y > pboundary[2] - player_h/2 then
-                self.player["right"]:SetAnchor("TOPRIGHT",pboundary[4],pboundary[2])
-            else
-                self.player["right"]:SetAnchor("RIGHT",pboundary[4],y)
-            end
+    end
+    
+    if self.player["right"] ~= nil then
+        player_h = self.player["right"]:Height()
+        if y < pboundary[1] + player_h/2 then
+            self.player["right"]:SetAnchor("BOTTOMRIGHT",pboundary[4],pboundary[1])
+        elseif y > pboundary[2] - player_h/2 then
+            self.player["right"]:SetAnchor("TOPRIGHT",pboundary[4],pboundary[2])
+        else
+            self.player["right"]:SetAnchor("RIGHT",pboundary[4],y)
         end
+    end
 end
 
-local backdrop = Region('region', 'backdrop', UIParent)
+backdrop = Region('region', 'backdrop', UIParent)
 backdrop:SetWidth(ScreenWidth())
 backdrop:SetHeight(ScreenHeight())
+--backdrop:SetBlendMode("MOD")
 backdrop:SetLayer("BACKGROUND")
 backdrop:SetAnchor('BOTTOMLEFT',0,0)
 backdrop:Handle("OnTouchDown", TouchDown)
@@ -261,594 +288,9 @@ hold_button:Handle("OnLeave",HoldButtonRelease)
 hold_button:SetAnchor("LEFT",UIParent,"LEFT")
 hold_button.held = 0
 
-------------  v4.color wheel -------------
-local color_w = 256
-local color_h = 256
 
-function UpdateColor(self,x,y,dx,dy)
-    local xx = (x+dx)*1530/color_w
-    local yy = y+dy
-    local r=0
-    local g=0
-    local b=0
-    self.region.a=yy-1
-    
-    if xx < 255 then
-        r = 255
-        g = xx
-        b = 0
-    elseif xx < 510 then
-        r = 510 - xx
-        g = 255
-        b = 0
-    elseif xx < 765 then
-        r = 0
-        g = 255
-        b = xx - 510
-    elseif xx < 920 then
-        r = 0 
-        g = 920 - xx
-        b = 255
-    elseif xx < 1175 then
-        r = xx - 920
-        g = 0
-        b = 255
-    else
-        r = 255
-        g = 0
-        b = 1530 - xx
-    end
-    
-    self.region.r = r*self.region.a/255
-    self.region.g = g*self.region.a/255
-    self.region.b = b*self.region.a/255
-    
-    VSetTexture(self.region)
-    DPrint("r"..self.region.r.." g"..self.region.g.." b"..self.region.b.." a"..self.region.a..". Double tap to close.")
-end
 
-function CloseColorWheel(self)
-    self:Hide()
-    self:EnableInput(false)
-    DPrint("color wheel closed")
-end
-
-local color_wheel = Region('region','colorwheel',UIParent)
-color_wheel.t = color_wheel:Texture()
-color_wheel.t:SetTexture('color_map.png')
-color_wheel:SetWidth(color_w)
-color_wheel:SetHeight(color_h)
-color_wheel:SetAnchor("BOTTOMLEFT",UIParent,"BOTTOMLEFT") 
-color_wheel:MoveToTop()
-color_wheel:EnableInput(false)
-color_wheel:EnableMoving(false)
-color_wheel:EnableResizing(false)
-color_wheel:Handle("OnMove",UpdateColor)
-color_wheel:Handle("OnDoubleTap",CloseColorWheel)
-
------------------ v5.moving controller --------------------
--- moving controller is a clickable region to move its specified caller region
-local move_step = 10
-local move_holdtime = 0.01
-
-function ControllerTouchDown(self)
-    CloseSharedStuff(nil)
-    if current_mode == modes[2] then
-        DisableMove(self.caller)
-        self:EnableMoving(false)
-    else
-        self:EnableMoving(true)
-    end
-    self.holdtime = move_holdtime
-    Highlight(self)
-end
-
-function ControllerTouchUp(self)
-    UnHighlight(self)
-    self:Handle("OnUpdate",nil)
-end
-
-function MoveLeft(self)
-    if current_mode == modes[2] then
-        local x,y = self.caller:Center()
-        if x <= self.caller:Width()/2 then
-            self.caller:SetAnchor("LEFT",0,y)
-            -- DPrint(self.caller:Name().." kissing left")
-            ControllerTouchUp(self)
-        else
-            self.caller:SetAnchor("CENTER",x-move_step,y)
-            -- DPrint(self.caller:Name().." moving left")
-        end
-    else
-        DPrint(self.caller:Name().." will move left in release mode")
-    end
-end
-
-function MoveRight(self)
-    if current_mode == modes[2] then
-        local x,y = self.caller:Center()
-        if x >= ScreenWidth()-self.caller:Width()/2 then
-            self.caller:SetAnchor("RIGHT",ScreenWidth(),y)
-            -- DPrint(self.caller:Name().." kissing right")
-            ControllerTouchUp(self)
-        else
-            self.caller:SetAnchor("CENTER",x+move_step,y)
-            -- DPrint(self.caller:Name().." moving right")
-        end
-    else
-        DPrint(self.caller:Name().." will move right in release mode")
-    end
-end
-function MoveUp(self)
-    if current_mode == modes[2] then
-        local x,y = self.caller:Center()
-        if y >= ScreenHeight()-self.caller:Height()/2 then
-            self.caller:SetAnchor("TOP",x,ScreenHeight())
-            -- DPrint(self.caller:Name().." kissing top")
-            ControllerTouchUp(self)
-        else
-            self.caller:SetAnchor("CENTER",x,y+move_step)
-            -- DPrint(self.caller:Name().." moving up")
-        end
-    else
-        DPrint(self.caller:Name().." will move up in release mode")
-    end
-end
-
-function MoveDown(self)
-    if current_mode == modes[2] then
-        local x,y = self.caller:Center()
-        if y <= self.caller:Height()/2 then
-            self.caller:SetAnchor("BOTTOM",x,0)
-            -- DPrint(self.caller:Name().." kissing bottom")
-            ControllerTouchUp(self)
-        else
-            self.caller:SetAnchor("CENTER",x,y-move_step)
-            -- DPrint(self.caller:Name().." moving down")
-        end
-    else
-        DPrint(self.caller:Name().." will move down in release mode")
-    end
-end
-
-function TriggerLeft(self,e)
-    self:MoveToTop()
-    self.holdtime = self.holdtime - e
-    if self.holdtime <= 0 then
-        MoveLeft(self)
-        self.holdtime = move_holdtime
-    end
-end
-
-function TriggerRight(self,e)
-    self:MoveToTop()
-    self.holdtime = self.holdtime - e
-    if self.holdtime <= 0 then
-        MoveRight(self)
-        self.holdtime = move_holdtime
-    end
-end
-
-function TriggerUp(self,e)
-    self:MoveToTop()
-    self.holdtime = self.holdtime - e
-    if self.holdtime <= 0 then
-        MoveUp(self)
-        self.holdtime = move_holdtime
-    end
-end 
-
-function TriggerDown(self,e)
-    self:MoveToTop()
-    self.holdtime = self.holdtime - e
-    if self.holdtime <= 0 then
-        MoveDown(self)
-        self.holdtime = move_holdtime
-    end
-end
-
-function ControllerTouchDownLeft(self) -- event for OnTouchDown of the controller
-    ControllerTouchDown(self)
-    MoveLeft(self)
-    self:Handle("OnUpdate",TriggerLeft)
-end
-
-function ControllerTouchDownRight(self)
-    ControllerTouchDown(self)
-    MoveRight(self)
-    self:Handle("OnUpdate",TriggerRight)
-end
-
-function ControllerTouchDownUp(self)
-    ControllerTouchDown(self)
-    MoveUp(self)
-    self:Handle("OnUpdate",TriggerUp)
-end
-
-function ControllerTouchDownDown(self)
-    ControllerTouchDown(self)
-    MoveDown(self)
-    self:Handle("OnUpdate",TriggerDown)
-end
-
-function RemoveController(self)
-    if current_mode == modes[1] then
-        self:Hide()
-        self:EnableInput(false)
-        self:EnableMoving(false)
-        DPrint("DoubleTap removes the controller. To re-enable it, please repeat its configuration.")
-    end
-end
-
-function RemoveControllerLeft(self)
-    RemoveController(self)
-    self.caller.left_controller = nil
-end
-
-function RemoveControllerRight(self)
-    RemoveController(self)
-    self.caller.right_controller = nil
-end
-
-function RemoveControllerUp(self)
-    RemoveController(self)
-    self.caller.up_controller = nil
-end
-
-function RemoveControllerDown(self)
-    RemoveController(self)
-    self.caller.down_controller = nil
-end
-
-function CreateController()
-    local controller = Region('region','controller',UIParent)
-    controller:SetWidth(60)
-    controller:SetHeight(60)
-    controller:Handle("OnTouchUp",ControllerTouchUp)
-    controller:Handle("OnLeave",ControllerTouchUp)
-    return controller
-end
-
------------ v10.Keyboard class ------------
-local key_margin = 5
-local key_w = (ScreenWidth() - key_margin * 11) / 10
-local key_h = key_w * 0.9
-
-Keyboard = {}
-Keyboard.__index = Keyboard
-
-function KeyTouchDown(self)
-    self.parent.typingarea.tl:SetLabel(self.parent.typingarea.tl:Label()..self.faces[self.parent.face])
-    if self.parent.typingarea.text_sharee ~= -1 and self.parent.typingarea.text_sharee ~= nil then
-        regions[self.parent.typingarea.text_sharee].tl:SetLabel(self.parent.typingarea.tl:Label())
-    end
-    Highlight(self)
-    for i = 1,4 do
-        for j = 1,#self.parent[i] do
-            self.parent[i][j]:MoveToTop()
-        end
-    end
-end
-
-function KeyTouchUp(self)
-    UnHighlight(self)
-end
-
-function KeyTouchDownShift(self)
-    if self.parent.face == 1 then
-        self.parent:UpdateFaces(2)
-        Highlight(self)
-    elseif self.parent.face == 2 then
-        self.parent:UpdateFaces(1)
-        UnHighlight(self)
-    end
-end
-
-function KeyTouchDownFlip(self) -- event for switching number/alphabet mode 
-    Highlight(self)
-    if self.parent.face == 3 then
-        self.parent:UpdateFaces(1)
-    else
-        self.parent:UpdateFaces(3)
-    end
-end
-
-function KeyTouchDownBack(self)
-    Highlight(self)
-    local s = self.parent.typingarea.tl:Label()
-    if s ~= "" then
-        DPrint(s)
-        self.parent.typingarea.tl:SetLabel(s:sub(1,s:len()-1))
-    end
-end
-
-function KeyTouchDownClear(self)
-    Highlight(self)
-    self.parent.typingarea.tl:SetLabel("")
-    if self.parent.typingarea.text_sharee ~= -1 and self.parent.typingarea.text_sharee ~= nil then
-        regions[self.parent.typingarea.text_sharee].tl:SetLabel("")
-    end
-end
-
-function Keyboard:CreateKey(ch1,ch2,ch3,w)
-    local key = Region('region', 'key', UIParent)
-    key.parent = self
-    key.faces = {ch1,ch2,ch3} -- 1: low case, 2: upper case, 3: back number
-    key.t = key:Texture(200,200,200,255)
-    key.tl = key:TextLabel()
-    key.tl:SetLabel(ch1)
-    key.tl:SetFontHeight(22)
-    key.tl:SetColor(0,0,0,255) 
-    key.tl:SetHorizontalAlign("JUSTIFY")
-    key.tl:SetShadowColor(255,255,255,255)
-    key.tl:SetShadowOffset(1,1)
-    key.tl:SetShadowBlur(1)
-    key:SetHeight(key_h)
-    key:SetWidth(w)
-    key:Handle("OnTouchDown",KeyTouchDown)
-    key:Handle("OnTouchUp",KeyTouchUp)
-    key:Handle("OnLeave",KeyTouchUp)
-    return key
-end
-
-function Keyboard:CreateKBLine(str1,str2,str3,line,w) -- as a private function for initialization, only called by Keyboard.Create()
-                                                    -- str1, str2, str3 each is a string on a whole line of keyboard
-                                                    -- str1 is lower case, str2 is upper case, str3 is number and symbol
-    self[line] = {}
-    self[line].num = string.len(str1)
-    self[line][1] = self:CreateKey(string.char(str1:byte(1)),string.char(str2:byte(1)),string.char(str3:byte(1)),w)
-    
-    for i=2,self[line].num do
-        self[line][i] = self:CreateKey(string.char(str1:byte(i)),string.char(str2:byte(i)),string.char(str3:byte(i)),w)
-        self[line][i]:SetAnchor("TOPLEFT",self[line][i-1],"TOPRIGHT",key_margin,0)
-    end
-end
-
-function Keyboard:UpdateFaces(face) -- update the character on a key when Shift key is hit or number/alphabet mode is switched
-    self.face = face
-    for i = 1,4 do
-        for j = 1,#self[i] do
-            self[i][j].tl:SetLabel(self[i][j].faces[face])
-        end
-    end
-    UnHighlight(self[3][10])
-end
-
-function Keyboard.Create(area)
-    local kb = {}
-    setmetatable(kb, Keyboard)
-    kb.open = 0
-    kb.typingarea = area
-    kb.w = ScreenWidth()
-    kb.face = 1 -- 1: low case, 2: upper case, 3: numbers and symbols
-    kb:CreateKBLine("qwertyuiop","QWERTYUIOP","1234567890",1,key_w)
-    kb:CreateKBLine("asdfghjkl","ASDFGHJKL","-/:;()$&@",2,key_w)
-    kb:CreateKBLine("zxcvbnm,.","ZXCVBNM!?","_\\|~<>+='",3,key_w)
-    -- kb(3) has SHIFT key
-    kb[3][10] = kb:CreateKey("shift","shift","",key_w)
-    kb[3][10]:SetAnchor("TOPLEFT",kb[3][9],"TOPRIGHT",key_margin,0)
-    kb[3][10]:Handle("OnTouchDown",KeyTouchDownShift)
-    kb[3][10]:Handle("OnTouchUp",nil)
-    kb[3][10]:Handle("OnLeave",nil)
-    kb[3].num = kb[3].num + 1
-    kb[4] = {}
-    kb[4].num = 3
-    kb[4][1] = kb:CreateKey("123","123","abc",key_w*2)
-    kb[4][2] = kb:CreateKey(" "," "," ",key_w*5.5)
-    kb[4][3] = kb:CreateKey("<=","<=","<=",key_w*2.2)
-    kb[4][4] = kb:CreateKey("clear","clear","clear",key_w*0.7)
-    kb[4][2]:SetAnchor("TOPLEFT",kb[4][1],"TOPRIGHT",key_margin,0)
-    kb[4][3]:SetAnchor("TOPLEFT",kb[4][2],"TOPRIGHT",key_margin,0)
-    kb[4][4]:SetAnchor("TOPLEFT",kb[4][3],"TOPRIGHT",key_margin,0)
-    kb[4][1]:Handle("OnTouchDown",KeyTouchDownFlip)
-    kb[4][3]:Handle("OnTouchDown",KeyTouchDownBack)
-    kb[4][4]:Handle("OnTouchDown",KeyTouchDownClear)
-    
-    kb[4][1]:SetAnchor("BOTTOMLEFT",key_margin,key_margin)
-    kb[3][1]:SetAnchor("BOTTOMLEFT",kb[4][1],"TOPLEFT",0,key_margin)
-    kb[2][1]:SetAnchor("BOTTOMLEFT",kb[3][1],"TOPLEFT",key_w/2,key_margin)
-    kb[1][1]:SetAnchor("BOTTOMLEFT",kb[2][1],"TOPLEFT",0-key_w/2,key_margin)
-    
-    kb.h = #kb * (key_h+key_margin)
-    kb.enabled = 1
-    
-    return kb
-end
-
-function Keyboard:Show(face) 
-    for i = 1,4 do
-        for j = 1,#self[i] do
-            self[i][j]:EnableInput(true)
-            self[i][j]:Show()
-            self[i][j]:MoveToTop()
-            self[i][j].tl:SetLabel(self[i][j].faces[face])
-        end
-    end
-    UnHighlight(self[3][10])
-    self.face = face
-    self.open = 1
-end
-
-function Keyboard:Hide()
-    for i = 1,4 do
-        for j = 1,#self[i] do
-            self[i][j]:EnableInput(false)
-            self.face = 1
-            self[i][j].tl:SetLabel(self[i][j].faces[1])
-            self[i][j]:Hide()
-        end
-    end
-    self.open = 0
-end
-
-local mykb = Keyboard.Create()
-
----------------------- v6.moving dialog --------------------------
-function CreateOptions(txt,w)
-    local r = Region('region','dialog',UIParent)
-    r.tl = r:TextLabel()
-    r.tl:SetLabel(txt)
-    r.tl:SetFontHeight(16)
-    r.tl:SetColor(0,0,0,255) 
-    r.tl:SetHorizontalAlign("JUSTIFY")
-    r.tl:SetShadowColor(255,255,255,255)
-    r.tl:SetShadowOffset(1,1)
-    r.tl:SetShadowBlur(1)
-    r.t = r:Texture(200,200,200,255)
-    r:SetWidth(w)
-    r:SetHeight(50)
-    return r
-end
-
-function CloseMyDialog(self)
-    self.title:Hide()
-    for i = 1,#self.hint do
-        self[i][1]:Hide()
-        self[i][2]:Hide()
-        self[i][2]:EnableInput(false)
-    end
-    
-    self[#self.hint][1]:EnableInput(false)
-    mykb:Hide()
-    self.ready = 0
-    backdrop:EnableInput(true)
-end
-
-function OKclicked(self)
-    local dd = self.parent
-    d1 = tonumber(dd[1][2].tl:Label())
-    d2 = tonumber(dd[2][2].tl:Label())
-    if d1 <= 0 or d1 > 20 then
-        DPrint("Speed must be in the range (0,20]")
-        return
-    end
-    if d2 >= 360 or d2 < 0 then
-        DPrint("Direction must be in the range [0,360)")
-        return
-    end
-
-    local region = dd.caller
-    local deg = d2 * math.pi / 180
-    region.speed = d1
-    region.dy = d1*math.sin(deg)
-    region.dx = d1*math.cos(deg)
-    region.bounceobjects = dd.bounceobjects
-    region.bounceremoveobjects = dd.bounceremoveobjects
-    region.bound = boundary 
-
-    CloseMyDialog(self.parent)
-    StartMoving(region,0)
-end
-
-function CANCELclicked(self)
-    CloseMyDialog(self.parent)
-end
-
-function SelectBounceObject(self)
-    self.parent.bouncetype = 0
-    if self.parent.bounceobjects.dirty == 0 then
-        self.parent[3][2].tl:SetLabel("")
-    end
-end
-
-function SelectBounceObjectRemove(self)
-    self.parent.bouncetype = 1
-    if self.parent.bounceremoveobjects.dirty == 0 then
-        self.parent[4][2].tl:SetLabel("")
-    end
-end
-
-function OpenOrCloseNumericKeyboard(self)
-    if mykb.open == 0 then 
-        mykb.typingarea = self
-        CloseColorWheel(color_wheel)
-        DPrint("Keyboard opened.")
-        mykb:Show(3)
-        backdrop:SetClipRegion(0,mykb.h,ScreenWidth(),ScreenHeight())
-    else 
-        DPrint("Keyboard closed.")
-        mykb:Hide()
-        backdrop:SetClipRegion(0,0,ScreenWidth(),ScreenHeight())
-    end
-end
-
-local mydialog = {}
-mydialog.title = Region('region','dialog',UIParent)
-mydialog.title.t = mydialog.title:Texture(240,240,240,255)
-mydialog.title.tl = mydialog.title:TextLabel()
-mydialog.title.tl:SetLabel("Move! Touch the region to stop moving.")
-mydialog.title.tl:SetFontHeight(16)
-mydialog.title.tl:SetColor(0,0,0,255) 
-mydialog.title.tl:SetHorizontalAlign("JUSTIFY")
-mydialog.title.tl:SetShadowColor(255,255,255,255)
-mydialog.title.tl:SetShadowOffset(1,1)
-mydialog.title.tl:SetShadowBlur(1)
-mydialog.title:SetWidth(400)
-mydialog.title:SetHeight(50)
-mydialog.title:SetAnchor("BOTTOM",UIParent,"CENTER",0,100)
-mydialog.hint = {{"Speed (1 to 20, slow to fast)",moving_default_speed},{"Direction (degrees)",moving_default_dir},{"Select Vs to bounce from","Click here"},{"Select Vs to bounce from and remove","Click here"},{"OK","CANCEL"}}
-mydialog.bounceobjects = {}
-mydialog.bounceremoveobjects = {}
-mydialog.bouncetype = 0 -- 1:remove after bounce, 0:just bounce
-mydialog.ready = 0
-mydialog.caller = nil
-for i = 1,#mydialog.hint do
-    mydialog[i] = {}
-    mydialog[i][1] = CreateOptions(mydialog.hint[i][1],250)
-    mydialog[i][2] = CreateOptions(mydialog.hint[i][2],150)
-    mydialog[i][2]:SetAnchor("LEFT",mydialog[i][1],"RIGHT",0,0)
-    mydialog[i][1].parent = mydialog
-    mydialog[i][2].parent = mydialog
-end
-mydialog[1][2]:Handle("OnTouchDown",OpenOrCloseNumericKeyboard)
-mydialog[2][2]:Handle("OnTouchDown",OpenOrCloseNumericKeyboard)
-mydialog[3][2]:Handle("OnTouchDown",SelectBounceObject)
-mydialog[4][2]:Handle("OnTouchDown",SelectBounceObjectRemove)
-mydialog[5][1]:Handle("OnTouchDown",OKclicked)
-mydialog[5][2]:Handle("OnTouchDown",CANCELclicked)
-
-mydialog[1][1]:SetAnchor("TOPLEFT",mydialog.title,"BOTTOMLEFT",0,0)
-for i = 2,#mydialog.hint do
-    mydialog[i][1]:SetAnchor("TOPLEFT",mydialog[i-1][1],"BOTTOMLEFT",0,0)
-end
-
-function OpenMyDialog(v)
-    mydialog.title:Show()
-    mydialog.title:MoveToTop()
-    mydialog.caller = v
-    DPrint("Moving configuration for "..v:Name())
-    while #mydialog.bounceobjects > 0 do
-        table.remove(mydialog.bounceobjects)
-    end
-    while #mydialog.bounceremoveobjects > 0 do
-        table.remove(mydialog.bounceremoveobjects)
-    end
-    while #mydialog.caller.bounceobjects > 0 do
-        table.remove(mydialog.caller.bounceobjects)
-    end
-    while #mydialog.caller.bounceremoveobjects > 0 do
-        table.remove(mydialog.caller.bounceremoveobjects)
-    end
-    mydialog[1][2].tl:SetLabel(mydialog.hint[1][2])
-    mydialog[2][2].tl:SetLabel(mydialog.hint[2][2])
-    mydialog[3][2].tl:SetLabel(mydialog.hint[3][2])
-    mydialog[4][2].tl:SetLabel(mydialog.hint[4][2])
-    for i = 1,#mydialog.hint do
-        mydialog[i][1]:Show()
-        mydialog[i][2]:Show()
-        mydialog[i][1]:MoveToTop()
-        mydialog[i][2]:MoveToTop()
-        mydialog[i][2]:EnableInput(true)
-    end
-    mydialog[#mydialog.hint][1]:EnableInput(true)
-    mydialog.ready = 1
-    mydialog.bouncetype = 0
-    mydialog.bounceobjects.dirty = 0
-    mydialog.bounceremoveobjects.dirty = 0
-    backdrop:EnableInput(false)
-end
-
------------- v7.Menu class -------------
+------------ v4.Menu class -------------
 Menu = {}
 Menu.__index = Menu
 function Menu:OpenMenu() 
@@ -857,6 +299,7 @@ function Menu:OpenMenu()
             self[i]:EnableInput(true)
             self[i]:MoveToTop()
             self[i]:Show()
+--            self[i].t:SetTexture(200,200,200,255)
         end
         self.open = 1
     end
@@ -936,7 +379,9 @@ function Menu:CreateOption(pair) -- pair: see how function_list and each menu ar
     opt:SetWidth(self.w)
     opt:SetHeight(self.h)
     opt.t = opt:Texture(200,200,200,255)
-    opt.t:SetTexture(self.bkg)
+    if self.bkg ~= "" then
+        opt.t:SetTexture(self.bkg)
+    end
     opt.t:SetBlendMode("BLEND")
     opt.backupfunc = pair[2]
     
@@ -954,8 +399,8 @@ function Menu:CreateOption(pair) -- pair: see how function_list and each menu ar
 end
 
 function Menu.Create(region,background,list,anchor,relanchor) 
--- list: see how function_list and each menu are created
--- anchor and relanchor are anchor positions for the menu relative to region
+    -- list: see how function_list and each menu are created
+    -- anchor and relanchor are anchor positions for the menu relative to region
     local menu = {}
     setmetatable(menu,Menu)
     menu.w = MIN_WIDTH_MENU
@@ -1047,7 +492,7 @@ function Unstick(v)
 end
 
 function TouchObject(r,other) -- when r is moving, check whether r is about to touch the "other"
-                                -- if yes, let r touch the "other", and change dx or dy and r's moving direction
+    -- if yes, let r touch the "other", and change dx or dy and r's moving direction
     local bb = r:Bottom() + r.dy
     local tt = r:Top() + r.dy
     local ll = r:Left() + r.dx
@@ -1056,7 +501,7 @@ function TouchObject(r,other) -- when r is moving, check whether r is about to t
     local t2 = other:Top()
     local l2 = other:Left()
     local r2 = other:Right()
-
+    
     if (l2 < ll and ll < r2 or l2 < rr and rr < r2) and (b2 < tt and tt < t2 or b2 < bb and bb < t2) then
         -- two regions is about to overlap
         if bb <= t2 and tt >= t2 and r:Bottom() >= t2 then
@@ -1112,7 +557,7 @@ function TouchObject(r,other) -- when r is moving, check whether r is about to t
 end
 
 function TouchBound(r) -- when r is moving, check whether r is about to touch its bound
-                        -- if yes, let r touch the bound, and change dx or dy and r's moving direction
+    -- if yes, let r touch the bound, and change dx or dy and r's moving direction
     if r:Bottom() + r.dy <= r.bound[1] then
         -- DPrint("bottom")
         r.y = r.y + r.bound[1] - r:Bottom()
@@ -1164,63 +609,7 @@ function TouchBound(r) -- when r is moving, check whether r is about to touch it
     end
 end
 
-function StartMovingEvent(r,e) -- event called with signal OnUpdate. parameters for r are set in StartMoving
-    if r.touch ~= "none" then
-        r.x = r.x + r.dx
-        r.y = r.y + r.dy
-        r.touch = "none"
-    else
-        if r.random == 1 then
-            local deg = math.random(-10,10)
-            r.dir = (r.dir + deg*math.pi/180)%360
-            r.dy = r.speed*math.sin(r.dir)
-            r.dx = r.speed*math.cos(r.dir)
-        end
-    
-        for i = 1,#r.bounceobjects do
-            TouchObject(r,regions[r.bounceobjects[i]])
-            if r.touch ~= "none" then
-                break
-            end
-        end
-        
-        if r.touch == "none" then
-            for k = 1,#r.bounceremoveobjects do
-                TouchObject(r,regions[r.bounceremoveobjects[k]])
-                if r.touch ~= "none" then
-                    RemoveV(regions[r.bounceremoveobjects[k]])
-                    table.remove(r.bounceremoveobjects,k)
-                    break
-                end
-            end
-        end
-    
-        if r.touch == "none" then
-            TouchBound(r)
-            if r.touch == "none" then
-                r.x = r.x + r.dx
-                r.y = r.y + r.dy
-            end
-        end
-    end
-    
-    r:SetAnchor("CENTER",r.x,r.y)
-end
 
-function StartMoving(vv,random) -- set parameters for region vv to move. with random as 1, vv flies in random directions
-    vv.x,vv.y = vv:Center()
-    vv.moving = 1
-    vv.touch = "none"
-    vv.random = random
-    
-    if vv.eventlist["OnUpdate"]["move"] == 0 then
-        table.insert(vv.eventlist["OnUpdate"],StartMovingEvent)
-        vv.eventlist["OnUpdate"]["move"] = 1
-    end
-    vv.eventlist["OnUpdate"].currentevent = StartMovingEvent
-    vv:Handle("OnUpdate",nil)
-    vv:Handle("OnUpdate",VUpdate)
-end
 
 function SelfColor(self,e)
     self.colortime = self.colortime - e
@@ -1243,491 +632,110 @@ function TextSharing(self)
     end
 end
 
-------------- menu functions --------------
--- called by menu option, named starting with Menu-
--- arguments (opt,vv): opt is menu option region, vv is the region that functions should be implemented on
 
-function MenuAbout(opt,vv)
-    output = vv:Name()..", sticker #"..vv.sticker..", stickees"
-    if #vv.stickee == 0 then
-        output = output.." #-1"
-    else
-        for i = 1,#vv.stickee do
-            output = output.." #"..vv.stickee[i]
-        end
-    end
-    DPrint(output)
-end
 
-function MenuPictureRandomly(opt,vv)
-    vv.bkg = pics[math.random(1,5)]
-    vv.t:SetTexture(vv.bkg)
-    DPrint(vv:Name().." background pic: "..vv.bkg)
-end
-
-function MenuColorRandomly(opt,vv)
-    vv.r = math.random(0,255)
-    vv.g = math.random(0,255)
-    vv.b = math.random(0,255)
-    vv.a = math.random(0,255)
-    vv.t:SetSolidColor(vv.r,vv.g,vv.b,vv.a)
-    DPrint(vv:Name().." random color (r,g,b,a): ("..vv.r..","..vv.g..","..vv.b..","..vv.a..")")
-end
-
-function MenuClearToWhite(opt,vv)
-    DPrint(vv:Name().." clear to white")
-    vv.r = 255
-    vv.g = 255
-    vv.b = 255
-    vv.a = 255
-    vv.bkg = ""
-    vv.t:SetTexture(255,255,255,255)
-end
-
-function MenuUnstick(opt,vv)
-    Unstick(vv)
-    UnHighlight(opt)
-    CloseMenuBar()
-end
-
-function RemoveV(vv)
-    Unstick(vv)
-    
-    if vv.text_sharee ~= -1 then
-        for k,i in pairs(global_text_senders) do
-            if i == vv.id then
-                table.remove(global_text_senders,k)
-            end
-        end
-        regions[vv.text_sharee].text_sharee = -1
-    end
-    
-    PlainVRegion(vv)
-    vv:EnableInput(false)
-    vv:EnableMoving(false)
-    vv:EnableResizing(false)
-    vv:Hide()
-    vv.usable = 0
-
-    table.insert(recycledregions, vv.id)
-    DPrint(vv:Name().." removed")
-end
-
-function MenuRecycleSelf(opt,vv)
-    RemoveV(vv)
-    UnHighlight(opt)
-    CloseMenuBar()
-end
-
-function MenuStickControl(opt,vv)
-    if auto_stick_enabled == 1 then
-        DPrint("AutoStick disabled")
-        auto_stick_enabled = 0
-    else
-        DPrint("AutoStick enabled")
-        auto_stick_enabled = 1
-    end
-end
-
-function MenuKeyboardControl(opt,vv)
-    if mykb.enabled == 1 then
-        DPrint("Keyboard will be disabled in release mode")
-        mykb.enabled = 0
-    else
-        DPrint("Keyboard will be re-enabled in release mode")
-        mykb.enabled = 1
-    end
-end
-
-function MenuDuplicate(opt,oldv)
-    local newv = CreateorRecycleregion('region', 'backdrop', UIParent)
-    -- size
-    newv:SetWidth(oldv:Width())
-    newv:SetHeight(oldv:Height())
-    -- color
-    VVSetTexture(newv,oldv)
-    -- text 
-    newv.tl:SetFontHeight(oldv.tl:FontHeight())
-    newv.tl:SetHorizontalAlign(oldv.tl:HorizontalAlign())
-    newv.tl:SetVerticalAlign(oldv.tl:VerticalAlign())
-    newv.tl:SetLabel(newv.tl:Label())
-    -- position
-    local x,y = oldv:Center()
-    local h = 10 + oldv:Height()
-    newv:Show()
-    if y-h < 100 then
-        newv:SetAnchor("CENTER",x,y+h)
-    else
-        newv:SetAnchor("CENTER",x,y-h)
-    end
-    DPrint(newv.tl:Label().." Color: ("..newv.r..", "..newv.g..", "..newv.b..", "..newv.a.."). Background pic: "..newv.bkg..". Blend mode: "..newv.t:BlendMode())
-    
-    return newv
-end
-
-function MenuTextSize(opt,vv)
-    DPrint("Change to font: "..text_size_list[opt.k])
-    vv.tl:SetFontHeight(tonumber(text_size_list[opt.k]) * 2) -- scale by 2
-    vv.tl:SetLabel(vv.tl:Label())
-end
-
-function MenuTextPosition(opt,vv)
-    vv.tl:SetHorizontalAlign(text_position_hor_list[opt.k])
-    vv.tl:SetVerticalAlign(text_position_ver_list[opt.k])
-    vv.tl:SetLabel(vv.tl:Label())
-end
-
-function MenuText(opt,vv)
-    DPrint("Current text size: " .. vv.tl:FontHeight()/2 .. ", position: " .. vv.tl:VerticalAlign() .. " & " .. vv.tl:HorizontalAlign()) -- TODO wrong output
-end
-
-function MenuChangeColor(opt,vv)
-    color_wheel:Show()
-    color_wheel.region = vv
-    color_wheel:EnableInput(true)
-    UnHighlight(opt)
-    CloseMenuBar()
-end
-
-function MenuTransparency(opt,vv)
-    DPrint("Current blend mode: " .. vv.t:BlendMode())
-end
-
-function MenuBlendMode(opt,vv)
-    DPrint("Change to blend mode: " .. blend_mode_list[opt.k])
-    vv.t:SetBlendMode(blend_mode_list[opt.k])
-end
-
-function MenuMoving(opt,vv)
-    OpenMyDialog(vv)
-    UnHighlight(opt)
-    CloseMenuBar()
-end
-
-function MenuSelfFly(opt,vv) 
-    -- if don't want to let it bounce from other regions, delete the following two while loops
-    while #vv.bounceobjects > 0 do
-        table.remove(vv.bounceobjects)
-    end
-    while #vv.bounceremoveobjects > 0 do
-        table.remove(vv.bounceremoveobjects)
-    end
-    
-    StartMoving(vv,1)
-    DPrint(vv:Name().." randomly flies. Click it to stop.")
-    UnHighlight(opt)
-    CloseMenuBar()
-end
-
-function SelfShowHideEvent(self,e) -- event called with OnUpdate
-    self.showtime = self.showtime - e
-    if self.showtime <= 0 then
-        if self:IsShown() then
-            self:Hide()
-        else
-            self:Show()
-        end
-        self.showtime = math.random(1,4)/4
-    end
-end
-
-function MenuSelfShowHide(opt,vv) 
-    vv.showtime = math.random(1,4)/4
-    if vv.eventlist["OnUpdate"]["selfshowhide"] == 0 then
-        table.insert(vv.eventlist["OnUpdate"],SelfShowHideEvent)
-        vv.eventlist["OnUpdate"]["selfshowhide"] = 1
-    end
-    vv.eventlist["OnUpdate"].currentevent = SelfShowHideEvent
-    vv:Handle("OnUpdate",nil)
-    vv:Handle("OnUpdate",VUpdate)
-    DPrint(vv:Name().." randomly shows and hides. Click it to stop.")
-    UnHighlight(opt)
-    CloseMenuBar()
-end
-
-function MenuSelfColor(opt,vv)
-    vv.colortime = 1
-    if vv.eventlist["OnUpdate"]["selfcolor"] == 0 then
-        table.insert(vv.eventlist["OnUpdate"],SelfColor)
-        vv.eventlist["OnUpdate"]["selfcolor"] = 1
-    end
-    vv.eventlist["OnUpdate"].currentevent = SelfColor
-    vv:Handle("OnUpdate",nil)
-    vv:Handle("OnUpdate",VUpdate)
-    DPrint(vv:Name().." randomly changes color. Click it to stop.")
-    UnHighlight(opt)
-    CloseMenuBar()
-end
-
-function MenuStartPlayerLeft(opt,vv) -- this set of 4 functions are for player regions to stick to pboundary when OnMove signal is received by backdrop in release mode
-    if vv.stickboundary ~= "left" then
-        backdrop.player[vv.stickboundary] = nil
-    end
-    backdrop.player["left"] = vv
-    vv:SetAnchor("LEFT",pboundary[3],(pboundary[2]+pboundary[1])/2)
-    DisableMove(vv)
-    UnHighlight(opt)
-    CloseMenuBar()
-end
-
-function MenuStartPlayerRight(opt,vv)
-    if vv.stickboudary ~= "right" then
-        backdrop.player[vv.stickboundary] = nil
-    end
-    backdrop.player["right"] = vv
-    vv:SetAnchor("RIGHT",pboundary[4],(pboundary[2]+pboundary[1])/2)
-    DisableMove(vv)
-    UnHighlight(opt)
-    CloseMenuBar()
-end
-
-function MenuStartPlayerTop(opt,vv)
-    if vv.stickboudary ~= "top" then
-        backdrop.player[vv.stickboundary] = nil
-    end
-    backdrop.player["top"] = vv
-    vv:SetAnchor("TOP",(pboundary[3]+pboundary[4])/2,pboundary[2])
-    DisableMove(vv)
-    UnHighlight(opt)
-    CloseMenuBar()
-end
-
-function MenuStartPlayerBottom(opt,vv)
-    if vv.stickboudary ~= "bottom" then
-        backdrop.player[vv.stickboundary] = nil
-    end
-    backdrop.player["bottom"] = vv
-    vv:SetAnchor("BOTTOM",(pboundary[3]+pboundary[4])/2,pboundary[1])
-    DisableMove(vv)
-    UnHighlight(opt)
-    CloseMenuBar()
-end
-
-function MenuClearText(opt,vv)
-    vv.tl:SetLabel("")
-    if vv.text_sharee ~= -1 then
-        regions[vv.text_sharee].tl:SetLabel("")
-    end
-    UnHighlight(opt)
-    CloseMenuBar()
-end
-
-function MenuStickBoundary(opt,vv)
-    DPrint("Only takes effect in release mode.")
-end
-
-function MenuMoveController(opt,vv)
-    DPrint("Use a controller to control the move direction of "..vv:Name())
-end
-
-function MenuControllerLeft(opt,vv) -- this set of 4 functions are for moving controllers
-    if vv.left_controller == nil then
-        controller = CreateController()
-        controller.t = controller:Texture('Left.png')
-        controller:SetAnchor("RIGHT",UIParent,"CENTER",-10,0)
-        controller.caller = vv
-        controller:Handle("OnDoubleTap",RemoveControllerLeft)
-        controller:Handle("OnTouchDown",ControllerTouchDownLeft)
-        vv.left_controller = controller
-    end        
-    controller:Show()
-    controller:EnableInput(true)
-    controller:EnableMoving(true)
-end
-
-function MenuControllerRight(opt,vv)
-    if vv.right_controller == nil then
-        controller = CreateController()
-        controller.t = controller:Texture('Right.png')
-        controller:SetAnchor("LEFT",UIParent,"CENTER",10,0)
-        controller.caller = vv
-        controller:Handle("OnDoubleTap",RemoveControllerRight)
-        controller:Handle("OnTouchDown",ControllerTouchDownRight)
-        vv.right_controller = controller
-    end        
-    controller:Show()
-    controller:EnableInput(true)
-    controller:EnableMoving(true)
-end
-
-function MenuControllerUp(opt,vv)
-    if vv.up_controller == nil then
-        controller = CreateController()
-        controller.t = controller:Texture('up.png')
-        controller:SetAnchor("BOTTOM",UIParent,"CENTER",0,10)
-        controller.caller = vv
-        controller:Handle("OnDoubleTap",RemoveControllerUp)
-        controller:Handle("OnTouchDown",ControllerTouchDownUp)
-        vv.up_controller = controller
-    end        
-    controller:Show()
-    controller:EnableInput(true)
-    controller:EnableMoving(true)
-end
-
-function MenuControllerDown(opt,vv)
-    if vv.down_controller == nil then
-        controller = CreateController()
-        controller.t = controller:Texture('down.png')
-        controller:SetAnchor("TOP",UIParent,"CENTER",0,-10)
-        controller.caller = vv
-        controller:Handle("OnDoubleTap",RemoveControllerDown)
-        controller:Handle("OnTouchDown",ControllerTouchDownDown)
-        vv.down_controller = controller
-    end
-    controller:Show()
-    controller:EnableInput(true)
-    controller:EnableMoving(true)
-end
-
-function MenuGlobalTextSharing(opt,vv)
-    if vv.is_text_sharer == 1 then
-        DPrint(vv:Name().." is a sharer")
-    elseif vv.is_text_receiver == 1 then
-        DPrint(vv:Name().." is a receiver")
-    else
-        DPrint(vv:Name().." is neither a sharer nor a receiver")
-    end
-end
-
-function MenuSetGlobalTextSender(opt,vv)
-    if global_text_receiver == vv.id then
-        global_text_receiver = -1
-    end
-    if vv.is_text_sender == 0 then
-        vv.is_text_sender = 1
-        table.insert(global_text_senders,vv.id)
-        table.insert(vv.eventlist["OnTouchDown"],TextSharing)
-        table.insert(vv.reventlist["OnTouchDown"],TextSharing)
-        DPrint(vv:Name().." is set as global text sender")
-        if global_text_receiver ~= -1 then
-            vv.text_sharee = global_text_receiver
-            regions[global_text_receiver].text_sharee = vv.id
-        end
-    end
-    UnHighlight(opt)
-    CloseMenuBar()
-end
-
-function MenuSetGlobalTextReceiver(opt,vv) -- not checking duplicates
-    DPrint(vv:Name().." is set as global text receiver")
-    if vv.is_text_sender == 1 then
-        for i = 1,#global_text_senders do
-            if global_text_senders[i] == vv then
-                table.remove(global_text_senders,i)
-                break
-            end
-        end
-        if regions[global_text_receiver].text_sharee == vv.id then
-            if #global_text_senders > 0 then
-                regions[global_text_receiver].text_sharee = global_text_senders[1]
-            else
-                regions[global_text_receiver].text_sharee = -1 
-            end
-        end
-    end
-    if vv.id ~= global_text_receiver and global_text_receiver ~= -1 then
-        regions[global_text_receiver].text_sharee = -1
-    end
-        
-    vv.is_text_receiver = 1
-    global_text_receiver = vv.id
-    for i = 1,#global_text_senders do
-        regions[global_text_senders[i]].text_sharee = vv.id
-    end
-    if #global_text_senders > 0 then
-        vv.text_sharee = global_text_senders[1]
-    end
-    
-    UnHighlight(opt)
-    CloseMenuBar()
-end
-
-------------------- v8.menu function list ------------------
--- function_list[i] = {"menubar optoin label", {func_list}} where func_list:
+------------------- v5.menu function list ------------------
+-- function_list[i] = {"menubar option label", {func_list}} where func_list:
 -- func_list[i] = {"menu option label", event, {func_list for sub-menu}
 function_list = {}
 
 function_list[1] = {"Basics", {
-                                {"About",MenuAbout,{}},
-                                {"Random Picture",MenuPictureRandomly,{}},
-                                {"Random Color",MenuColorRandomly,{}},
-                                {"Clear Background",MenuClearToWhite,{}},
-                                {"Unstick",MenuUnstick,{}},
-                                {"Remove",MenuRecycleSelf,{}}
-                            }
-                    }
-                    
-function_list[2] = {"Edit", {
-                                {"Color Wheel",MenuChangeColor,{}},
-                                {"Transparency",MenuTransparency,{
-                                                            {blend_mode_list[1],MenuBlendMode,{}},
-                                                            {blend_mode_list[2],MenuBlendMode,{}},
-                                                            {blend_mode_list[3],MenuBlendMode,{}},
-                                                            {blend_mode_list[4],MenuBlendMode,{}},
-                                                            {blend_mode_list[5],MenuBlendMode,{}},
-                                                            {blend_mode_list[6],MenuBlendMode,{}}
-                                                        }},
-                                {"Text Position",MenuText,{
-                                                            {text_position_list[1],MenuTextPosition,{}},
-                                                            {text_position_list[2],MenuTextPosition,{}},
-                                                            {text_position_list[3],MenuTextPosition,{}},
-                                                            {text_position_list[4],MenuTextPosition,{}},
-                                                            {text_position_list[5],MenuTextPosition,{}},
-                                                            {text_position_list[6],MenuTextPosition,{}},
-                                                            {text_position_list[7],MenuTextPosition,{}},
-                                                            {text_position_list[8],MenuTextPosition,{}},
-                                                            {text_position_list[9],MenuTextPosition,{}}
-                                                        }},
-                                {"Text Font",MenuText,{
-                                                            {text_size_list[1],MenuTextSize,{}},
-                                                            {text_size_list[2],MenuTextSize,{}},
-                                                            {text_size_list[3],MenuTextSize,{}},
-                                                            {text_size_list[4],MenuTextSize,{}},
-                                                            {text_size_list[5],MenuTextSize,{}},
-                                                            {text_size_list[6],MenuTextSize,{}},
-                                                            {text_size_list[7],MenuTextSize,{}},
-                                                            {text_size_list[8],MenuTextSize,{}},
-                                                            {text_size_list[9],MenuTextSize,{}},
-                                                            {text_size_list[10],MenuTextSize,{}}
-                                                        }},
-                                {"Clear Text",MenuClearText,{}},
-                                {"Duplicate",MenuDuplicate,{}}
-                            }
-                    }
-                            
-function_list[3] = {"Advanced", {
-                                {"Move",MenuMoving,{}},
-                                {"Self Fly",MenuSelfFly,{}},
-                                {"Self Show and Hide",MenuSelfShowHide,{}},
-                                {"Self Change Color",MenuSelfColor,{}},
-                                {"Stick to Boundery",MenuStickBoundary,{
-                                                            {"Left",MenuStartPlayerLeft,{}},
-                                                            {"Right",MenuStartPlayerRight,{}},
-                                                            {"Top",MenuStartPlayerTop,{}},
-                                                            {"Bottom",MenuStartPlayerBottom,{}}
-                                                        }},
-                                {"Add Moving Controller",MenuMoveController,{
-                                                            {"Left",MenuControllerLeft,{}},
-                                                            {"Right",MenuControllerRight,{}},
-                                                            {"Top",MenuControllerUp,{}},
-                                                            {"Bottom",MenuControllerDown,{}}
-                                                        }},
-                                {"Global Text Sharing",MenuGlobalTextSharing,{
-                                                            {"Set as Sender",MenuSetGlobalTextSender,{}},
-                                                            {"Set as Receiver",MenuSetGlobalTextReceiver,{}}
-                                                        }}
-                            }
-                    }
-                    
-function_list[4] = {"Global Control", {
-                                {"Autostick Control",MenuStickControl,{}},
-                                {"Keyboard Control",MenuKeyboardControl,{}}
-                            }
-                    }
-                    
+        {"About",MenuAbout,{}},
+        {"Load Picture",loadPicture,{}},       
+        {"Random Picture",MenuPictureRandomly,{}},
+        {"Random Gradient", MenuGradientRandom,{}},
+        {"Random Color",MenuColorRandomly,{}},
+        {"Clear Background",MenuClearToWhite,{}},
+        {"Unstick",MenuUnstick,{}},
+        {"Remove",MenuRecycleSelf,{}}
+    }
+}
 
------------- v9.global menubar -------------
+function_list[2] = {"Edit", {
+        {"Color Wheel",MenuChangeColor,{}},
+        {"Gradient Selection",menuGradient,{}},
+        {"Image Selection",menuPicture,{}},
+        {"Transparency",MenuTransparency,{
+                {blend_mode_list[1],MenuBlendMode,{}},
+                {blend_mode_list[2],MenuBlendMode,{}},
+                {blend_mode_list[3],MenuBlendMode,{}},
+                {blend_mode_list[4],MenuBlendMode,{}},
+                {blend_mode_list[5],MenuBlendMode,{}},
+                {blend_mode_list[6],MenuBlendMode,{}}
+            }},
+        {"Text Position",MenuText,{
+                {text_position_list[1],MenuTextPosition,{}},
+                {text_position_list[2],MenuTextPosition,{}},
+                {text_position_list[3],MenuTextPosition,{}},
+                {text_position_list[4],MenuTextPosition,{}},
+                {text_position_list[5],MenuTextPosition,{}},
+                {text_position_list[6],MenuTextPosition,{}},
+                {text_position_list[7],MenuTextPosition,{}},
+                {text_position_list[8],MenuTextPosition,{}},
+                {text_position_list[9],MenuTextPosition,{}}
+            }},
+        {"Text Font",MenuText,{
+                {text_size_list[1],MenuTextSize,{}},
+                {text_size_list[2],MenuTextSize,{}},
+                {text_size_list[3],MenuTextSize,{}},
+                {text_size_list[4],MenuTextSize,{}},
+                {text_size_list[5],MenuTextSize,{}},
+                {text_size_list[6],MenuTextSize,{}},
+                {text_size_list[7],MenuTextSize,{}},
+                {text_size_list[8],MenuTextSize,{}},
+                {text_size_list[9],MenuTextSize,{}},
+                {text_size_list[10],MenuTextSize,{}}
+            }},
+        {"Clear Text",MenuClearText,{}},
+        {"Duplicate",MenuDuplicate,{}}
+    }
+}
+
+function_list[3] = {"Advanced", {
+        {"Animation",MenuAnimation,{}},
+        {"Generation Off",MenuGenerationOff,{}},
+        {"Generation",MenuGeneration,{}},
+        {"Projectile Controller",MenuProjectileController,{
+                {"Left",MenuProjLeft,{}},
+                {"Right",MenuProjRight,{}},
+                {"Top",MenuProjUp,{}},
+                {"Bottom",MenuProjDown,{}}
+            }},
+        {"Collisions",MenuCollisions,{}},
+        {"Move",MenuMoving,{}},
+        {"Self Fly",MenuSelfFly,{}},
+        {"Self Show and Hide",MenuSelfShowHide,{}},
+        {"Self Change Color",MenuSelfColor,{}},
+        {"Stick to Boundery",MenuStickBoundary,{
+                {"Left",MenuStartPlayerLeft,{}},
+                {"Right",MenuStartPlayerRight,{}},
+                {"Top",MenuStartPlayerTop,{}},
+                {"Bottom",MenuStartPlayerBottom,{}}
+            }},
+        {"Add Moving Controller",MenuMoveController,{
+                {"Left",MenuControllerLeft,{}},
+                {"Right",MenuControllerRight,{}},
+                {"Top",MenuControllerUp,{}},
+                {"Bottom",MenuControllerDown,{}}
+            }},
+        {"Global Text Sharing",MenuGlobalTextSharing,{
+                {"Set as Sender",MenuSetGlobalTextSender,{}},
+                {"Set as Receiver",MenuSetGlobalTextReceiver,{}}
+            }}
+    }
+}
+
+function_list[4] = {"Global Control", {
+        {"Autostick Control",MenuStickControl,{}},
+        {"Keyboard Control",MenuKeyboardControl,{}},
+        {"BackGround Control",MenuBackGround,{}}
+    }
+}
+
+--function_list[5] = {"Test"}
+
+
+------------ v6.global menubar -------------
 function OpenOrCloseMenubarItemEvent(self) -- call by menubar[i]
     local bar = self.boss
     DPrint(self.tl:Label())
@@ -1780,7 +788,7 @@ for i=2,#menubar do
 end
 menubar[1]:Hide()
 
------------- v11.edit/release mode --------------
+------------ v7.edit/release mode --------------
 function ChangeMode(self)
     if current_mode == modes[1] then
         current_mode = modes[2]
@@ -1802,7 +810,7 @@ function ChangeMode(self)
     self.tl:SetLabel(current_mode)
 end
 
-moderegion = Region('region','mode',UIParent)
+local moderegion = Region('region','mode',UIParent) -- gessl: if this is global weird things happen on iPad1s. Mysterious bug somewhere!
 moderegion:Texture(200,200,200,255)
 moderegion:SetHeight(HEIGHT_LINE)
 moderegion:SetWidth(WIDTH_MODE)
@@ -1816,7 +824,7 @@ moderegion:SetAnchor("TOPLEFT",UIParent,"TOPLEFT")
 moderegion:Show()
 
 
-------------- v12.trashbin -------------
+------------- v8.trashbin -------------
 local trashbin = Region('region','trashbin',UIParent)
 trashbin.t = trashbin:Texture("trashbin.png")
 trashbin:SetWidth(2*HEIGHT_LINE)
@@ -1829,7 +837,7 @@ function MoveToTrashbin(v)
     CloseMenuBar()
 end
 
--------------- v13.anchorv --------------
+-------------- v9.anchorv --------------
 -- shows on each created region, click to un/lock region's position
 function LockOrUnlock(self)
     if anchorv.caller.fixed == 1 then
@@ -1851,7 +859,7 @@ anchorv:SetHeight(30)
 anchorv.caller = nil
 
 
------------ v events --------------
+----------- v10. events --------------
 function CloseMenubarHelper()
     if menubar.show == 1 then
         for i = 1,#menubar do
@@ -1932,13 +940,13 @@ function StickToClosestAnchorPoint(ee,er)
     if dx < 1 then dx = 1 end
     if dy > 4 then dy = 4 end
     if dy < 1 then dy = 1 end
-
+    
     ee:SetAnchor(SixteenPositions[dx][dy][2],er,SixteenPositions[dx][dy][1])
     table.insert(er.stickee,ee.id)
     ee.sticker = er.id
     ee.group = er.group
     DisableMove(ee)
-
+    
     output = SixteenPositions[dx][dy][1].."+"..SixteenPositions[dx][dy][2].." new stickee "..ee:Name().."! sticker "..er:Name().." now has stickees: "
     for i = 1,#er.stickee do
         output = output.." R#"..er.stickee[i]
@@ -1999,40 +1007,6 @@ function AddAnchorIcon(self)
     anchorv.caller = self
 end
 
-function OpenOrCloseKeyboard(self)
-    if mykb.enabled == 1 or current_mode == modes[1] then
-        if mykb.open == 0 then 
-            mykb.typingarea = self
-            DPrint("DoubleTap to close keyboard. Go to Menubar->Global Control->Keyboard Control to enable/disable in RELEASE mode.")
-            mykb:Show(1)
-            self.kbopen = 1
-            if self.text_sharee ~= -1 then
-                regions[self.text_sharee].kbopen = 1
-            end
-            backdrop:SetClipRegion(0,mykb.h,ScreenWidth(),ScreenHeight())
-        elseif self.kbopen == 0 then
-            mykb.typingarea.kbopen = 0
-            mykb.typingarea = self
-            self.kbopen = 1
-            if self.text_sharee ~= -1 then
-                regions[self.text_sharee].kbopen = 1
-            end
-            DPrint("DoubleTap to close keyboard. Go to Menubar->Global Control->Keyboard Control to enable/disable in RELEASE mode.")
-            mykb:Show(1)
-        else
-            DPrint("Keyboard closed. Go to Menubar->Global Control->Keyboard Control to enable/disable in RELEASE mode.")
-            mykb:Hide()
-            self.kbopen = 0
-            if self.text_sharee ~= -1 then
-                regions[self.text_sharee].kbopen = 0
-            end
-            backdrop:SetClipRegion(0,0,ScreenWidth(),ScreenHeight())
-        end
-    else
-        DPrint("Keyboard disabled. Go to EDIT Mode->Menubar->Global Control->Keyboard Control to enable/disable in RELEASE mode.")
-    end
-end
-
 function BeBouncedObject(self) -- add self.id to mydialog.bounceobjects or bounceremoveobjects list with no duplicates
     if self.id == mydialog.caller.id then
         DPrint("Please select objects other than "..mydialog.caller:Name())
@@ -2054,7 +1028,7 @@ function BeBouncedObject(self) -- add self.id to mydialog.bounceobjects or bounc
             end
         end
     end
-        
+    
     if found1 == 0 and found2 == 0 then
         if mydialog.bouncetype == 0 then
             table.insert(mydialog.bounceobjects,self.id)
@@ -2078,9 +1052,11 @@ function OverlapTrashbinEvent(self) -- event to check whether self overlaps with
         self.t:SetTexture(255,0,0,250)
         trashbin.yes = 1
     else
-        DPrint("To remove "..self:Name()..", move it to bottomright corner")
-        VSetTexture(self)
-        trashbin.yes = 0
+        if trashbin.yes == 1 then
+            DPrint("To remove "..self:Name()..", move it to bottomright corner")
+            VSetTexture(self)
+            trashbin.yes = 0
+        end
     end
 end
 
@@ -2095,6 +1071,7 @@ function HoldToTrigger(self, elapsed) -- for long tap
         trashbin:Show()
         trashbin:MoveToTop()
         self:Handle("OnUpdate",nil)
+        trashbin.yes = 1 -- Hack to trigger info text
         self:Handle("OnUpdate",OverlapTrashbinEvent)
     else 
         if math.abs(self.x - x) > 10 or math.abs(self.y - y) > 10 then
@@ -2117,7 +1094,7 @@ function DeTrigger(self) -- for long tap
     self.eventlist["OnUpdate"].currentevent = nil
     self:Handle("OnUpdate",nil)
     self:Handle("OnUpdate",VUpdate)
-
+    
     if trashbin.yes == 1 then
         MoveToTrashbin(self)
         trashbin.yes = 0
@@ -2150,6 +1127,10 @@ end
 function VTouchDown(self)
     if mydialog.ready == 1 and current_mode == modes[1] then
         BeBouncedObject(self)
+    elseif coldialog.ready == 1 and current_mode == modes[1] then
+        CollisionObject(self)
+        
+        
     else
         CallEvents("OnTouchDown",self)
     end
@@ -2180,6 +1161,11 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
     r.eventlist["OnUpdate"]["selfshowhide"] = 0
     r.eventlist["OnUpdate"]["selfcolor"] = 0
     r.eventlist["OnUpdate"]["move"] = 0
+    r.eventlist["OnUpdate"]["animate"] = 0
+    r.eventlist["OnUpdate"]["generate"] = 0
+    r.eventlist["OnUpdate"]["collision"] = 0
+    r.eventlist["OnUpdate"]["background"] = 0
+    r.eventlist["OnUpdate"]["projectile"] = 0
     r.eventlist["OnUpdate"].currentevent = nil
     r.reventlist = {} -- eventlist for release mode
     r.reventlist["OnTouchDown"] = {}
@@ -2193,6 +1179,13 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
     r.large = Region()
     r.large:SetAnchor("CENTER",r,"CENTER")
     
+    -- Initialize for generation
+    r.gencontrollerL = nil
+    r.gencontrollerR = nil
+    r.gencontrolle = nil
+    r.gencontrollerD = nil
+    r[1] = nil
+    
     -- initialize for moving
     r.random = 0
     r.speed = tonumber(moving_default_speed)
@@ -2204,12 +1197,39 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
     r.bounceremoveobjects = {}
     r.bound = boundary
     
+    -- Initialize for Collisions
+    r.regionregion = {}
+    r.regionproj = {}
+    r.projregion = {}
+    r.projproj = {}
+    
+    -- Initialize for Background
+    r.bgspeed = 0
+    r.bgdir = 0
+    
     -- initialize texture, label and size
     r.r = 255
     r.g = 255
     r.b = 255
     r.a = 255
     r.bkg = ""
+    --initialize gradient
+    r.r1 = nil
+    r.r2 = nil
+    r.r3 = nil
+    r.r4 = nil
+    r.g1 = nil
+    r.g2 = nil
+    r.g3 = nil
+    r.g4 = nil
+    r.b1 = nil
+    r.b2 = nil
+    r.b3 = nil
+    r.b4 = nil
+    r.a1 = nil
+    r.a2 = nil
+    r.a3 = nil
+    r.a4 = nil
     r.t:SetTexture(r.r,r.g,r.b,r.a)
     r.tl:SetLabel(r:Name())
     r.tl:SetFontHeight(18)
@@ -2236,7 +1256,7 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
     r.is_text_sender = 0
     r.is_text_receiver = 0
     r.text_sharee = -1
-
+    
     -- stickboundary
     r.stickboundary = "none"
 end
@@ -2280,7 +1300,7 @@ function CreateorRecycleregion(ftype, name, parent)
     return region
 end
 
------------------ v14.pagebutton -------------------
+----------------- v11.pagebutton -------------------
 local pagebutton=Region('region', 'pagebutton', UIParent)
 pagebutton:SetWidth(pagersize)
 pagebutton:SetHeight(pagersize)
@@ -2295,3 +1315,4 @@ pagebutton.texture:SetBlendMode("BLEND")
 pagebutton.texture:SetTexCoord(0,1.0,0,1.0)
 pagebutton:EnableInput(true)
 pagebutton:Show()
+

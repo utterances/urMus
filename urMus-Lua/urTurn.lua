@@ -45,6 +45,7 @@ for j=1,numrepetitions do
 		r:SetAnchor("CENTER",UIParent,"CENTER",0,0)
 		r:SetHeight(r.size)
 		r:SetWidth(r.size)
+--        r.t=r:Texture(255,0,0,255);
 		r.tl=r:TextLabel()
 		r.tl:SetLabel(words[i])
 		r:Show()

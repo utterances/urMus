@@ -1,0 +1,3 @@
+[submodule "Classes/GPUImage"]
+	path = Classes/GPUImage
+	url = git://github.com/BradLarson/GPUImage.git

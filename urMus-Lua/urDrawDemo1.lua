@@ -58,6 +58,40 @@ amp = 5
 angle = 0
 i = 0
 
+local brushtype = 0
+function ChangeBrushRepaint(self)
+    r.t:Clear(255,255,255,255)
+    radius = 10
+    thickness = 0.5
+    x = 2
+    y = ScreenHeight()/2
+    z = ScreenHeight()/2
+    t = ScreenHeight()/2
+    amp = 5
+    angle = 0
+    i = 0
+    if brushtype == 0 then
+        if not brush1 then
+            brush1=Region('region','brush',UIParent)
+            brush1.t=brush1:Texture()
+        end
+        brush1.t:SetTexture("circlebutton-16.png")
+        brush1.t:SetSolidColor(127,0,0,15)
+        brush1:UseAsBrush()
+        brushtype = 1
+    elseif brushtype == 1 then
+        brush1.t:SetTexture("Ornament1.png")
+        brush1.t:SetSolidColor(127,0,0,15)
+        brush1:UseAsBrush()
+        brush1.t:SetBrushSize(32)
+        brushtype = 2
+    elseif brushtype == 2 then
+        brush1.t:ClearBrush()
+        brushtype = 0
+    end
+        
+end
+
 r = Region()
 r:SetWidth(ScreenWidth())
 r:SetHeight(ScreenHeight())
@@ -65,6 +99,15 @@ r.t=r:Texture(255,255,255,255)
 r.t:SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
 --r.t:SetBlendMode("BLEND")
 r:Show()
+
+r:Handle("OnDoubleTap", ChangeBrushRepaint)
+r:EnableInput(true)
+
+dummp = Region()
+dummp.t = dummp:Texture()
+dummp.t:UseCamera()
+dummp:Show()
+dummp:SetAnchor("BOTTOMLEFT",-dummp:Width(),0)
 
 
 function draw(self,elapsed)

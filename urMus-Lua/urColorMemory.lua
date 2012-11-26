@@ -298,7 +298,6 @@ end
 
 -- Blows up everything!!!! self:SoarExec("smem --init")
 
-
 --GenerateSequence()
 
 --backdrop:Handle("OnUpdate",Playing)

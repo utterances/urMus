@@ -6,6 +6,9 @@
 
 if Keyboard then return end -- Keyboard already instantiated
 
+
+dofile(SystemPath("FAIAP.lua"))
+
 ----------- global helper functions ------------
 
 local function Highlight(r)
@@ -33,7 +36,13 @@ function Keyboard:Height()
 end
 
 function KeyTouchDown(self)
-    self.parent.typingarea.tl:SetLabel(self.parent.typingarea.tl:Label()..self.faces[self.parent.face])
+    
+    if self.parent.keyfunc then
+        self.parent.keyfunc(self.faces[self.parent.face])
+    else
+        self.parent.typingarea.tl:SetLabel(colorhighlightlib.stripWowColors(self.parent.typingarea.tl:Label())..self.faces[self.parent.face])
+    end
+
     Highlight(self)
     for i = 1,4 do
         for j = 1,#self.parent[i] do
@@ -117,9 +126,13 @@ end
 
 function KeyTouchDownBack(self)
     Highlight(self)
-    local s = self.parent.typingarea.tl:Label()
-    if s ~= "" then
-        self.parent.typingarea.tl:SetLabel(s:sub(1,s:len()-1))
+    if self.parent.backfunc then
+        self.parent.backfunc()
+    else
+        local s = colorhighlightlib.stripWowColors(self.parent.typingarea.tl:Label())
+        if s ~= "" then
+            self.parent.typingarea.tl:SetLabel(s:sub(1,s:len()-1))
+        end
     end
 end
 
@@ -129,15 +142,16 @@ function KeyTouchDownReturn(self)
 		self.parent.enterfunc(self.parent)
 	else
 		Highlight(self)
-		self.parent.typingarea.tl:SetLabel(self.parent.typingarea.tl:Label().."\n")
+        if self.parent.typingarea then
+            self.parent.typingarea.tl:SetLabel(self.parent.typingarea.tl:Label().."\n")
+        end
     end
 end
 
-function Keyboard.Create(area)
+function Keyboard.CreateKB()
     local kb = {}
     setmetatable(kb, Keyboard)
     kb.open = 0
-    kb.typingarea = area
     kb.w = ScreenWidth()
     kb.face = 1 -- 1: low case, 2: upper case, 3: back number
     kb:CreateKBLine("qwertyuiop","QWERTYUIOP","1234567890",1,key_w)
@@ -171,6 +185,20 @@ function Keyboard.Create(area)
     
     kb.h = #kb * (key_h+key_margin)
     
+    return kb
+end
+
+function Keyboard.CreateWithCallbacks(keycb, backcb, returncb)
+    local kb = Keyboard.CreateKB()
+    kb.keyfunc = keycb
+    kb.backfunc = backcb
+    kb.enterfunc = returncb
+    return kb
+end
+
+function Keyboard.Create(area)
+    local kb = Keyboard.CreateKB()
+    kb.typingarea = area
     return kb
 end
 

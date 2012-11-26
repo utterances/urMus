@@ -42,7 +42,11 @@ function BrushUp(self)
 end
 
 function Clear(self)
+
+--    smudgebackdropregion.texture:FinishMovie();
+
 	smudgebackdropregion.texture:Clear(255,255,255,0);
+--    DPrint("finishing")
 end
 
 smudgebackdropregion=Region('region', 'smudgebackdropregion', UIParent);
@@ -99,7 +103,9 @@ smudgebackdropregion.texture:Rect((320-40-100)*rescalex,(480-40-100)*rescaley,10
 smudgebackdropregion.texture:SetBrushColor(255,127,0,30)
 
 brush1.t:SetBrushSize(32);
+--smudgebackdropregion.texture:WriteMovie("urMus-test.mp4");
 
+pagersize = pagersize or 32
 local pagebutton=Region('region', 'pagebutton', UIParent);
 pagebutton:SetWidth(pagersize);
 pagebutton:SetHeight(pagersize);

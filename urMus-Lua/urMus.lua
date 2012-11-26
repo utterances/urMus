@@ -14,20 +14,38 @@ local sin = math.sin
 local cos = math.cos
 local ceil = math.ceil
 
+--urfont = "DroidSansMono.ttf"
+urfont = "Trebuchet MS"
+--urfont = "arial"
+--urfont = "Helvetica"
+
 patchdir = "Patches"
 
 pagefile = {
 "urMus",
---"urTurntable2.lua",
+"urFontTest.lua",
+"urTurn.lua",
+"urTextLabelHighlight.lua",
+"urAlignTest.lua",
+"urSimplePatch.lua",
+"urBasicFM.lua",
+"urMovieWriteTest.lua",
+"urPinchDemo.lua",
+"urMovieTest.lua",
+"urCameraFilterDemo.lua",
+"urMovieInterface2.lua",
+"urTime.lua",
+"urTurntable2.lua",
 "urColors.lua",
 --"urGEAugRel2.lua",
 "urVen2.lua",
+"urVen2-original.lua",
+"urSpriteAnimationExample.lua",
 "urLuaEditor.lua",
 "urDeleteFile.lua",
 "urNetDiscoveryTest.lua",
 "urMenu.lua",
 "urDrawDemo1.lua",
-"urTurn.lua",
 "urCameraDemo.lua",
 "urCameraBrush.lua",
 "urExternalTest.lua",
@@ -97,8 +115,25 @@ if SoarEnabled() then
     table.insert( pagefile, "urMusQuenzer.lua" )
     table.insert( pagefile, "urAgents.lua" )
     table.insert( pagefile, "urSoarAsynch.lua" )
-    table.insert( pagefile, 2, "urWaterJug.lua" )
+    table.insert( pagefile, "urWaterJug.lua" )
+    table.insert( pagefile, 2, "urBeats.lua" )
 end
+
+local texturefiles = {
+  button = "button-padded.png",
+-- button = "buttonvar1-64x80-padded.png", Fugly
+-- button = "buttonvar2-64x80-padded.png", Fairly fugly
+--  button = "buttonvar3-64x80-padded.png", Fugly
+--  button = "buttonvar4-64x80-padded.png",
+--  button = "buttonvar5-64x80-padded.png",
+  backdropedge = "backdrop-edge-brighter-128.png",
+  connectarrow = "connectarrow2.png",
+  doublearrow = "doublearrow.png",
+  downarrow = "downarrow.png",
+  rightarrow = "rightarrow.png",
+  leftarrow = "leftarrow.png",
+}
+
 
 scrollpage = 29
 
@@ -209,6 +244,24 @@ function save (name, value, saved)
 	else
 		error("cannot save a " .. type(value))
 	end
+end
+
+-- Flowbox Representation service functions
+
+local function GetLets(cflowbox, fbtype)
+    local lets
+    if fbtype == 1 then
+        lets = {cflowbox:Outs()}
+    else
+        lets = {cflowbox:Ins()}
+        if cflowbox:NumOuts() > 1 then
+            local outlets = { cflowbox:Outs()}
+            for i=2,#outlets do
+                table.insert(lets,outlets[i])
+            end
+        end
+    end
+    return lets
 end
 
 -- Loading, saving, settings
@@ -432,11 +485,8 @@ function ActivateSettings()
 				local object = v.name
 				local lets
 				
-				if fbtype == 1 then
-					lets = {flowbox:Outs()}
-				else
-					lets = {flowbox:Ins()}
-				end
+                lets = GetLets(flowbox, fbtype)
+
 				local inidx
 				if fbtype == 1 then
 					inidx = outnr
@@ -450,7 +500,7 @@ function ActivateSettings()
 				local thisregion = CreateButton(x,y,col,fbtype, object, flowbox, inidx, instancenumber)
 				local label = object
 				if thisregion.flowbox:IsInstantiable() then
-					label = label .." ("..thisregion.flowbox:InstanceNumber()..")"
+					label = label .."\n("..thisregion.flowbox:InstanceNumber()..")"
 				end
 				label = label .."\n"..lets[inidx+1]
 				thisregion.textlabel:SetLabel(label)
@@ -771,14 +821,14 @@ function CreateButton(x,y,col,fbtype,label,flowbox,inidx, instance)
 --		returnbutton:Handle("OnTouchUp", LockCursor)
 		returnbutton:Handle("OnDragStop", LockCursor)
 		returnbutton.textlabel=returnbutton:TextLabel()
-		returnbutton.textlabel:SetFont("Trebuchet MS")
+		returnbutton.textlabel:SetFont(urfont)
 		returnbutton.textlabel:SetHorizontalAlign("CENTER")
 		returnbutton.textlabel:SetLabel(label)
 		returnbutton.textlabel:SetFontHeight(16)
 		returnbutton.textlabel:SetColor(255,255,255,255)
 		returnbutton.textlabel:SetShadowColor(0,0,0,190)
 		returnbutton.textlabel:SetShadowBlur(2.0)
-		returnbutton.texture = returnbutton:Texture("button.png")
+		returnbutton.texture = returnbutton:Texture(texturefiles.button)
 		SetFlowboxColor(returnbutton.texture, fbtype)
 		returnbutton.texture:SetTexCoord(0,1.0,0,0.625)
 		returnbutton:EnableInput(true)
@@ -809,14 +859,12 @@ function CreateButton(x,y,col,fbtype,label,flowbox,inidx, instance)
 
 			local pos = fbpos[fbtype]
 			local lets
-			if fbtype == 1 then
-				lets = {flowbox:Outs()}
-			else
-				lets = {flowbox:Ins()}
-			end
+            
+            lets = GetLets(cflowbox, fbtype)
+
 			for k,letstr in pairs(lets) do
 				if letstr then
-					local label = object.." ("..#flowbox.instances..")".."\n"..letstr--.."("..(k-1)..")"
+					local label = object.."\n("..#flowbox.instances..")".."\n"..letstr--.."("..(k-1)..")"
 					if k-1 == inidx then
 						returnbutton.textlabel:SetLabel(label)
 					end
@@ -826,13 +874,11 @@ function CreateButton(x,y,col,fbtype,label,flowbox,inidx, instance)
 		else
 			local object = rflowbox:Name()
 			local lets
-			if fbtype == 1 then
-				lets = {rflowbox:Outs()}
-			else
-				lets = {rflowbox:Ins()}
-			end
+            
+            lets = GetLets(rflowbox, fbtype)
+            
 			local letstr = lets[inidx+1]
-			local label = object.." ("..rflowbox:InstanceNumber()..")".."\n"..letstr--.."("..inidx..")"
+			local label = object.."\n("..rflowbox:InstanceNumber()..")".."\n"..letstr--.."("..inidx..")"
 			returnbutton.textlabel:SetLabel(label)
 			flowbox = rflowbox
 			flowbox.let[inidx] = true
@@ -1733,16 +1779,14 @@ function ToggleIconFan(self)
 			local radius = diag*1.5
 			
 			local flowbox = self.flowbox
-			if fbtype == 1 then
-				lets = {flowbox:Outs()}
-			else
-				lets = {flowbox:Ins()}
-			end
+            
+            lets = GetLets(flowbox, fbtype)
+
 			popupbuttons = {}
 			
 			local instancelabel
 			if self.flowbox.instances then
-				instancelabel = "("..#self.flowbox.instances..")"
+				instancelabel = "\n("..#self.flowbox.instances..")"
 			else
 				instancelabel = ""
 			end
@@ -1794,14 +1838,14 @@ for fbtype=1,3 do
 	--		protofbcells[fbtype][cell]:Handle("OnTouchUp", LockCursor)
 			protofbcells[fbtype][cell]:Handle("OnDragStop", LockCursor)
 			protofbcells[fbtype][cell].textlabel=protofbcells[fbtype][cell]:TextLabel()
-			protofbcells[fbtype][cell].textlabel:SetFont("Trebuchet MS")
+			protofbcells[fbtype][cell].textlabel:SetFont(urfont)
 			protofbcells[fbtype][cell].textlabel:SetHorizontalAlign("CENTER")
 			protofbcells[fbtype][cell].textlabel:SetLabel("Source")
 			protofbcells[fbtype][cell].textlabel:SetFontHeight(16)
 			protofbcells[fbtype][cell].textlabel:SetColor(255,255,255,255)
 			protofbcells[fbtype][cell].textlabel:SetShadowColor(0,0,0,190)
 			protofbcells[fbtype][cell].textlabel:SetShadowBlur(2.0)
-			protofbcells[fbtype][cell].texture = protofbcells[fbtype][cell]:Texture("button.png")
+			protofbcells[fbtype][cell].texture = protofbcells[fbtype][cell]:Texture(texturefiles.button)
 			SetFlowboxColor(protofbcells[fbtype][cell].texture, fbtype)
 			protofbcells[fbtype][cell].texture:SetTexCoord(0,1.0,0,0.625)
 			if fbtype == activefbtype then
@@ -1826,11 +1870,7 @@ for fbtype=1,3 do
 		end
 		local pos = fbpos[fbtype]
 		local lets
-		if fbtype == 1 then
-			lets = {cflowbox:Outs()}
-		else
-			lets = {cflowbox:Ins()}
-		end
+        lets = GetLets(cflowbox, fbtype)
 		for k,letstr in pairs(lets) do
 			if letstr then
 				fblabels[fbtype][pos] = object.."\n"..letstr--.."("..(k-1)..")"
@@ -2103,7 +2143,7 @@ sourcetitlelabel:SetLayer("TOOLTIP")
 sourcetitlelabel:SetAnchor('CENTER', backdropanchor[1], 'TOPLEFT', colwidth/2, -4)
 sourcetitlelabel:Show()
 sourcetitlelabel.textlabel=sourcetitlelabel:TextLabel()
-sourcetitlelabel.textlabel:SetFont("Trebuchet MS")
+sourcetitlelabel.textlabel:SetFont(urfont)
 sourcetitlelabel.textlabel:SetHorizontalAlign("CENTER")
 sourcetitlelabel.textlabel:SetVerticalAlign("TOP")
 sourcetitlelabel.textlabel:SetLabel("Source")
@@ -2121,7 +2161,7 @@ filtertitlelabel:SetLayer("TOOLTIP")
 filtertitlelabel:SetAnchor('CENTER', backdropanchor[1], 'TOP', 0, -4)
 filtertitlelabel:Show()
 filtertitlelabel.textlabel=filtertitlelabel:TextLabel()
-filtertitlelabel.textlabel:SetFont("Trebuchet MS")
+filtertitlelabel.textlabel:SetFont(urfont)
 filtertitlelabel.textlabel:SetHorizontalAlign("CENTER")
 filtertitlelabel.textlabel:SetVerticalAlign("TOP")
 filtertitlelabel.textlabel:SetLabel("Filter")
@@ -2139,7 +2179,7 @@ sinktitlelabel:SetLayer("TOOLTIP")
 sinktitlelabel:SetAnchor('CENTER', backdropanchor[1], 'TOPRIGHT', -colwidth/2, -4)
 sinktitlelabel:Show()
 sinktitlelabel.textlabel=sinktitlelabel:TextLabel()
-sinktitlelabel.textlabel:SetFont("Trebuchet MS")
+sinktitlelabel.textlabel:SetFont(urfont)
 sinktitlelabel.textlabel:SetHorizontalAlign("CENTER")
 sinktitlelabel.textlabel:SetVerticalAlign("TOP")
 sinktitlelabel.textlabel:SetLabel("Sink")
@@ -2157,7 +2197,7 @@ clearbutton:SetLayer("TOOLTIP")
 clearbutton:SetAnchor('BOTTOMLEFT',0,ScreenHeight()-menubottonheight) 
 clearbutton:EnableClamping(true)
 clearbutton:Handle("OnDoubleTap", ClearSetup)
-clearbutton.texture = clearbutton:Texture("button.png")
+clearbutton.texture = clearbutton:Texture(texturefiles.button)
 clearbutton.texture:SetGradientColor("TOP",128,128,128,255,128,128,128,255)
 clearbutton.texture:SetGradientColor("BOTTOM",128,128,128,255,128,128,128,255)
 clearbutton.texture:SetBlendMode("BLEND")
@@ -2165,7 +2205,7 @@ clearbutton.texture:SetTexCoord(0,1.0,0,0.625)
 clearbutton:EnableInput(true)
 clearbutton:Show()
 clearbutton.textlabel=clearbutton:TextLabel()
-clearbutton.textlabel:SetFont("Trebuchet MS")
+clearbutton.textlabel:SetFont(urfont)
 clearbutton.textlabel:SetHorizontalAlign("CENTER")
 clearbutton.textlabel:SetLabel("Clear")
 clearbutton.textlabel:SetFontHeight(16)
@@ -2180,7 +2220,7 @@ loadbutton:SetLayer("TOOLTIP")
 loadbutton:SetAnchor('BOTTOMLEFT',ScreenWidth()/4,ScreenHeight()-menubottonheight) 
 loadbutton:EnableClamping(true)
 loadbutton:Handle("OnDoubleTap", LoadSettings)
-loadbutton.texture = loadbutton:Texture("button.png")
+loadbutton.texture = loadbutton:Texture(texturefiles.button)
 loadbutton.texture:SetGradientColor("TOP",128,128,128,255,128,128,128,255)
 loadbutton.texture:SetGradientColor("BOTTOM",128,128,128,255,128,128,128,255)
 loadbutton.texture:SetBlendMode("BLEND")
@@ -2188,7 +2228,7 @@ loadbutton.texture:SetTexCoord(0,1.0,0,0.625)
 loadbutton:EnableInput(true)
 loadbutton:Show()
 loadbutton.textlabel=loadbutton:TextLabel()
-loadbutton.textlabel:SetFont("Trebuchet MS")
+loadbutton.textlabel:SetFont(urfont)
 loadbutton.textlabel:SetHorizontalAlign("CENTER")
 loadbutton.textlabel:SetLabel("Load")
 loadbutton.textlabel:SetFontHeight(16)
@@ -2203,7 +2243,7 @@ savebutton:SetLayer("TOOLTIP")
 savebutton:SetAnchor('BOTTOMLEFT',2*ScreenWidth()/4,ScreenHeight()-menubottonheight) 
 savebutton:EnableClamping(true)
 savebutton:Handle("OnDoubleTap", SaveSettings)
-savebutton.texture = savebutton:Texture("button.png")
+savebutton.texture = savebutton:Texture(texturefiles.button)
 savebutton.texture:SetGradientColor("TOP",128,128,128,255,128,128,128,255)
 savebutton.texture:SetGradientColor("BOTTOM",128,128,128,255,128,128,128,255)
 savebutton.texture:SetBlendMode("BLEND")
@@ -2211,7 +2251,7 @@ savebutton.texture:SetTexCoord(0,1.0,0,0.625)
 savebutton:EnableInput(true)
 savebutton:Show()
 savebutton.textlabel=savebutton:TextLabel()
-savebutton.textlabel:SetFont("Trebuchet MS")
+savebutton.textlabel:SetFont(urfont)
 savebutton.textlabel:SetHorizontalAlign("CENTER")
 savebutton.textlabel:SetLabel("Save")
 savebutton.textlabel:SetFontHeight(16)
@@ -2226,7 +2266,7 @@ facebutton:SetLayer("TOOLTIP")
 facebutton:SetAnchor('BOTTOMLEFT',3*ScreenWidth()/4,ScreenHeight()-menubottonheight) 
 facebutton:EnableClamping(true)
 facebutton:Handle("OnDoubleTap", FlipPage)
-facebutton.texture = facebutton:Texture("button.png")
+facebutton.texture = facebutton:Texture(texturefiles.button)
 facebutton.texture:SetGradientColor("TOP",128,128,128,255,128,128,128,255)
 facebutton.texture:SetGradientColor("BOTTOM",128,128,128,255,128,128,128,255)
 facebutton.texture:SetBlendMode("BLEND")
@@ -2234,7 +2274,7 @@ facebutton.texture:SetTexCoord(0,1.0,0,0.625)
 facebutton:EnableInput(true)
 facebutton:Show()
 facebutton.textlabel=facebutton:TextLabel()
-facebutton.textlabel:SetFont("Trebuchet MS")
+facebutton.textlabel:SetFont(urfont)
 facebutton.textlabel:SetHorizontalAlign("CENTER")
 facebutton.textlabel:SetLabel("Face")
 facebutton.textlabel:SetFontHeight(16)
@@ -2251,7 +2291,7 @@ notificationregion:SetAnchor('BOTTOMLEFT',0,ScreenHeight()/2-24)
 notificationregion:EnableClamping(true)
 notificationregion:Show()
 notificationregion.textlabel=notificationregion:TextLabel()
-notificationregion.textlabel:SetFont("Trebuchet MS")
+notificationregion.textlabel:SetFont(urfont)
 notificationregion.textlabel:SetHorizontalAlign("CENTER")
 notificationregion.textlabel:SetLabel("Notifications")
 notificationregion.textlabel:SetFontHeight(48)
@@ -2270,8 +2310,8 @@ end
 notificationregion:Handle("OnNetConnect", NewConnection)
 notificationregion:Handle("OnNetDisconnect", LostConnection)
 
---StartNetAdvertise("",8888)
---StartNetDiscovery("")
+StartNetAdvertise("",8888)
+StartNetDiscovery("")
 
 StartAudio()
 ShowNotification("urMus") -- Shame on me, pointless eye candy.
@@ -2281,6 +2321,7 @@ ShowNotification("urMus") -- Shame on me, pointless eye candy.
 --Widget.Tooltip("Double-Tap to Save", {parent=savebutton})
 --Widget.Tooltip("Double-Tap for Faces", {parent=facebutton})
 
+StartHTTPServer()
 local host,port = HTTPServer()
 if host and port then -- Only advertise the web server if it is launched
 	DPrint("http://"..host..":"..port.."/")
