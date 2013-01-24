@@ -3129,6 +3129,7 @@ int textlabel_SetFont(lua_State* lua)
 {
 	urAPI_TextLabel_t* t = checktextlabel(lua, 1);
 	t->font = luaL_checkstring(lua,2);
+    t->updatestring = true;
 	return 0;
 }
 
@@ -3279,6 +3280,7 @@ int textlabel_LabelBounds(lua_State* lua)
     int returncnt = 0;
     bool started = false;
     assert((returncnt%2)==0);
+    NSLog(@"Num Lines: %d", textlabel->textlabelTex->charLines());
     for(int i=0;i< textlabel->textlabelTex->charLines(); i++)
     {
         assert((returncnt%2)==0);
@@ -3416,6 +3418,7 @@ int textlabel_SetSpacing(lua_State* lua)
 {
 	urAPI_TextLabel_t* t = checktextlabel(lua, 1);
 	t->linespacing = luaL_checknumber(lua,2);
+    t->updatestring = true;
 	return 0;
 }
 
@@ -3457,6 +3460,7 @@ int textlabel_SetFontHeight(lua_State* lua)
 {
 	urAPI_TextLabel_t* t = checktextlabel(lua, 1);
 	t->textheight = luaL_checknumber(lua,2);
+    t->updatestring = true;
 	return 0;
 }
 
@@ -3488,6 +3492,7 @@ int textlabel_SetLabel(lua_State* lua)
 
 //	t->updatestring = true;
     renderTextLabel(t->region);
+    t->updatestring = false;
 	return 0;
 }
 
@@ -3539,7 +3544,7 @@ int textlabel_Outline(lua_State* lua)
 	lua_pushnumber(lua, t->outlinemode);
 	lua_pushnumber(lua, t->outlinethickness);
     
-    return 6;
+    return 2;
 }
 
 // SOAR support API

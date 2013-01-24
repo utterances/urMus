@@ -11,6 +11,8 @@ local currentcode
 
 local cursor
 
+local fontheight = ScreenHeight()/30
+
 local cursorpos = 0
 colorcode = true
 
@@ -25,9 +27,13 @@ end
 
 function RefreshCursor(self)
     local x,y = self.tl:LabelBounds(cursorpos,cursorpos)
+    if x == nil then
+        x = 0
+        y = self:Top()-fontheight
+    end
     cursor:SetAnchor("BOTTOMLEFT",self,"BOTTOMLEFT",x ,y )
-    local code = self.tl:Label()
-    DPrint(cursorpos.." : "..code:sub(cursorpos,cursorpos+3))
+--    local code = self.tl:Label()
+--    DPrint(cursorpos.." : "..code:sub(cursorpos,cursorpos+3))
 end
 
 function OnTouchDownCursor(self,x,y)
@@ -51,9 +57,10 @@ local function ColorCode(t)
 end
 
 local function ClearCode(self)
-    EditRegion.tl:SetLabel("")
     currentcode = ""
-    cursporpos = 0
+    cursorpos = 0
+    EditRegion.tl:SetLabel("")
+    RefreshCursor(EditRegion)
     ShowNotification("Cleared")
 end
 
@@ -152,7 +159,7 @@ EditRegion:SetAnchor("BOTTOMLEFT",0,mykb:Height())
 EditRegion.tl = EditRegion:TextLabel()
 EditRegion.tl:SetVerticalAlign("TOP")
 EditRegion.tl:SetHorizontalAlign("LEFT")
-EditRegion.tl:SetFontHeight(ScreenHeight()/30)
+EditRegion.tl:SetFontHeight(fontheight)
 EditRegion.tl:SetLabel("")
 EditRegion:Show()
 
@@ -207,7 +214,7 @@ function KeyBackspace()
         local code = EditRegion.tl:Label()
         local pos, numLines
         if colorcode then
-        DPrint(code:sub(cursorpos-2,cursorpos+2))
+--        DPrint(code:sub(cursorpos-2,cursorpos+2))
             code, pos = colorhighlightlib.stripWowColorsWithPos(code, cursorpos)
             pos = pos - 1
         else

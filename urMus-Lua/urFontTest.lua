@@ -4,6 +4,8 @@ bg:SetHeight(ScreenHeight())
 bg.t = bg:Texture(0,0,90,255)
 bg:Show()
 
+local urfont2 = "Trebuchet MS"
+--[[
 r={}
 for i=1,8 do
     r[i] = Region()
@@ -21,7 +23,7 @@ for i=1,8 do
     end
     r[i]:Show()
 end
-
+--]]
 r2={}
 local xoff = 4
 local yoff = -4
@@ -31,28 +33,29 @@ for i=1,8 do
     r2[i]:SetHeight((8+4*(i-1))*1.47)
     r2[i]:SetWidth(ScreenWidth())
     r2[i].tl = r2[i]:TextLabel()
-    r2[i].tl:SetFont(urfont)
-    r2[i].tl:SetOutline(2,math.max((8+4*(i-1))/10,1),0,0,0,255)
+    r2[i].tl:SetOutline(2,math.max((8+4*(i-1))/10,1),255,0,0,255)
+    r2[i].tl:SetFont(urfont2)
     r2[i].tl:SetFontHeight(8+4*(i-1))
-    r2[i].tl:SetLabel("A quick brown fox jumps over the lazy dog")
     r2[i].tl:SetColor(255,60,60,190)
+    r2[i].tl:SetLabel("A quick brown fox jumps over the lazy dog")
     r2[i].tl:SetShadowColor(0,0,0,190)
     r2[i].tl:SetShadowBlur(2.0)
     if i==1 then
-        r2[i]:SetAnchor("TOPLEFT",r[8],"BOTTOMLEFT",0+xoff,-16+yoff)
+        r2[i]:SetAnchor("TOPLEFT",0,ScreenHeight())
+--        r2[i]:SetAnchor("TOPLEFT",r[8],"BOTTOMLEFT",0+xoff,-16+yoff)
     else
         r2[i]:SetAnchor("TOPLEFT",r2[i-1],"BOTTOMLEFT",0+xoff,0+yoff)
     end
     r2[i]:Show()
 end
-
+--[[
 r3={}
 for i=1,8 do
 r3[i] = Region()
 r3[i]:SetHeight((8+4*(i-1))*1.47)
 r3[i]:SetWidth(ScreenWidth())
 r3[i].tl = r3[i]:TextLabel()
-r3[i].tl:SetFont(urfont)
+r3[i].tl:SetFont(urfont2)
 r3[i].tl:SetFontHeight(8+4*(i-1))
 r3[i].tl:SetLabel("A quick brown fox jumps over the lazy dog")
 r3[i].tl:SetColor(255,255,255,255)
@@ -65,7 +68,7 @@ r3[i]:SetAnchor("TOPLEFT",r2[i-1],"BOTTOMLEFT",0,0)
 end
 r3[i]:Show()
 end
-
+--]]
 
 local pagebutton=Region('region', 'pagebutton', UIParent)
 pagebutton:SetWidth(pagersize)
