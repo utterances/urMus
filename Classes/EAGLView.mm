@@ -4305,7 +4305,7 @@ void renderTextLabel(urAPI_Region_t* t)
                         t->texture->movieTexture = 0;
 #endif
 #else
-                        if([t->texture->movieTex playStatus] == GPUMOVIE_FINISHED)
+               //         if([t->texture->movieTex playStatus] == GPUMOVIE_FINISHED)
                         {
                             glDeleteTextures(1,&(t->texture->movieTexture));
                             t->texture->movieTexture = 0;
