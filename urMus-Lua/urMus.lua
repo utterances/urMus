@@ -15,7 +15,7 @@ local cos = math.cos
 local ceil = math.ceil
 
 urfont = "DroidSansMono.ttf"
---urfont = "Trebuchet MS"
+urfont2 = "Trebuchet MS"
 --urfont = "arial"
 --urfont = "Helvetica"
 

@@ -4302,7 +4302,7 @@ void renderTextLabel(urAPI_Region_t* t)
                         {
                             int a = err;
                         }
-                        t->texture->movieTexture = 0;
+                        t->texture->movieTex ture = 0;
 #endif
 #else
                //         if([t->texture->movieTex playStatus] == GPUMOVIE_FINISHED)
@@ -5282,8 +5282,13 @@ void onTouchDoubleDragUpdate(int t, int dragidx, float pos1x, float pos1y, float
                 {
                     float deltanewwidth = fabs(cursorpositionx2-pos1x);
                     float deltanewheight = fabs(cursorpositiony2-pos1y);
-                    dragregion->width = dragtouches[dragidx].dragwidth + deltanewwidth;
-                    dragregion->height = dragtouches[dragidx].dragheight + deltanewheight;
+                    float width = dragtouches[dragidx].dragwidth + deltanewwidth;
+                    float height = dragtouches[dragidx].dragheight + deltanewheight;
+                    if(dragregion->textlabel!=NULL && (width != dragregion->width || height != dragregion->height))
+                        dragregion->textlabel->updatestring = true;
+
+                    dragregion->width = width;
+                    dragregion->height = height;
                 }
                 dragregion->right = dragregion->left + dragregion->width;
                 dragregion->top = dragregion->bottom + dragregion->height;

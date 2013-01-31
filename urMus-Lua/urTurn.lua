@@ -5,6 +5,7 @@
 
 FreeAllRegions()
 
+local urfont2 = "arial"
 local random = math.random
 
 local numrepetitions = 3
@@ -52,8 +53,9 @@ for j=1,numrepetitions do
 		r.angle = random(0,360)
 		r.aspeed = random(minspeed,maxspeed)
 		r.fsize = random(minfontsize,maxfontsize)
-		r.tl:SetRotation(r.angle)
+        r.tl:SetFont(urfont2)
 		r.tl:SetFontHeight(r.fsize)
+		r.tl:SetRotation(r.angle)
 		r.tl:SetVerticalAlign("TOP")
 		r.alpha = 255
 		r.alphaspeed = random(1*30,4*30)
@@ -74,3 +76,5 @@ pagebutton.texture:SetSolidColor(255,255,255,255)
 pagebutton.texture:SetBlendMode("BLEND")
 pagebutton:EnableInput(true)
 pagebutton:Show()
+
+DPrint("yarg")

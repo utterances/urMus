@@ -931,12 +931,12 @@ function lib.encode(code)
 end
 
 function lib.stripWowColorsWithPos(code, pos)
-    DPrint("D1a: "..pos.." :"..code:sub(pos-3,pos+3))
+--    DPrint("D1a: "..pos.." :"..code:sub(pos-3,pos+3))
 	code = stringinsert(code, pos, "\2")
-    DPrint("D1b: "..pos.." :"..code:sub(pos-3,pos+3))
+--    DPrint("D1b: "..pos.." :"..code:sub(pos-3,pos+3))
 	code = lib.stripWowColors(code)
 	pos = stringfind(code, "\2", 1, 1)
-    DPrint("D2: "..pos)
+--    DPrint("D2: "..pos)
 	code = stringdelete(code, pos, pos)
 	return code, pos
 end

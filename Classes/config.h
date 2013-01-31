@@ -15,7 +15,7 @@
 #ifdef OPENGLES2
 #define GPUIMAGE
 #else
-#define GPUIMAGE
+//#define GPUIMAGE
 #endif
 // Enabled Apple's font rendering rather than FreeType2/Glyph Atlas code. The Apple rendering is stable but not portable.
 #undef UISTRINGS
