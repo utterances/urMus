@@ -14,11 +14,11 @@ function createProjectiles(self)
     if self.projpicture == nil then
         r.t = r:Texture(255,255,255,255)
     else
-        r.t = r:Texture(pics[self.projpicture])
+        r.t =self.projpicture
         r.t:SetBlendMode("ALPHAKEY")
     end
-    r:SetHeight(50)
-    r:SetWidth(50)
+    r:SetHeight(self.ProjSize)
+    r:SetWidth(self.ProjSize)
     
     r.speedy = 0
     r.speedx = 0
@@ -49,30 +49,30 @@ function startProjectiles(self)
                 if self.direction == "U" then                    
                     self[i].y = self.bottomY
                     if self.randomise == "Y" then
-                        self[i].x = math.random(self.leftX, self.rightX-50)
+                        self[i].x = math.random(self.leftX, self.rightX-r:Width())
                     else
-                        self[i].x = self.centerX-25
+                        self[i].x = self.centerX-r:Width()/2
                     end
                 elseif self.direction == "D" then
-                    self[i].y = self.topY-50
+                    self[i].y = self.topY-r:Width()
                     if self.randomise == "Y" then
-                        self[i].x = math.random(self.leftX, self.rightX-50)
+                        self[i].x = math.random(self.leftX, self.rightX-r:Width())
                     else
-                        self[i].x = self.centerX-25
+                        self[i].x = self.centerX-r:Width()/2
                     end
                 elseif self.direction == "L" then                    
-                    self[i].x = self.rightX-50
+                    self[i].x = self.rightX-r:Width()
                     if self.randomise == "Y" then
-                        self[i].y = math.random(self.bottomY,self.topY-50)
+                        self[i].y = math.random(self.bottomY,self.topY-r:Width())
                     else
-                        self[i].y = self.centerY-25
+                        self[i].y = self.centerY-r:Width()/2
                     end
                 elseif self.direction == "R" then                    
                     self[i].x = self.leftX
                     if self.randomise == "Y" then
-                        self[i].y = math.random(self.bottomY,self.topY-50)
+                        self[i].y = math.random(self.bottomY,self.topY-r:Width())
                     else
-                        self[i].y = self.centerY-25
+                        self[i].y = self.centerY-r:Width()
                     end
                 end
                 break
@@ -89,11 +89,11 @@ function drawProjectiles(self)
     end
 end
 
-function updateProjectiles(self)
+function updateProjectiles(self,elapsed)
     for i = 1, self.numProjectiles do        
         if self[i].live then
-            self[i].x = self[i].x + self[i].speedx
-            self[i].y = self[i].y + self[i].speedy
+            self[i].x = self[i].x + self[i].speedx*50*elapsed
+            self[i].y = self[i].y + self[i].speedy*50*elapsed
             self[i]:SetAnchor("BOTTOMLEFT",self[i].x,self[i].y)
         end
         if self[i].live and self[i].y > ScreenHeight() or self[i].y < 0 or self[i].x > ScreenWidth() or self[i].x < 0 then
@@ -112,15 +112,16 @@ function GenerationEvent(self,elapsed)
     
     startProjectiles(self)
     drawProjectiles(self)
-    updateProjectiles(self)
+    updateProjectiles(self, elapsed)
 end
 
-function StartGenerating(vv,numProjectiles,genSpeed,projectileSpeed,direction,randomise)
+function StartGenerating(vv,numProjectiles,genSpeed,projectileSpeed,direction,randomise, size)
     vv.numProjectiles = numProjectiles
     vv.genSpeed = genSpeed
     vv.direction = direction
     vv.projectileSpeed = projectileSpeed
     vv.randomise = randomise
+    vv.ProjSize = size
     
     for i = 1,numProjectiles do
         vv[i] = createProjectiles(vv)
@@ -141,8 +142,9 @@ function OKGenclicked(self)
     direction = tostring(dd[4][2].tl:Label())  
     randomise = tostring(dd[5][2].tl:Label())
     image = tostring(dd[6][2].tl:Label())      
+    size = tostring(dd[7][2].tl:Label())
     
-    StartGenerating(region,numProjectiles,genSpeed,projectileSpeed,direction,randomise)
+    StartGenerating(region,numProjectiles,genSpeed,projectileSpeed,direction,randomise,size)
     
     CloseGenDialog(self.parent)
 end
@@ -156,6 +158,7 @@ function CloseGenDialog(self)
     end
     
     self[#self.tooltips][1]:EnableInput(false)
+    mykp:Hide()
     mykb:Hide()
     self.ready = 0
     backdrop:EnableInput(true)
@@ -167,8 +170,23 @@ end
 
 function pictureLoading(self)
     picture = CreateorRecycleregion('region', 'backdrop', UIParent)
-    OpenPictureDialog(picture) 
-    self.parent.caller.projpicture = globalPic    
+    loadPicture(nil,picture) 
+    self.parent.caller.projpicture = picture.t   
+end
+
+function arrowClickedRight(self)
+    self.count = self.count + 1
+    if self.count > #self.parent.values then
+        self.count = 1
+    end
+    self.parent.tl:SetLabel(self.parent.values[self.count])
+end
+function arrowClickedLeft(self)
+    self.count = self.count - 1
+    if self.count < 1 then
+        self.count = #self.parent.values
+    end
+    self.parent.tl:SetLabel(self.parent.values[self.count])
 end
 
 gendialog = {}
@@ -185,7 +203,7 @@ gendialog.title.tl:SetShadowBlur(1)
 gendialog.title:SetWidth(550)
 gendialog.title:SetHeight(50)
 gendialog.title:SetAnchor("BOTTOM",UIParent,"CENTER",0,300)
-gendialog.tooltips = {{"How Many?","10"},{"How Often to Generate?","500"},{"How Fast should they move?","10"},{"Which Direction? (First letter of direction)","U"},{"Randomize Start Position?","Y"},{"Image for Projectile?",nil},{"OK","CANCEL"}}
+gendialog.tooltips = {{"How Many?","10"},{"How Often to Generate? (Higher == Slower)","500"},{"How Fast should they move?","10"},{"Which Direction? (First letter of direction)","U"},{"Randomize Start Position?","Y"},{"Image for Projectile?",nil},{"Projectile Size?",50},{"OK","CANCEL"}}
 
 gendialog.caller = nil
 gendialog.picture = nil
@@ -199,14 +217,37 @@ for i = 1,#gendialog.tooltips do
     gendialog[i][2].parent = gendialog
 end
 
-gendialog[1][2]:Handle("OnTouchDown",OpenOrCloseNumericKeyboard)
-gendialog[2][2]:Handle("OnTouchDown",OpenOrCloseNumericKeyboard)
-gendialog[3][2]:Handle("OnTouchDown",OpenOrCloseNumericKeyboard)
-gendialog[4][2]:Handle("OnTouchDown",OpenOrCloseKeyboard)
-gendialog[5][2]:Handle("OnTouchDown",OpenOrCloseKeyboard)
+for i = 0, 1 do
+    for j = 0,1 do
+        gendialog[4+j][3+i] = Region('region','dialog',UIParent)
+        gendialog[4+j][3+i].t = gendialog[4+j][3+i]:Texture(SystemPath("arrow.png"))
+        gendialog[4+j][3+i].t:SetBlendMode("ALPHAKEY")
+        gendialog[4+j][3+i].t:SetRotation(3.14*i)
+        gendialog[4+j][3+i]:SetWidth(50)
+        gendialog[4+j][3+i]:SetHeight(50)
+        gendialog[4+j][3+i]:SetAnchor("LEFT",gendialog[4+j][1],"RIGHT",100-(i*100),0)
+        gendialog[4+j][3+i].dir = i
+        gendialog[4+j][3+i].parent = gendialog[4+j][2]
+    end
+end
+gendialog[4][2].values = {"U","D","L","R"}
+gendialog[4][3].count = 1
+gendialog[4][4].count = 1
+gendialog[5][2].values = {"Y","N"}
+gendialog[5][3].count = 1
+gendialog[5][4].count = 1
+
+gendialog[1][2]:Handle("OnTouchDown",OpenOrCloseKeyPad)
+gendialog[2][2]:Handle("OnTouchDown",OpenOrCloseKeyPad)
+gendialog[3][2]:Handle("OnTouchDown",OpenOrCloseKeyPad)
+gendialog[4][3]:Handle("OnTouchDown",arrowClickedRight)
+gendialog[4][4]:Handle("OnTouchDown",arrowClickedLeft)
+gendialog[5][3]:Handle("OnTouchDown",arrowClickedRight)
+gendialog[5][4]:Handle("OnTouchDown",arrowClickedLeft)
 gendialog[6][2]:Handle("OnTouchDown",pictureLoading)
-gendialog[7][1]:Handle("OnTouchDown",OKGenclicked)
-gendialog[7][2]:Handle("OnTouchDown",CANCELGenclicked)
+gendialog[7][2]:Handle("OnTouchDown",OpenOrCloseKeyPad)
+gendialog[8][1]:Handle("OnTouchDown",OKGenclicked)
+gendialog[8][2]:Handle("OnTouchDown",CANCELGenclicked)
 
 gendialog[1][1]:SetAnchor("TOPLEFT",gendialog.title,"BOTTOMLEFT",0,0)
 
@@ -226,6 +267,13 @@ function OpenGenDialog(v)
         gendialog[i][2]:MoveToTop()
         gendialog[i][2].tl:SetLabel(tostring(gendialog.tooltips[i][2]))
         gendialog[i][2]:EnableInput(true)
+    end
+    for i = 0, 1 do
+        for j = 0,1 do
+            gendialog[4+j][3+i]:Show()
+            gendialog[4+j][3+i]:MoveToTop()
+            gendialog[4+j][3+i]:EnableInput(true)
+        end
     end
     gendialog[#gendialog.tooltips][1]:EnableInput(true)
     gendialog.picture = nil

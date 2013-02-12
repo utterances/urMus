@@ -251,7 +251,6 @@
 		77731DF3161B715800DBB08B /* urTexture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 77731DF1161B715800DBB08B /* urTexture.cpp */; };
 		77731DF6161B717900DBB08B /* urImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 77731DF4161B717900DBB08B /* urImage.cpp */; };
 		77732586161B7A4500DBB08B /* libFreetype2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 77732585161B7A4500DBB08B /* libFreetype2.a */; };
-		7777E3221165CC480013B337 /* MainWindow-iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7777E3211165CC480013B337 /* MainWindow-iPad.xib */; };
 		7778B1EB0FED04AF00F491D3 /* lapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 7778B1B40FED04AF00F491D3 /* lapi.c */; };
 		7778B1EC0FED04AF00F491D3 /* lauxlib.c in Sources */ = {isa = PBXBuildFile; fileRef = 7778B1B60FED04AF00F491D3 /* lauxlib.c */; };
 		7778B1ED0FED04AF00F491D3 /* lbaselib.c in Sources */ = {isa = PBXBuildFile; fileRef = 7778B1B80FED04AF00F491D3 /* lbaselib.c */; };
@@ -310,6 +309,7 @@
 		778FB5220FEEE8F900F109A7 /* Texture2d.mm in Sources */ = {isa = PBXBuildFile; fileRef = 778FB5210FEEE8F900F109A7 /* Texture2d.mm */; };
 		778FB5350FEEEB7800F109A7 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 778FB5340FEEEB7800F109A7 /* QuartzCore.framework */; };
 		778FB5F80FEEEDEA00F109A7 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 778FB5F70FEEEDEA00F109A7 /* CoreGraphics.framework */; };
+		7790B95A16BB14CF008120B7 /* arrow.png in Resources */ = {isa = PBXBuildFile; fileRef = 7790B95916BB14CF008120B7 /* arrow.png */; };
 		7792694316231BC8006A6A3B /* urFontTest.lua in Sources */ = {isa = PBXBuildFile; fileRef = 7792694216231BC8006A6A3B /* urFontTest.lua */; };
 		7792694416232913006A6A3B /* urFontTest.lua in Resources */ = {isa = PBXBuildFile; fileRef = 7792694216231BC8006A6A3B /* urFontTest.lua */; };
 		7798DD791240246100238912 /* urAnimExample.lua in Resources */ = {isa = PBXBuildFile; fileRef = 7798DD70124023BC00238912 /* urAnimExample.lua */; };
@@ -318,7 +318,6 @@
 		779AD4A5104A3B2C007040BF /* downarrow.png in Resources */ = {isa = PBXBuildFile; fileRef = 779AD4A2104A3B2C007040BF /* downarrow.png */; };
 		779B89211393A25900B6C9BA /* urExternalTest.lua in Resources */ = {isa = PBXBuildFile; fileRef = 774A6F6B13938A4300F13FAB /* urExternalTest.lua */; };
 		779BE9C013A99BF2002E36DC /* libcurl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 779BE9BF13A99BF2002E36DC /* libcurl.a */; };
-		779BE9CB13A99F25002E36DC /* libz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 779BE9CA13A99F25002E36DC /* libz.a */; };
 		779BE9DD13A9A010002E36DC /* curlbuild.h.cmake in Resources */ = {isa = PBXBuildFile; fileRef = 779BE9CF13A9A010002E36DC /* curlbuild.h.cmake */; };
 		779BE9DE13A9A010002E36DC /* curlbuild.h.in in Resources */ = {isa = PBXBuildFile; fileRef = 779BE9D013A9A010002E36DC /* curlbuild.h.in */; };
 		779BE9E013A9A010002E36DC /* Makefile.am in Resources */ = {isa = PBXBuildFile; fileRef = 779BE9D513A9A010002E36DC /* Makefile.am */; };
@@ -499,6 +498,8 @@
 		77D61B4A10C80C170091DE81 /* Pink-Mono.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77D61B4210C80C170091DE81 /* Pink-Mono.wav */; };
 		77D61B4B10C80C170091DE81 /* Orange-Mono.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77D61B4310C80C170091DE81 /* Orange-Mono.wav */; };
 		77D61B4C10C80C170091DE81 /* Red-Mono.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77D61B4410C80C170091DE81 /* Red-Mono.wav */; };
+		77D9ED6516C16D77008EC083 /* libz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 77D9ED6416C16D77008EC083 /* libz.a */; };
+		77D9ED6916C19837008EC083 /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 77D9ED6816C19837008EC083 /* Default-568h@2x.png */; };
 		77DEFB5712930C2200110BA1 /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = 77DEFB5612930C2200110BA1 /* Default.png */; };
 		77DF162413FC829600B00815 /* urStringEditBox.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77DF162013FC828200B00815 /* urStringEditBox.lua */; };
 		77DF162513FC829700B00815 /* urFileBrowser.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77DF162113FC828200B00815 /* urFileBrowser.lua */; };
@@ -513,7 +514,6 @@
 		77F01C11112508CB007FD520 /* small-ball.png in Resources */ = {isa = PBXBuildFile; fileRef = 77F01C0D112508CB007FD520 /* small-ball.png */; };
 		77F01C12112508CB007FD520 /* ball.png in Resources */ = {isa = PBXBuildFile; fileRef = 77F01C0E112508CB007FD520 /* ball.png */; };
 		77F01C13112508CB007FD520 /* PongBG.png in Resources */ = {isa = PBXBuildFile; fileRef = 77F01C0F112508CB007FD520 /* PongBG.png */; };
-		77F043D81123C28B00CB8C95 /* MainWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 77F043D71123C28B00CB8C95 /* MainWindow.xib */; };
 		77F31ADB15AB81E400B8E700 /* urCameraFilterDemo.lua in Sources */ = {isa = PBXBuildFile; fileRef = 77F31ADA15AB81E400B8E700 /* urCameraFilterDemo.lua */; };
 		77F31ADC15AB825D00B8E700 /* urCameraFilterDemo.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77F31ADA15AB81E400B8E700 /* urCameraFilterDemo.lua */; };
 		77F35C881357230F00BE696C /* parenth.png in Resources */ = {isa = PBXBuildFile; fileRef = 77F35C851357230F00BE696C /* parenth.png */; };
@@ -564,7 +564,7 @@
 		23D069EC1198FEEB0031847C /* urBlank.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urBlank.lua; path = "urMus-Lua/urBlank.lua"; sourceTree = "<group>"; };
 		28FD14FC0DC6FC130079059D /* EAGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLView.h; sourceTree = "<group>"; };
 		28FD14FD0DC6FC130079059D /* EAGLView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = EAGLView.mm; sourceTree = "<group>"; };
-		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = main.m; sourceTree = "<group>"; };
 		32CA4F630368D1EE00C91783 /* urMus_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = urMus_Prefix.pch; sourceTree = "<group>"; };
 		7700BFCC104AF4120025D43A /* connectarrow2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = connectarrow2.png; path = Textures/connectarrow2.png; sourceTree = "<group>"; };
 		7700C069104B2DA70025D43A /* leftarrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = leftarrow.png; path = Textures/leftarrow.png; sourceTree = "<group>"; };
@@ -935,7 +935,6 @@
 		77731DF4161B717900DBB08B /* urImage.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = urImage.cpp; sourceTree = "<group>"; };
 		77731DF5161B717900DBB08B /* urImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = urImage.h; sourceTree = "<group>"; };
 		77732585161B7A4500DBB08B /* libFreetype2.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libFreetype2.a; path = libs/libFreetype2.a; sourceTree = "<group>"; };
-		7777E3211165CC480013B337 /* MainWindow-iPad.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = "MainWindow-iPad.xib"; path = "Resources-iPad/MainWindow-iPad.xib"; sourceTree = "<group>"; };
 		7778B1B40FED04AF00F491D3 /* lapi.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = lapi.c; path = "Classes/lua-5.1.4/src/lapi.c"; sourceTree = "<group>"; };
 		7778B1B50FED04AF00F491D3 /* lapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lapi.h; path = "Classes/lua-5.1.4/src/lapi.h"; sourceTree = "<group>"; };
 		7778B1B60FED04AF00F491D3 /* lauxlib.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = lauxlib.c; path = "Classes/lua-5.1.4/src/lauxlib.c"; sourceTree = "<group>"; };
@@ -1041,13 +1040,13 @@
 		778FB5210FEEE8F900F109A7 /* Texture2d.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Texture2d.mm; sourceTree = "<group>"; };
 		778FB5340FEEEB7800F109A7 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = /System/Library/Frameworks/QuartzCore.framework; sourceTree = "<absolute>"; };
 		778FB5F70FEEEDEA00F109A7 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		7790B95916BB14CF008120B7 /* arrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = arrow.png; path = Textures/arrow.png; sourceTree = "<group>"; };
 		7792694216231BC8006A6A3B /* urFontTest.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urFontTest.lua; path = "urMus-Lua/urFontTest.lua"; sourceTree = "<group>"; };
 		7798DD70124023BC00238912 /* urAnimExample.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urAnimExample.lua; path = "urMus-Lua/urAnimExample.lua"; sourceTree = "<group>"; };
 		779AD4A0104A3B2C007040BF /* button.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = button.png; path = Textures/button.png; sourceTree = "<group>"; };
 		779AD4A1104A3B2C007040BF /* doublearrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = doublearrow.png; path = Textures/doublearrow.png; sourceTree = "<group>"; };
 		779AD4A2104A3B2C007040BF /* downarrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = downarrow.png; path = Textures/downarrow.png; sourceTree = "<group>"; };
 		779BE9BF13A99BF2002E36DC /* libcurl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcurl.a; path = libs/libcurl.a; sourceTree = "<group>"; };
-		779BE9CA13A99F25002E36DC /* libz.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libz.a; path = libs/libz.a; sourceTree = "<group>"; };
 		779BE9CD13A9A010002E36DC /* curl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = curl.h; sourceTree = "<group>"; };
 		779BE9CE13A9A010002E36DC /* curlbuild.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = curlbuild.h; sourceTree = "<group>"; };
 		779BE9CF13A9A010002E36DC /* curlbuild.h.cmake */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = curlbuild.h.cmake; sourceTree = "<group>"; };
@@ -1326,6 +1325,8 @@
 		77D61B4210C80C170091DE81 /* Pink-Mono.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "Pink-Mono.wav"; path = "Sounds/Pink-Mono.wav"; sourceTree = "<group>"; };
 		77D61B4310C80C170091DE81 /* Orange-Mono.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "Orange-Mono.wav"; path = "Sounds/Orange-Mono.wav"; sourceTree = "<group>"; };
 		77D61B4410C80C170091DE81 /* Red-Mono.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = "Red-Mono.wav"; path = "Sounds/Red-Mono.wav"; sourceTree = "<group>"; };
+		77D9ED6416C16D77008EC083 /* libz.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libz.a; path = libs/libz.a; sourceTree = "<group>"; };
+		77D9ED6816C19837008EC083 /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
 		77DEFB5612930C2200110BA1 /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
 		77DF162013FC828200B00815 /* urStringEditBox.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urStringEditBox.lua; path = "urMus-Lua/urStringEditBox.lua"; sourceTree = "<group>"; };
 		77DF162113FC828200B00815 /* urFileBrowser.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urFileBrowser.lua; path = "urMus-Lua/urFileBrowser.lua"; sourceTree = "<group>"; };
@@ -1338,7 +1339,6 @@
 		77F01C0D112508CB007FD520 /* small-ball.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "small-ball.png"; path = "Textures/small-ball.png"; sourceTree = "<group>"; };
 		77F01C0E112508CB007FD520 /* ball.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = ball.png; path = Textures/ball.png; sourceTree = "<group>"; };
 		77F01C0F112508CB007FD520 /* PongBG.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = PongBG.png; path = Textures/PongBG.png; sourceTree = "<group>"; };
-		77F043D71123C28B00CB8C95 /* MainWindow.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MainWindow.xib; sourceTree = "<group>"; };
 		77F31ADA15AB81E400B8E700 /* urCameraFilterDemo.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urCameraFilterDemo.lua; path = "urMus-Lua/urCameraFilterDemo.lua"; sourceTree = "<group>"; };
 		77F35C851357230F00BE696C /* parenth.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = parenth.png; path = Textures/parenth.png; sourceTree = "<group>"; };
 		77F35C861357230F00BE696C /* shape.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = shape.png; path = Textures/shape.png; sourceTree = "<group>"; };
@@ -1372,10 +1372,10 @@
 				77B3001112E63BD300F119FE /* CoreMedia.framework in Frameworks */,
 				77B3001312E63BD300F119FE /* CoreVideo.framework in Frameworks */,
 				779BE9C013A99BF2002E36DC /* libcurl.a in Frameworks */,
-				779BE9CB13A99F25002E36DC /* libz.a in Frameworks */,
 				779FEC1115A561A2004E0708 /* OpenGLES.framework in Frameworks */,
 				77732586161B7A4500DBB08B /* libFreetype2.a in Frameworks */,
 				77076DAF1664131800004C22 /* libGPUImage.a in Frameworks */,
+				77D9ED6516C16D77008EC083 /* libz.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1432,6 +1432,7 @@
 		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
 			isa = PBXGroup;
 			children = (
+				77D9ED6816C19837008EC083 /* Default-568h@2x.png */,
 				77F043951123BC5100CB8C95 /* Sounds */,
 				77F043941123BC3F00CB8C95 /* Textures */,
 				77B9FC5C1194AEF9006D5007 /* urMus-lua */,
@@ -1471,7 +1472,6 @@
 			isa = PBXGroup;
 			children = (
 				77DEFB5612930C2200110BA1 /* Default.png */,
-				77F043D71123C28B00CB8C95 /* MainWindow.xib */,
 				77A1A6DB10ABD49D004A7C47 /* Icon.png */,
 				8D1107310486CEB800E47090 /* Info.plist */,
 			);
@@ -1481,8 +1481,8 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				77D9ED6416C16D77008EC083 /* libz.a */,
 				779FEC1015A561A2004E0708 /* OpenGLES.framework */,
-				779BE9CA13A99F25002E36DC /* libz.a */,
 				779BE9BF13A99BF2002E36DC /* libcurl.a */,
 				77B3D17C10C7196000D5FB4B /* MediaPlayer.framework */,
 				77A3269F1058A79900D0394E /* AudioToolbox.framework */,
@@ -1617,7 +1617,6 @@
 		7777E3201165CC470013B337 /* Resources-iPad */ = {
 			isa = PBXGroup;
 			children = (
-				7777E3211165CC480013B337 /* MainWindow-iPad.xib */,
 			);
 			name = "Resources-iPad";
 			sourceTree = "<group>";
@@ -2242,6 +2241,7 @@
 		77F043941123BC3F00CB8C95 /* Textures */ = {
 			isa = PBXGroup;
 			children = (
+				7790B95916BB14CF008120B7 /* arrow.png */,
 				7701938F161FF2FF00FDBD4B /* DroidSansMono.ttf */,
 				771F845315F91223006D8926 /* buttonvar5-64x80-padded.png */,
 				771F845415F91223006D8926 /* buttonvar4-64x80-padded.png */,
@@ -2683,12 +2683,10 @@
 				773D287910CF32A10090E189 /* sleighbells.wav in Resources */,
 				77B6329610D152C200AACEE4 /* SleighBells.png in Resources */,
 				772CCAD1111F92C700E932EE /* Ornament1.png in Resources */,
-				77F043D81123C28B00CB8C95 /* MainWindow.xib in Resources */,
 				77F01C10112508CB007FD520 /* paddle.png in Resources */,
 				77F01C11112508CB007FD520 /* small-ball.png in Resources */,
 				77F01C12112508CB007FD520 /* ball.png in Resources */,
 				77ABBE4A1125E4CC00EB080C /* Plick.wav in Resources */,
-				7777E3221165CC480013B337 /* MainWindow-iPad.xib in Resources */,
 				23C56097119295D200758BB9 /* html in Resources */,
 				77F01C13112508CB007FD520 /* PongBG.png in Resources */,
 				77B9FCB71194AF8F006D5007 /* o-alpha.png in Resources */,
@@ -2819,6 +2817,8 @@
 				7735D94616397159006AACCF /* VeraMoBI.ttf in Resources */,
 				7735D94716397159006AACCF /* VeraMoIt.ttf in Resources */,
 				7735D94816397159006AACCF /* VeraMono.ttf in Resources */,
+				7790B95A16BB14CF008120B7 /* arrow.png in Resources */,
+				77D9ED6916C19837008EC083 /* Default-568h@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3063,10 +3063,11 @@
 					"$(SRCROOT)/Classes/freetype/include/**",
 				);
 				INFOPLIST_FILE = Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 4.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/libs\"",
+					/opt/local/lib,
 				);
 				OTHER_LDFLAGS = (
 					"-ObjC",
@@ -3077,7 +3078,7 @@
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				VALID_ARCHS = armv7;
+				VALID_ARCHS = "i386 armv7 armv7s";
 			};
 			name = Debug;
 		};
@@ -3097,10 +3098,11 @@
 					"$(SRCROOT)/Classes/freetype/include/**",
 				);
 				INFOPLIST_FILE = Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 4.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/libs\"",
+					/opt/local/lib,
 				);
 				OTHER_LDFLAGS = (
 					"-ObjC",
@@ -3111,7 +3113,7 @@
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				VALID_ARCHS = armv7;
+				VALID_ARCHS = "i386 armv7 armv7s";
 			};
 			name = Release;
 		};

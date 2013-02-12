@@ -392,6 +392,10 @@ void urFont::loadFont(string filename, int fontsize){
 	loadFont(filename, fontsize, true, false, false);
 }
 
+#ifdef FTGL
+extern string errorfontPath;
+#endif
+
 //------------------------------------------------------------------
 void urFont::loadFont(string filename, int fontsize, bool _bAntiAliased, bool _bFullCharacterSet, bool makeContours, bool contourThickness){
 	
@@ -437,6 +441,8 @@ void urFont::loadFont(string filename, int fontsize, bool _bAntiAliased, bool _b
     font = 0;
     atlas = texture_atlas_new( 512, 512, 2 );
     font = texture_font_new( atlas, filename.c_str(), fontsize*10/7 );
+   if(font == NULL)
+        font = texture_font_new( atlas, errorfontPath.c_str(), fontsize*10/7 );
     font->outline_type = makeContours;
     font->outline_thickness = contourThickness;
 

@@ -55,11 +55,6 @@ function urPictureList.ScrollBackdrop(self,diff)
     
     self:SetAnchor('BOTTOMLEFT', UIParent, 'BOTTOMLEFT', self:Left() ,bottom)
     for k,v in ipairs(urPictureList.scrollRegions) do
-        if not v.t and v:Top()>=0 then
-            v.t = previewregion:Texture(v.icontexture)
-            v.t:SetBlendMode("BLEND")
-            DPrint("loading cached icon"..v.icontexture)
-        end
         v.highlit = nil
         v.t:SetTexture(unpack(v.color))
     end
@@ -81,7 +76,7 @@ end
 
 -- Initialize the ScrollList from an entries table
 -- Format for the entries table is {{"text1","text2","text3",icontexture, backdroptexture}}
-function urPictureList:InitScrollList(title, titleicontexture, titlebackdroptextre, entries)
+function urPictureList:InitScrollList(title, titleicontexture, titlebackdroptextre, entries, vv)
     
     -- Create Backdrop
     if not urPictureList.BackdropRegion then
@@ -123,9 +118,10 @@ function urPictureList:InitScrollList(title, titleicontexture, titlebackdroptext
         self.titleregion = region
     end
     self.titleregion.tl:SetLabel(title)
-    
+    self.parent = vv
     for k, v in pairs(entries) do
         self:CreatescrollRegion(unpack(v))
+        self.scrollRegions[k].parent = self
     end
 end
 
@@ -159,8 +155,8 @@ function urPictureList:CreatescrollRegion(text1, text2, text3, callback, color, 
     
     if #self.recycledRegions > 0 then
         region = table.remove(urPictureList.recycledRegions,1) -- Bug hunt: If we remove last from table this bugs, that shouldn't be. NYI flagging it for checking.
-
-        previewregion.t = region:Texture(icontexture)
+        
+        --previewregion.t = region:Texture(icontexture)
     else
         region = Region('region', 'scrollregion'..text1,UIParent)
         region:SetWidth(ScreenWidth()/2)
@@ -171,26 +167,22 @@ function urPictureList:CreatescrollRegion(text1, text2, text3, callback, color, 
         region:Handle("OnTouchUp",urPictureList.SelectscrollRegion)
         region:SetClipRegion(0,0,ScreenWidth(),(scrollRegionHeight+scrollRegionGap)*maxVisiblescrollRegions)
         region:EnableClipping(true)
-
+        --[[
         previewregion = Region()
         previewregion:SetWidth(scrollRegionHeight)
         previewregion:SetHeight(scrollRegionHeight)
         previewregion:SetLayer("HIGH")
+        previewregion.t = previewregion:Texture(icontexture)
+        previewregion.t:SetBlendMode("BLEND")
         previewregion:SetClipRegion(0,0,ScreenWidth(),(scrollRegionHeight+scrollRegionGap)*maxVisiblescrollRegions)
         previewregion:EnableClipping(true)
         previewregion:SetAnchor("BOTTOMRIGHT",region,"BOTTOMRIGHT",0,0)
-        if previewregion:Top() >= 0 then
-            previewregion.t = previewregion:Texture(icontexture)
-            previewregion.t:SetBlendMode("BLEND")
-        else
-            previewregion.icontexture = icontexture
-        end
---        DPrint("icon "..icontexture)
-        previewregion:Show()
+        DPrint("icon "..icontexture)
+        previewregion:Show()]]--
     end
-
-
-
+    
+    
+    
     if backdroptexture then
         region.t:SetTexture(backdroptexture)
     else
@@ -265,7 +257,7 @@ function cancelButton()
 end
 
 function loadButton(self)
-    table.insert(pics, self.name)
+    self.parent.parent.parent.t:SetTexture(self.name)  
     loadScreen.preview:Hide()
     loadScreen.load:Hide()
     loadScreen.cancel:Hide()
@@ -274,51 +266,62 @@ function loadButton(self)
 end
 
 --Creates loading menu and preview
-function urPictureList:OpenLoadMenu(name, path)
+function urPictureList:OpenLoadMenu(self, name, path)
+    --urPictureList.HighlightControl(self)
     loadScreen = {}
-    loadScreen.preview = Region()
-    loadScreen.preview.t = loadScreen.preview:Texture()
+    if not loadScreen.preview then
+        loadScreen.preview = Region()
+        loadScreen.preview.t = loadScreen.preview:Texture()
+        loadScreen.preview:SetAnchor("BOTTOMLEFT",ScreenWidth()/2+42,ScreenHeight()/2-50)
+        loadScreen.preview:SetHeight(300)
+        loadScreen.preview:SetWidth(300)
+    end
     loadScreen.preview.t:SetTexture(tostring(name))
-    loadScreen.preview:SetAnchor("BOTTOMLEFT",ScreenWidth()/2+42,ScreenHeight()/2-50)
-    loadScreen.preview:SetHeight(300)
-    loadScreen.preview:SetWidth(300)
     loadScreen.preview:Show()
     
-    loadScreen.load = Region()
-    loadScreen.load.name = name
-    loadScreen.load.t = loadScreen.load:Texture(90,90,90,255)
-    loadScreen.load.tl = loadScreen.load:TextLabel()
-    loadScreen.load.tl:SetLabel("Load")
-    loadScreen.load.tl:SetColor(255,255,255,255)
-    loadScreen.load.tl:SetShadowColor(0,0,0,190)
-    loadScreen.load.tl:SetShadowBlur(2.0)
-    loadScreen.load.tl:SetShadowOffset(2,-3)
-    loadScreen.load.tl:SetFont(urfont)
-    loadScreen.load.tl:SetFontHeight(20)
-    loadScreen.load:SetHeight(50)
-    loadScreen.load:SetWidth(149)
-    loadScreen.load:SetAnchor("BOTTOMLEFT", ScreenWidth()/2+42,ScreenHeight()/2-101)
-    loadScreen.load:Handle("OnTouchDown",loadButton)
-    loadScreen.load:EnableInput(true)
-    loadScreen.load:MoveToTop()
-    loadScreen.load:Show()
+    if not loadScreen.load then
+        loadScreen.load = Region()
+        
+        loadScreen.load.t = loadScreen.load:Texture(90,90,90,255)
+        loadScreen.load.tl = loadScreen.load:TextLabel()
+        loadScreen.load.tl:SetLabel("Load")
+        loadScreen.load.tl:SetColor(255,255,255,255)
+        loadScreen.load.tl:SetShadowColor(0,0,0,190)
+        loadScreen.load.tl:SetShadowBlur(2.0)
+        loadScreen.load.tl:SetShadowOffset(2,-3)
+        loadScreen.load.tl:SetFont("Trebuchet MS")
+        loadScreen.load.tl:SetFontHeight(20)
+        loadScreen.load:SetHeight(50)
+        loadScreen.load:SetWidth(149)
+        loadScreen.load:SetAnchor("BOTTOMLEFT", ScreenWidth()/2+42,ScreenHeight()/2-101)
+        loadScreen.load:Handle("OnTouchDown",loadButton)
+        loadScreen.load:EnableInput(true)
+        loadScreen.load:MoveToTop()
     
-    loadScreen.cancel = Region()
-    loadScreen.cancel.t = loadScreen.cancel:Texture(90,90,90,255)
-    loadScreen.cancel.tl = loadScreen.cancel:TextLabel()
-    loadScreen.cancel.tl:SetLabel("Cancel")
-    loadScreen.cancel.tl:SetColor(255,255,255,255)
-    loadScreen.cancel.tl:SetShadowColor(0,0,0,190)
-    loadScreen.cancel.tl:SetShadowBlur(2.0)
-    loadScreen.cancel.tl:SetShadowOffset(2,-3)
-    loadScreen.cancel.tl:SetFont(urfont)
-    loadScreen.cancel.tl:SetFontHeight(20)
-    loadScreen.cancel:SetHeight(50)
-    loadScreen.cancel:SetWidth(149)
-    loadScreen.cancel:SetAnchor("BOTTOMLEFT", ScreenWidth()/2+193,ScreenHeight()/2-101)
-    loadScreen.cancel:Handle("OnTouchDown",cancelButton)
-    loadScreen.cancel:EnableInput(true)
-    loadScreen.cancel:MoveToTop()
+    end
+    loadScreen.load.parent = self
+    loadScreen.load:Show()
+    loadScreen.load.name = name
+    
+    
+    if not loadScreen.cancel then
+        loadScreen.cancel = Region()
+        loadScreen.cancel.t = loadScreen.cancel:Texture(90,90,90,255)
+        loadScreen.cancel.tl = loadScreen.cancel:TextLabel()
+        loadScreen.cancel.tl:SetLabel("Cancel")
+        loadScreen.cancel.tl:SetColor(255,255,255,255)
+        loadScreen.cancel.tl:SetShadowColor(0,0,0,190)
+        loadScreen.cancel.tl:SetShadowBlur(2.0)
+        loadScreen.cancel.tl:SetShadowOffset(2,-3)
+        loadScreen.cancel.tl:SetFont("Trebuchet MS")
+        loadScreen.cancel.tl:SetFontHeight(20)
+        loadScreen.cancel:SetHeight(50)
+        loadScreen.cancel:SetWidth(149)
+        loadScreen.cancel:SetAnchor("BOTTOMLEFT", ScreenWidth()/2+193,ScreenHeight()/2-101)
+        loadScreen.cancel:Handle("OnTouchDown",cancelButton)
+        loadScreen.cancel:EnableInput(true)
+        loadScreen.cancel:MoveToTop()
+    end
     loadScreen.cancel:Show()    
 end
 
@@ -329,6 +332,7 @@ end
 
 function urPictureList:ReopenScrollListPage(page)
     urScrollList.returnPage = Page()
+    --DPrint(page)
     SetPage(page)
 end
 
@@ -349,8 +353,6 @@ end
 
 function urPictureList.SelectscrollRegion(self)
     if self.highlit then
-        urPictureList:OpenLoadMenu(self.data, self.data2)
+        urPictureList:OpenLoadMenu(self, self.data, self.data2)
     end
 end
-
-

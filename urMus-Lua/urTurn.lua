@@ -5,7 +5,7 @@
 
 FreeAllRegions()
 
-local urfont2 = "arial"
+--local urfont2 = "arial"
 local random = math.random
 
 local numrepetitions = 3

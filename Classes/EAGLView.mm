@@ -1372,7 +1372,8 @@ void decCameraUseBy(int dec)
 	NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
 	// path to the default font
     g_storagePath = [resourcePath UTF8String];
-    errorfontPath = storagePath + "/arial.ttf";
+//    errorfontPath = storagePath + "/arial.ttf";
+    errorfontPath = storagePath + "/DroidSansMono.ttf";
     
     // Hide top navigation bar
 	[[UIApplication sharedApplication] setStatusBarHidden:YES animated:NO];
@@ -1967,6 +1968,8 @@ static EAGLSharegroup* theSharegroup = nil;
 }
 
 
+
+
 //The GL view is stored in the nib file. When it's unarchived it's sent -initWithCoder:
 - (id)initWithCoder:(NSCoder*)coder {
     
@@ -2021,10 +2024,20 @@ static EAGLSharegroup* theSharegroup = nil;
             return nil;
         }
         
+#ifdef OPENGLES2
+        if ([context API] == kEAGLRenderingAPIOpenGLES2) {
+            [self setFramebuffer];
+            [self setupView];
+            [self setupShaders];
+        }
+#endif
         animationInterval = 1.0 / 60.0; // We look for 60 FPS
 		
     }
 	
+	// Set up the ability to track multiple touches.
+	[self setMultipleTouchEnabled:YES];
+	self.multipleTouchEnabled = YES;
 	return self;
 }
 		
@@ -4866,10 +4879,10 @@ void renderTextLabel(urAPI_Region_t* t)
     
     if(displaynumber <= 1)
     {
-        SCREEN_WIDTH = self.frame.size.width;
-        SCREEN_HEIGHT = self.frame.size.height;
-//        SCREEN_WIDTH = screendimensions.size.width;
-//        SCREEN_HEIGHT = screendimensions.size.height;
+//        SCREEN_WIDTH = self.frame.size.width;
+//        SCREEN_HEIGHT = self.frame.size.height;
+        SCREEN_WIDTH = screendimensions.size.width;
+        SCREEN_HEIGHT = screendimensions.size.height;
         HALF_SCREEN_WIDTH = SCREEN_WIDTH/2;
         HALF_SCREEN_HEIGHT = SCREEN_HEIGHT/2;
     }

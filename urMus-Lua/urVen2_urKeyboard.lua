@@ -148,6 +148,46 @@ function Keyboard.Create(area)
     return kb
 end
 
+function Keyboard.CreateKeyPad(area)
+    local kb = {}
+    setmetatable(kb, Keyboard)
+    kb.open = 0
+    kb.typingarea = area
+    kb.w = ScreenWidth()
+    kb.face = 1 -- 1: low case, 2: upper case, 3: numbers and symbols
+    kb:CreateKBLine("789","","",1,key_w)
+    kb[2] = {}
+    kb[2][1] = kb:CreateKey("4"," "," ",key_w)
+    kb[2][2] = kb:CreateKey("5"," "," ",key_w)
+    kb[2][3] = kb:CreateKey("6"," "," ",key_w)
+    kb[2][1]:SetAnchor("TOPLEFT",kb[1][1],"BOTTOMRIGHT",0,key_margin)
+    kb[2][2]:SetAnchor("TOPLEFT",kb[2][1],"TOPRIGHT",key_margin,0)
+    kb[2][3]:SetAnchor("TOPLEFT",kb[2][2],"TOPRIGHT",key_margin,0)
+    kb:CreateKBLine("123","","",3,key_w)
+    -- kb(3) has SHIFT key
+    kb[4] = {}
+    kb[4].num = 3
+    kb[4][1] = kb:CreateKey("0","","",key_w*2.07)
+    kb[4][2] = kb:CreateKey("."," "," ",key_w)
+    kb[4][3] = kb:CreateKey("<=","<=","<=",key_w*2.2)
+    kb[4][4] = kb:CreateKey("clear","clear","clear",key_w*0.7)
+    kb[4][2]:SetAnchor("TOPLEFT",kb[4][1],"TOPRIGHT",key_margin,0)
+    kb[4][3]:SetAnchor("TOPLEFT",kb[4][2],"TOPRIGHT",key_margin,0)
+    kb[4][4]:SetAnchor("TOPLEFT",kb[4][3],"TOPRIGHT",key_margin,0)
+    kb[4][3]:Handle("OnTouchDown",KeyTouchDownBack)
+    kb[4][4]:Handle("OnTouchDown",KeyTouchDownClear)
+    
+    kb[4][1]:SetAnchor("BOTTOMLEFT",ScreenWidth()/2-key_w*1.5,key_margin)
+    kb[3][1]:SetAnchor("BOTTOMLEFT",kb[4][1],"TOPLEFT",0,key_margin)
+    kb[2][1]:SetAnchor("BOTTOMLEFT",kb[3][1],"TOPLEFT",0,key_margin)
+    kb[1][1]:SetAnchor("BOTTOMLEFT",kb[2][1],"TOPLEFT",0,key_margin)
+    
+    kb.h = #kb * (key_h+key_margin)
+    kb.enabled = 1
+    
+    return kb
+end
+
 function Keyboard:Show(face) 
     for i = 1,4 do
         for j = 1,#self[i] do
@@ -191,13 +231,14 @@ end
 
 
 mykb = Keyboard.Create()
-
+mykp = Keyboard.CreateKeyPad()
 function OpenOrCloseKeyboard(self)
     if mykb.enabled == 1 or current_mode == modes[1] then
         if mykb.open == 0 then 
             mykb.typingarea = self
             DPrint("DoubleTap to close keyboard. Go to Menubar->Global Control->Keyboard Control to enable/disable in RELEASE mode.")
             mykb:Show(1)
+            mykp:Hide()
             self.kbopen = 1
             if self.text_sharee and self.text_sharee ~= -1 then
                 regions[self.text_sharee].kbopen = 1
@@ -226,3 +267,37 @@ function OpenOrCloseKeyboard(self)
     end
 end
 
+function OpenOrCloseKeyPad(self)
+    if mykp.enabled == 1 or current_mode == modes[1] then
+        if mykp.open == 0 then 
+            mykp.typingarea = self
+            DPrint("DoubleTap to close keyboard. Go to Menubar->Global Control->Keyboard Control to enable/disable in RELEASE mode.")
+            mykp:Show(1)
+            mykb:Hide()
+            self.kbopen = 1
+            if self.text_sharee and self.text_sharee ~= -1 then
+                regions[self.text_sharee].kbopen = 1
+            end
+            backdrop:SetClipRegion(0,mykp.h,ScreenWidth(),ScreenHeight())
+        elseif self.kbopen == 0 then
+            mykp.typingarea.kbopen = 0
+            mykp.typingarea = self
+            self.kbopen = 1
+            if self.text_sharee and self.text_sharee ~= -1 then
+                regions[self.text_sharee].kbopen = 1
+            end
+            DPrint("DoubleTap to close keyboard. Go to Menubar->Global Control->Keyboard Control to enable/disable in RELEASE mode.")
+            mykp:Show(1)
+        else
+            DPrint("Keyboard closed. Go to Menubar->Global Control->Keyboard Control to enable/disable in RELEASE mode.")
+            mykp:Hide()
+            self.kbopen = 0
+            if self.text_sharee and self.text_sharee ~= -1 then
+                regions[self.text_sharee].kbopen = 0
+            end
+            backdrop:SetClipRegion(0,0,ScreenWidth(),ScreenHeight())
+        end
+    else
+        DPrint("Keyboard disabled. Go to EDIT Mode->Menubar->Global Control->Keyboard Control to enable/disable in RELEASE mode.")
+    end
+end

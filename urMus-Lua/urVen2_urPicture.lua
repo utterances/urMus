@@ -1,7 +1,7 @@
 -----------------------------------------------------------
---                 Picture  Choosing                     --
+--    **DEFUNCT**  Picture  Choosing  **DEFUNCT**        --
 -----------------------------------------------------------
-
+-- This script is no longer used and is DEFUNCT
 -- Allows user to select image to place on a region
 
 

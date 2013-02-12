@@ -128,5 +128,3 @@ function OpenGradDialog(v)
     grad[5][1]:EnableInput(true)
     backdrop:EnableInput(false)   
 end
-
-

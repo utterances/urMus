@@ -2393,8 +2393,11 @@ int region_Texture(lua_State* lua)
 }
 
 char textlabel_empty[] = "";
+#ifdef UISTRINGS
 const char textlabel_defaultfont[] = "Helvetica";
-
+#else
+const char textlabel_defaultfont[] = "DroidSansMono.ttf";
+#endif
 int region_TextLabel(lua_State* lua)
 {
 	urAPI_Region_t* region = checkregion(lua,1);
