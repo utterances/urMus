@@ -12,6 +12,13 @@
 		1D60589B0D05DD56006BFB54 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; };
 		1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
 		1DF5F4E00D08C38300B7A737 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DF5F4DF0D08C38300B7A737 /* UIKit.framework */; };
+		2234782516DFFD4200E9B741 /* Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 2234782416DFFD4200E9B741 /* Icon@2x.png */; };
+		2234782A16DFFD5600E9B741 /* Icon-72.png in Resources */ = {isa = PBXBuildFile; fileRef = 2234782816DFFD5600E9B741 /* Icon-72.png */; };
+		2234782B16DFFD5600E9B741 /* Icon-72@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 2234782916DFFD5600E9B741 /* Icon-72@2x.png */; };
+		2234782E16DFFD7B00E9B741 /* Icon-Small.png in Resources */ = {isa = PBXBuildFile; fileRef = 2234782C16DFFD7B00E9B741 /* Icon-Small.png */; };
+		2234782F16DFFD7B00E9B741 /* Icon-Small@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 2234782D16DFFD7B00E9B741 /* Icon-Small@2x.png */; };
+		2234783216DFFD8400E9B741 /* Icon-Small-50.png in Resources */ = {isa = PBXBuildFile; fileRef = 2234783016DFFD8400E9B741 /* Icon-Small-50.png */; };
+		2234783316DFFD8400E9B741 /* Icon-Small-50@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 2234783116DFFD8400E9B741 /* Icon-Small-50@2x.png */; };
 		23C56097119295D200758BB9 /* html in Resources */ = {isa = PBXBuildFile; fileRef = 23C56095119295D200758BB9 /* html */; };
 		23C5609A119295E200758BB9 /* mongoose.c in Sources */ = {isa = PBXBuildFile; fileRef = 23C56099119295E200758BB9 /* mongoose.c */; };
 		23C5612A1192A56900758BB9 /* httpServer.c in Sources */ = {isa = PBXBuildFile; fileRef = 23C561291192A56900758BB9 /* httpServer.c */; };
@@ -556,6 +563,13 @@
 		1D3623250D0F684500981E51 /* urMusAppDelegate.mm */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = urMusAppDelegate.mm; sourceTree = "<group>"; };
 		1D6058910D05DD3D006BFB54 /* urMus.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = urMus.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1DF5F4DF0D08C38300B7A737 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		2234782416DFFD4200E9B741 /* Icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon@2x.png"; sourceTree = "<group>"; };
+		2234782816DFFD5600E9B741 /* Icon-72.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-72.png"; sourceTree = "<group>"; };
+		2234782916DFFD5600E9B741 /* Icon-72@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-72@2x.png"; sourceTree = "<group>"; };
+		2234782C16DFFD7B00E9B741 /* Icon-Small.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Small.png"; sourceTree = "<group>"; };
+		2234782D16DFFD7B00E9B741 /* Icon-Small@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Small@2x.png"; sourceTree = "<group>"; };
+		2234783016DFFD8400E9B741 /* Icon-Small-50.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Small-50.png"; sourceTree = "<group>"; };
+		2234783116DFFD8400E9B741 /* Icon-Small-50@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Small-50@2x.png"; sourceTree = "<group>"; };
 		23C56095119295D200758BB9 /* html */ = {isa = PBXFileReference; lastKnownFileType = folder; path = html; sourceTree = "<group>"; };
 		23C56098119295E200758BB9 /* mongoose.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mongoose.h; sourceTree = "<group>"; };
 		23C56099119295E200758BB9 /* mongoose.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mongoose.c; sourceTree = "<group>"; };
@@ -1473,6 +1487,9 @@
 			children = (
 				77DEFB5612930C2200110BA1 /* Default.png */,
 				77A1A6DB10ABD49D004A7C47 /* Icon.png */,
+				2234782416DFFD4200E9B741 /* Icon@2x.png */,
+				2234782C16DFFD7B00E9B741 /* Icon-Small.png */,
+				2234782D16DFFD7B00E9B741 /* Icon-Small@2x.png */,
 				8D1107310486CEB800E47090 /* Info.plist */,
 			);
 			name = Resources;
@@ -1617,6 +1634,10 @@
 		7777E3201165CC470013B337 /* Resources-iPad */ = {
 			isa = PBXGroup;
 			children = (
+				2234782816DFFD5600E9B741 /* Icon-72.png */,
+				2234782916DFFD5600E9B741 /* Icon-72@2x.png */,
+				2234783016DFFD8400E9B741 /* Icon-Small-50.png */,
+				2234783116DFFD8400E9B741 /* Icon-Small-50@2x.png */,
 			);
 			name = "Resources-iPad";
 			sourceTree = "<group>";
@@ -2819,6 +2840,13 @@
 				7735D94816397159006AACCF /* VeraMono.ttf in Resources */,
 				7790B95A16BB14CF008120B7 /* arrow.png in Resources */,
 				77D9ED6916C19837008EC083 /* Default-568h@2x.png in Resources */,
+				2234782516DFFD4200E9B741 /* Icon@2x.png in Resources */,
+				2234782A16DFFD5600E9B741 /* Icon-72.png in Resources */,
+				2234782B16DFFD5600E9B741 /* Icon-72@2x.png in Resources */,
+				2234782E16DFFD7B00E9B741 /* Icon-Small.png in Resources */,
+				2234782F16DFFD7B00E9B741 /* Icon-Small@2x.png in Resources */,
+				2234783216DFFD8400E9B741 /* Icon-Small-50.png in Resources */,
+				2234783316DFFD8400E9B741 /* Icon-Small-50@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3063,7 +3091,7 @@
 					"$(SRCROOT)/Classes/freetype/include/**",
 				);
 				INFOPLIST_FILE = Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/libs\"",
@@ -3098,7 +3126,7 @@
 					"$(SRCROOT)/Classes/freetype/include/**",
 				);
 				INFOPLIST_FILE = Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/libs\"",
@@ -3126,7 +3154,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = "./**";
-				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = (
 					"-ObjC",
@@ -3147,7 +3175,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = "./**";
-				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				OTHER_LDFLAGS = (
 					"-ObjC",
 					"-fobjc-arc",

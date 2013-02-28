@@ -4318,12 +4318,12 @@ void renderTextLabel(urAPI_Region_t* t)
                         t->texture->movieTex ture = 0;
 #endif
 #else
-                        if([t->texture->movieTex playStatus] == GPUMOVIE_FINISHED)
-                        {
-                            glDeleteTextures(1,&(t->texture->movieTexture));
-                            t->texture->movieTexture = 0;
-                            freeMovieTexture(t);
-                        }
+//                        if([t->texture->movieTex playStatus] == GPUMOVIE_FINISHED)
+//                        {
+//                            glDeleteTextures(1,&(t->texture->movieTexture));
+//                            t->texture->movieTexture = 0;
+//                            freeMovieTexture(t);
+//                        }
 #endif
 #endif	
                     }
