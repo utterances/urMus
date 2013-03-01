@@ -22,6 +22,8 @@
 		226E03B716E13C6800BB11DA /* iTunesArtwork.png in Resources */ = {isa = PBXBuildFile; fileRef = 226E03B516E13C6800BB11DA /* iTunesArtwork.png */; };
 		226E03B816E13C6800BB11DA /* iTunesArtwork@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 226E03B616E13C6800BB11DA /* iTunesArtwork@2x.png */; };
 		226E03BC16E1432600BB11DA /* Default@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 226E03BB16E1432600BB11DA /* Default@2x.png */; };
+		226E03BF16E1466D00BB11DA /* Default-Portrait.png in Resources */ = {isa = PBXBuildFile; fileRef = 226E03BD16E1466D00BB11DA /* Default-Portrait.png */; };
+		226E03C016E1466D00BB11DA /* Default-Portrait@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 226E03BE16E1466D00BB11DA /* Default-Portrait@2x.png */; };
 		23C56097119295D200758BB9 /* html in Resources */ = {isa = PBXBuildFile; fileRef = 23C56095119295D200758BB9 /* html */; };
 		23C5609A119295E200758BB9 /* mongoose.c in Sources */ = {isa = PBXBuildFile; fileRef = 23C56099119295E200758BB9 /* mongoose.c */; };
 		23C5612A1192A56900758BB9 /* httpServer.c in Sources */ = {isa = PBXBuildFile; fileRef = 23C561291192A56900758BB9 /* httpServer.c */; };
@@ -576,6 +578,8 @@
 		226E03B516E13C6800BB11DA /* iTunesArtwork.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = iTunesArtwork.png; sourceTree = "<group>"; };
 		226E03B616E13C6800BB11DA /* iTunesArtwork@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "iTunesArtwork@2x.png"; sourceTree = "<group>"; };
 		226E03BB16E1432600BB11DA /* Default@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default@2x.png"; sourceTree = "<group>"; };
+		226E03BD16E1466D00BB11DA /* Default-Portrait.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Default-Portrait.png"; path = "Resources-iPad/Default-Portrait.png"; sourceTree = "<group>"; };
+		226E03BE16E1466D00BB11DA /* Default-Portrait@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Default-Portrait@2x.png"; path = "Resources-iPad/Default-Portrait@2x.png"; sourceTree = "<group>"; };
 		23C56095119295D200758BB9 /* html */ = {isa = PBXFileReference; lastKnownFileType = folder; path = html; sourceTree = "<group>"; };
 		23C56098119295E200758BB9 /* mongoose.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mongoose.h; sourceTree = "<group>"; };
 		23C56099119295E200758BB9 /* mongoose.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mongoose.c; sourceTree = "<group>"; };
@@ -1643,6 +1647,8 @@
 		7777E3201165CC470013B337 /* Resources-iPad */ = {
 			isa = PBXGroup;
 			children = (
+				226E03BD16E1466D00BB11DA /* Default-Portrait.png */,
+				226E03BE16E1466D00BB11DA /* Default-Portrait@2x.png */,
 				2234782816DFFD5600E9B741 /* Icon-72.png */,
 				2234782916DFFD5600E9B741 /* Icon-72@2x.png */,
 				2234783016DFFD8400E9B741 /* Icon-Small-50.png */,
@@ -2859,6 +2865,8 @@
 				226E03B716E13C6800BB11DA /* iTunesArtwork.png in Resources */,
 				226E03B816E13C6800BB11DA /* iTunesArtwork@2x.png in Resources */,
 				226E03BC16E1432600BB11DA /* Default@2x.png in Resources */,
+				226E03BF16E1466D00BB11DA /* Default-Portrait.png in Resources */,
+				226E03C016E1466D00BB11DA /* Default-Portrait@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
