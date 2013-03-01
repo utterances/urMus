@@ -19,6 +19,9 @@
 		2234782F16DFFD7B00E9B741 /* Icon-Small@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 2234782D16DFFD7B00E9B741 /* Icon-Small@2x.png */; };
 		2234783216DFFD8400E9B741 /* Icon-Small-50.png in Resources */ = {isa = PBXBuildFile; fileRef = 2234783016DFFD8400E9B741 /* Icon-Small-50.png */; };
 		2234783316DFFD8400E9B741 /* Icon-Small-50@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 2234783116DFFD8400E9B741 /* Icon-Small-50@2x.png */; };
+		226E03B716E13C6800BB11DA /* iTunesArtwork.png in Resources */ = {isa = PBXBuildFile; fileRef = 226E03B516E13C6800BB11DA /* iTunesArtwork.png */; };
+		226E03B816E13C6800BB11DA /* iTunesArtwork@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 226E03B616E13C6800BB11DA /* iTunesArtwork@2x.png */; };
+		226E03BC16E1432600BB11DA /* Default@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 226E03BB16E1432600BB11DA /* Default@2x.png */; };
 		23C56097119295D200758BB9 /* html in Resources */ = {isa = PBXBuildFile; fileRef = 23C56095119295D200758BB9 /* html */; };
 		23C5609A119295E200758BB9 /* mongoose.c in Sources */ = {isa = PBXBuildFile; fileRef = 23C56099119295E200758BB9 /* mongoose.c */; };
 		23C5612A1192A56900758BB9 /* httpServer.c in Sources */ = {isa = PBXBuildFile; fileRef = 23C561291192A56900758BB9 /* httpServer.c */; };
@@ -570,6 +573,9 @@
 		2234782D16DFFD7B00E9B741 /* Icon-Small@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Small@2x.png"; sourceTree = "<group>"; };
 		2234783016DFFD8400E9B741 /* Icon-Small-50.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Small-50.png"; sourceTree = "<group>"; };
 		2234783116DFFD8400E9B741 /* Icon-Small-50@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-Small-50@2x.png"; sourceTree = "<group>"; };
+		226E03B516E13C6800BB11DA /* iTunesArtwork.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = iTunesArtwork.png; sourceTree = "<group>"; };
+		226E03B616E13C6800BB11DA /* iTunesArtwork@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "iTunesArtwork@2x.png"; sourceTree = "<group>"; };
+		226E03BB16E1432600BB11DA /* Default@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default@2x.png"; sourceTree = "<group>"; };
 		23C56095119295D200758BB9 /* html */ = {isa = PBXFileReference; lastKnownFileType = folder; path = html; sourceTree = "<group>"; };
 		23C56098119295E200758BB9 /* mongoose.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mongoose.h; sourceTree = "<group>"; };
 		23C56099119295E200758BB9 /* mongoose.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mongoose.c; sourceTree = "<group>"; };
@@ -1469,6 +1475,8 @@
 				7777E3201165CC470013B337 /* Resources-iPad */,
 				29B97323FDCFA39411CA2CEA /* Frameworks */,
 				19C28FACFE9D520D11CA2CBB /* Products */,
+				226E03B516E13C6800BB11DA /* iTunesArtwork.png */,
+				226E03B616E13C6800BB11DA /* iTunesArtwork@2x.png */,
 			);
 			name = CustomTemplate;
 			sourceTree = "<group>";
@@ -1486,6 +1494,7 @@
 			isa = PBXGroup;
 			children = (
 				77DEFB5612930C2200110BA1 /* Default.png */,
+				226E03BB16E1432600BB11DA /* Default@2x.png */,
 				77A1A6DB10ABD49D004A7C47 /* Icon.png */,
 				2234782416DFFD4200E9B741 /* Icon@2x.png */,
 				2234782C16DFFD7B00E9B741 /* Icon-Small.png */,
@@ -2847,6 +2856,9 @@
 				2234782F16DFFD7B00E9B741 /* Icon-Small@2x.png in Resources */,
 				2234783216DFFD8400E9B741 /* Icon-Small-50.png in Resources */,
 				2234783316DFFD8400E9B741 /* Icon-Small-50@2x.png in Resources */,
+				226E03B716E13C6800BB11DA /* iTunesArtwork.png in Resources */,
+				226E03B816E13C6800BB11DA /* iTunesArtwork@2x.png in Resources */,
+				226E03BC16E1432600BB11DA /* Default@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3078,7 +3090,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
-				CODE_SIGN_IDENTITY = "iPhone Developer: Georg Essl (Q4K2DQJWQ3)";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -3102,7 +3114,7 @@
 					"-fobjc-arc",
 				);
 				PRODUCT_NAME = urMus;
-				PROVISIONING_PROFILE = "F073BF3A-84B0-4B13-9FCF-F20561F53D55";
+				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -3115,7 +3127,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
-				CODE_SIGN_IDENTITY = "iPhone Developer: Georg Essl (Q4K2DQJWQ3)";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -3137,7 +3149,7 @@
 					"-fobjc-arc",
 				);
 				PRODUCT_NAME = urMus;
-				PROVISIONING_PROFILE = "F073BF3A-84B0-4B13-9FCF-F20561F53D55";
+				PROVISIONING_PROFILE = "";
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
