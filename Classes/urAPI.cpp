@@ -1,4 +1,5 @@
- /*
+
+/*
  *  urAPI.c
  *  urMus
  *
@@ -2393,7 +2394,7 @@ int region_Texture(lua_State* lua)
 }
 
 char textlabel_empty[] = "";
-const char textlabel_defaultfont[] = "Helvetica";
+const char textlabel_defaultfont[] = "DroidSansMono";
 
 int region_TextLabel(lua_State* lua)
 {

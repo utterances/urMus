@@ -1372,7 +1372,7 @@ void decCameraUseBy(int dec)
 	NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
 	// path to the default font
     g_storagePath = [resourcePath UTF8String];
-    errorfontPath = storagePath + "/arial.ttf";
+    errorfontPath = storagePath + "/DroidSansMono.ttf";
     
     // Hide top navigation bar
 	[[UIApplication sharedApplication] setStatusBarHidden:YES animated:NO];
@@ -4598,7 +4598,7 @@ void renderTextLabel(urAPI_Region_t* t)
         shadowColors[3] = 80;
         errorStrTex = [[Texture2D alloc] initWithString:[NSString stringWithUTF8String:errorstr.c_str()]
                                                             dimensions:CGSizeMake(SCREEN_WIDTH, 128) alignment:UITextAlignmentCenter
-                                                              fontName:@"Helvetica" fontSize:14 lineBreakMode:UILineBreakModeWordWrap
+                                                              fontName:@"DroidSansMono.ttf" fontSize:14 lineBreakMode:UILineBreakModeWordWrap
                                                           shadowOffset:CGSizeMake(0,0) shadowBlur:2 shadowColor:shadowColors];
 #else
         errorStrTex = new urTexture(errorstr.c_str(),errorfontPath.c_str(),20,SCREEN_WIDTH,128);
@@ -4623,7 +4623,7 @@ void renderTextLabel(urAPI_Region_t* t)
         shadowColors[3] = 80;
         errorStrTex = [[Texture2D alloc] initWithString:[NSString stringWithUTF8String:errorstr.c_str()]
                                              dimensions:CGSizeMake(SCREEN_WIDTH, 128) alignment:UITextAlignmentCenter
-                                               fontName:@"Helvetica" fontSize:14 lineBreakMode:UILineBreakModeWordWrap
+                                               fontName:@"DroidSansMono.ttf" fontSize:14 lineBreakMode:UILineBreakModeWordWrap
                                            shadowOffset:CGSizeMake(0,0) shadowBlur:2 shadowColor:shadowColors];
 #else
         errorStrTex = new urTexture(errorstr.c_str(),errorfontPath.c_str(),20,SCREEN_WIDTH,128);
