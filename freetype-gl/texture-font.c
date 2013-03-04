@@ -270,7 +270,8 @@ texture_font_new( texture_atlas_t * atlas,
     FT_Face face;
     if( !texture_font_load_face( &library, self->filename, self->size*100, &face ) )
     {
-        return self;
+//        return self;
+        return NULL;
     }
 
     // 64 * 64 because of 26.6 encoding AND the transform matrix used

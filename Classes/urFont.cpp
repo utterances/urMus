@@ -392,6 +392,10 @@ void urFont::loadFont(string filename, int fontsize){
 	loadFont(filename, fontsize, true, false, false);
 }
 
+#ifdef FTGL
+extern string errorfontPath;
+#endif
+
 //------------------------------------------------------------------
 void urFont::loadFont(string filename, int fontsize, bool _bAntiAliased, bool _bFullCharacterSet, bool makeContours, bool contourThickness){
 	
@@ -437,6 +441,8 @@ void urFont::loadFont(string filename, int fontsize, bool _bAntiAliased, bool _b
     font = 0;
     atlas = texture_atlas_new( 512, 512, 2 );
     font = texture_font_new( atlas, filename.c_str(), fontsize*10/7 );
+   if(font == NULL)
+        font = texture_font_new( atlas, errorfontPath.c_str(), fontsize*10/7 );
     font->outline_type = makeContours;
     font->outline_thickness = contourThickness;
 
@@ -911,16 +917,16 @@ void urFont::drawChar(int c, float x, float y, int kerningchar) {
 #ifdef OPENGLES2
 	urPushMatrix();
 	urRotatef(180,1,0,0);
+#else
+	glPushMatrix();
+	glRotatef(180,1,0,0);
+#endif
     GLenum err = glGetError();
     if(err != GL_NO_ERROR)
     {
         int a = err;
     }
     
-#else
-	glPushMatrix();
-	glRotatef(180,1,0,0);
-#endif
 	if (glIsTexture(texNames[cu])) {
 		glBindTexture(GL_TEXTURE_2D, texNames[cu]);
 #ifndef OPENGLES2

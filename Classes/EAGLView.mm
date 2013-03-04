@@ -27,7 +27,6 @@
 
 
 #define SLEEPER
-#define USECAMERA
 /* If GPUIMAGE is used or not is defined in EAGLView.h" */
 
 #ifdef SANDWICH_SUPPORT
@@ -1372,6 +1371,7 @@ void decCameraUseBy(int dec)
 	NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
 	// path to the default font
     g_storagePath = [resourcePath UTF8String];
+//    errorfontPath = storagePath + "/arial.ttf";
     errorfontPath = storagePath + "/DroidSansMono.ttf";
     
     // Hide top navigation bar
@@ -1473,7 +1473,10 @@ void decCameraUseBy(int dec)
         [locationManager startUpdatingHeading];
 		
     }
-	
+    
+    if ([UIImagePickerController isSourceTypeAvailable: UIImagePickerControllerSourceTypeCamera])
+        // Has camera
+	{
 #ifdef USECAMERA
 #ifdef GPUIMAGE
 
@@ -1510,6 +1513,7 @@ void decCameraUseBy(int dec)
 //    [captureManager.captureSession stopRunning];
 #endif
 #endif	
+    }
 	//Create and advertise networking and discover others
 //	[self setup];
 	[self setupNetConnects];
@@ -1967,6 +1971,8 @@ static EAGLSharegroup* theSharegroup = nil;
 }
 
 
+
+
 //The GL view is stored in the nib file. When it's unarchived it's sent -initWithCoder:
 - (id)initWithCoder:(NSCoder*)coder {
     
@@ -2021,10 +2027,20 @@ static EAGLSharegroup* theSharegroup = nil;
             return nil;
         }
         
+#ifdef OPENGLES2
+        if ([context API] == kEAGLRenderingAPIOpenGLES2) {
+            [self setFramebuffer];
+            [self setupView];
+            [self setupShaders];
+        }
+#endif
         animationInterval = 1.0 / 60.0; // We look for 60 FPS
 		
     }
 	
+	// Set up the ability to track multiple touches.
+	[self setMultipleTouchEnabled:YES];
+	self.multipleTouchEnabled = YES;
 	return self;
 }
 		
@@ -2396,7 +2412,9 @@ GLuint textureFrameBuffer=-1;
 GLuint bgtextureFrameBuffer=-1;
 GLuint bgname=-1;
 
+#ifndef LEGACY42
 #define RENDERTOTEXTURE
+#endif
 
 void CreateFrameBuffer()
 {
@@ -3176,7 +3194,7 @@ void drawLineToTexture(urAPI_Texture_t *texture, float startx, float starty, flo
             
             glVertexPointer(2, GL_FLOAT, 0, vertexBuffer);
             glDrawArrays(GL_POINTS, 0, vertexCount);
-        }
+//        } BACKC
 #endif
         
 	}
@@ -3390,9 +3408,14 @@ UILineBreakMode tolinebreakmode(int wrap)
 
 int refreshLabelYAlign(urAPI_Region_t* t)
 {
+#ifndef UISTRINGS
     int fontheight = t->textlabel->textlabelTex->getFontBlockHeight(); // NYI
-    int lineheight = t->textlabel->textlabelTex->getLineHeight();
+//    int lineheight = t->textlabel->textlabelTex->getLineHeight();
     int linegap = t->textlabel->textlabelTex->getLineGap();
+#else
+    int fontheight = [t->textlabel->textlabelTex fontblockHeight]; // NYI
+    int linegap = t->textlabel->textheight*1.43; // NYI BACKC
+#endif
     int justify = 0;
     switch(t->textlabel->justifyv)
     {
@@ -3420,7 +3443,9 @@ int refreshLabelYAlign(urAPI_Region_t* t)
     
     if(t->textlabel->textlabelTex)
     {
+#ifndef UISTRINGS
         t->textlabel->textlabelTex->setYAlign(justify);
+#endif
     }
     return justify;
 }
@@ -3522,7 +3547,9 @@ void renderTextLabel(urAPI_Region_t* t)
     [fontname release];
     [textlabelstr release];
 #endif
+#ifndef UISTRINGS
     refreshLabelYAlign(t);
+#endif
 }
 
 -(void) startMovieWriter:(const char*)fname
@@ -4866,10 +4893,10 @@ void renderTextLabel(urAPI_Region_t* t)
     
     if(displaynumber <= 1)
     {
-        SCREEN_WIDTH = self.frame.size.width;
-        SCREEN_HEIGHT = self.frame.size.height;
-//        SCREEN_WIDTH = screendimensions.size.width;
-//        SCREEN_HEIGHT = screendimensions.size.height;
+//        SCREEN_WIDTH = self.frame.size.width;
+//        SCREEN_HEIGHT = self.frame.size.height;
+        SCREEN_WIDTH = screendimensions.size.width;
+        SCREEN_HEIGHT = screendimensions.size.height;
         HALF_SCREEN_WIDTH = SCREEN_WIDTH/2;
         HALF_SCREEN_HEIGHT = SCREEN_HEIGHT/2;
     }
@@ -4900,7 +4927,8 @@ void renderTextLabel(urAPI_Region_t* t)
     if (context && !viewFramebuffer)
     {
         [EAGLContext setCurrentContext:context];
-        
+
+#ifdef OPENGLES2
         glGenFramebuffers(1, &viewFramebuffer);
         glGenRenderbuffers(1, &viewRenderbuffer);
         glBindFramebuffer(GL_FRAMEBUFFER, viewFramebuffer);
@@ -4915,9 +4943,21 @@ void renderTextLabel(urAPI_Region_t* t)
 		glBindRenderbuffer(GL_RENDERBUFFER, depthRenderbuffer);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, backingWidth, backingHeight);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer);				
-
+        
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
             NSLog(@"Failed to make complete framebuffer object %x", glCheckFramebufferStatus(GL_FRAMEBUFFER));
+#else
+        glGenFramebuffersOES(1, &viewFramebuffer);
+        glGenRenderbuffersOES(1, &viewRenderbuffer);
+        glBindFramebufferOES(GL_FRAMEBUFFER_OES, viewFramebuffer);
+        glBindRenderbufferOES(GL_RENDERBUFFER_OES, viewRenderbuffer);
+        [context renderbufferStorage:GL_RENDERBUFFER_OES fromDrawable:(CAEAGLLayer*)self.layer];
+        glFramebufferRenderbufferOES(GL_FRAMEBUFFER_OES, GL_COLOR_ATTACHMENT0_OES, GL_RENDERBUFFER_OES, viewRenderbuffer);
+        
+        glGetRenderbufferParameterivOES(GL_RENDERBUFFER_OES, GL_RENDERBUFFER_WIDTH_OES, &backingWidth);
+        glGetRenderbufferParameterivOES(GL_RENDERBUFFER_OES, GL_RENDERBUFFER_HEIGHT_OES, &backingHeight);
+#endif
+        
     }
 }
 
@@ -4936,6 +4976,7 @@ void renderTextLabel(urAPI_Region_t* t)
 */
 
 - (void) setupView {
+#ifdef OPENGLES2 // BACKC
 //	const GLfloat zNear = 1, zFar = 600, fieldOfView = 40*M_PI/180.0;
 	
 /*	esMatrixLoadIdentity(&projection);
@@ -4977,6 +5018,7 @@ void renderTextLabel(urAPI_Region_t* t)
 	
 //    glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 //	glViewport(0, 0, self.frame.size.width, self.frame.size.height);
+#endif
 }
 
 
@@ -4989,8 +5031,9 @@ void renderTextLabel(urAPI_Region_t* t)
         
         if (!viewFramebuffer)
             [self createFramebuffer2];
-        
+#ifdef OPENGLES2        // BACKC
         glBindFramebuffer(GL_FRAMEBUFFER, viewFramebuffer);
+#endif
         
         glViewport(0, 0, backingWidth, backingHeight);
     }
@@ -5004,9 +5047,11 @@ void renderTextLabel(urAPI_Region_t* t)
     {
         [EAGLContext setCurrentContext:context];
         
+#ifdef OPENGLES2 // BACKC
         glBindRenderbuffer(GL_RENDERBUFFER, viewRenderbuffer);
         
         success = [context presentRenderbuffer:GL_RENDERBUFFER];
+#endif
     }
     
     return success;

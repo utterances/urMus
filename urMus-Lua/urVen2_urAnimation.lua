@@ -53,6 +53,7 @@ function CloseAnimDialog(self)
     end
     
     self[#self.tooltips][1]:EnableInput(false)
+    mykp:Hide()
     mykb:Hide()
     self.ready = 0
     backdrop:EnableInput(true)
@@ -122,9 +123,9 @@ for i = 1,#animdialog.tooltips do
     animdialog[i][2].parent = animdialog
 end
 
-animdialog[1][2]:Handle("OnTouchDown",OpenOrCloseNumericKeyboard)
-animdialog[2][2]:Handle("OnTouchDown",OpenOrCloseNumericKeyboard)
-animdialog[3][2]:Handle("OnTouchDown",OpenOrCloseNumericKeyboard)
+animdialog[1][2]:Handle("OnTouchDown",OpenOrCloseKeyPad)
+animdialog[2][2]:Handle("OnTouchDown",OpenOrCloseKeyPad)
+animdialog[3][2]:Handle("OnTouchDown",OpenOrCloseKeyPad)
 animdialog[4][1]:Handle("OnTouchDown",OKAnimclicked)
 animdialog[4][2]:Handle("OnTouchDown",CANCELAnimclicked)
 
@@ -157,4 +158,3 @@ function OpenAnimDialog(v)
     animdialog[#animdialog.tooltips][1]:EnableInput(true)
     backdrop:EnableInput(false)
 end
-

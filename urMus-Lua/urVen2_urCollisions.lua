@@ -314,4 +314,3 @@ function OpenColDialog(v)
     
     backdrop:EnableInput(false)
 end
-

@@ -4,7 +4,7 @@ bg:SetHeight(ScreenHeight())
 bg.t = bg:Texture(0,0,90,255)
 bg:Show()
 
-local urfont2 = "Trebuchet MS"
+--local urfont2 = "Trebuchet MS"
 --[[
 r={}
 for i=1,8 do

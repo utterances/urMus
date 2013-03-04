@@ -28,14 +28,10 @@ function loadPicture(opt,vv)
             table.insert(pictureentries, entry)            
         end
     end
-    urPictureList:OpenScrollListPage1(39, "Load a Picture",nil,nil,pictureentries)
+    urPictureList:OpenScrollListPage1(39, "Load a Picture",nil,nil,pictureentries,vv)
     placeholder = {}
     
-end
-function MenuPictureRandomly(opt,vv)
-    vv.bkg = pics[math.random(1,#pics)]
-    vv.t:SetTexture(vv.bkg)
-    DPrint(vv:Name().." background pic: "..vv.bkg)
+    
 end
 
 function MenuColorRandomly(opt,vv)
@@ -208,12 +204,6 @@ end
 
 function menuGradient(opt,vv)
     OpenGradDialog(vv,pics)
-    UnHighlight(opt)
-    CloseMenuBar()
-end
-
-function menuPicture(opt,vv)
-    OpenPictureDialog(vv)
     UnHighlight(opt)
     CloseMenuBar()
 end
@@ -474,3 +464,27 @@ function MenuGenerationOff(opt,vv)
     CloseMenuBar()
 end
 
+
+function FPSEvent(self, elapsed)
+    self.fps = self.fps + 1/elapsed
+    self.count = self.count +1
+    self.sec = elapsed + self.sec
+    if (self.sec > .0001) then
+        
+        self.tl:SetLabel( math.floor(self.fps/self.count))
+        self.sec = 0
+    end 
+end
+
+function MenuFPS(opt, vv)
+    if vv.eventlist["OnUpdate"]["fps"] == 0 then
+        table.insert(vv.eventlist["OnUpdate"],FPSEvent)
+        vv.eventlist["OnUpdate"]["fps"] = 1
+    end
+    
+    vv.count = 0
+    vv.fps = 0
+    vv.sec = 0
+    UnHighlight(opt)
+    CloseMenuBar()
+end

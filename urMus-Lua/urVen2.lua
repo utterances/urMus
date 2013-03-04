@@ -22,7 +22,6 @@ dofile(SystemPath("urVen2_urMovingController.lua"))
 dofile(SystemPath("urVen2_urMoving.lua"))
 dofile(SystemPath("urVen2_urColorWheel.lua"))
 dofile(SystemPath("urVen2_urPictureLoading.lua"))
-dofile(SystemPath("urVen2_urPicture.lua"))
 dofile(SystemPath("urVen2_urMenu.lua"))
 dofile(SystemPath("urVen2_urAnimation.lua"))
 dofile(SystemPath("urVen2_urGeneration.lua"))
@@ -40,7 +39,6 @@ regions = {}
 recycledregions = {}
 
 auto_stick_enabled = 0
-pics = {"vinyl.png","Ornament1.png",DocumentPath("Pirate1.png"),"Play.png","Right.png"} -- for random pictures
 
 moving_default_speed = "8" -- 3 to 10, slow to fast
 moving_default_dir = "45" -- direction by degree
@@ -125,7 +123,6 @@ function EnableMove(vv)
     vv:EnableMoving(true)
     vv:EnableResizing(true)
 end
-
 
 
 ------------------ v1.backdrop ---------------------
@@ -256,7 +253,7 @@ notificationregion:SetAnchor('BOTTOMLEFT',0,ScreenHeight()/2-24)
 notificationregion:EnableClamping(true)
 notificationregion:Show()
 notificationregion.textlabel=notificationregion:TextLabel()
-notificationregion.textlabel:SetFont(urfont)
+notificationregion.textlabel:SetFont("Trebuchet MS")
 notificationregion.textlabel:SetHorizontalAlign("CENTER")
 notificationregion.textlabel:SetLabel("")
 notificationregion.textlabel:SetFontHeight(48)
@@ -642,7 +639,6 @@ function_list = {}
 function_list[1] = {"Basics", {
         {"About",MenuAbout,{}},
         {"Load Picture",loadPicture,{}},       
-        {"Random Picture",MenuPictureRandomly,{}},
         {"Random Gradient", MenuGradientRandom,{}},
         {"Random Color",MenuColorRandomly,{}},
         {"Clear Background",MenuClearToWhite,{}},
@@ -654,7 +650,6 @@ function_list[1] = {"Basics", {
 function_list[2] = {"Edit", {
         {"Color Wheel",MenuChangeColor,{}},
         {"Gradient Selection",menuGradient,{}},
-        {"Image Selection",menuPicture,{}},
         {"Transparency",MenuTransparency,{
                 {blend_mode_list[1],MenuBlendMode,{}},
                 {blend_mode_list[2],MenuBlendMode,{}},
@@ -728,7 +723,9 @@ function_list[3] = {"Advanced", {
 function_list[4] = {"Global Control", {
         {"Autostick Control",MenuStickControl,{}},
         {"Keyboard Control",MenuKeyboardControl,{}},
-        {"BackGround Control",MenuBackGround,{}}
+        {"BackGround Control",MenuBackGround,{}},
+        {"FPS Control", MenuFPS,{}}
+            
     }
 }
 
@@ -1052,11 +1049,9 @@ function OverlapTrashbinEvent(self) -- event to check whether self overlaps with
         self.t:SetTexture(255,0,0,250)
         trashbin.yes = 1
     else
-        if trashbin.yes == 1 then
-            DPrint("To remove "..self:Name()..", move it to bottomright corner")
-            VSetTexture(self)
-            trashbin.yes = 0
-        end
+        DPrint("To remove "..self:Name()..", move it to bottomright corner")
+        VSetTexture(self)
+        trashbin.yes = 0
     end
 end
 
@@ -1071,7 +1066,6 @@ function HoldToTrigger(self, elapsed) -- for long tap
         trashbin:Show()
         trashbin:MoveToTop()
         self:Handle("OnUpdate",nil)
-        trashbin.yes = 1 -- Hack to trigger info text
         self:Handle("OnUpdate",OverlapTrashbinEvent)
     else 
         if math.abs(self.x - x) > 10 or math.abs(self.y - y) > 10 then
@@ -1166,6 +1160,7 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
     r.eventlist["OnUpdate"]["collision"] = 0
     r.eventlist["OnUpdate"]["background"] = 0
     r.eventlist["OnUpdate"]["projectile"] = 0
+    r.eventlist["OnUpdate"]["fps"] = 0
     r.eventlist["OnUpdate"].currentevent = nil
     r.reventlist = {} -- eventlist for release mode
     r.reventlist["OnTouchDown"] = {}
@@ -1315,4 +1310,3 @@ pagebutton.texture:SetBlendMode("BLEND")
 pagebutton.texture:SetTexCoord(0,1.0,0,1.0)
 pagebutton:EnableInput(true)
 pagebutton:Show()
-

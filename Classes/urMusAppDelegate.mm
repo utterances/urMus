@@ -18,6 +18,8 @@
 #import "SandwichUpdateListener.h"
 #endif
 
+#define NOXIB
+
 @implementation urMusAppDelegate
 
 @synthesize window;
@@ -113,7 +115,38 @@ extern int SCREEN_HEIGHT;
 extern std::string g_fontPath;
 extern std::string g_storagePath;
 
-- (void)applicationDidFinishLaunching:(UIApplication *)application {
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    [self applicationDidFinishLaunching:application];
+    return YES;
+}
+
+-(void)applicationDidFinishLaunching:(UIApplication *)application {
+
+
+//- (void)applicationDidFinishLaunching:(UIApplication *)application {
+    
+#ifdef NOXIB
+    // Override point for customization after application launch.
+    
+//    [window release];
+//	[glView release];
+
+    window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+    window.backgroundColor = [UIColor whiteColor];
+//    [self.window makeKeyAndVisible];
+    
+    glView = [EAGLView alloc];
+    [glView awakeFromNib]; // Fake nib initialization
+	[glView initWithFrame:[window bounds]];//]
+										   //pixelFormat:kEAGLColorFormatRGBA8
+										   //depthFormat:GL_DEPTH_COMPONENT24_OES
+									//preserveBackbuffer:NO];
+	// make the OpenGLView a child of the main window
+	[window addSubview:glView];
+    
+	// make main window visible
+	[window makeKeyAndVisible];
+#endif
     
     // Register for screen connect and disconnect notifications.
 	[[NSNotificationCenter defaultCenter] addObserver:self

@@ -78,4 +78,3 @@ color_wheel:EnableMoving(false)
 color_wheel:EnableResizing(false)
 color_wheel:Handle("OnMove",UpdateColor)
 color_wheel:Handle("OnDoubleTap",CloseColorWheel)
-

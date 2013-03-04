@@ -98,6 +98,7 @@ function CloseMyDialog(self)
     
     self[#self.hint][1]:EnableInput(false)
     mykb:Hide()
+    mykp:Hide()
     self.ready = 0
     backdrop:EnableInput(true)
 end
@@ -176,8 +177,8 @@ for i = 1,#mydialog.hint do
     mydialog[i][1].parent = mydialog
     mydialog[i][2].parent = mydialog
 end
-mydialog[1][2]:Handle("OnTouchDown",OpenOrCloseNumericKeyboard)
-mydialog[2][2]:Handle("OnTouchDown",OpenOrCloseNumericKeyboard)
+mydialog[1][2]:Handle("OnTouchDown",OpenOrCloseKeyPad)
+mydialog[2][2]:Handle("OnTouchDown",OpenOrCloseKeyPad)
 mydialog[3][2]:Handle("OnTouchDown",SelectBounceObject)
 mydialog[4][2]:Handle("OnTouchDown",SelectBounceObjectRemove)
 mydialog[5][1]:Handle("OnTouchDown",OKclicked)
@@ -225,4 +226,3 @@ function OpenMyDialog(v)
     mydialog.bounceremoveobjects.dirty = 0
     backdrop:EnableInput(false)
 end
-
