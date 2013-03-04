@@ -1547,7 +1547,7 @@ void decCameraUseBy(int dec)
 
 #define TEST_CAMERA
 
-static GLuint	cameraTexture= 0;
+GLuint	cameraTexture= 0;
 static bool cameraBeingUsedAsBrush = false;
 
 - (void)newCameraTextureForDisplay:(GLuint)texture {
@@ -1961,10 +1961,14 @@ static EAGLSharegroup* theSharegroup = nil;
         CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
         
         eaglLayer.opaque = TRUE;
-        eaglLayer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys:
-                                        [NSNumber numberWithBool:FALSE], kEAGLDrawablePropertyRetainedBacking,
-                                        kEAGLColorFormatRGBA8, kEAGLDrawablePropertyColorFormat,
-                                        nil];
+        eaglLayer.drawableProperties = @{
+                                         kEAGLDrawablePropertyRetainedBacking: [NSNumber numberWithBool:YES],
+                                         kEAGLDrawablePropertyColorFormat: kEAGLColorFormatRGBA8
+                                         };
+//        eaglLayer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys:
+//                                        [NSNumber numberWithBool:YES], kEAGLDrawablePropertyRetainedBacking,
+//                                        kEAGLColorFormatRGBA8, kEAGLDrawablePropertyColorFormat,
+//                                        nil];
     }
     
     return self;
@@ -1980,9 +1984,11 @@ static EAGLSharegroup* theSharegroup = nil;
         // Get the layer
         CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
         
-        eaglLayer.opaque = YES;
-        eaglLayer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys:
-                                        [NSNumber numberWithBool:YES], kEAGLDrawablePropertyRetainedBacking, kEAGLColorFormatRGBA8, kEAGLDrawablePropertyColorFormat, nil];
+        eaglLayer.opaque = TRUE;
+        eaglLayer.drawableProperties = @{
+                                         kEAGLDrawablePropertyRetainedBacking: [NSNumber numberWithBool:YES],
+                                         kEAGLDrawablePropertyColorFormat: kEAGLColorFormatRGBA8
+                                         };
         
 		context = [self createContext];
 		//       context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
@@ -2015,9 +2021,11 @@ static EAGLSharegroup* theSharegroup = nil;
         // Get the layer
         CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
         
-        eaglLayer.opaque = YES;
-        eaglLayer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys:
-                                        [NSNumber numberWithBool:YES], kEAGLDrawablePropertyRetainedBacking, kEAGLColorFormatRGBA8, kEAGLDrawablePropertyColorFormat, nil];
+        eaglLayer.opaque = TRUE;
+        eaglLayer.drawableProperties = @{
+                                         kEAGLDrawablePropertyRetainedBacking: [NSNumber numberWithBool:YES],
+                                         kEAGLDrawablePropertyColorFormat: kEAGLColorFormatRGBA8
+                                         };
         
 		context = [self createContext];
 		//       context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
@@ -2052,9 +2060,11 @@ static EAGLSharegroup* theSharegroup = nil;
         // Get the layer
         CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
         
-        eaglLayer.opaque = YES;
-        eaglLayer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys:
-                                        [NSNumber numberWithBool:YES], kEAGLDrawablePropertyRetainedBacking, kEAGLColorFormatRGBA8, kEAGLDrawablePropertyColorFormat, nil];
+        eaglLayer.opaque = TRUE;
+        eaglLayer.drawableProperties = @{
+                                         kEAGLDrawablePropertyRetainedBacking: [NSNumber numberWithBool:YES],
+                                         kEAGLDrawablePropertyColorFormat: kEAGLColorFormatRGBA8
+                                         };
         
 		//context = passedContext;
 		//       context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
@@ -3278,6 +3288,58 @@ void clearTexture(Texture2D* texture, float r, float g, float b, float a)
         int a = err;
     }
 
+}
+
+void readPixelColor(GLuint	t,int x, int y, unsigned char *colors)
+{
+    [EAGLContext setCurrentContext:g_glView->context];
+    GLenum err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    glBindFramebufferOES(GL_FRAMEBUFFER_OES, g_glView->viewFramebuffer);
+    glViewport(0, 0, g_glView->backingWidth, g_glView->backingHeight);
+    
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+	// allocate frame buffer
+	if(textureFrameBuffer == -1)
+		CreateFrameBuffer();
+	// bind frame buffer
+	glBindFramebufferOES(GL_FRAMEBUFFER_OES, textureFrameBuffer);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    glFramebufferTexture2DOES(GL_FRAMEBUFFER_OES, GL_COLOR_ATTACHMENT0_OES, GL_TEXTURE_2D, t, 0);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    GLenum errf = glCheckFramebufferStatus(GL_FRAMEBUFFER_OES);
+    if(errf!= GL_FRAMEBUFFER_COMPLETE)
+    {
+        NSLog(@"Frame buffer incomplete: %d",errf);
+        int a=0;
+    }
+    glReadPixels(x, y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, colors);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    glBindFramebufferOES(GL_FRAMEBUFFER_OES, 0);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
 }
 
 // Create a texture instance for a given region
