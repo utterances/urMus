@@ -409,7 +409,7 @@ double NetIn_Out(ursObject* gself)
 
 
 
-ursObject::ursObject(const char* objname, void* (*objconst)(), void (*objdest)(ursObject*),int nrins, int nrouts, bool dontinstance, bool coupled, ursObjectArray* instancearray)
+ursObject::ursObject(const char* objname, void* (*objconst)(), void (*objdest)(ursObject*),int nrins, int nrouts, bool dontinstance, bool coupled, ursObjectArray* instancearray, char* objnote)
 {
 	nr_ins = nrins;
 	nr_outs = nrouts;
@@ -459,6 +459,8 @@ ursObject::ursObject(const char* objname, void* (*objconst)(), void (*objdest)(u
 	if(DataConstructor != NULL)
 		objectdata = DataConstructor();
 	fed = false;
+    
+    note = objnote;
 }
 
 ursObject::~ursObject()
@@ -2970,7 +2972,7 @@ void urs_SetupObjects()
 	
 	object = new ursObject("Quant", Quant_Constructor, Quant_Destructor,1,1);
 	object->AddOut("Out", "Generic", Quant_Out, Quant_Tick, NULL);
-	object->AddIn("In", "Generic", Quant_In);
+	object->AddIn("In", "Generic", Quant_In) ;
 	//	object->AddIn("Base", "Frequency", Quant_Oct);
 	object->SetCouple(0,0);
 	urmanipulatorobjectlist.Append(object);
