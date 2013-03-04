@@ -3110,12 +3110,38 @@ int texture_UseCamera(lua_State* lua)
 //        [g_glView IncCameraUse];
 	t->usecamera = 1;
 	t->isTiled = false; // Camera textures cannot be tiled
+//    t->width = 1024;
+//    t->height = 512;
     
     if(UsesTextureBrush())
         SetBrushAsCamera(true);
 	return 0;
 }
-	
+
+void readPixelColor(GLuint t, int x, int y, unsigned char* colors);
+
+extern GLuint	cameraTexture;
+
+int texture_PixelColor(lua_State* lua)
+{
+   	urAPI_Texture_t* t = checktexture(lua, 1);
+    lua_Number x = luaL_checknumber(lua,2);
+    lua_Number y = luaL_checknumber(lua,3);
+    unsigned char colors[4*4];
+    y = t->height-y;
+    GLuint	texture;
+    if(t->usecamera)
+        texture = cameraTexture;
+    else
+        texture = (GLuint)t->backgroundTex;
+    readPixelColor(texture, (int)x, (int)y, (unsigned char*)colors);
+    lua_pushnumber(lua, colors[0]);
+    lua_pushnumber(lua, colors[1]);
+    lua_pushnumber(lua, colors[2]);
+    lua_pushnumber(lua, colors[3]);
+    return 4;
+}
+
 int region_UseAsBrush(lua_State* lua)
 {
 	urAPI_Region_t* t = checkregion(lua, 1);
@@ -3921,6 +3947,7 @@ static const struct luaL_reg texturefuncs [] =
 	{"Width", texture_Width},
 	{"Height", texture_Height},
 	{"UseCamera", texture_UseCamera},
+    {"PixelColor", texture_PixelColor},
 	{"__gc",       texture_gc},
 	{NULL, NULL}
 };
