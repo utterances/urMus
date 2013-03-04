@@ -1490,6 +1490,23 @@ int region_Handle(lua_State* lua)
 	}
 }
 
+int region_ReadHandle(lua_State* lua)
+{
+	urAPI_Region_t* region = checkregion(lua,1);
+	//get parameter
+	const char* handler = luaL_checkstring(lua, 2);
+    
+    for(int i=0; i<MAX_EVENTS; i++)
+    {
+        if(!strcmp(handler, urEventNames[i]))
+        {
+            lua_rawgeti(lua,LUA_REGISTRYINDEX, region->OnEvents[i]);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void ClampRegion(urAPI_Region_t* region);
 
 void changeLayout(urAPI_Region_t* region)
@@ -3922,6 +3939,7 @@ static const struct luaL_reg regionfuncs [] =
 	{"EnableMoving", region_EnableMoving},
 	{"EnableResizing", region_EnableResizing},
 	{"Handle", region_Handle},
+    {"ReadHandle", region_ReadHandle},
 	{"SetHeight", region_SetHeight},
 	{"SetWidth", region_SetWidth},
 	{"Show", region_Show},
@@ -4380,6 +4398,18 @@ int flowbox_Get(lua_State *lua)
 	return 1;
 }
 
+int flowbox_Note(lua_State *lua)
+{
+	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
+    if(fb->object && fb->object->note)
+    {
+        lua_pushstring(lua, fb->object->note);
+        return 1;
+    }
+    return 0;
+    
+}
+
 int flowbox_AddFile(lua_State *lua)
 {
 	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
@@ -4485,6 +4515,7 @@ static const struct luaL_reg flowboxfuncs [] =
     {"Push", flowbox_Push},
     {"Pull", flowbox_Pull},
     {"Get", flowbox_Get},
+    {"Note", flowbox_Note},
     {"AddFile", flowbox_AddFile},
     {"ReadFile", flowbox_ReadFile},
     {"WriteFile", flowbox_WriteFile},

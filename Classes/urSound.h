@@ -60,7 +60,7 @@ class ursObjectArray;
 class ursObject
 {
 public:
-	ursObject(const char* objname, void* (*objconst)(), void (*objdest)(ursObject*),int nrins = 0, int nrouts = 0, bool dontinstance = false, bool coupled = false, ursObjectArray* instancearray = NULL);
+	ursObject(const char* objname, void* (*objconst)(), void (*objdest)(ursObject*),int nrins = 0, int nrouts = 0, bool dontinstance = false, bool coupled = false, ursObjectArray* instancearray = NULL, char* objnote = NULL);
 	~ursObject();
 	ursObject* Clone();
 	void AddOut(const char* outname, const char* outsemantics, double (*func)(ursObject *), double (*func3)(ursObject *), void (*func2)(ursObject*, SInt16*, UInt32));
@@ -104,6 +104,7 @@ public:
 	bool iscoupled;
 	void* (*DataConstructor)();
 	void (*DataDestructor)(ursObject*);
+    char* note;
 	void* objectdata;
 };
 
