@@ -153,6 +153,10 @@ object's input.</p>
 </ul>
 
 
+<h3>Note</h3>
+
+<p>Equivalent functionality can be achieved by using outlet member function API flowbox.out:SetPush(flowbox.in). This version of the API is still active but is discouraged from use because it is a candidate for deprication.</p>
+
 <h2>Flowbox:SetPullLink</h2>
 
 <h3>Synopsis</h3>
@@ -186,6 +190,10 @@ index.</p>
 </ul>
 
 
+<h3>Note</h3>
+
+<p>Equivalent functionality can be achieved by using inlet member function API flowbox.in:SetPull(flowbox.out). This version of the API is still active but is discouraged from use because it is a candidate for deprication.</p>
+
 <h2>Flowbox:RemovePushLink</h2>
 
 <h3>Synopsis</h3>
@@ -218,11 +226,15 @@ index.</p>
 </ul>
 
 
+<h3>Note</h3>
+
+<p>Equivalent functionality can be achieved by using outlet member function API flowbox.out:RemovePush(flowbox.in). This version of the API is still active but is discouraged from use because it is a candidate for deprication.</p>
+
 <h2>Flowbox:RemovePullLink</h2>
 
 <h3>Synopsis</h3>
 
-<pre><code>didRemoveLink = flowbox:SetPullLink(inIndex, targetObject, targetOutIndex)
+<pre><code>didRemoveLink = flowbox:RemovePullLink(inIndex, targetObject, targetOutIndex)
 </code></pre>
 
 <h3>Description</h3>
@@ -250,6 +262,10 @@ index.</p>
   the outIndex for the target was invalid.</li>
 </ul>
 
+
+<h3>Note</h3>
+
+<p>Equivalent functionality can be achieved by using inlet member function API flowbox.in:RemovePull(flowbox.out). This version of the API is still active but is discouraged from use because it is a candidate for deprication.</p>
 
 <h2>Flowbox:IsPushed</h2>
 
@@ -481,6 +497,158 @@ identify itself.</p>
   Returns true if there exists an inlet/outlet pair which is coupled.</li>
 </ul>
 
+
+<h1>Flowbox Inlet API</h1>
+
+<p>These functions are members of any inlet of a Flowbox. The names of the inlets are specified by the flowbox itself and can be found as part of the <a href="FlowboxList.html">specification of flowboxes</a>.</p>
+
+<h2>Flowbox.in:SetPull</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>didLink = flowbox.in:SetPull(flowbox2.out)
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Adds a pull link between the this flowbox's input in to the flowbox2's output
+out.</p>
+
+<h3>Arguments</h3>
+
+<ul>
+<li><code>in</code> (inlet)
+ The name of the inlet of flowbox</li>
+<li><code>flowbox2</code> (Flowbox)</li>
+<li><code>out</code> (outlet)
+ The name of the outlet of flowbox2</li>
+</ul>
+
+
+<h3>Returns</h3>
+
+<ul>
+<li><code>didLink</code> (Boolean)
+  True if a pull link was successfully created between the two; false if an error
+  occurred.</li>
+</ul>
+
+
+<h3>Note</h3>
+
+<p>Requires V1.0 or later. Equivalent functionality can be achieved by using function API flowbox.SetPullLink(). This version of the API is recommended as the other alternative is a candidate for deprication.</p>
+
+<h2>Flowbox.in:RemovePull</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>didRemoveLink = flowbox.in:RemovePull(flowbox2.out)
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Removes a pull link between the this flowbox's input in to flowbox2's output
+out.</p>
+
+<h3>Arguments</h3>
+
+<ul>
+<li><code>in</code> (inlet)
+ The name of the inlet of flowbox</li>
+<li><code>flowbox2</code> (Flowbox)</li>
+<li><code>out</code> (outlet)
+ The name of the outlet of flowbox2</li>
+</ul>
+
+
+<h3>Returns</h3>
+
+<ul>
+<li><code>didRemoveLink</code> (Boolean)
+  True if a pull link was successfully removed; false if an error
+  occurred.</li>
+</ul>
+
+
+<h3>Note</h3>
+
+<p>Requires V1.0 or later. Equivalent functionality can be achieved by using function API flowbox.RemovePullLink(). This version of the API is recommended as the other alternative is a candidate for deprication.</p>
+
+<h1>Flowbox Outlet API</h1>
+
+<p>These functions are members of any outlet of a Flowbox. The names of the outlets are specified by the flowbox itself and can be found as part of the <a href="FlowboxList.html">specification of flowboxes</a>.</p>
+
+<h2>Flowbox.out:SetPush</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>didLink = flowbox.out:SetPush(flowbox2.in)
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Adds a push link between the this flowbox's output out to the flowbox2's input
+in.</p>
+
+<h3>Arguments</h3>
+
+<ul>
+<li><code>out</code> (outlet)
+ The name of the outlet of flowbox</li>
+<li><code>flowbox2</code> (Flowbox)</li>
+<li><code>in</code> (inlet)
+ The name of the inlet of flowbox2</li>
+</ul>
+
+
+<h3>Returns</h3>
+
+<ul>
+<li><code>didLink</code> (Boolean)
+  True if a push link was successfully created between the two; false if an error
+  occurred.</li>
+</ul>
+
+
+<h3>Note</h3>
+
+<p>Requires V1.0 or later. Equivalent functionality can be achieved by using function API flowbox.SetPushLink(). This version of the API is recommended as the other alternative is a candidate for deprication.</p>
+
+<h2>Flowbox.out:RemovePush</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>didRemoveLink = flowbox.out:RemovePush(flowbox2.in)
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Removes a push link between this flowbox's input in to flowbox2's output
+out.</p>
+
+<h3>Arguments</h3>
+
+<ul>
+<li><code>out</code> (outlet)
+ The name of the outlet of flowbox</li>
+<li><code>flowbox2</code> (Flowbox)</li>
+<li><code>in</code> (inlet)
+ The name of the inlet of flowbox2</li>
+</ul>
+
+
+<h3>Returns</h3>
+
+<ul>
+<li><code>didRemoveLink</code> (Boolean)
+  True if a push link was successfully removed; false if an error
+  occurred.</li>
+</ul>
+
+
+<h3>Note</h3>
+
+<p>Requires V1.0 or later. Equivalent functionality can be achieved by using function API flowbox.RemovePushLink(). This version of the API is recommended as the other alternative is a candidate for deprication.</p>
 
 <p><a href="overview.html">urMus API Overview</a></p>
 

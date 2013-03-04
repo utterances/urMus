@@ -14,11 +14,11 @@ local sin = math.sin
 local cos = math.cos
 local ceil = math.ceil
 
-urfont = "DroidSansMono.ttf"
-urfont2 = "DroidSansMono.ttf"
---urfont2 = "Trebuchet MS"
+--urfont = "DroidSansMono.ttf"
+--urfont2 = "DroidSansMono.ttf"
+urfont2 = "Trebuchet MS"
 --urfont = "arial"
---urfont = "Helvetica"
+urfont = "Helvetica"
 
 patchdir = "Patches"
 

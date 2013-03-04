@@ -250,7 +250,7 @@
 		77731DF0161B711A00DBB08B /* urFont.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 77731DEE161B711A00DBB08B /* urFont.cpp */; };
 		77731DF3161B715800DBB08B /* urTexture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 77731DF1161B715800DBB08B /* urTexture.cpp */; };
 		77731DF6161B717900DBB08B /* urImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 77731DF4161B717900DBB08B /* urImage.cpp */; };
-		77732586161B7A4500DBB08B /* libFreetype2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 77732585161B7A4500DBB08B /* libFreetype2.a */; };
+		77732586161B7A4500DBB08B /* libFreetype2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 77732585161B7A4500DBB08B /* libFreetype2.a */; settings = {ATTRIBUTES = (Weak, ); }; };
 		7778B1EB0FED04AF00F491D3 /* lapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 7778B1B40FED04AF00F491D3 /* lapi.c */; };
 		7778B1EC0FED04AF00F491D3 /* lauxlib.c in Sources */ = {isa = PBXBuildFile; fileRef = 7778B1B60FED04AF00F491D3 /* lauxlib.c */; };
 		7778B1ED0FED04AF00F491D3 /* lbaselib.c in Sources */ = {isa = PBXBuildFile; fileRef = 7778B1B80FED04AF00F491D3 /* lbaselib.c */; };
@@ -317,7 +317,7 @@
 		779AD4A4104A3B2C007040BF /* doublearrow.png in Resources */ = {isa = PBXBuildFile; fileRef = 779AD4A1104A3B2C007040BF /* doublearrow.png */; };
 		779AD4A5104A3B2C007040BF /* downarrow.png in Resources */ = {isa = PBXBuildFile; fileRef = 779AD4A2104A3B2C007040BF /* downarrow.png */; };
 		779B89211393A25900B6C9BA /* urExternalTest.lua in Resources */ = {isa = PBXBuildFile; fileRef = 774A6F6B13938A4300F13FAB /* urExternalTest.lua */; };
-		779BE9C013A99BF2002E36DC /* libcurl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 779BE9BF13A99BF2002E36DC /* libcurl.a */; };
+		779BE9C013A99BF2002E36DC /* libcurl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 779BE9BF13A99BF2002E36DC /* libcurl.a */; settings = {ATTRIBUTES = (Weak, ); }; };
 		779BE9DD13A9A010002E36DC /* curlbuild.h.cmake in Resources */ = {isa = PBXBuildFile; fileRef = 779BE9CF13A9A010002E36DC /* curlbuild.h.cmake */; };
 		779BE9DE13A9A010002E36DC /* curlbuild.h.in in Resources */ = {isa = PBXBuildFile; fileRef = 779BE9D013A9A010002E36DC /* curlbuild.h.in */; };
 		779BE9E013A9A010002E36DC /* Makefile.am in Resources */ = {isa = PBXBuildFile; fileRef = 779BE9D513A9A010002E36DC /* Makefile.am */; };
@@ -498,7 +498,7 @@
 		77D61B4A10C80C170091DE81 /* Pink-Mono.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77D61B4210C80C170091DE81 /* Pink-Mono.wav */; };
 		77D61B4B10C80C170091DE81 /* Orange-Mono.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77D61B4310C80C170091DE81 /* Orange-Mono.wav */; };
 		77D61B4C10C80C170091DE81 /* Red-Mono.wav in Resources */ = {isa = PBXBuildFile; fileRef = 77D61B4410C80C170091DE81 /* Red-Mono.wav */; };
-		77D9ED6516C16D77008EC083 /* libz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 77D9ED6416C16D77008EC083 /* libz.a */; };
+		77D9ED6516C16D77008EC083 /* libz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 77D9ED6416C16D77008EC083 /* libz.a */; settings = {ATTRIBUTES = (Weak, ); }; };
 		77D9ED6916C19837008EC083 /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 77D9ED6816C19837008EC083 /* Default-568h@2x.png */; };
 		77DEFB5712930C2200110BA1 /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = 77DEFB5612930C2200110BA1 /* Default.png */; };
 		77DF162413FC829600B00815 /* urStringEditBox.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77DF162013FC828200B00815 /* urStringEditBox.lua */; };
@@ -3063,7 +3063,7 @@
 					"$(SRCROOT)/Classes/freetype/include/**",
 				);
 				INFOPLIST_FILE = Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/libs\"",
@@ -3098,7 +3098,7 @@
 					"$(SRCROOT)/Classes/freetype/include/**",
 				);
 				INFOPLIST_FILE = Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/libs\"",

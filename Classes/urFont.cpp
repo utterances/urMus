@@ -917,16 +917,16 @@ void urFont::drawChar(int c, float x, float y, int kerningchar) {
 #ifdef OPENGLES2
 	urPushMatrix();
 	urRotatef(180,1,0,0);
+#else
+	glPushMatrix();
+	glRotatef(180,1,0,0);
+#endif
     GLenum err = glGetError();
     if(err != GL_NO_ERROR)
     {
         int a = err;
     }
     
-#else
-	glPushMatrix();
-	glRotatef(180,1,0,0);
-#endif
 	if (glIsTexture(texNames[cu])) {
 		glBindTexture(GL_TEXTURE_2D, texNames[cu]);
 #ifndef OPENGLES2
