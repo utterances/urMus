@@ -65,6 +65,7 @@ using namespace stk;
 void* ADSR_Constructor()
 {
 	ADSR* self = new ADSR;
+    self->keyOff();
 	return (void*)self;
 }
 
@@ -78,8 +79,7 @@ double ADSR_Tick(ursObject* gself)
 {
 	ADSR* self = (ADSR*)gself->objectdata;
 	gself->FeedAllPullIns(1); // This is decoupled so no forwarding, just pulling to propagate our natural rate
-	
-	return gself->CallAllPullIns()*self->tick(); //gself->lastindata[0]*self->tick();
+    return self->tick();//	return gself->CallAllPullIns()*self->tick(); //gself->lastindata[0]*self->tick();
 }
 
 double ADSR_Out(ursObject* gself)
@@ -87,7 +87,7 @@ double ADSR_Out(ursObject* gself)
 	ADSR* self = (ADSR*)gself->objectdata;
 	return self->lastOut();
 }
-
+/*
 void ADSR_In(ursObject* gself, double indata)
 {
 	ADSR* self = (ADSR*)gself->objectdata;
@@ -95,6 +95,15 @@ void ADSR_In(ursObject* gself, double indata)
 	double res = 0;
 	res = self->tick();
 	gself->CallAllPushOuts(res);
+}
+*/
+void ADSR_SetKey(ursObject* gself, double indata)
+{
+	ADSR* self = (ADSR*)gself->objectdata;
+    if (indata > 0) // ATTACK
+        self->keyOn();
+    else            // RELEASE
+        self->keyOff();
 }
 
 void ADSR_SetAttack(ursObject* gself, double indata)
@@ -2653,12 +2662,13 @@ void urSTK_Setup()
 	
 	object = new ursObject("ADSR", ADSR_Constructor, ADSR_Destructor,5,1);
 	object->AddOut("Out", "TimeSeries", ADSR_Tick, ADSR_Out, NULL);
-	object->AddIn("In", "Generic", ADSR_In);
-	object->AddIn("Attack", "Rate", ADSR_SetAttack);
+//	object->AddIn("In", "Generic", ADSR_In);
+    object->AddIn("Key", "Generic", ADSR_SetKey);
+    object->AddIn("Attack", "Rate", ADSR_SetAttack);
 	object->AddIn("Decay", "Rate", ADSR_SetDecay);
 	object->AddIn("Sustain", "Threshold", ADSR_SetSustain);
 	object->AddIn("Release", "Rate", ADSR_SetRelease);
-	object->SetCouple(0,0);
+//	object->SetCouple(0,0);
 	urmanipulatorobjectlist.Append(object);
 	
 	object = new ursObject("Asymp", Asymp_Constructor, Asymp_Destructor,2,1);
