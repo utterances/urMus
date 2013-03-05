@@ -60,7 +60,7 @@
 using namespace stk;
 */
 #ifndef LEGACY42
-    #define INCLUDE_COMPHEAVY_STKS
+//    #define INCLUDE_COMPHEAVY_STKS
 #endif
 // Interface - ADSR
 
@@ -531,7 +531,7 @@ void BlitSquare_SetHarmonics(ursObject* gself, double indata)
 class ExBlowBotl : public BlowBotl
 {
 public:
-    ExBlowBotl() { amplitude = 1.0; rate = 0.2; }
+    ExBlowBotl() { amplitude = DEFAULT_INSTRUMENT_AMPLITUDE; rate = DEFAULT_INSTRUMENT_RATE; }
     double amplitude;
     double rate;
 };
@@ -587,9 +587,9 @@ void BlowBotl_SetAmplitude(ursObject* gself, double indata)
 	ExBlowBotl* self = (ExBlowBotl*)gself->objectdata;
     self->amplitude = indata;
     if (self->amplitude> 0)
-        self->startBlowing(self->amplitude, self->rate );
+        self->startBlowing(self->amplitude,self->rate);
     else
-        self->stopBlowing(INSTRUMENT_RELEASE_RATE);
+        self->stopBlowing(self->rate);
 }
 
 void BlowBotl_SetRate(ursObject* gself, double indata)
@@ -603,7 +603,7 @@ void BlowBotl_SetRate(ursObject* gself, double indata)
 class ExBlowHole : public BlowHole
 {
 public:
-    ExBlowHole():BlowHole(22.0) { amplitude = 1.0; rate = 0.2; }
+    ExBlowHole():BlowHole(22.0) { amplitude = DEFAULT_INSTRUMENT_AMPLITUDE; rate = DEFAULT_INSTRUMENT_RATE; }
     double amplitude;
     double rate;
 };
@@ -670,7 +670,7 @@ void BlowHole_SetAmplitude(ursObject* gself, double indata)
     ExBlowHole* self = (ExBlowHole*)gself->objectdata;
     self->amplitude =capNorm(indata);
     if (self->amplitude ==  0)
-        self->stopBlowing(INSTRUMENT_RELEASE_RATE);
+        self->stopBlowing(self->rate);
     else
         self->startBlowing(self->amplitude, self->rate );
 
@@ -678,9 +678,9 @@ void BlowHole_SetAmplitude(ursObject* gself, double indata)
 
 void BlowHole_SetRate(ursObject* gself, double indata)
 {
-	ExBlowBotl* self = (ExBlowBotl*)gself->objectdata;
-	self->startBlowing(self->amplitude,(indata+1.0)*2.0/48000.0);
-    self->rate = (indata+1.0)*2.0/48000.0;
+	ExBlowHole* self = (ExBlowHole*)gself->objectdata;
+    self->rate = norm2Rate(indata);
+	self->startBlowing(self->amplitude,self->rate);
 }
 
 // Interface - Bowed
@@ -688,7 +688,7 @@ void BlowHole_SetRate(ursObject* gself, double indata)
 class ExBowed : public Bowed
 {
 public:
-    ExBowed():Bowed(22.0) { amplitude = 1.0; rate = 0.2; }
+    ExBowed():Bowed(22.0) { amplitude = DEFAULT_INSTRUMENT_AMPLITUDE; rate = DEFAULT_INSTRUMENT_RATE; }
     double amplitude;
     double rate;
 };
@@ -734,6 +734,7 @@ void Bowed_In(ursObject* gself, double indata)
 }
 */
 
+
 void Bowed_SetFrequency(ursObject* gself, double indata)
 {
 	ExBowed* self = (ExBowed*)gself->objectdata;
@@ -751,9 +752,17 @@ void Bowed_SetAmplitude(ursObject* gself, double indata)
 	ExBowed* self = (ExBowed*)gself->objectdata;
     self->amplitude =capNorm(indata);
     if (self->amplitude== 0)
-        self->stopBowing(INSTRUMENT_RELEASE_RATE);
+        self->stopBowing(self->rate);
     else
         self->startBowing(self->amplitude, self->rate);
+}
+
+
+void Bowed_SetRate(ursObject* gself, double indata)
+{
+	ExBowed* self = (ExBowed*)gself->objectdata;
+    self->rate = norm2Rate(indata);
+	self->startBowing(self->amplitude,self->rate);
 }
 
 // Interface - BowTable
@@ -808,22 +817,31 @@ void BowTable_SetSlope(ursObject* gself, double indata)
 
 // Interface - Brass
 
+class ExBrass : public Brass
+{
+public:
+    ExBrass():Brass(22.0) { amplitude = DEFAULT_INSTRUMENT_AMPLITUDE; rate = DEFAULT_INSTRUMENT_RATE; }
+    double amplitude;
+    double rate;
+};
+
+
 void* Brass_Constructor()
 {
-	Brass* self = new Brass(22.0);
+	ExBrass* self = new ExBrass();
 	self->noteOn(440.0, 1.0);
 	return (void*)self;
 }
 
 void Brass_Destructor(ursObject* gself)
 {
-	Brass* self = (Brass*)gself->objectdata;
-	delete (Brass*)self;
+	ExBrass* self = (ExBrass*)gself->objectdata;
+	delete (ExBrass*)self;
 }
 
 double Brass_Tick(ursObject* gself)
 {
-	Brass* self = (Brass*)gself->objectdata;
+	ExBrass* self = (ExBrass*)gself->objectdata;
 	
 	gself->FeedAllPullIns(1); // This is decoupled so no forwarding, just pulling to propagate our natural rate
 
@@ -833,7 +851,7 @@ double Brass_Tick(ursObject* gself)
 
 double Brass_Out(ursObject* gself)
 {
-	Brass* self = (Brass*)gself->objectdata;
+	ExBrass* self = (ExBrass*)gself->objectdata;
 	return self->lastOut();
 }
 /*
@@ -849,23 +867,28 @@ void Brass_In(ursObject* gself, double indata)
 */
 void Brass_SetFrequency(ursObject* gself, double indata)
 {
-	Brass* self = (Brass*)gself->objectdata;
+	ExBrass* self = (ExBrass*)gself->objectdata;
 	self->setFrequency(norm2Freq(indata));
 }
 
 void Brass_SetAmplitude(ursObject* gself, double indata)
 {
-	Brass* self = (Brass*)gself->objectdata;
-    double amp = capNorm(indata);
-    if (amp > 0)
-        self->startBlowing(amp, INSTRUMENT_RELEASE_RATE);
+	ExBrass* self = (ExBrass*)gself->objectdata;
+    self->amplitude = capNorm(indata);
+    if (self->amplitude > 0)
+        self->startBlowing(self->amplitude, self->rate);
     else
-        self->stopBlowing(INSTRUMENT_RELEASE_RATE);
+        self->stopBlowing(self->rate);
 }
 
+void Brass_SetRate(ursObject* gself, double indata)
+{
+	ExBrass* self = (ExBrass*)gself->objectdata;
+    self->rate = norm2Rate(indata);
+	self->startBlowing(self->amplitude,self->rate);
+}
 
 // Interface - Chorus
-
 void* Chorus_Constructor()
 {
 	Chorus* self = new Chorus();
@@ -916,22 +939,32 @@ void Chorus_SetModFrequency(ursObject* gself, double indata)
 
 // Interface - Clarinet
 
+
+class ExClarinet : public Clarinet
+{
+public:
+    ExClarinet():Clarinet(22.0) { amplitude = DEFAULT_INSTRUMENT_AMPLITUDE; rate = DEFAULT_INSTRUMENT_RATE; }
+    double amplitude;
+    double rate;
+};
+
+
 void* Clarinet_Constructor()
 {
-	Clarinet* self = new Clarinet(22.0);
+	ExClarinet* self = new ExClarinet();
 	self->noteOn(440.0, 1.0);
 	return (void*)self;
 }
 
 void Clarinet_Destructor(ursObject* gself)
 {
-	Clarinet* self = (Clarinet*)gself->objectdata;
-	delete (Clarinet*)self;
+	ExClarinet* self = (ExClarinet*)gself->objectdata;
+	delete (ExClarinet*)self;
 }
 
 double Clarinet_Tick(ursObject* gself)
 {
-	Clarinet* self = (Clarinet*)gself->objectdata;
+	ExClarinet* self = (ExClarinet*)gself->objectdata;
 
 	gself->FeedAllPullIns(1); // This is decoupled so no forwarding, just pulling to propagate our natural rate
 	
@@ -942,7 +975,7 @@ double Clarinet_Tick(ursObject* gself)
 
 double Clarinet_Out(ursObject* gself)
 {
-	Clarinet* self = (Clarinet*)gself->objectdata;
+	ExClarinet* self = (ExClarinet*)gself->objectdata;
 	return self->lastOut();
 }
 /*
@@ -959,20 +992,27 @@ void Clarinet_In(ursObject* gself, double indata)
 */
 void Clarinet_SetFrequency(ursObject* gself, double indata)
 {
-	Clarinet* self = (Clarinet*)gself->objectdata;
+	ExClarinet* self = (ExClarinet*)gself->objectdata;
 	self->setFrequency(norm2Freq(indata));
 }
 
-void Clarinet_Amplitude(ursObject* gself, double indata)
+void Clarinet_SetAmplitude(ursObject* gself, double indata)
 {
-	Clarinet* self = (Clarinet*)gself->objectdata;
-    double amp = capNorm(indata);
-    if (amp > 0)
-        self->startBlowing(amp, INSTRUMENT_RELEASE_RATE);
+	ExClarinet* self = (ExClarinet*)gself->objectdata;
+    self->amplitude= capNorm(indata);
+    if (self->amplitude > 0)
+        self->startBlowing(self->amplitude , self->rate);
     else
-        self->stopBlowing(INSTRUMENT_RELEASE_RATE);
+        self->stopBlowing(self->rate);
 }
 
+
+void Clarinet_SetRate(ursObject* gself, double indata)
+{
+	ExClarinet* self = (ExClarinet*)gself->objectdata;
+    self->rate = norm2Rate(indata);
+	self->startBlowing(self->amplitude,self->rate);
+}
 
 // Interface - Delay
 
@@ -1220,22 +1260,30 @@ void Envelope_SetTime(ursObject* gself, double indata)
 
 // Interface - Flute
 
+class ExFlute : public Flute
+{
+public:
+    ExFlute():Flute(22.0) { amplitude = DEFAULT_INSTRUMENT_AMPLITUDE; rate = DEFAULT_INSTRUMENT_RATE; }
+    double amplitude;
+    double rate;
+};
+
 void* Flute_Constructor()
 {
-	Flute* self = new Flute(22.0);
-	self->noteOn(440.0, 1.0);
+	ExFlute* self = new ExFlute();
+	self->noteOn(440.0, DEFAULT_INSTRUMENT_AMPLITUDE);
 	return (void*)self;
 }
 
 void Flute_Destructor(ursObject* gself)
 {
-	Flute* self = (Flute*)gself->objectdata;
-	delete (Flute*)self;
+	ExFlute* self = (ExFlute*)gself->objectdata;
+	delete (ExFlute*)self;
 }
 
 double Flute_Tick(ursObject* gself)
 {
-	Flute* self = (Flute*)gself->objectdata;
+	ExFlute* self = (ExFlute*)gself->objectdata;
 	
 	gself->FeedAllPullIns(1); // This is decoupled so no forwarding, just pulling to propagate our natural rate
 
@@ -1244,13 +1292,13 @@ double Flute_Tick(ursObject* gself)
 
 double Flute_Out(ursObject* gself)
 {
-	Flute* self = (Flute*)gself->objectdata;
+	ExFlute* self = (ExFlute*)gself->objectdata;
 	return self->lastOut();
 }
 
 void Flute_In(ursObject* gself, double indata)
 {
-	Flute* self = (Flute*)gself->objectdata;
+	ExFlute* self = (ExFlute*)gself->objectdata;
 	gself->lastindata[0] =indata;
 	// NYI check if this makes sense
 	double res = 0;
@@ -1260,25 +1308,25 @@ void Flute_In(ursObject* gself, double indata)
 
 void Flute_SetFrequency(ursObject* gself, double indata)
 {
-	Flute* self = (Flute*)gself->objectdata;
+	ExFlute* self = (ExFlute*)gself->objectdata;
 	self->setFrequency(norm2Freq(indata));
 }
 
 void Flute_SetJetReflection(ursObject* gself, double indata)
 {
-	Flute* self = (Flute*)gself->objectdata;
+	ExFlute* self = (ExFlute*)gself->objectdata;
 	self->setJetReflection(indata);
 }
 
 void Flute_SetEndReflection(ursObject* gself, double indata)
 {
-	Flute* self = (Flute*)gself->objectdata;
+	ExFlute* self = (ExFlute*)gself->objectdata;
 	self->setEndReflection(indata);
 }
 
 void Flute_SetJetDelay(ursObject* gself, double indata)
 {
-	Flute* self = (Flute*)gself->objectdata;
+	ExFlute* self = (ExFlute*)gself->objectdata;
 	self->setJetDelay(indata);
 }
 
@@ -2918,11 +2966,12 @@ void urSTK_Setup()
 	urmanipulatorobjectlist.Append(object);
 #endif
 	
-	object = new ursObject("Clarinet", Clarinet_Constructor, Clarinet_Destructor,2,1);
+	object = new ursObject("Clarinet", Clarinet_Constructor, Clarinet_Destructor,3,1);
 	object->AddOut("Out", "TimeSeries", Clarinet_Tick, Clarinet_Out, NULL);
 //	object->AddIn("In", "Generic", Clarinet_In);
 	object->AddIn("Freq", "Frequency", Clarinet_SetFrequency);
-	object->AddIn("Amp", "Amplitude", Clarinet_Amplitude);
+	object->AddIn("Amp", "Amplitude", Clarinet_SetAmplitude);
+    object->AddIn("Rate", "Rate", Clarinet_SetRate);
     addSTKNote(object);
 	urmanipulatorobjectlist.Append(object);
 	
@@ -2961,7 +3010,7 @@ void urSTK_Setup()
     addSTKNote(object);
 	urmanipulatorobjectlist.Append(object);
 	
-	object = new ursObject("Env", Envelope_Constructor, Envelope_Destructor,2,1);
+	object = new ursObject("Env", Envelope_Constructor, Envelope_Destructor,3,1);
 	object->AddOut("Out", "TimeSeries", Envelope_Tick, Envelope_Out, NULL);
 	object->AddIn("In", "Generic", Envelope_In);
     object->AddIn("Target", "Sample", Envelope_SetTarget);
