@@ -99,7 +99,7 @@ void ADSR_In(ursObject* gself, double indata)
 	gself->CallAllPushOuts(res);
 }
 */
-void ADSR_SetKey(ursObject* gself, double indata)
+void ADSR_In(ursObject* gself, double indata)
 {
 	ADSR* self = (ADSR*)gself->objectdata;
     if (indata > 0) // ATTACK
@@ -1701,9 +1701,9 @@ double Modulate_Tick(ursObject* gself)
 {
 	Modulate* self = (Modulate*)gself->objectdata;
 	
-	gself->FeedAllPullIns(1); // This is decoupled so no forwarding, just pulling to propagate our natural rate
+	gself->FeedAllPullIns(); // This is decoupled so no forwarding, just pulling to propagate our natural rate
 
-	return gself->CallAllPullIns()*self->tick();
+	return /*gself->CallAllPullIns()**/self->tick();
 }
 
 double Modulate_Out(ursObject* gself)
@@ -1724,7 +1724,7 @@ double Modulate_Out(ursObject* gself)
 void Modulate_SetVibratoRate(ursObject* gself, double indata)
 {
 	Modulate* self = (Modulate*)gself->objectdata;
-	self->setVibratoRate(indata);
+	self->setVibratoRate(norm2Freq(indata));
 }
 
 void Modulate_SetVibratoGain(ursObject* gself, double indata)
@@ -1832,10 +1832,11 @@ double Noise_Out(ursObject* gself)
 }
 
 // Interface - NRev
-
+/*
 void* NRev_Constructor()
 {
 	NRev* self = new NRev();
+    self->clear();
 	return (void*)self;
 }
 
@@ -1874,7 +1875,7 @@ void NRev_SetT60(ursObject* gself, double indata)
 	NRev* self = (NRev*)gself->objectdata;
 	self->setT60(norm2RevTime(indata));
 }
-
+*/
 // Interface - OnePole
 
 void* OnePole_Constructor()
@@ -2233,6 +2234,7 @@ void AllPass_SetAllpass(ursObject* gself, double indata)
 void* ZeroBlock_Constructor()
 {
 	PoleZero* self = new PoleZero;
+    self->setBlockZero();
 	return (void*)self;
 }
 
@@ -2876,16 +2878,16 @@ void urSTK_Setup()
 
 	object = new ursObject("Plucked", Plucked_Constructor, Plucked_Destructor,2,1);
 	object->AddOut("Out", "TimeSeries", Plucked_Tick, Plucked_Out, NULL);
-	object->AddIn("In", "Generic", Plucked_In);
+	object->AddIn("Trigger", "Trigger", Plucked_In);
 	object->AddIn("Freq", "Frequency", Plucked_SetFrequency);
     addSTKNote(object);
 	urmanipulatorobjectlist.Append(object);
 	
 	object = new ursObject("ADSR", ADSR_Constructor, ADSR_Destructor,5,1);
 	object->AddOut("Out", "TimeSeries", ADSR_Tick, ADSR_Out, NULL);
-//	object->AddIn("In", "Generic", ADSR_In);
-    object->AddIn("Key", "Generic", ADSR_SetKey);
-    object->AddIn("Attack", "Rate", ADSR_SetAttack);
+
+	object->AddIn("Trigger", "Trigger", ADSR_In);
+	object->AddIn("Attack", "Rate", ADSR_SetAttack);
 	object->AddIn("Decay", "Rate", ADSR_SetDecay);
 	object->AddIn("Sustain", "Threshold", ADSR_SetSustain);
 	object->AddIn("Release", "Rate", ADSR_SetRelease);
@@ -3156,7 +3158,7 @@ void urSTK_Setup()
 	object = new ursObject("Mod", Modulate_Constructor, Modulate_Destructor,3,1);
 	object->AddOut("Out", "TimeSeries", Modulate_Tick, Modulate_Out, NULL);
 //	object->AddIn("In", "Generic", Modulate_In);
-	object->AddIn("VibRate", "Rate", Modulate_SetVibratoRate);
+	object->AddIn("VibFreq", "Rate", Modulate_SetVibratoRate);
 	object->AddIn("VibGain", "Gain", Modulate_SetVibratoGain);
 	object->AddIn("RandGain", "Gain", Modulate_SetRandomGain);
     addSTKNote(object);
@@ -3174,6 +3176,7 @@ void urSTK_Setup()
 	urmanipulatorobjectlist.Append(object);
 #endif
 
+    /*
 	object = new ursObject("NRev", NRev_Constructor, NRev_Destructor,2,1);
 	object->AddOut("Out", "TimeSeries", NRev_Tick, NRev_Out, NULL);
 	object->AddIn("In", "Generic", NRev_In);
@@ -3181,6 +3184,7 @@ void urSTK_Setup()
 	object->SetCouple(0,0);
     addSTKNote(object);
 	urmanipulatorobjectlist.Append(object);
+     */
 	
 	object = new ursObject("OnePole", OnePole_Constructor, OnePole_Destructor,2,1);
 	object->AddOut("Out", "TimeSeries", OnePole_Tick, OnePole_Out, NULL);
@@ -3293,14 +3297,14 @@ void urSTK_Setup()
 	
 	object = new ursObject("Sitar", Sitar_Constructor, Sitar_Destructor,2,1);
 	object->AddOut("Out", "TimeSeries", Sitar_Tick, Sitar_Out, NULL);
-	object->AddIn("In", "Generic", Sitar_In);
+	object->AddIn("Trigger", "Trigger", Sitar_In);
 	object->AddIn("Freq", "Frequency", Sitar_SetFrequency);
     addSTKNote(object);
 	urmanipulatorobjectlist.Append(object);
 	
 	object = new ursObject("StifKarp", StifKarp_Constructor, StifKarp_Destructor,5,1);
 	object->AddOut("Out", "TimeSeries", StifKarp_Tick, StifKarp_Out, NULL);
-	object->AddIn("In", "Generic", StifKarp_In);
+	object->AddIn("Trigger", "Trigger", StifKarp_In);
 	object->AddIn("Freq", "Frequency", StifKarp_SetFrequency);
 	object->AddIn("Stretch", "Generic", StifKarp_SetStretch);
 	object->AddIn("Pos", "Position", StifKarp_SetPickupPosition);
