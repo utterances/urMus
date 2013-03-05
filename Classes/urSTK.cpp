@@ -580,8 +580,8 @@ void BlowBotl_SetAmplitude(ursObject* gself, double indata)
 void BlowBotl_SetRate(ursObject* gself, double indata)
 {
 	ExBlowBotl* self = (ExBlowBotl*)gself->objectdata;
-	self->startBlowing(self->amplitude,(indata+1.0)*2.0/48000.0);
-    self->rate = (indata+1.0)*2.0/48000.0;
+	self->startBlowing(self->amplitude,norm2Rate(indata));
+    self->rate = norm2Rate(indata);
 }
 
 
@@ -1105,11 +1105,24 @@ void Envelope_In(ursObject* gself, double indata)
 	gself->CallAllPushOuts(res);
 }
 
+void Envelope_SetTarget(ursObject* gself, double indata)
+{
+	Envelope* self = (Envelope*)gself->objectdata;
+	self->setTime(indata);
+}
+
+void Envelope_SetRate(ursObject* gself, double indata)
+{
+	Envelope* self = (Envelope*)gself->objectdata;
+	self->setRate(norm2Rate(indata));
+}
+/*
 void Envelope_SetTime(ursObject* gself, double indata)
 {
 	Envelope* self = (Envelope*)gself->objectdata;
 	self->setTime(norm2PositiveLinear(indata)*0.25);
 }
+ */
 
 // Interface - Flute
 
@@ -2850,7 +2863,9 @@ void urSTK_Setup()
 	object = new ursObject("Env", Envelope_Constructor, Envelope_Destructor,2,1);
 	object->AddOut("Out", "TimeSeries", Envelope_Tick, Envelope_Out, NULL);
 	object->AddIn("In", "Generic", Envelope_In);
-	object->AddIn("Time", "Time", Envelope_SetTime);
+    object->AddIn("Target", "Sample", Envelope_SetTarget);
+    object->AddIn("Rate", "Rate", Envelope_SetRate);
+//	object->AddIn("Time", "Time", Envelope_SetTime);
 	object->SetCouple(0,0);
     addSTKNote(object);
 	urmanipulatorobjectlist.Append(object);
