@@ -147,7 +147,7 @@ Manipulators are flowboxes which have both at least one input and one output. Th
 SinOsc
 --------
 ### Description
-Generates a sine wave. It is not self-timed and derives its time update from being pulled at the output WaveForm. It provides not couples.
+Generates a sine wave. It is not self-timed and derives its time update from being pulled at the output Out. It provides not couples.
 
 ### Source of Rate
 Pulling output Out (0)
@@ -663,10 +663,10 @@ None
 CMap
 ------
 ### Description
-Generates a circle map wave. A circle map is a non-linear oscillator. If the non-linearity is -1 it will behave like a linear sine oscillator. It is not self-timed and derives its time update from being pulled at the output WaveForm. It provides not couples.
+Generates a circle map wave. A circle map is a non-linear oscillator. If the non-linearity is -1 it will behave like a linear sine oscillator. It is not self-timed and derives its time update from being pulled at the output Out. It provides not couples.
 
 ### Source of Rate
-Pulling output WaveForm (0)
+Pulling output Out (0)
 
 ### Couples
 None
