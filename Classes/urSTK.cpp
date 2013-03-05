@@ -59,8 +59,9 @@
 
 using namespace stk;
 */
-
-//#define INCLUDE_COMPHEAVY_STKS
+#ifndef LEGACY42
+    #define INCLUDE_COMPHEAVY_STKS
+#endif
 // Interface - ADSR
 
 void* ADSR_Constructor()
@@ -655,23 +656,23 @@ void BlowHole_SetFrequency(ursObject* gself, double indata)
 void BlowHole_SetToneHole(ursObject* gself, double indata)
 {
     ExBlowHole* self = (ExBlowHole*)gself->objectdata;
-    self->setTonehole(norm2ZeroOne(indata));
+    self->setTonehole(norm2PositiveLinear(indata));
 }
 
 void BlowHole_SetVent(ursObject* gself, double indata)
 {
     ExBlowHole* self = (ExBlowHole*)gself->objectdata;
-    self->setVent(norm2ZeroOne(indata));
+    self->setVent(norm2PositiveLinear(indata));
 }
 
 void BlowHole_SetAmplitude(ursObject* gself, double indata)
 {
     ExBlowHole* self = (ExBlowHole*)gself->objectdata;
-    self->amplitude =norm2ZeroOne(indata);
-    if (self->amplitude> 0)
-        self->startBlowing(self->amplitude, self->rate );
-    else
+    self->amplitude =capNorm(indata);
+    if (self->amplitude ==  0)
         self->stopBlowing(INSTRUMENT_RELEASE_RATE);
+    else
+        self->startBlowing(self->amplitude, self->rate );
 
 }
 
@@ -748,11 +749,11 @@ void Bowed_SetVibrato(ursObject* gself, double indata)
 void Bowed_SetAmplitude(ursObject* gself, double indata)
 {
 	ExBowed* self = (ExBowed*)gself->objectdata;
-    self->amplitude =norm2ZeroOne(indata);
-    if (self->amplitude> 0)
-        self->startBowing(self->amplitude, self->rate);
-    else
+    self->amplitude =capNorm(indata);
+    if (self->amplitude== 0)
         self->stopBowing(INSTRUMENT_RELEASE_RATE);
+    else
+        self->startBowing(self->amplitude, self->rate);
 }
 
 // Interface - BowTable
@@ -855,7 +856,7 @@ void Brass_SetFrequency(ursObject* gself, double indata)
 void Brass_SetAmplitude(ursObject* gself, double indata)
 {
 	Brass* self = (Brass*)gself->objectdata;
-    double amp = norm2ZeroOne(indata);
+    double amp = capNorm(indata);
     if (amp > 0)
         self->startBlowing(amp, INSTRUMENT_RELEASE_RATE);
     else
@@ -904,7 +905,7 @@ void Chorus_In(ursObject* gself, double indata)
 void Chorus_SetModDepth(ursObject* gself, double indata)
 {
 	Chorus* self = (Chorus*)gself->objectdata;
-	self->setModDepth(norm2ZeroOne(indata));
+	self->setModDepth(norm2PositiveLinear(indata));
 }
 
 void Chorus_SetModFrequency(ursObject* gself, double indata)
@@ -965,7 +966,7 @@ void Clarinet_SetFrequency(ursObject* gself, double indata)
 void Clarinet_Amplitude(ursObject* gself, double indata)
 {
 	Clarinet* self = (Clarinet*)gself->objectdata;
-    double amp = norm2ZeroOne(indata);
+    double amp = capNorm(indata);
     if (amp > 0)
         self->startBlowing(amp, INSTRUMENT_RELEASE_RATE);
     else
