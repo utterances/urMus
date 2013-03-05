@@ -25,7 +25,7 @@ double gatePositives(double norm);
 double gateNegatives(double norm);
 double norm2PositiveLinear(double norm);
 double norm2NegativeLinear(double norm);
-double norm2ZeroOne(double norm);
+double norm2Rate(double norm);
 
 void urSoundAtoms_Setup();
 

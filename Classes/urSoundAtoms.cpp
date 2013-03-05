@@ -147,7 +147,11 @@ inline double norm2NegativeLinear(double norm)
 	return norm/2.0-0.5;
 }
 
-
+// This converts to a rate scale of 0-4 seconds assuming a 48000 Hz base rate
+double norm2Rate(double norm)
+{
+    return (norm+1.0)*2.0/48000.0;
+}
 
 double Nope_Tick(ursObject* gself)
 {
