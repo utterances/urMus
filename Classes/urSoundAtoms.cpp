@@ -21,6 +21,11 @@ double norm2Freq(double norm)
 	return 55.0*pow(2.0,96*norm/12.0);
 }
 
+// This converts a normed value into 0 to 1 ranged value
+double norm2ZeroOne(double norm){
+    return (norm + 1.0)/2.0;
+}
+
 // This converts a normed value into a canonical reverberation time. We range it to up to 4 seconds. 150ms minimum.
 double norm2RevTime(double norm)
 {

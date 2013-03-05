@@ -54,6 +54,7 @@
 #include "Whistle.h"
 #include "Wurley.h"
 
+#define INSTRUMENT_RELEASE_RATE 0.0002
 using namespace stk;
 
 void urSTK_Setup();
