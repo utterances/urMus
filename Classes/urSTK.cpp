@@ -1295,7 +1295,7 @@ double Flute_Out(ursObject* gself)
 	ExFlute* self = (ExFlute*)gself->objectdata;
 	return self->lastOut();
 }
-
+/*
 void Flute_In(ursObject* gself, double indata)
 {
 	ExFlute* self = (ExFlute*)gself->objectdata;
@@ -1305,7 +1305,7 @@ void Flute_In(ursObject* gself, double indata)
 	res = self->tick();
 	gself->CallAllPushOuts(res);
 }
-
+*/
 void Flute_SetFrequency(ursObject* gself, double indata)
 {
 	ExFlute* self = (ExFlute*)gself->objectdata;
@@ -1329,6 +1329,26 @@ void Flute_SetJetDelay(ursObject* gself, double indata)
 	ExFlute* self = (ExFlute*)gself->objectdata;
 	self->setJetDelay(indata);
 }
+
+
+void Flute_SetRate(ursObject* gself, double indata)
+{
+	ExFlute* self = (ExFlute*)gself->objectdata;
+    self->rate = norm2Rate(indata);
+	self->startBlowing(self->amplitude,self->rate);
+}
+
+void Flute_SetAmplitude(ursObject* gself, double indata)
+{
+	ExFlute* self = (ExFlute*)gself->objectdata;
+    self->amplitude= capNorm(indata);
+    if (self->amplitude > 0)
+        self->startBlowing(self->amplitude , self->rate);
+    else
+        self->stopBlowing(self->rate);
+}
+
+
 
 // Interface - FMVoices
 #ifdef SAMPLEBASED_STKS
@@ -2390,34 +2410,43 @@ void Rhodey_SetFrequency(ursObject* gself, double indata)
 
 // Interface - Saxofony
 
+class ExSaxofony : public Saxofony
+{
+public:
+    ExSaxofony():Saxofony(22.0) { amplitude = DEFAULT_INSTRUMENT_AMPLITUDE; rate = DEFAULT_INSTRUMENT_RATE; }
+    double amplitude;
+    double rate;
+};
+
 void* Saxofony_Constructor()
 {
-	Saxofony* self = new Saxofony(22.0);
+	ExSaxofony* self = new ExSaxofony();
 	self->noteOn(440.0, 1.0);
 	return (void*)self;
 }
 
 void Saxofony_Destructor(ursObject* gself)
 {
-	Saxofony* self = (Saxofony*)gself->objectdata;
-	delete (Saxofony*)self;
+	ExSaxofony* self = (ExSaxofony*)gself->objectdata;
+	delete (ExSaxofony*)self;
 }
 
 double Saxofony_Tick(ursObject* gself)
 {
-	Saxofony* self = (Saxofony*)gself->objectdata;
+	ExSaxofony* self = (ExSaxofony*)gself->objectdata;
 	
 	gself->FeedAllPullIns(1); // This is decoupled so no forwarding, just pulling to propagate our natural rate
 
-	return self->tick(gself->CallAllPullIns());
+//	return self->tick(gself->CallAllPullIns());
+	return self->tick();
 }
 
 double Saxofony_Out(ursObject* gself)
 {
-	Saxofony* self = (Saxofony*)gself->objectdata;
+	ExSaxofony* self = (ExSaxofony*)gself->objectdata;
 	return self->lastOut();
 }
-
+/*
 void Saxofony_In(ursObject* gself, double indata)
 {
 	Saxofony* self = (Saxofony*)gself->objectdata;
@@ -2427,20 +2456,37 @@ void Saxofony_In(ursObject* gself, double indata)
 	res = self->tick();
 	gself->CallAllPushOuts(res);
 }
-
+*/
 void Saxofony_SetFrequency(ursObject* gself, double indata)
 {
-	Saxofony* self = (Saxofony*)gself->objectdata;
+	ExSaxofony* self = (ExSaxofony*)gself->objectdata;
 	self->setFrequency(norm2Freq(indata));
 }
 
 void Saxofony_SetBlowPosition(ursObject* gself, double indata)
 {
-	Saxofony* self = (Saxofony*)gself->objectdata;
+	ExSaxofony* self = (ExSaxofony*)gself->objectdata;
 	self->setBlowPosition(norm2PositiveLinear(indata));
 }
 
-/*// Interface - Shakers
+void Saxofony_SetAmplitude(ursObject* gself, double indata)
+{
+	ExSaxofony* self = (ExSaxofony*)gself->objectdata;
+    self->amplitude = capNorm(indata);
+    if (self->amplitude > 0)
+        self->startBlowing(self->amplitude, self->rate);
+    else
+        self->stopBlowing(self->rate);
+}
+
+void Saxofony_SetRate(ursObject* gself, double indata)
+{
+	ExSaxofony* self = (ExSaxofony*)gself->objectdata;
+    self->rate = norm2Rate(indata);
+	self->startBlowing(self->amplitude,self->rate);
+}
+
+// Interface - Shakers
 
 void* Shakers_Constructor()
 {
@@ -2466,7 +2512,7 @@ double Shakers_Out(ursObject* gself)
 	Shakers* self = (Shakers*)gself->objectdata;
 	return self->lastOut();
 }
-
+/*
 void Shakers_In(ursObject* gself, double indata)
 {
 	Shakers* self = (Shakers*)gself->objectdata;
@@ -2498,8 +2544,8 @@ void Shakers_SetPreset(ursObject* gself, double indata)
 {
 	Shakers* self = (Shakers*)gself->objectdata;
 	self->setPreset(indata);
-}*/
-
+}
+*/
 // Interface - Sitar
 
 void* Sitar_Constructor()
@@ -3010,7 +3056,7 @@ void urSTK_Setup()
     addSTKNote(object);
 	urmanipulatorobjectlist.Append(object);
 	
-	object = new ursObject("Env", Envelope_Constructor, Envelope_Destructor,3,1);
+	object = new ursObject("Env", Envelope_Constructor, Envelope_Destructor,2,1);
 	object->AddOut("Out", "TimeSeries", Envelope_Tick, Envelope_Out, NULL);
 //	object->AddIn("In", "Generic", Envelope_In);
     object->AddIn("Target", "Sample", Envelope_SetTarget);
@@ -3028,13 +3074,15 @@ void urSTK_Setup()
 	
 // NYI Fir, needs parameter split
 	
-	object = new ursObject("Flute", Flute_Constructor, Flute_Destructor,5,1);
+	object = new ursObject("Flute", Flute_Constructor, Flute_Destructor,6,1);
 	object->AddOut("Out", "TimeSeries", Flute_Tick, Flute_Out, NULL);
-	object->AddIn("In", "Generic", Flute_In);
+//	object->AddIn("In", "Generic", Flute_In);
 	object->AddIn("Freq", "Frequency", Flute_SetFrequency);
 	object->AddIn("JetRefl", "Generic", Flute_SetJetReflection);
 	object->AddIn("EndRefl", "Generic", Flute_SetEndReflection);
 	object->AddIn("JetDelay", "Time", Flute_SetJetDelay);
+    object->AddIn("Amp", "Amplitude", Flute_SetAmplitude);
+	object->AddIn("Rate", "Rate", Flute_SetRate);
     addSTKNote(object);
 	urmanipulatorobjectlist.Append(object);
 	
@@ -3054,7 +3102,7 @@ void urSTK_Setup()
 
 // NYI Granulate, sample based	
 	
-	object = new ursObject("HevyMetl", HevyMetl_Constructor, HevyMetl_Destructor,2,1);
+	object = new ursObject("HevyMetl", HevyMetl_Constructor, HevyMetl_Destructor,4,1);
 	object->AddOut("Out", "TimeSeries", HevyMetl_Tick, HevyMetl_Out, NULL);
 	object->AddIn("In", "Generic", HevyMetl_In);
 	object->AddIn("Freq", "Frequency", HevyMetl_SetFrequency);
@@ -3216,11 +3264,13 @@ void urSTK_Setup()
 	
 // NYI Sampler, sample based
 
-	object = new ursObject("Saxofony", Saxofony_Constructor, Saxofony_Destructor,3,1);
+	object = new ursObject("Saxofony", Saxofony_Constructor, Saxofony_Destructor,4,1);
 	object->AddOut("Out", "TimeSeries", Saxofony_Tick, Saxofony_Out, NULL);
-	object->AddIn("In", "Generic", Saxofony_In);
+//	object->AddIn("In", "Generic", Saxofony_In);
 	object->AddIn("Freq", "Frequency", Saxofony_SetFrequency);
 	object->AddIn("Pos", "Position", Saxofony_SetBlowPosition);
+  	object->AddIn("Amp", "Amplitude", Saxofony_SetAmplitude);
+	object->AddIn("Rate", "Rate", Saxofony_SetRate);
     addSTKNote(object);
 	urmanipulatorobjectlist.Append(object);
 	
