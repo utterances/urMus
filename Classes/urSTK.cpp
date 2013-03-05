@@ -1220,7 +1220,7 @@ double Envelope_Tick(ursObject* gself)
 	
 	gself->FeedAllPullIns(1); // This is decoupled so no forwarding, just pulling to propagate our natural rate
 
-	return gself->CallAllPullIns()*self->tick();
+	return /*gself->CallAllPullIns()**/self->tick();
 }
 
 double Envelope_Out(ursObject* gself)
@@ -1242,7 +1242,7 @@ void Envelope_In(ursObject* gself, double indata)
 void Envelope_SetTarget(ursObject* gself, double indata)
 {
 	Envelope* self = (Envelope*)gself->objectdata;
-	self->setTime(indata);
+	self->setTarget(indata);
 }
 
 void Envelope_SetRate(ursObject* gself, double indata)
@@ -3012,11 +3012,11 @@ void urSTK_Setup()
 	
 	object = new ursObject("Env", Envelope_Constructor, Envelope_Destructor,3,1);
 	object->AddOut("Out", "TimeSeries", Envelope_Tick, Envelope_Out, NULL);
-	object->AddIn("In", "Generic", Envelope_In);
+//	object->AddIn("In", "Generic", Envelope_In);
     object->AddIn("Target", "Sample", Envelope_SetTarget);
     object->AddIn("Rate", "Rate", Envelope_SetRate);
 //	object->AddIn("Time", "Time", Envelope_SetTime);
-	object->SetCouple(0,0);
+//	object->SetCouple(0,0);
     addSTKNote(object);
 	urmanipulatorobjectlist.Append(object);
 	
