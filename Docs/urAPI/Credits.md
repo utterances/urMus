@@ -20,6 +20,10 @@ Credits
  * Nate Derbinsky
  * Georg Essl
 
+### STK Integration
+ * Georg Essl
+ * Sang Won Lee
+
 ### Android Port
  * Jongwook Kim
 
@@ -66,6 +70,7 @@ Credits
 ### Documentation
 * Bryan Summersett
 * Georg Essl
+* Sang Won Lee
 * Patrick O'Keefe (for Tutorials)
 
 [urMus API Overview](overview.html)

@@ -3111,8 +3111,8 @@ int texture_UseCamera(lua_State* lua)
 //        [g_glView IncCameraUse];
 	t->usecamera = 1;
 	t->isTiled = false; // Camera textures cannot be tiled
-//    t->width = 1024;
-//    t->height = 512;
+    t->width =480 ;//640;
+    t->height = 640;
     
     if(UsesTextureBrush())
         SetBrushAsCamera(true);
@@ -3134,7 +3134,11 @@ int texture_PixelColor(lua_State* lua)
     if(t->usecamera)
         texture = cameraTexture;
     else
-        texture = (GLuint)t->backgroundTex;
+    {
+        if(t->backgroundTex==0)
+            instantiateTexture(t->region);
+        texture = (GLuint)t->backgroundTex.name;
+    }
     readPixelColor(texture, (int)x, (int)y, (unsigned char*)colors);
     lua_pushnumber(lua, colors[0]);
     lua_pushnumber(lua, colors[1]);
