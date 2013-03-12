@@ -99,6 +99,8 @@ extern char TEXTURE_SOLID[];
 
 extern lua_State *lua;
 
+typedef struct urAPI_Region urAPI_Region_t;
+
 // TextLabel user data
 typedef struct urAPI_TextLabel
 {
@@ -129,7 +131,6 @@ typedef struct urAPI_TextLabel
 #endif
 } urAPI_TextLabel_t;
 
-typedef struct urAPI_Region urAPI_Region_t;
 typedef struct DrawQueueEntry DrawQueueEntry_t;
 
 // Texture user data

@@ -2972,7 +2972,7 @@ void urs_SetupObjects()
 	
 	object = new ursObject("Quant", Quant_Constructor, Quant_Destructor,1,1);
 	object->AddOut("Out", "Generic", Quant_Out, Quant_Tick, NULL);
-	object->AddIn("In", "Generic", Quant_In) ;
+	object->AddIn("In", "Generic", Quant_In);
 	//	object->AddIn("Base", "Frequency", Quant_Oct);
 	object->SetCouple(0,0);
 	urmanipulatorobjectlist.Append(object);
