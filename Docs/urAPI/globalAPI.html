@@ -40,7 +40,7 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 <h3>Description</h3>
 
 <p>Debug print a give string in the center of the screen. This will also be used
-for system errors and should not be used for normal user interactions.</p>
+for system errors and should not be used for normal user interactions. DPrints also appear in the error log of the urMus web editing environment.</p>
 
 <h3>Arguments</h3>
 
@@ -118,7 +118,7 @@ for system errors and should not be used for normal user interactions.</p>
 
 <h3>Synopsis</h3>
 
-<pre><code>flowbox = FlowBox("type", "name", inheritedFlowbox)
+<pre><code>flowbox = FlowBox(inheritedFlowbox)
 </code></pre>
 
 <h3>Description</h3>
@@ -129,18 +129,9 @@ instances of flowboxes via <code>_G["FB"..objectname]</code>.</p>
 <h3>Arguments</h3>
 
 <ul>
-<li>type (String) [unused]
-  String identifying the opject type.</li>
-<li>name (String) [unused]
-
-<pre><code>User-specified name of the object.
-</code></pre></li>
 <li>inheritedFlowbox (Flowbox)
-
-<pre><code>The parent flowbox to inherit from. If specified, this creates a deep-copy of the 
-</code></pre>
-
-<p>  parent.</p></li>
+  The parent flowbox to inherit from. If specified, this creates a new instance of the
+  parent. If the parent cannot be instanced it simply returns the parent.</li>
 </ul>
 
 
@@ -148,9 +139,13 @@ instances of flowboxes via <code>_G["FB"..objectname]</code>.</p>
 
 <ul>
 <li>flowbox (Flowbox)
-A new instance of the given flowbox.</li>
+A new instance of the given flowbox. Returns the original if it cannot be instanced.</li>
 </ul>
 
+
+<h3>Note</h3>
+
+<p>  Old API flowbox = FlowBox("type", "name", inheritedFlowbox) is considered obsolete after v1.0.</p>
 
 <h2>SourceNames</h2>
 
@@ -560,6 +555,75 @@ A reference to the newly created region.</li>
   Frequency at which the light is turned on and off</li>
 </ul>
 
+
+<h2>CameraFilters</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>filtername1, filtername2,.. = CameraFilters()
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Returns all currently available camera filter effects. The returned strings can be used with SetCameraFilter() to activate the effect.</p>
+
+<h3>Returns</h3>
+
+<ul>
+<li>filtername1, filtername2,.. (List)
+A list of names of camera filter effects.</li>
+</ul>
+
+
+<h3>Note</h3>
+
+<p>Requires v1.0 or later, requires camera.</p>
+
+<h2>SetCameraFilter</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>SetCameraFilter(filtername)
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Sets the currently active camera filter effect. Applies to all regions using cameras as textures via texture:UseCamera(). Applicabile parameters can be changed via SetCameraFilterParameter().</p>
+
+<h3>Arguments</h3>
+
+<ul>
+<li>filtername (String)
+ Name of a filter to active. Allowable filter names can be identified by using CameraFilters().</li>
+</ul>
+
+
+<h3>Note</h3>
+
+<p>Requires v1.0 or later, requires camera.</p>
+
+<h2>SetCameraFilterParameter</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>SetCameraFilter(filterparam)
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Sets the parameter of the currently active camera filter effect. See also SetCameraFilter().</p>
+
+<h3>Arguments</h3>
+
+<ul>
+<li>filterparam (Number)
+Parameter for the active camera filter, range -1 to 1.</li>
+</ul>
+
+
+<h3>Note</h3>
+
+<p>Requires v1.0 or later, requires camera.</p>
 
 <h1>Networking API</h1>
 

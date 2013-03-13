@@ -5584,6 +5584,19 @@ const char* urFilterModeNames[] = { "NONE", "SATURATION", "CONTRAST", "BRIGHTNES
     "SPHEREREFRACTION", "GLASSSPHERE", "HIGHLIGHTSHADOW", "LOCALBINARYPATTERN"
 };
 
+int l_CameraFilters(lua_State *lua)
+{
+#ifdef GPUIMAGE
+    for(int i=0; i<maxFilterMode; i++)
+    {
+        lua_pushstring(lua,urFilterModeNames[i]);
+    }
+    return maxFilterMode;
+#else
+    return 0;
+#endif
+}
+
 int l_SetCameraFilter(lua_State *lua)
 {
 	const char* filtermode = luaL_checkstring(lua, 1);
@@ -6046,6 +6059,8 @@ void l_setupAPI(lua_State *lua)
 	lua_setglobal(lua, "SetTorchFlashFrequency");
 	lua_pushcfunction(lua, l_SetCameraAutoBalance);
     lua_setglobal(lua, "SetCameraAutoBalance");
+    lua_pushcfunction(lua, l_CameraFilters);
+    lua_setglobal(lua, "CameraFilters");
     lua_pushcfunction(lua, l_SetCameraFilter);
     lua_setglobal(lua, "SetCameraFilter");
     lua_pushcfunction(lua, l_SetCameraFilterParameter);
