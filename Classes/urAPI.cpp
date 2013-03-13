@@ -4410,7 +4410,10 @@ int flowbox_Pull(lua_State *lua)
 {
 	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
 	
-	fb->object->lastindata[0] = fb->object->CallAllPullIns();
+    if(fb->object->firstpullin[0]!=NULL)
+    {
+        fb->object->lastindata[0] = fb->object->CallAllPullIns();
+    }
 	
     lua_pushnumber(lua, fb->object->lastindata[0]);
     
