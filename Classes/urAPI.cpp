@@ -4615,13 +4615,18 @@ void ur_Log(const char * str) {
 char * ur_GetLog(int since, int *nlog) {
 	if(since<0) since=0;
 	std::string str="";
-	for(int i=since;i<ur_log.size();i++) {
+    long loglen = ur_log.size();
+    int i;
+	for(i=since;i<loglen && (str.length()+ur_log[i].length()+1) < 7800;i++) { // HTTP Length restriction is 8192, giving 300+ char slack for header.
 		str+=ur_log[i];
 		str+="\n";
 	}
 	char *result=(char *)malloc(str.length()+1);
 	strcpy(result, str.c_str());
-	*nlog=ur_log.size();
+    if (since >= loglen)
+        *nlog=loglen;
+    else
+        *nlog = i;
 	return result;
 }
 

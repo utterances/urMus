@@ -19,7 +19,7 @@ function updateLog() {
 	    document.getElementById("log").innerHTML+=last;
 		since=xhr.getResponseHeader("Pragma");
 		document.body.scrollTop=document.body.scrollHeight
-        setTimeout("updateLog()",100);
+        setTimeout("updateLog()",500);
 	  },
       error: function() {
 		alert("Network Error! Reload this page");
@@ -29,7 +29,7 @@ function updateLog() {
 
 $(function (){
 	document.title+=" : " + document.location.hostname;
-	setTimeout("updateLog()",100);
+	setTimeout("updateLog()",500);
 });
 
 

@@ -354,7 +354,7 @@ Texture2D       *errorStrTex = nil;
 urTexture       *errorStrTex = nil;
 #endif
 std::string errorstr = "";
-bool newerror = true;
+bool newerror = false;
 
 //#define LATE_LAUNCH
 // Main drawing loop. This does everything but brew coffee.
@@ -1545,6 +1545,7 @@ void decCameraUseBy(int dec)
 		const char* error = lua_tostring(lua, -1);
 		errorstr = error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 	}
 #endif
 }
@@ -3942,10 +3943,6 @@ void renderTextLabel(urAPI_Region_t* t)
 #ifdef SOAR_SUPPORT
         callAllOnSoarOutput();
 #endif
-      	if(newerror)
-        {
-            ur_Log(errorstr.c_str());
-        }
   
 	}	
 	CGRect  bounds = [self bounds];
@@ -4302,6 +4299,7 @@ void renderTextLabel(urAPI_Region_t* t)
                         sprintf(errorstrbuf,"Frame %d",cameraTexture);
                         errorstr = errorstrbuf;
                         newerror = true;
+                        ur_Log(errorstr.c_str());
 #endif
 
 #ifdef OPENGLES2    
@@ -4840,6 +4838,7 @@ void renderTextLabel(urAPI_Region_t* t)
             framecnt ++;
             errorstr = errorstrbuf;
             newerror = true;
+            ur_Log(errorstr.c_str());
 #endif
             [textureInput processTextureWithFrameTime:CMTimeMake(totalelapsedtime*1000,1000)];
         }
@@ -5179,8 +5178,9 @@ void renderTextLabel(urAPI_Region_t* t)
 		const char* error = lua_tostring(lua, -1);
 		errorstr = [[NSString alloc] initWithCString:error ]; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 	}
-#endif	
+#endif
 	
 }
 
@@ -5581,6 +5581,7 @@ void onTouchDragEnd(int t,int touch, float posx, float posy)
 	sprintf(errorstrbuf,"Begin %d",numTouches);
 	errorstr = errorstrbuf;
 	newerror = true;
+    ur_Log(errorstr.c_str());
 #endif
 	
 	// Event for all fingers (global). We do this first so people can choose to create/remove regions that can also receive events for the locations (yay)
@@ -5648,6 +5649,7 @@ void onTouchDragEnd(int t,int touch, float posx, float posy)
 	sprintf(errorstrbuf,"Move %d",numTouches);
 	errorstr = errorstrbuf;
 	newerror = true;
+    ur_Log(errorstr.c_str());
 #endif
 
 	
@@ -5721,6 +5723,7 @@ void onTouchDragEnd(int t,int touch, float posx, float posy)
 #ifdef DEBUG_TOUCH
 	errorstr = "End";
 	newerror = true;
+    ur_Log(errorstr.c_str());
 #endif
     for (UITouch *touch in touches) {
         [ActiveTouches removeObject:touch];
