@@ -967,6 +967,7 @@ void callAllOnEnterLeaveRegions(int nr, float* x, float* y, float* ox, float* oy
     enum eventIDs event = OnLeave;
     for(int i=0; i<nr; i++)
     {
+        event = OnLeave;
         if(EventChain[event].first != NULL)
         {
             EventChain[event].next = EventChain[event].first->next; // Helps save-guard the chain should a region unhook itself
