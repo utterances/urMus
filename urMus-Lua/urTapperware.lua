@@ -10,29 +10,53 @@
 -- The basis of the script is contained in this file while most of the features are contained
 -- the accompianing scripts, listed below.
 
+CREATION_MARGIN = 20	-- margin for creating via tapping
 
 FreeAllRegions()
 -- SetPage(38)
 regions = {}
 recycledregions = {}
 
-function TouchDown(self)    
-    local region = CreateorRecycleregion('region', 'backdrop', UIParent)
-    local x,y = InputPosition()
-    region:Show()
-    region:SetAnchor("CENTER",x,y)
-    DPrint(region:Name().." created, centered at "..x..", "..y)
+function TouchDown(self)
+	shadow:Show()
+	local x,y = InputPosition()
+	shadow:SetAnchor('CENTER',x,y)
+  DPrint("release to create region")
 end
 
 function TouchUp(self)
-    --    DPrint("MU")
-	  -- CloseSharedStuff(nil)
-	  --   
-	  -- local region = CreateorRecycleregion('region', 'backdrop', UIParent)
-	  -- local x,y = InputPosition()
-	  -- region:Show()
-	  -- region:SetAnchor("CENTER",x,y)
-	  -- DPrint(region:Name().." created, centered at "..x..", "..y)
+	shadow:Hide()
+	DPrint("")
+ 	-- DPrint("MU")
+  -- CloseSharedStuff(nil)
+    
+	-- only create if we are not too close to the edge
+  local x,y = InputPosition()
+	if x>CREATION_MARGIN and x<ScreenWidth()-CREATION_MARGIN and 
+		y>CREATION_MARGIN and y<ScreenHeight()-CREATION_MARGIN then
+		local region = CreateorRecycleregion('region', 'backdrop', UIParent)
+		region:Show()
+		region:SetAnchor("CENTER",x,y)
+		DPrint(region:Name().." created, centered at "..x..", "..y)
+	end
+end
+
+function Move(self)
+	local x,y = InputPosition()
+	if x>CREATION_MARGIN and x<ScreenWidth()-CREATION_MARGIN and 
+		y>CREATION_MARGIN and y<ScreenHeight()-CREATION_MARGIN then
+		shadow:SetAnchor('CENTER',x,y)
+		shadow:Show()
+	  DPrint("release to create region")
+	else
+		shadow:Hide()
+		DPrint("")
+	end
+end
+
+function Leave(self)
+	shadow:Hide()
+	DPrint("")
 end
 
 function CreateorRecycleregion(ftype, name, parent)
@@ -70,7 +94,7 @@ function VRegion(ttype,name,parent,id) -- customized initialization of region
     r:Handle("OnDoubleTap",VDoubleTap)
     r:Handle("OnTouchDown",VTouchDown)
     r:Handle("OnTouchUp",VTouchUp)
-    
+    r:Handle("OnMove",VMove)
     return r
 end
 
@@ -188,8 +212,20 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
     r.stickboundary = "none"
 end
 
+function VDoubleTap(self)
+	DPrint("double tapped")
+    -- CallEvents("OnDoubleTap",self)
+end
 
--- DPrint("okok")
+function VTouchUp(self)
+	DPrint("touched up")
+    -- CallEvents("OnTouchUp",self)
+end
+
+function VMove(self)
+	DPrint("moved")
+end
+
 backdrop = Region('region', 'backdrop', UIParent)
 backdrop:SetWidth(ScreenWidth())
 backdrop:SetHeight(ScreenHeight())
@@ -201,9 +237,33 @@ backdrop:Handle("OnTouchUp", TouchUp)
 backdrop:Handle("OnDoubleTap", DoubleTap)
 backdrop:Handle("OnEnter", Enter)
 backdrop:Handle("OnLeave", Leave)
-backdrop:Handle("OnMove",nil)
+backdrop:Handle("OnMove", Move)
 backdrop:EnableInput(true)
 backdrop:SetClipRegion(0,0,ScreenWidth(),ScreenHeight())
 backdrop:EnableClipping(true)
 backdrop.player = {} 
+
+-- set up shadow for when tap down and hold, show future region creation location
+shadow = Region('region', 'shadow', UIParent)
+shadow.t = shadow:Texture()
+shadow.t:SetTexture(122,140,150,100)
+
+
+
+
+----------------- v11.pagebutton -------------------
+local pagebutton=Region('region', 'pagebutton', UIParent)
+pagebutton:SetWidth(pagersize)
+pagebutton:SetHeight(pagersize)
+pagebutton:SetLayer("TOOLTIP")
+pagebutton:SetAnchor('BOTTOMLEFT',ScreenWidth()-pagersize-4,ScreenHeight()-pagersize-4)
+pagebutton:EnableClamping(true)
+pagebutton:Handle("OnTouchDown", FlipPage)
+pagebutton.texture = pagebutton:Texture("circlebutton-16.png")
+pagebutton.texture:SetGradientColor("TOP",255,255,255,255,255,255,255,255)
+pagebutton.texture:SetGradientColor("BOTTOM",255,255,255,255,255,255,255,255)
+pagebutton.texture:SetBlendMode("BLEND")
+pagebutton.texture:SetTexCoord(0,1.0,0,1.0)
+pagebutton:EnableInput(true)
+pagebutton:Show()
 
