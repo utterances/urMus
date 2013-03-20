@@ -126,6 +126,8 @@ end
 
 
 ------------------ v1.backdrop ---------------------
+-- creates a region on touch down TODO: maybe better on touch up?
+-- add shadow when touch down, only create when touch up
 function TouchDown(self)
     CloseSharedStuff(nil)
     
@@ -138,6 +140,13 @@ end
 
 function TouchUp(self)
     --    DPrint("MU")
+	  -- CloseSharedStuff(nil)
+	  --   
+	  -- local region = CreateorRecycleregion('region', 'backdrop', UIParent)
+	  -- local x,y = InputPosition()
+	  -- region:Show()
+	  -- region:SetAnchor("CENTER",x,y)
+	  -- DPrint(region:Name().." created, centered at "..x..", "..y)
 end
 
 function DoubleTap(self)
@@ -249,11 +258,12 @@ local notificationregion=Region('region', 'notificationregion', UIParent)
 notificationregion:SetWidth(ScreenWidth())
 notificationregion:SetHeight(48*2)
 notificationregion:SetLayer("TOOLTIP")
-notificationregion:SetAnchor('BOTTOMLEFT',0,ScreenHeight()/2-24) 
+notificationregion:SetAnchor('BOTTOMLEFT',0,ScreenHeight()/4-24) 
 notificationregion:EnableClamping(true)
 notificationregion:Show()
 notificationregion.textlabel=notificationregion:TextLabel()
-notificationregion.textlabel:SetFont("Trebuchet MS")
+-- notificationregion.textlabel:SetFont("Trebuchet MS")
+notificationregion.textlabel:SetFont("Helvetica")
 notificationregion.textlabel:SetHorizontalAlign("CENTER")
 notificationregion.textlabel:SetLabel("")
 notificationregion.textlabel:SetFontHeight(48)
@@ -760,6 +770,7 @@ for k,name in pairs (menubar.menus) do
     r.tl = r:TextLabel()
     r.tl:SetLabel(menubar.menus[k][1])
     r.tl:SetFontHeight(18)
+		r.tl:SetFont("Helvetica")
     r.tl:SetColor(0,0,0,255) 
     r.tl:SetHorizontalAlign("JUSTIFY")
     r.tl:SetShadowColor(255,255,255,255)
