@@ -7,7 +7,7 @@
 -- The basis of the script is contained in this file while most of the features are contained
 -- the accompianing scripts, listed below.
 
-CREATION_MARGIN = 20	-- margin for creating via tapping
+CREATION_MARGIN = 40	-- margin for creating via tapping
 
 -- initial size for regions
 INITSIZE = 160
@@ -343,7 +343,7 @@ DPrint(ScreenWidth()..","..ScreenHeight())
 backdrop.t:SetFill(true)
 backdrop.t:SetBrushColor(150,150,150,255)
 backdrop.t:Rect(0,0,ScreenWidth(),ScreenHeight())
-backdrop.t:SetBrushColor(255,0,0,255)
+backdrop.t:SetBrushColor(255,100,100,255)
 backdrop.t:Ellipse(ScreenWidth()/2, ScreenHeight()/2, 200, 200)
 backdrop:Show()
 
@@ -352,8 +352,6 @@ shadow = Region('region', 'shadow', UIParent)
 shadow.t = shadow:Texture()
 shadow.t:SetTexture(95,110,120,100)
 shadow.t:SetBlendMode("BLEND")
-
-
 
 ----------------- v11.pagebutton -------------------
 local pagebutton=Region('region', 'pagebutton', UIParent)
