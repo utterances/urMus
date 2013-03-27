@@ -13,6 +13,9 @@
 		1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
 		1DF5F4E00D08C38300B7A737 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DF5F4DF0D08C38300B7A737 /* UIKit.framework */; };
 		220321A616F7B38800599CFE /* urTapperware.lua in Resources */ = {isa = PBXBuildFile; fileRef = 220321A516F7B38800599CFE /* urTapperware.lua */; };
+		2211BD32170359BC006C42B5 /* shadow.png in Resources */ = {isa = PBXBuildFile; fileRef = 2211BD31170359BC006C42B5 /* shadow.png */; };
+		2211BD3617039D09006C42B5 /* roundrec.png in Resources */ = {isa = PBXBuildFile; fileRef = 2211BD3517039D09006C42B5 /* roundrec.png */; };
+		2211BD381703A7B4006C42B5 /* roundrec_s.png in Resources */ = {isa = PBXBuildFile; fileRef = 2211BD371703A7B4006C42B5 /* roundrec_s.png */; };
 		2234782516DFFD4200E9B741 /* Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 2234782416DFFD4200E9B741 /* Icon@2x.png */; };
 		2234782A16DFFD5600E9B741 /* Icon-72.png in Resources */ = {isa = PBXBuildFile; fileRef = 2234782816DFFD5600E9B741 /* Icon-72.png */; };
 		2234782B16DFFD5600E9B741 /* Icon-72@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 2234782916DFFD5600E9B741 /* Icon-72@2x.png */; };
@@ -570,6 +573,9 @@
 		1D6058910D05DD3D006BFB54 /* urMus.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = urMus.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1DF5F4DF0D08C38300B7A737 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		220321A516F7B38800599CFE /* urTapperware.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urTapperware.lua; path = "urMus-Lua/urTapperware.lua"; sourceTree = "<group>"; };
+		2211BD31170359BC006C42B5 /* shadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = shadow.png; path = Textures/shadow.png; sourceTree = "<group>"; };
+		2211BD3517039D09006C42B5 /* roundrec.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = roundrec.png; path = Textures/roundrec.png; sourceTree = "<group>"; };
+		2211BD371703A7B4006C42B5 /* roundrec_s.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = roundrec_s.png; path = Textures/roundrec_s.png; sourceTree = "<group>"; };
 		2234782416DFFD4200E9B741 /* Icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon@2x.png"; sourceTree = "<group>"; };
 		2234782816DFFD5600E9B741 /* Icon-72.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-72.png"; sourceTree = "<group>"; };
 		2234782916DFFD5600E9B741 /* Icon-72@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-72@2x.png"; sourceTree = "<group>"; };
@@ -2280,8 +2286,11 @@
 		77F043941123BC3F00CB8C95 /* Textures */ = {
 			isa = PBXGroup;
 			children = (
+				2211BD371703A7B4006C42B5 /* roundrec_s.png */,
+				2211BD31170359BC006C42B5 /* shadow.png */,
 				7790B95916BB14CF008120B7 /* arrow.png */,
 				7701938F161FF2FF00FDBD4B /* DroidSansMono.ttf */,
+				2211BD3517039D09006C42B5 /* roundrec.png */,
 				771F845315F91223006D8926 /* buttonvar5-64x80-padded.png */,
 				771F845415F91223006D8926 /* buttonvar4-64x80-padded.png */,
 				771F845515F91223006D8926 /* buttonvar3-64x80-padded.png */,
@@ -2871,6 +2880,9 @@
 				226E03BF16E1466D00BB11DA /* Default-Portrait.png in Resources */,
 				226E03C016E1466D00BB11DA /* Default-Portrait@2x.png in Resources */,
 				220321A616F7B38800599CFE /* urTapperware.lua in Resources */,
+				2211BD32170359BC006C42B5 /* shadow.png in Resources */,
+				2211BD3617039D09006C42B5 /* roundrec.png in Resources */,
+				2211BD381703A7B4006C42B5 /* roundrec_s.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

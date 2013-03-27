@@ -40,6 +40,7 @@ pagefile = {
 "urColors.lua",
 --"urGEAugRel2.lua",
 "urVen2.lua",
+"urTapper.lua",
 "urTapperware.lua",
 --"urVen2-original.lua",
 "urSpriteAnimationExample.lua",
