@@ -413,6 +413,7 @@ ursObject::ursObject(const char* objname, void* (*objconst)(), void (*objdest)(u
 {
 	nr_ins = nrins;
 	nr_outs = nrouts;
+#ifdef OLDINOUTS
 	ins = new urSoundIn[nrins];
 	outs = new urSoundOut[nrouts];
 	firstpullin = new urSoundPullIn*[nrins];
@@ -427,6 +428,7 @@ ursObject::ursObject(const char* objname, void* (*objconst)(), void (*objdest)(u
         outs[i].object = this;
 		firstpushout[i] = NULL;
     }
+#endif
 	lastin = 0;
 	lastout = 0;
 	lastindata[0] = 0.0;
@@ -436,7 +438,7 @@ ursObject::ursObject(const char* objname, void* (*objconst)(), void (*objdest)(u
 	noninstantiable = dontinstance;
 	if(!noninstantiable && instancearray == NULL)
 	{
-		instancelist = new ursObjectArray();
+		instancelist = new ursObjectArray(4);
 		instancenumber = 0;
 		instancelist->Append(this);
 	}
@@ -465,10 +467,12 @@ ursObject::ursObject(const char* objname, void* (*objconst)(), void (*objdest)(u
 
 ursObject::~ursObject()
 {
+#ifdef OLDINOUTS
 	delete ins;
 	delete outs;
     delete firstpullin;
     delete firstpushout;
+#endif
 }
 
 ursObject* ursObject::Clone()
@@ -490,6 +494,8 @@ ursObject* ursObject::Clone()
 
 void ursObject::AddOut(const char* outname, const char* outsemantics, double (*func)(ursObject *), double (*func3)(ursObject *), void (*func2)(ursObject*, SInt16*, UInt32))
 {
+#ifdef OLDINOUTS
+
 	if(lastout >= nr_outs)
 	{
 		int a = 0;
@@ -510,14 +516,28 @@ void ursObject::AddOut(const char* outname, const char* outsemantics, double (*f
 	outs[lastout].object = this;
 	outs[lastout].data = this->objectdata;
 	lastout++;
+#else
+    urSoundOut newout;
+    newout.name = outname;
+	newout.semantics = outsemantics;
+	newout.outFuncTick = func;
+	newout.outFuncFillBuffer = func2;
+	newout.outFuncValue = func3;
+	newout.object = this;
+	newout.data = this->objectdata;
+    
+    outs.push_back(newout);
+    firstpushout.push_back((urSoundPushOut*)NULL);
+#endif
 }
 
 void ursObject::AddIn(const char* inname, const char* insemantics, void (*func)(ursObject *, double))
 {
+#ifdef OLDINOUTS
 	if(lastin >= nr_ins)
 	{
 		int a = 0;
-		/* NYI gotta grow here */
+		// NYI gotta grow here
         assert(0);
 	}
 	ins[lastin].name = inname;
@@ -526,12 +546,28 @@ void ursObject::AddIn(const char* inname, const char* insemantics, void (*func)(
 	ins[lastin].object = this;
 	ins[lastin].data = this->objectdata;
 	lastin++;
+#else
+    urSoundIn newin;
+	newin.name = inname;
+	newin.semantics = insemantics;
+	newin.inFuncTick = func;
+	newin.object = this;
+	newin.data = this->objectdata;
+    
+    ins.push_back(newin);
+    firstpullin.push_back((urSoundPullIn*)NULL);
+#endif
+
 }
 
 void ursObject::CallAllPushOuts(double indata, int idx)
 {
+#ifdef OLDINOUTS
 	if(this == NULL || this->firstpushout == NULL) return;
-	
+#else
+    if(this == NULL || this->firstpushout.size() == 0) return;
+#endif
+    
 #ifdef RELOCATE_FAFB
     if(this->noninstantiable && freePatches[currentPatch] != 0) return;
 #endif
@@ -848,6 +884,15 @@ ursObjectArray::~ursObjectArray()
 			delete objectlist[i];
 	}
 	delete objectlist;
+}
+
+void ursObjectArray::TestObjects()
+{
+    for(int i=0; i<current; i++)
+    {
+        assert(objectlist[i]->nr_ins == objectlist[i]->lastin);
+        assert(objectlist[i]->nr_outs == objectlist[i]->lastout);
+    }
 }
 
 void ursObjectArray::Append(ursObject* object)
@@ -1221,6 +1266,8 @@ double Gain_Tick(ursObject* gself)
 	Gain_Data* self = (Gain_Data*)gself->objectdata;
 	double res;
 	res = 0; //gself->lastindata[0];
+
+	gself->FeedAllPullIns(1); // This is decoupled so no forwarding, just pulling to propagate our natural rate
 	
 	res += gself->CallAllPullIns();
 	res = res * self->amp;
@@ -1230,7 +1277,10 @@ double Gain_Tick(ursObject* gself)
 double Gain_Out(ursObject* gself)
 {
 	Gain_Data* self = (Gain_Data*)gself->objectdata;
-	return self->amp*gself->CallAllPullIns();
+
+    gself->FeedAllPullIns(1); // This is decoupled so no forwarding, just pulling to propagate our natural rate
+
+    return self->amp*gself->CallAllPullIns();
 }
 
 void Gain_In(ursObject* gself, double in)
@@ -2876,14 +2926,12 @@ void urs_SetupObjects()
 	urmanipulatorobjectlist.Append(object);
 	
     
-    /*	object = new ursObject("Tuner", Tuner_Constructor, Tuner_Destructor,1,1);
+     object = new ursObject("Tuner", Tuner_Constructor, Tuner_Destructor,1,1);
      object->AddOut("Out", "TimeSeries", Tuner_Tick, Tuner_Out, NULL);
      object->AddIn("In", "TimeSeries", Tuner_In);
      object->SetCouple(0,0);
      urmanipulatorobjectlist.Append(object);
-     */
-    
-    /*
+
      object = new ursObject("Pump", Pump_Constructor, Pump_Destructor,2,1);
      object->AddOut("Out", "TimeSeries", Pump_Out, NULL, NULL);
      object->AddIn("In", "TimeSeries", Pump_In);
@@ -2912,8 +2960,7 @@ void urs_SetupObjects()
      object->AddIn("In", "TimeSeries", SniffL_In);
      object->SetCouple(0,0);
      urmanipulatorobjectlist.Append(object);
-     */
-    
+     
 	object = new ursObject("Dist3", ThreeDist_Constructor, ThreeDist_Destructor,4,1);
 	object->AddOut("Out", "TimeSeries", ThreeDist_Tick, ThreeDist_Out, NULL);
 	object->AddIn("In1", "TimeSeries", ThreeDist_In1);
@@ -2951,7 +2998,6 @@ void urs_SetupObjects()
 	object->AddIn("In1", "TimeSeries", MaxS_In1);
 	object->AddIn("In2", "TimeSeries", MaxS_In2);
 	urmanipulatorobjectlist.Append(object);
-	
 	
 	urSoundAtoms_Setup();
 	
@@ -3042,7 +3088,8 @@ void urs_SetupObjects()
 	object->AddIn("Time", "Time", CircleMap_SetPhase);
 	urmanipulatorobjectlist.Append(object);
     
-    /*	object = new ursObject("OWF", OWF_Constructor, OWF_Destructor,4,1);
+    /*
+     object = new ursObject("OWF", OWF_Constructor, OWF_Destructor,4,1);
      object->AddOut("Out", "TimeSeries", OWF_Tick, OWF_Out, NULL);
      object->AddIn("Freq", "Frequency", OWF_SetFreq);
      object->AddIn("Amp", "Amplitude", OWF_SetAmp);
@@ -3058,7 +3105,7 @@ void urs_SetupObjects()
 	visobject = new ursObject("Vis", NULL, NULL, 1, 0, true);
 	visobject->AddIn("In", "TimeSeries", Vis_In);
 	ursinkobjectlist.Append(visobject);
-    
+
 	netobject = new ursObject("Net", NULL, NULL, 1, 0, true);
 	netobject->AddIn("In", "Event", Net_In);
 	ursinkobjectlist.Append(netobject);
@@ -3071,8 +3118,13 @@ void urs_SetupObjects()
 	pullobject->AddIn("In", "Event", Pull_In); // A event based drain ("bang" drain in PD parlance)
 	ursinkobjectlist.Append(pullobject);
     
+//#undef LOAD_STK_OBJECTS
 #ifdef LOAD_STK_OBJECTS
 	urSTK_Setup();
 #endif
 	
+    urmanipulatorobjectlist.TestObjects();
+    ursinkobjectlist.TestObjects();
+    ursourceobjectlist.TestObjects();
+    
 }

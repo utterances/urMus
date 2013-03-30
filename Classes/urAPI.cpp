@@ -153,7 +153,7 @@ urAPI_Region_t* UIParent = nil;
 // Flowbox patches (NYI)
 //------------------------------------------------------------------------------
 
-ursAPI_FlowBox_t* FBNope = nil;
+//ursAPI_FlowBox_t* FBNope = nil;
 
 int currentPatch = 0;
 ursAPI_FlowBox_t** firstFlowbox[MAX_PATCHES] = {nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil};
@@ -5866,7 +5866,7 @@ void l_setupAPI(lua_State *lua)
 	lua_setglobal(lua, "UIParent");
 
 	urs_SetupObjects();
-	
+
 	char fbname[255];
 	for(int source=0; source<ursourceobjectlist.Last(); source++)
 	{
@@ -5880,11 +5880,11 @@ void l_setupAPI(lua_State *lua)
 		//	luaL_getmetatable(lua, "URAPI.region");
 		//	lua_setmetatable(lua, -2);
 		myflowbox->object = ursourceobjectlist[source];
-		FBNope = myflowbox;
+//		FBNope = myflowbox;
 		strcpy(fbname, "FB");
 		strcat(fbname, myflowbox->object->name);
 		lua_setglobal(lua, fbname);
-        lua_getglobal(lua, fbname);        
+//        lua_getglobal(lua, fbname);
         populateFlowboxPorts(myflowbox);
 	}
 	for(int manipulator=0; manipulator<urmanipulatorobjectlist.Last(); manipulator++)
@@ -5899,11 +5899,11 @@ void l_setupAPI(lua_State *lua)
 		//	luaL_getmetatable(lua, "URAPI.region");
 		//	lua_setmetatable(lua, -2);
 		myflowbox->object = urmanipulatorobjectlist[manipulator];
-		FBNope = myflowbox;
+//		FBNope = myflowbox;
 		strcpy(fbname, "FB");
 		strcat(fbname, myflowbox->object->name);
 		lua_setglobal(lua, fbname);
-        lua_getglobal(lua, fbname);
+//        lua_getglobal(lua, fbname);
         populateFlowboxPorts(myflowbox);
 	}
 	for(int sink=0; sink<ursinkobjectlist.Last(); sink++)
@@ -5918,11 +5918,11 @@ void l_setupAPI(lua_State *lua)
 		//	luaL_getmetatable(lua, "URAPI.region");
 		//	lua_setmetatable(lua, -2);
 		myflowbox->object = ursinkobjectlist[sink];
-		FBNope = myflowbox;
+//		FBNope = myflowbox;
 		strcpy(fbname, "FB");
 		strcat(fbname, myflowbox->object->name);
 		lua_setglobal(lua, fbname);
-        lua_getglobal(lua, fbname);
+//        lua_getglobal(lua, fbname);
         populateFlowboxPorts(myflowbox);
 	}
 	
