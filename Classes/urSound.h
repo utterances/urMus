@@ -127,6 +127,7 @@ public:
 	ursObjectArray(int initmax = 256);
 	~ursObjectArray();
 	void Append(ursObject*);
+	void Remove(ursObject*);
     void TestObjects();
 	ursObject* Get(int);
 	ursObject* operator[](int);

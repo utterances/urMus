@@ -5880,12 +5880,12 @@ void l_setupAPI(lua_State *lua)
 		//	luaL_getmetatable(lua, "URAPI.region");
 		//	lua_setmetatable(lua, -2);
 		myflowbox->object = ursourceobjectlist[source];
-//		FBNope = myflowbox;
+        populateFlowboxPorts(myflowbox);
+        //		FBNope = myflowbox;
 		strcpy(fbname, "FB");
 		strcat(fbname, myflowbox->object->name);
 		lua_setglobal(lua, fbname);
-//        lua_getglobal(lua, fbname);
-        populateFlowboxPorts(myflowbox);
+        //        lua_getglobal(lua, fbname);
 	}
 	for(int manipulator=0; manipulator<urmanipulatorobjectlist.Last(); manipulator++)
 	{
@@ -5899,12 +5899,12 @@ void l_setupAPI(lua_State *lua)
 		//	luaL_getmetatable(lua, "URAPI.region");
 		//	lua_setmetatable(lua, -2);
 		myflowbox->object = urmanipulatorobjectlist[manipulator];
-//		FBNope = myflowbox;
+        populateFlowboxPorts(myflowbox);
+        //		FBNope = myflowbox;
 		strcpy(fbname, "FB");
 		strcat(fbname, myflowbox->object->name);
 		lua_setglobal(lua, fbname);
-//        lua_getglobal(lua, fbname);
-        populateFlowboxPorts(myflowbox);
+        //        lua_getglobal(lua, fbname);
 	}
 	for(int sink=0; sink<ursinkobjectlist.Last(); sink++)
 	{
@@ -5918,12 +5918,12 @@ void l_setupAPI(lua_State *lua)
 		//	luaL_getmetatable(lua, "URAPI.region");
 		//	lua_setmetatable(lua, -2);
 		myflowbox->object = ursinkobjectlist[sink];
-//		FBNope = myflowbox;
+        populateFlowboxPorts(myflowbox);
+        //		FBNope = myflowbox;
 		strcpy(fbname, "FB");
 		strcat(fbname, myflowbox->object->name);
 		lua_setglobal(lua, fbname);
-//        lua_getglobal(lua, fbname);
-        populateFlowboxPorts(myflowbox);
+        //        lua_getglobal(lua, fbname);
 	}
 	
 	luaL_newmetatable(lua, "URAPI.texture");

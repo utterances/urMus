@@ -438,7 +438,7 @@ ursObject::ursObject(const char* objname, void* (*objconst)(), void (*objdest)(u
 	noninstantiable = dontinstance;
 	if(!noninstantiable && instancearray == NULL)
 	{
-		instancelist = new ursObjectArray(4);
+		instancelist = new ursObjectArray(6);
 		instancenumber = 0;
 		instancelist->Append(this);
 	}
@@ -472,6 +472,7 @@ ursObject::~ursObject()
 	delete outs;
     delete firstpullin;
     delete firstpushout;
+    instancelist->Remove(this);
 #endif
 }
 
@@ -913,6 +914,21 @@ void ursObjectArray::Append(ursObject* object)
 	
 	objectlist[current] = object;
 	current++;
+}
+
+void ursObjectArray::Remove(ursObject* object)
+{
+    int i;
+    for(i=0; i<current && objectlist[i] != object; i++)
+    {
+    }
+    
+    assert(i<current);
+    
+    for(;i< current-1; i++)
+        objectlist[i] = objectlist[i+1];
+    objectlist[i+1]=NULL;
+    current--;
 }
 
 ursObject* ursObjectArray::Get(int idx)
