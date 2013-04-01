@@ -285,11 +285,10 @@ function VMove(self)
 end
 
 function DrawConnection(x1,y1,x2,y2)
-	-- backdrop.t:SetBrushColor(150,150,150,255)
-	-- backdrop.t:Rect(0,0,ScreenWidth(),ScreenHeight())
+	backdrop.t = backdrop:Texture('gridback.jpg')
 	backdrop.t:SetBrushColor(100,255,190,255)
 	backdrop.t:SetBrushSize(3)
-	-- backdrop.t:Line(x1, y1, x2, y2)
+	backdrop.t:Line(x1, y1, x2, y2)
 end
 	
 function RemoveV(vv)
@@ -331,24 +330,44 @@ backdrop:Handle("OnMove", Move)
 backdrop:EnableInput(true)
 backdrop:SetClipRegion(0,0,ScreenWidth(),ScreenHeight())
 backdrop:EnableClipping(true)
-backdrop.player = {} 
-backdrop.t = backdrop:Texture()
--- backdrop.t:SetTexCoord(0,1024/ScreenWidth(),1024/ScreenHeight(),0)
+backdrop.player = {}
+backdrop.tWall = backdrop:Texture("gridback.jpg")
+backdrop.t = backdrop.tWall
 backdrop.t:SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
-DPrint(ScreenWidth()..","..ScreenHeight())
--- SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
+backdrop.t:SetBlendMode("BLEND")
 
-
-
-backdrop.t:SetFill(true)
-backdrop.t:SetBrushColor(150,150,150,255)
-backdrop.t:Rect(0,0,ScreenWidth(),ScreenHeight())
+-- backdrop.t:SetFill(true)
+-- backdrop.t:SetBrushColor(150,150,150,255)
+-- backdrop.t:Rect(0,0,ScreenWidth(),ScreenHeight())
 backdrop.t:SetBrushColor(255,100,100,255)
 backdrop.t:Ellipse(ScreenWidth()/2, ScreenHeight()/2, 200, 200)
 backdrop:Show()
 
+
+
+-- connections = Region('region', 'backdrop', UIParent)
+-- connections:SetWidth(ScreenWidth())
+-- connections:SetHeight(ScreenHeight())
+-- connections:SetLayer("LOW")
+-- connections:SetAnchor('BOTTOMLEFT',0,0)
+-- connections.t = connections:Texture(0,0,0,255)
+-- connections.t:SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
+-- connections.t:SetBlendMode("BLEND")
+-- 
+-- connections.t:SetBrushColor(255,100,100,0)
+-- connections.t:Ellipse(ScreenWidth()/2, ScreenHeight()/2, 200, 200)
+-- 
+-- connections:MoveToTop()
+-- connections:Show()
+
+-- SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
+
+
+
+
 -- set up shadow for when tap down and hold, show future region creation location
 shadow = Region('region', 'shadow', UIParent)
+shadow:SetLayer("BACKGROUND")
 shadow.t = shadow:Texture()
 shadow.t:SetTexture(95,110,120,100)
 shadow.t:SetBlendMode("BLEND")
