@@ -1,5 +1,5 @@
 -- urTapperware.lua
--- scratch pad for new stuff to add to urVen
+-- scratch pad for new stuff to add to urVen2, borrowed heavily from urVen code
 -- focus on using touch for programming, avoid menu or buttons
 
 -- A multipurpose non-programming environment aimed towards giving the user the ability
@@ -7,34 +7,86 @@
 -- The basis of the script is contained in this file while most of the features are contained
 -- the accompianing scripts, listed below.
 
+-- ==================================
+-- = setup Global var and constants =
+-- ==================================
+
 CREATION_MARGIN = 40	-- margin for creating via tapping
+INITSIZE = 160	-- initial size for regions
 
--- initial size for regions
-INITSIZE = 160
-
-hold_region = false
-hold_x = 0
-hold_y = 0
-
-FreeAllRegions()
 regions = {}
 recycledregions = {}
 
+FreeAllRegions()
+
+modes = {"EDIT","RELEASE"}
+current_mode = modes[1]
+
+dofile(SystemPath("urTapperwareMenu.lua"))
+
+-- ============
+-- = Backdrop =
+-- ============
+
+backdrop = Region('region', 'backdrop', UIParent)
+backdrop:SetWidth(ScreenWidth())
+backdrop:SetHeight(ScreenHeight())
+backdrop:SetLayer("BACKGROUND")
+backdrop:SetAnchor('BOTTOMLEFT',0,0)
+backdrop:Handle("OnTouchDown", TouchDown)
+backdrop:Handle("OnTouchUp", TouchUp)
+backdrop:Handle("OnDoubleTap", DoubleTap)
+backdrop:Handle("OnEnter", Enter)
+backdrop:Handle("OnLeave", Leave)
+backdrop:Handle("OnMove", Move)
+backdrop:EnableInput(true)
+backdrop:SetClipRegion(0,0,ScreenWidth(),ScreenHeight())
+backdrop:EnableClipping(true)
+backdrop.player = {}
+backdrop.t = backdrop:Texture("gridback.jpg")
+backdrop.t:SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
+backdrop.t:SetBlendMode("BLEND")
+
+-- backdrop.t:SetFill(true)
+-- backdrop.t:SetBrushColor(150,150,150,255)
+-- backdrop.t:Rect(0,0,ScreenWidth(),ScreenHeight())
+backdrop.t:SetBrushColor(255,100,100,255)
+backdrop.t:Ellipse(ScreenWidth()/2, ScreenHeight()/2, 200, 200)
+backdrop:Show()
+
+-- connections = Region('region', 'backdrop', UIParent)
+-- connections:SetWidth(ScreenWidth())
+-- connections:SetHeight(ScreenHeight())
+-- connections:SetLayer("LOW")
+-- connections:SetAnchor('BOTTOMLEFT',0,0)
+-- connections.t = connections:Texture(0,0,0,255)
+-- connections.t:SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
+-- connections.t:SetBlendMode("BLEND")
+-- 
+-- connections.t:SetBrushColor(255,100,100,0)
+-- connections.t:Ellipse(ScreenWidth()/2, ScreenHeight()/2, 200, 200)
+-- 
+-- connections:MoveToTop()
+-- connections:Show()
+
+-- set up shadow for when tap down and hold, show future region creation location
+shadow = Region('region', 'shadow', UIParent)
+shadow:SetLayer("BACKGROUND")
+shadow.t = shadow:Texture()
+shadow.t:SetTexture(95,110,120,100)
+shadow.t:SetBlendMode("BLEND")
+
+-- ==========================
+-- = Global event functions =
+-- ==========================
 
 function TouchDown(self)
 	local x,y = InputPosition()
 	
-	if not hold_region then
-		shadow:Show()
-		shadow:SetAnchor('CENTER',x,y)
-	  DPrint("release to create region")
-	else
+	shadow:Show()
+	shadow:SetAnchor('CENTER',x,y)
+  DPrint("release to create region")
 		
-	end
-end
-
-function TouchHold(self)
-	
 end
 	
 function TouchUp(self)
@@ -46,11 +98,11 @@ function TouchUp(self)
 	-- only create if we are not too close to the edge
   local x,y = InputPosition()
 
-	if hold_region then
-		DrawConnection(x,y,hold_x,hold_y)
-		backdrop:Show()
-		DPrint("line"..x..","..y.."-"..hold_x..","..hold_y)
-	else
+	-- if hold_region then
+	-- 	DrawConnection(x,y,hold_x,hold_y)
+	-- 	backdrop:Show()
+	-- 	DPrint("line"..x..","..y.."-"..hold_x..","..hold_y)
+	-- else
 		-- backdrop:Hide()
 		
 		if x>CREATION_MARGIN and x<ScreenWidth()-CREATION_MARGIN and 
@@ -60,17 +112,17 @@ function TouchUp(self)
 			region:SetAnchor("CENTER",x,y)
 			DPrint(region:Name().." created, centered at "..x..", "..y)
 		end
-	end
+	-- end
 end
 
 function Move(self)
 	local x,y = InputPosition()
 	
-	if hold_region then
-		DrawConnection(x,y,hold_x,hold_y)
-		backdrop:Show()
-		DPrint("line"..x..","..y.."-"..hold_x..","..hold_y)
-	else
+	-- if hold_region then
+	-- 	DrawConnection(x,y,hold_x,hold_y)
+	-- 	backdrop:Show()
+	-- 	DPrint("line"..x..","..y.."-"..hold_x..","..hold_y)
+	-- else
 		-- backdrop:Hide()
 		if x>CREATION_MARGIN and x<ScreenWidth()-CREATION_MARGIN and 
 			y>CREATION_MARGIN and y<ScreenHeight()-CREATION_MARGIN then
@@ -81,13 +133,17 @@ function Move(self)
 			shadow:Hide()
 			DPrint("")
 		end
-	end
+	-- end
 end
 
 function Leave(self)
 	shadow:Hide()
 	DPrint("")
 end
+
+-- ===================
+-- = Region Creation =
+-- ===================
 
 function CreateorRecycleregion(ftype, name, parent)
     local region
@@ -111,7 +167,7 @@ function VRegion(ttype,name,parent,id) -- customized initialization of region
 
 	-- add a visual shadow as a second layer	
 	local r_s = Region(ttype,"drops"..id,parent)
-	r_s.t = r_s:Texture("shadow.png")
+	r_s.t = r_s:Texture("tw_shadow.png")
 	r_s.t:SetBlendMode("BLEND")
   r_s:SetWidth(INITSIZE+70)
   r_s:SetHeight(INITSIZE+70)
@@ -121,7 +177,7 @@ function VRegion(ttype,name,parent,id) -- customized initialization of region
 	
     local r = Region(ttype,"R#"..id,parent)
     r.tl = r:TextLabel()
-    r.t = r:Texture("roundrec.png")
+    r.t = r:Texture("tw_roundrec.png")
 		r:SetLayer("MEDIUM")
 		r.shadow = r_s
 		r.shadow:SetAnchor("CENTER",r,"CENTER",0,0) 
@@ -138,8 +194,7 @@ function VRegion(ttype,name,parent,id) -- customized initialization of region
     r:Handle("OnTouchDown",VTouchDown)
     r:Handle("OnTouchUp",VTouchUp)
     r:Handle("OnMove",VMove)
-		
-		
+			
     return r
 end
 
@@ -148,9 +203,10 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
     -- r.kbopen = 0 -- for keyboard isopen
     -- 
     -- -- initialize for events and signals
-    -- r.eventlist = {}
+    r.eventlist = {}
     -- r.eventlist["OnTouchDown"] = {HoldTrigger,CloseSharedStuff,SelectObj,AddAnchorIcon}
-    -- r.eventlist["OnTouchUp"] = {AutoCheckStick,DeTrigger} 
+    r.eventlist["OnTouchDown"] = {HoldTrigger}
+    r.eventlist["OnTouchUp"] = {DeTrigger} 
     -- r.eventlist["OnDoubleTap"] = {CloseSharedStuff,OpenOrCloseKeyboard} 
     -- r.eventlist["OnUpdate"] = {} 
     -- r.eventlist["OnUpdate"]["selfshowhide"] = 0
@@ -229,7 +285,8 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
     -- r.t:SetTexture(r.r,r.g,r.b,r.a)
 		r.t:SetBlendMode("BLEND")
     r.tl:SetLabel(r:Name())
-    r.tl:SetFontHeight(18)
+    r.tl:SetFontHeight(16)
+		r.tl:SetFont("Avenir.ttc")
     r.tl:SetColor(0,0,0,255) 
     r.tl:SetHorizontalAlign("JUSTIFY")
     r.tl:SetVerticalAlign("MIDDLE")
@@ -258,13 +315,51 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
     r.stickboundary = "none"
 end
 
-function VDoubleTap(self)
-	DPrint("double tapped")
-	RemoveV(self)
-    -- CallEvents("OnDoubleTap",self)
+function HoldToTrigger(self, elapsed) -- for long tap
+    x,y = self:Center()
+    
+    if self.holdtime <= 0 then
+        self.x = x 
+        self.y = y
+        DPrint("Menu Opened. Use HOLD to select multiple Vs.")
+        OpenMenu(self)
+        self:Handle("OnUpdate",nil)
+    else 
+        if math.abs(self.x - x) > 10 or math.abs(self.y - y) > 10 then
+            self:Handle("OnUpdate",nil)
+            self:Handle("OnUpdate",VUpdate)
+        end
+        self.holdtime = self.holdtime - elapsed
+    end
+end
+
+function HoldTrigger(self) -- for long tap
+    self.holdtime = 0.5
+    self.x,self.y = self:Center()
+    self:Handle("OnUpdate",nil)
+    self:Handle("OnUpdate",HoldToTrigger)
+    self:Handle("OnLeave",DeTrigger)
+end
+
+
+function VMove(self)
+	DPrint("moved")
+end
+
+function CallEvents(signal,vv)
+    local list = {}
+    if current_mode == modes[1] then
+        list = vv.eventlist[signal]
+    else
+        list = vv.reventlist[signal]
+    end
+    for k = 1,#list do
+        list[k](vv)
+    end
 end
 
 function VTouchDown(self)
+  CallEvents("OnTouchDown",self)
 	DPrint("touched down")
 	self.shadow:MoveToTop()
 	self:MoveToTop()
@@ -274,14 +369,16 @@ function VTouchDown(self)
 	hold_y = y
 end
 
+
+
+function VDoubleTap(self)
+    CallEvents("OnDoubleTap",self)
+end
+
 function VTouchUp(self)
 	DPrint("touched up")
 	hold_region = false
-    -- CallEvents("OnTouchUp",self)
-end
-
-function VMove(self)
-	DPrint("moved")
+  CallEvents("OnTouchUp",self)
 end
 
 function DrawConnection(x1,y1,x2,y2)
@@ -313,64 +410,6 @@ function RemoveV(vv)
     table.insert(recycledregions, vv.id)
     DPrint(vv:Name().." removed")
 end
-
-
-backdrop = Region('region', 'backdrop', UIParent)
-backdrop:SetWidth(ScreenWidth())
-backdrop:SetHeight(ScreenHeight())
--- backdrop:SetBlendMode("MOD")
-backdrop:SetLayer("BACKGROUND")
-backdrop:SetAnchor('BOTTOMLEFT',0,0)
-backdrop:Handle("OnTouchDown", TouchDown)
-backdrop:Handle("OnTouchUp", TouchUp)
-backdrop:Handle("OnDoubleTap", DoubleTap)
-backdrop:Handle("OnEnter", Enter)
-backdrop:Handle("OnLeave", Leave)
-backdrop:Handle("OnMove", Move)
-backdrop:EnableInput(true)
-backdrop:SetClipRegion(0,0,ScreenWidth(),ScreenHeight())
-backdrop:EnableClipping(true)
-backdrop.player = {}
-backdrop.tWall = backdrop:Texture("gridback.jpg")
-backdrop.t = backdrop.tWall
-backdrop.t:SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
-backdrop.t:SetBlendMode("BLEND")
-
--- backdrop.t:SetFill(true)
--- backdrop.t:SetBrushColor(150,150,150,255)
--- backdrop.t:Rect(0,0,ScreenWidth(),ScreenHeight())
-backdrop.t:SetBrushColor(255,100,100,255)
-backdrop.t:Ellipse(ScreenWidth()/2, ScreenHeight()/2, 200, 200)
-backdrop:Show()
-
-
-
--- connections = Region('region', 'backdrop', UIParent)
--- connections:SetWidth(ScreenWidth())
--- connections:SetHeight(ScreenHeight())
--- connections:SetLayer("LOW")
--- connections:SetAnchor('BOTTOMLEFT',0,0)
--- connections.t = connections:Texture(0,0,0,255)
--- connections.t:SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
--- connections.t:SetBlendMode("BLEND")
--- 
--- connections.t:SetBrushColor(255,100,100,0)
--- connections.t:Ellipse(ScreenWidth()/2, ScreenHeight()/2, 200, 200)
--- 
--- connections:MoveToTop()
--- connections:Show()
-
--- SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
-
-
-
-
--- set up shadow for when tap down and hold, show future region creation location
-shadow = Region('region', 'shadow', UIParent)
-shadow:SetLayer("BACKGROUND")
-shadow.t = shadow:Texture()
-shadow.t:SetTexture(95,110,120,100)
-shadow.t:SetBlendMode("BLEND")
 
 ----------------- v11.pagebutton -------------------
 local pagebutton=Region('region', 'pagebutton', UIParent)
