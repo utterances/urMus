@@ -696,6 +696,7 @@ void decCameraUseBy(int dec)
     [movieWriter startRecording];
     
     [movieWriter setCompletionBlock:^{
+        /*
         [textureInput removeAllTargets];
 //        [textureInput removeTarget:movieWriter];
         [movieWriter finishRecording];
@@ -703,7 +704,7 @@ void decCameraUseBy(int dec)
 //        [textureInput removeAllTargets];
         [movieWriter dealloc];
         [cropfilter dealloc];
-        cropfilter = NULL;
+        cropfilter = NULL;*/
     }];
 }
 
@@ -777,6 +778,9 @@ void decCameraUseBy(int dec)
 
 - (void)finishMovie
 {
+    if(movieWriter)
+        [movieWriter finishRecording];
+
     if(textureInput)
     {
         [textureInput removeAllTargets];
@@ -784,23 +788,26 @@ void decCameraUseBy(int dec)
     }
 //        [textureInput removeTarget:movieWriter];
     
-    [movieWriter finishRecording];
     
 //    if(textureInput)
 //        [textureInput dealloc];
-    [movieWriter dealloc];
-    movieWriter = NULL;
     
-    if(cropfilter)
+    if(cropfilter != NULL)
     {
-        [cropfilter dealloc];
+       [cropfilter removeTarget:movieWriter];
+       [cropfilter dealloc];
         cropfilter = NULL;
     }
+    
     if(rotateFilter != NULL)
     {
-        [rotateFilter dealloc];
+        [rotateFilter removeTarget:movieWriter];
+       [rotateFilter dealloc];
         rotateFilter = NULL;
     }
+    
+    [movieWriter dealloc];
+    movieWriter = NULL;
 
     recordfrom = SOURCE_TEXTURE;
 }

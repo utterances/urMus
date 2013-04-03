@@ -205,6 +205,7 @@ extern std::string g_storagePath;
 #ifndef SLEEPER
 	NSString *filePath = [resourcePath stringByAppendingPathComponent:@"urMus.lua"];
 //	NSString *filePath = [resourcePath stringByAppendingPathComponent:@"urBlank.lua"];
+//	NSString *filePath = [resourcePath stringByAppendingPathComponent:@"urVen2.lua"];
 #else
 	NSString *filePath = [resourcePath stringByAppendingPathComponent:@"urSleeperLaunch.lua"];
 #endif
