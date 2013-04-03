@@ -49,18 +49,19 @@ local regionMenu = {}
 -- label, func, anchor relative to region, image file
 regionMenu.cmdList = {
 	{"", CloseRegion, 1, "tw_closebox.png"},
-	{"TAP", StartLinkRegionAction, 3, "tw_socket1.png"},
+	{"LINK", StartLinkRegionAction, 3, "tw_socket1.png"},
 	{"", SwitchRegionTypeAction, 4, "tw_varswitcher.png"},
 	{"", testMenu, 6, "tw_timer.png"},
 	{"", testMenu, 7, "tw_paint.png"},
 	{"", testMenu, 8, "tw_run.png"},
 }
 
-local regionConMenu = {}
+local linkReceiverMenu = {}
 -- label, func, anchor relative to region, image file
-regionConMenu.cmdList = {
-	{"Close", CloseRegion, 1, "tw_closebox.png"},
-	{"ReceiveLink", ReceiveLinkRegion, 4, "tw_socket2.png"}
+linkReceiverMenu.cmdList = {
+	{"", CloseRegion, 1, "tw_closebox.png"},
+	{"+", ReceiveLinkRegion, 4, "tw_socket2.png"},
+	{"-", ReceiveLinkRegion, 6, "tw_socket2.png"}
 }
 
 -- initialize regionMenu graphics
@@ -75,6 +76,8 @@ for k,item in pairs(regionMenu.cmdList) do
   local r = Region('region','menu',UIParent)
   r.tl = r:TextLabel()
   r.tl:SetLabel(label)
+	-- r.tl:SetVerticalAlign("TOP")
+	-- r.tl:SetSpacing(40)
   r.tl:SetFontHeight(12)
   r.tl:SetColor(0,0,0,255) 	
 	r.t = r:Texture(image)
@@ -99,9 +102,9 @@ regionMenu.v = nil
 
 
 -- initialize connection receiver menu graphics
-regionConMenu.items = {}
+linkReceiverMenu.items = {}
 
-for k,item in pairs(regionConMenu.cmdList) do
+for k,item in pairs(linkReceiverMenu.cmdList) do
 	label = item[1]
 	func = item[2]
 	anchor = item[3]
@@ -109,7 +112,7 @@ for k,item in pairs(regionConMenu.cmdList) do
 	
   local r = Region('region','menu',UIParent)
   r.tl = r:TextLabel()
-  -- r.tl:SetLabel(label)
+  r.tl:SetLabel(label)
   r.tl:SetFontHeight(13)
   r.tl:SetColor(0,0,0,255) 	
 	r.t = r:Texture(image)
@@ -126,9 +129,9 @@ for k,item in pairs(regionConMenu.cmdList) do
 	
 	r.func = func
 	r.anchorpos = anchor
-	table.insert(regionConMenu.items, r)
+	table.insert(linkReceiverMenu.items, r)
 end
-regionConMenu.show = 0
+linkReceiverMenu.show = 0
 
 function OpenMenu(self)
 
@@ -153,6 +156,28 @@ function OpenMenu(self)
 		self.menu = regionMenu
     -- regionMenu.show = 1
   -- end
+	
+	-- TODO change this later
+	-- open receiver menu for all another region(s)
+	for i = 1, #regions do
+		if regions[i] ~= self then
+			for j = 1, #linkReceiverMenu.items do
+	      linkReceiverMenu.items[j]:Show()
+	      linkReceiverMenu.items[j]:EnableInput(true)
+	      -- linkReceiverMenu.items[i]:Handle("OnTouchUp", OptEventFunc)
+	      linkReceiverMenu.items[j]:MoveToTop()
+				pos = linkReceiverMenu.items[j].anchorpos
+				linkReceiverMenu.items[j]:SetAnchor("CENTER", regions[i],
+																		buttonLocation[pos][1],
+																		buttonLocation[pos][2],
+																		buttonLocation[pos][3])
+				regions[i].menu = linkReceiverMenu
+				linkReceiverMenu.v = regions[i]
+			end
+			
+			break															
+		end
+	end
 end
 
 function OpenRegionMenu(self)
@@ -165,6 +190,11 @@ function RaiseMenu(self)
     for i = 1,#regionMenu.items do
         regionMenu.items[i]:MoveToTop()
     end
+		
+    for i = 1,#linkReceiverMenu.items do
+        linkReceiverMenu.items[i]:MoveToTop()
+    end
+		
 	-- end
 end
 
@@ -173,13 +203,23 @@ function CloseMenu(self)
     for i = 1,#regionMenu.items do
         regionMenu.items[i]:Hide()
         regionMenu.items[i]:EnableInput(false)
-        -- regionMenu.items[i]:MoveToTop()
-				-- regionMenu.items[i]:SetAnchor(regionMenu.items[i].anchorpos, self, "CENTER")
     end
 		regionMenu.show = 0
 		regionMenu.v = nil
 		self.menu = nil
 	-- end
+	
+	  for i = 1,#linkReceiverMenu.items do
+	      linkReceiverMenu.items[i]:Hide()
+	      linkReceiverMenu.items[i]:EnableInput(false)
+	      -- regionMenu.items[i]:MoveToTop()
+			-- regionMenu.items[i]:SetAnchor(regionMenu.items[i].anchorpos, self, "CENTER")
+	  end
+	linkReceiverMenu.show = 0
+	linkReceiverMenu.v = nil
+	for i = 1,#regions do
+		regions[i].menu = nil
+	end	
 end
 
 
@@ -189,7 +229,7 @@ function OptEventFunc(self)
 	-- DPrint("optevent func")
 	
 	local target = self.parent.v
-	CloseMenu(target)
+	-- CloseMenu(target)
 	self.func(target)
     -- Highlight(self)
     -- first close other opened menu options
@@ -211,8 +251,6 @@ end
 -- = Menu command functions =
 -- ==========================
 
-
-
 function MenuAbout(opt,vv)
     output = vv:Name()..", sticker #"..vv.sticker..", stickees"
     if #vv.stickee == 0 then
@@ -231,28 +269,28 @@ function MenuUnstick(opt,vv)
     CloseMenuBar()
 end
 
-function RemoveV(vv)
-    Unstick(vv)
-    
-    if vv.text_sharee ~= -1 then
-        for k,i in pairs(global_text_senders) do
-            if i == vv.id then
-                table.remove(global_text_senders,k)
-            end
-        end
-        regions[vv.text_sharee].text_sharee = -1
-    end
-    
-    PlainVRegion(vv)
-    vv:EnableInput(false)
-    vv:EnableMoving(false)
-    vv:EnableResizing(false)
-    vv:Hide()
-    vv.usable = 0
-    
-    table.insert(recycledregions, vv.id)
-    DPrint(vv:Name().." removed")
-end
+-- function RemoveV(vv)
+--     Unstick(vv)
+--     
+--     if vv.text_sharee ~= -1 then
+--         for k,i in pairs(global_text_senders) do
+--             if i == vv.id then
+--                 table.remove(global_text_senders,k)
+--             end
+--         end
+--         regions[vv.text_sharee].text_sharee = -1
+--     end
+--     
+--     PlainVRegion(vv)
+--     vv:EnableInput(false)
+--     vv:EnableMoving(false)
+--     vv:EnableResizing(false)
+--     vv:Hide()
+--     vv.usable = 0
+--     
+--     table.insert(recycledregions, vv.id)
+--     DPrint(vv:Name().." removed")
+-- end
 
 function MenuRecycleSelf(opt,vv)
     RemoveV(vv)

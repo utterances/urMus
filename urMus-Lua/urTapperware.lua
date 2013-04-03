@@ -13,10 +13,11 @@
 
 CREATION_MARGIN = 40	-- margin for creating via tapping
 INITSIZE = 150	-- initial size for regions
-MENUHOLDWAIT = 0.5 -- seconds to wait for hold to menu
+MENUHOLDWAIT = 0.4 -- seconds to wait for hold to menu
 
 regions = {}
 recycledregions = {}
+initialLinkRegion = nil
 
 FreeAllRegions()
 
@@ -206,6 +207,11 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
     -- r.selected = 0 -- for multiple selection of menubar
 		r.menu = nil
 		r.counter = 0
+		r.links = {}
+    r.links["OnTouchDown"] = {}
+		r.links["OnTouchUp"] = {}
+    r.links["OnDoubleTap"] = {} --{CloseSharedStuff,OpenOrCloseKeyboard} 
+		
     -- r.kbopen = 0 -- for keyboard isopen
     -- 
     -- -- initialize for events and signals
@@ -214,7 +220,7 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
     r.eventlist["OnTouchDown"] = {HoldTrigger}
     r.eventlist["OnTouchUp"] = {DeTrigger} 
     r.eventlist["OnDoubleTap"] = {} --{CloseSharedStuff,OpenOrCloseKeyboard} 
-    -- r.eventlist["OnUpdate"] = {} 
+    r.eventlist["OnUpdate"] = {} 
     -- r.eventlist["OnUpdate"]["selfshowhide"] = 0
     -- r.eventlist["OnUpdate"]["selfcolor"] = 0
     -- r.eventlist["OnUpdate"]["move"] = 0
@@ -224,7 +230,7 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
     -- r.eventlist["OnUpdate"]["background"] = 0
     -- r.eventlist["OnUpdate"]["projectile"] = 0
     -- r.eventlist["OnUpdate"]["fps"] = 0
-    -- r.eventlist["OnUpdate"].currentevent = nil
+    r.eventlist["OnUpdate"].currentevent = nil
     -- r.reventlist = {} -- eventlist for release mode
     -- r.reventlist["OnTouchDown"] = {}
     -- r.reventlist["OnTouchUp"] = {AutoCheckStick} 
@@ -327,14 +333,21 @@ function HoldToTrigger(self, elapsed) -- for long tap
     if self.holdtime <= 0 then
         self.x = x 
         self.y = y
-        -- DPrint("Menu Opened. Use HOLD to select multiple Vs.")
-        OpenRegionMenu(self)
+
+				if self.menu == nil then
+					OpenRegionMenu(self)
+				else
+					CloseMenu(self)
+				end
         self:Handle("OnUpdate",nil)
     else 
         if math.abs(self.x - x) > 10 or math.abs(self.y - y) > 10 then
             self:Handle("OnUpdate",nil)
             self:Handle("OnUpdate",VUpdate)
         end
+				if self.holdtime < MENUHOLDWAIT/2 then
+					DPrint("hold for menu")
+				end
         self.holdtime = self.holdtime - elapsed
     end
 end
@@ -348,7 +361,7 @@ function HoldTrigger(self) -- for long tap
 end
 
 function DeTrigger(self) -- for long tap
-    -- self.eventlist["OnUpdate"].currentevent = nil
+    self.eventlist["OnUpdate"].currentevent = nil
     self:Handle("OnUpdate",nil)
     self:Handle("OnUpdate",VUpdate)
 end
@@ -356,6 +369,9 @@ end
 
 function VMove(self)
 	DPrint("moved")
+	-- if self.menu ~= nil then
+	-- 	CloseMenu(self)
+	-- end
 end
 
 function CallEvents(signal,vv)
@@ -368,11 +384,19 @@ function CallEvents(signal,vv)
     for k = 1,#list do
         list[k](vv)
     end
+		
+		-- fire off messages to linked regions
+		list = vv.links[signal]
+		if list ~= nil then
+			for k = 1,#list do
+				list[k][1](list[k][2])
+			end
+		end
 end
 
 function VTouchDown(self)
   CallEvents("OnTouchDown",self)
-	DPrint("touched down")
+	-- DPrint("hold for menu")
 	self.shadow:MoveToTop()
 	self.shadow:SetLayer("MEDIUM")
 	self:MoveToTop()
@@ -394,8 +418,14 @@ function VDoubleTap(self)
 end
 
 function VTouchUp(self)
-	DPrint("touched up")
-	hold_region = false
+	
+	if initialLinkRegion == nil then
+		DPrint("")
+		hold_region = false
+	else
+		EndLinkRegion(self)
+		initialLinkRegion = nil
+	end
   CallEvents("OnTouchUp",self)
 end
 
@@ -407,13 +437,12 @@ end
 -- end
 	
 function AddOneToCounter(self)
-	DPrint("adding one")
+	-- DPrint("adding one")
 	if self.counter == 1 then
 		self.value = self.value + 1
 		self.tl:SetLabel(self.value)
 	end
 end
-
 
 function SwitchRegionType(self) -- TODO: change method name to reflect
 	-- switch from normal region to a counter
@@ -421,7 +450,7 @@ function SwitchRegionType(self) -- TODO: change method name to reflect
 	self.value = 0
 	self.counter = 1
   self.tl:SetLabel(self.value)
-  self.tl:SetFontHeight(40)
+  self.tl:SetFontHeight(42)
   self.tl:SetColor(255,255,255,255) 
   self.tl:SetHorizontalAlign("JUSTIFY")
   self.tl:SetVerticalAlign("MIDDLE")
@@ -431,10 +460,24 @@ function SwitchRegionType(self) -- TODO: change method name to reflect
 	
 	-- TESTING: just for testing counter:
   table.insert(self.eventlist["OnTouchUp"], AddOneToCounter)
+	
+	CloseMenu(self)
 end
 	
 function StartLinkRegion(self)
-	-- TODO
+	DPrint("Tap another region to link")
+	initialLinkRegion = self
+end
+
+function EndLinkRegion(self)
+	if initialLinkRegion ~= nil then
+		DPrint("linked from "..initialLinkRegion:Name().." to "..self:Name())
+		-- TODO create the link here!
+		table.insert(initialLinkRegion.links["OnTouchUp"], {VTouchUp, self})
+		CloseMenu(initialLinkRegion)
+		
+		initialLinkRegion = nil
+	end
 end
 	
 function RemoveV(vv)
@@ -448,7 +491,8 @@ function RemoveV(vv)
     --     end
     --     regions[vv.text_sharee].text_sharee = -1
     -- end
-    
+		CloseMenu(vv)
+		
     PlainVRegion(vv)
     vv:EnableInput(false)
     vv:EnableMoving(false)
