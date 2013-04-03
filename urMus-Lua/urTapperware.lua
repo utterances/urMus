@@ -12,7 +12,8 @@
 -- ==================================
 
 CREATION_MARGIN = 40	-- margin for creating via tapping
-INITSIZE = 160	-- initial size for regions
+INITSIZE = 150	-- initial size for regions
+MENUHOLDWAIT = 0.5 -- seconds to wait for hold to menu
 
 regions = {}
 recycledregions = {}
@@ -27,6 +28,67 @@ dofile(SystemPath("urTapperwareMenu.lua"))
 -- ============
 -- = Backdrop =
 -- ============
+
+function TouchDown(self)
+	local x,y = InputPosition()
+	
+	shadow:Show()
+	shadow:SetAnchor('CENTER',x,y)
+  -- DPrint("release to create region")
+		
+end
+	
+function TouchUp(self)
+	shadow:Hide()
+	DPrint("")
+ 	-- DPrint("MU")
+  -- CloseSharedStuff(nil)
+    
+	-- only create if we are not too close to the edge
+  local x,y = InputPosition()
+
+	-- if hold_region then
+	-- 	DrawConnection(x,y,hold_x,hold_y)
+	-- 	backdrop:Show()
+	-- 	DPrint("line"..x..","..y.."-"..hold_x..","..hold_y)
+	-- else
+		-- backdrop:Hide()
+		
+		if x>CREATION_MARGIN and x<ScreenWidth()-CREATION_MARGIN and 
+			y>CREATION_MARGIN and y<ScreenHeight()-CREATION_MARGIN then
+			local region = CreateorRecycleregion('region', 'backdrop', UIParent)
+			region:Show()
+			region:SetAnchor("CENTER",x,y)
+			-- DPrint(region:Name().." created, centered at "..x..", "..y)
+		end
+	-- end
+end
+
+function Move(self)
+	local x,y = InputPosition()
+	
+	-- if hold_region then
+	-- 	DrawConnection(x,y,hold_x,hold_y)
+	-- 	backdrop:Show()
+	-- 	DPrint("line"..x..","..y.."-"..hold_x..","..hold_y)
+	-- else
+		-- backdrop:Hide()
+		if x>CREATION_MARGIN and x<ScreenWidth()-CREATION_MARGIN and 
+			y>CREATION_MARGIN and y<ScreenHeight()-CREATION_MARGIN then
+			shadow:SetAnchor('CENTER',x,y)
+			shadow:Show()
+		  -- DPrint("release to create region")
+		else
+			shadow:Hide()
+			DPrint("")
+		end
+	-- end
+end
+
+function Leave(self)
+	shadow:Hide()
+	DPrint("")
+end
 
 backdrop = Region('region', 'backdrop', UIParent)
 backdrop:SetWidth(ScreenWidth())
@@ -72,74 +134,15 @@ backdrop:Show()
 -- set up shadow for when tap down and hold, show future region creation location
 shadow = Region('region', 'shadow', UIParent)
 shadow:SetLayer("BACKGROUND")
-shadow.t = shadow:Texture()
-shadow.t:SetTexture(95,110,120,100)
+shadow.t = shadow:Texture("tw_roundrec_create.png")
+-- shadow.t:SetTexture(195,210,220,100)
 shadow.t:SetBlendMode("BLEND")
 
 -- ==========================
 -- = Global event functions =
 -- ==========================
 
-function TouchDown(self)
-	local x,y = InputPosition()
-	
-	shadow:Show()
-	shadow:SetAnchor('CENTER',x,y)
-  DPrint("release to create region")
-		
-end
-	
-function TouchUp(self)
-	shadow:Hide()
-	DPrint("")
- 	-- DPrint("MU")
-  -- CloseSharedStuff(nil)
-    
-	-- only create if we are not too close to the edge
-  local x,y = InputPosition()
 
-	-- if hold_region then
-	-- 	DrawConnection(x,y,hold_x,hold_y)
-	-- 	backdrop:Show()
-	-- 	DPrint("line"..x..","..y.."-"..hold_x..","..hold_y)
-	-- else
-		-- backdrop:Hide()
-		
-		if x>CREATION_MARGIN and x<ScreenWidth()-CREATION_MARGIN and 
-			y>CREATION_MARGIN and y<ScreenHeight()-CREATION_MARGIN then
-			local region = CreateorRecycleregion('region', 'backdrop', UIParent)
-			region:Show()
-			region:SetAnchor("CENTER",x,y)
-			DPrint(region:Name().." created, centered at "..x..", "..y)
-		end
-	-- end
-end
-
-function Move(self)
-	local x,y = InputPosition()
-	
-	-- if hold_region then
-	-- 	DrawConnection(x,y,hold_x,hold_y)
-	-- 	backdrop:Show()
-	-- 	DPrint("line"..x..","..y.."-"..hold_x..","..hold_y)
-	-- else
-		-- backdrop:Hide()
-		if x>CREATION_MARGIN and x<ScreenWidth()-CREATION_MARGIN and 
-			y>CREATION_MARGIN and y<ScreenHeight()-CREATION_MARGIN then
-			shadow:SetAnchor('CENTER',x,y)
-			shadow:Show()
-		  DPrint("release to create region")
-		else
-			shadow:Hide()
-			DPrint("")
-		end
-	-- end
-end
-
-function Leave(self)
-	shadow:Hide()
-	DPrint("")
-end
 
 -- ===================
 -- = Region Creation =
@@ -154,6 +157,7 @@ function CreateorRecycleregion(ftype, name, parent)
         -- region:EnableResizing(true)
         region:EnableInput(true)
         region.usable = 1
+				region.t:SetTexture("tw_roundrec.png")	-- reset texture
     else
         region = VRegion(ftype, name, parent, #regions+1)
         table.insert(regions,region)
@@ -175,31 +179,33 @@ function VRegion(ttype,name,parent,id) -- customized initialization of region
 	r_s:SetLayer("MEDIUM")
 	r_s:Show()
 	
-    local r = Region(ttype,"R#"..id,parent)
-    r.tl = r:TextLabel()
-    r.t = r:Texture("tw_roundrec.png")
-		r:SetLayer("MEDIUM")
-		r.shadow = r_s
-		r.shadow:SetAnchor("CENTER",r,"CENTER",0,0) 
-    -- initialize for regions{} and recycledregions{}
-    r.usable = 1
-    r.id = id
-    PlainVRegion(r)
-    
-    r:EnableMoving(true)
-    -- r:EnableResizing(true)
-    r:EnableInput(true)
-    
-    r:Handle("OnDoubleTap",VDoubleTap)
-    r:Handle("OnTouchDown",VTouchDown)
-    r:Handle("OnTouchUp",VTouchUp)
-    r:Handle("OnMove",VMove)
-			
-    return r
+  local r = Region(ttype,"R#"..id,parent)
+  r.tl = r:TextLabel()
+  r.t = r:Texture("tw_roundrec.png")
+	r:SetLayer("MEDIUM")
+	r.shadow = r_s
+	r.shadow:SetAnchor("CENTER",r,"CENTER",0,0) 
+  -- initialize for regions{} and recycledregions{}
+  r.usable = 1
+  r.id = id
+  PlainVRegion(r)
+  
+  r:EnableMoving(true)
+  -- r:EnableResizing(true)
+  r:EnableInput(true)
+  
+  r:Handle("OnDoubleTap",VDoubleTap)
+  r:Handle("OnTouchDown",VTouchDown)
+  r:Handle("OnTouchUp",VTouchUp)
+  r:Handle("OnMove",VMove)
+		
+  return r
 end
 
 function PlainVRegion(r) -- customized parameter initialization of region, events are initialized in VRegion()
     -- r.selected = 0 -- for multiple selection of menubar
+		r.menu = nil
+		r.counter = 0
     -- r.kbopen = 0 -- for keyboard isopen
     -- 
     -- -- initialize for events and signals
@@ -207,7 +213,7 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
     -- r.eventlist["OnTouchDown"] = {HoldTrigger,CloseSharedStuff,SelectObj,AddAnchorIcon}
     r.eventlist["OnTouchDown"] = {HoldTrigger}
     r.eventlist["OnTouchUp"] = {DeTrigger} 
-    -- r.eventlist["OnDoubleTap"] = {CloseSharedStuff,OpenOrCloseKeyboard} 
+    r.eventlist["OnDoubleTap"] = {} --{CloseSharedStuff,OpenOrCloseKeyboard} 
     -- r.eventlist["OnUpdate"] = {} 
     -- r.eventlist["OnUpdate"]["selfshowhide"] = 0
     -- r.eventlist["OnUpdate"]["selfcolor"] = 0
@@ -296,23 +302,23 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
     r:SetWidth(INITSIZE)
     r:SetHeight(INITSIZE)
     
-    -- anchor
-    r.fixed = 0
-    -- AddAnchorIcon(r)
-    
-    -- move controller
-    r.left_controller = nil
-    r.right_controller = nil
-    r.up_controller = nil
-    r.down_controller = nil
-    
-    -- global text exchange
-    r.is_text_sender = 0
-    r.is_text_receiver = 0
-    r.text_sharee = -1
-    
-    -- stickboundary
-    r.stickboundary = "none"
+    -- -- anchor
+    -- r.fixed = 0
+    -- -- AddAnchorIcon(r)
+    -- 
+    -- -- move controller
+    -- r.left_controller = nil
+    -- r.right_controller = nil
+    -- r.up_controller = nil
+    -- r.down_controller = nil
+    -- 
+    -- -- global text exchange
+    -- r.is_text_sender = 0
+    -- r.is_text_receiver = 0
+    -- r.text_sharee = -1
+    -- 
+    -- -- stickboundary
+    -- r.stickboundary = "none"
 end
 
 function HoldToTrigger(self, elapsed) -- for long tap
@@ -321,8 +327,8 @@ function HoldToTrigger(self, elapsed) -- for long tap
     if self.holdtime <= 0 then
         self.x = x 
         self.y = y
-        DPrint("Menu Opened. Use HOLD to select multiple Vs.")
-        OpenMenu(self)
+        -- DPrint("Menu Opened. Use HOLD to select multiple Vs.")
+        OpenRegionMenu(self)
         self:Handle("OnUpdate",nil)
     else 
         if math.abs(self.x - x) > 10 or math.abs(self.y - y) > 10 then
@@ -334,11 +340,17 @@ function HoldToTrigger(self, elapsed) -- for long tap
 end
 
 function HoldTrigger(self) -- for long tap
-    self.holdtime = 0.5
+    self.holdtime = MENUHOLDWAIT
     self.x,self.y = self:Center()
     self:Handle("OnUpdate",nil)
     self:Handle("OnUpdate",HoldToTrigger)
     self:Handle("OnLeave",DeTrigger)
+end
+
+function DeTrigger(self) -- for long tap
+    -- self.eventlist["OnUpdate"].currentevent = nil
+    self:Handle("OnUpdate",nil)
+    self:Handle("OnUpdate",VUpdate)
 end
 
 
@@ -362,16 +374,22 @@ function VTouchDown(self)
   CallEvents("OnTouchDown",self)
 	DPrint("touched down")
 	self.shadow:MoveToTop()
+	self.shadow:SetLayer("MEDIUM")
 	self:MoveToTop()
+	self:SetLayer("MEDIUM")
 	hold_region = true
 	local x,y = InputPosition()
 	hold_x = x
 	hold_y = y
+	
+	-- bring menu up if they are already open
+	if self.menu ~= nil then
+		RaiseMenu(self)
+	end
 end
 
-
-
 function VDoubleTap(self)
+	DPrint("double tapped")
     CallEvents("OnDoubleTap",self)
 end
 
@@ -381,11 +399,42 @@ function VTouchUp(self)
   CallEvents("OnTouchUp",self)
 end
 
-function DrawConnection(x1,y1,x2,y2)
-	backdrop.t = backdrop:Texture('gridback.jpg')
-	backdrop.t:SetBrushColor(100,255,190,255)
-	backdrop.t:SetBrushSize(3)
-	backdrop.t:Line(x1, y1, x2, y2)
+-- function DrawConnection(x1,y1,x2,y2)
+-- 	backdrop.t = backdrop:Texture('gridback.jpg')
+-- 	backdrop.t:SetBrushColor(100,255,190,255)
+-- 	backdrop.t:SetBrushSize(3)
+-- 	backdrop.t:Line(x1, y1, x2, y2)
+-- end
+	
+function AddOneToCounter(self)
+	DPrint("adding one")
+	if self.counter == 1 then
+		self.value = self.value + 1
+		self.tl:SetLabel(self.value)
+	end
+end
+
+
+function SwitchRegionType(self) -- TODO: change method name to reflect
+	-- switch from normal region to a counter
+	self.t:SetTexture("tw_roundrec_slate.png")
+	self.value = 0
+	self.counter = 1
+  self.tl:SetLabel(self.value)
+  self.tl:SetFontHeight(40)
+  self.tl:SetColor(255,255,255,255) 
+  self.tl:SetHorizontalAlign("JUSTIFY")
+  self.tl:SetVerticalAlign("MIDDLE")
+  self.tl:SetShadowColor(10,10,10,255)
+  self.tl:SetShadowOffset(1,1)
+  self.tl:SetShadowBlur(1)
+	
+	-- TESTING: just for testing counter:
+  table.insert(self.eventlist["OnTouchUp"], AddOneToCounter)
+end
+	
+function StartLinkRegion(self)
+	-- TODO
 end
 	
 function RemoveV(vv)
@@ -410,6 +459,18 @@ function RemoveV(vv)
     table.insert(recycledregions, vv.id)
     DPrint(vv:Name().." removed")
 end
+
+-- function CloseRegion(self)
+-- 	DPrint("touched close")
+-- end
+-- 
+-- function LinkRegion(r)
+-- 	DPrint("initiating linking")
+-- end
+-- 
+-- function SwitchRegionType(r)
+-- 	DPrint("switch type")
+-- end
 
 ----------------- v11.pagebutton -------------------
 local pagebutton=Region('region', 'pagebutton', UIParent)

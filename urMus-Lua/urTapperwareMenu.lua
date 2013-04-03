@@ -7,97 +7,209 @@
 -- ============================
 -- we need region specific menu for hooking up signals(sender and receiver), and then creation menu
 
-function_list = {}
+BUTTONSIZE = 56	-- on screen size in points/pixels
+BUTTONOFFSET = 3
+BUTTONIMAGESIZE = 80		-- size of the square icon image
 
-function_list = {{"Close",CloseRegion,{}},
-        {"Link",LinkRegion,{}},
-        {"SwitchType",SwitchRegionType,{}}
+function testMenu(self)
+	DPrint("touched menu on"..self:Name())
+end
+
+function CloseRegion(self)
+	DPrint("touched close")
+	RemoveV(self)
+end
+
+function StartLinkRegionAction(r)
+	DPrint("initiating linking")
+	StartLinkRegion(r)
+end
+
+function SwitchRegionTypeAction(r)
+	DPrint("switch type")
+	SwitchRegionType(r)
+end
+
+-- radial menu layout:
+-- 1 2 3
+-- 4 9 5
+-- 6 7 8
+
+local buttonLocation = {
+	[1]={"TOPLEFT", BUTTONOFFSET, -BUTTONOFFSET},
+	[3]={"TOPRIGHT", -BUTTONOFFSET, -BUTTONOFFSET},
+	[4]={"LEFT", BUTTONOFFSET, 0},
+	[6]={"BOTTOMLEFT", BUTTONOFFSET, BUTTONOFFSET},
+	[7]={"BOTTOM", 0, BUTTONOFFSET},	
+	[8]={"BOTTOMRIGHT", -BUTTONOFFSET, BUTTONOFFSET},
+	[9]={"CENTER", 0, 0}
 }
 
 local regionMenu = {}
-regionMenu.parentRegion = {}
-deleteButton = Region('region','menu',UIParent)
-deleteButton.t = deleteButton:Texture("tw_closebox.png")
-deleteButton:SetHeight(40)
-deleteButton:SetWidth(40)
-deleteButton.t:SetBlendMode("BLEND")
-regionMenu.deleteButton = deleteButton
--- regionMenu.menus = function_list -- TODO: add the list here
--- regionMenu.v = nil -- caller v
--- regionMenu.openmenu = -1
--- regionMenu.show = 0
--- regionMenu.selectedregions = {}
--- 
--- for k,name in pairs (regionMenu.menus) do
---     local r = Region('region','menu',UIParent)
---     r.tl = r:TextLabel()
---     r.tl:SetLabel(regionMenu.menus[k][1])
---     r.tl:SetFontHeight(18)
--- 		-- r.tl:SetFont("Avenir")
---     r.tl:SetColor(0,0,0,255) 
---     r.tl:SetHorizontalAlign("JUSTIFY")
---     r.tl:SetShadowColor(255,255,255,255)
---     r.tl:SetShadowOffset(1,1)
---     r.tl:SetShadowBlur(1)
---     r.t = r:Texture(250,250,250,255)
---     r.k = k
---     r.boss = regionMenu
---     r.menu = Menu.Create(r,"",regionMenu.menus[k][2],"BOTTOMLEFT","TOPLEFT")
---     r:SetWidth((ScreenWidth()-2*HEIGHT_LINE)/#regionMenu.menus)
---     r:SetHeight(HEIGHT_LINE)
---     r:EnableInput(false)
---     r:EnableMoving(false)
---     r:EnableResizing(false)
---     r:Handle("OnTouchDown",OpenOrCloseMenubarItemEvent)
---     regionMenu[k] = r
--- end
+-- label, func, anchor relative to region, image file
+regionMenu.cmdList = {
+	{"", CloseRegion, 1, "tw_closebox.png"},
+	{"TAP", StartLinkRegionAction, 3, "tw_socket1.png"},
+	{"", SwitchRegionTypeAction, 4, "tw_varswitcher.png"},
+	{"", testMenu, 6, "tw_timer.png"},
+	{"", testMenu, 7, "tw_paint.png"},
+	{"", testMenu, 8, "tw_run.png"},
+}
 
--- regionMenu:SetAnchor("BOTTOMLEFT",UIParent,"BOTTOMLEFT")
--- for i=2,#regionMenu do
---     regionMenu[i]:SetAnchor("LEFT",regionMenu[i-1],"RIGHT")
---     regionMenu[i]:Hide()
--- end
-regionMenu.deleteButton:SetAnchor("BOTTOMLEFT", UIParent, "BOTTOMLEFT")
--- regionMenu.deleteButton:Hide()
--- regionMenu:Hide()
+local regionConMenu = {}
+-- label, func, anchor relative to region, image file
+regionConMenu.cmdList = {
+	{"Close", CloseRegion, 1, "tw_closebox.png"},
+	{"ReceiveLink", ReceiveLinkRegion, 4, "tw_socket2.png"}
+}
+
+-- initialize regionMenu graphics
+regionMenu.items = {}
+
+for k,item in pairs(regionMenu.cmdList) do
+	label = item[1]
+	func = item[2]
+	anchor = item[3]
+	image = item[4]
+	
+  local r = Region('region','menu',UIParent)
+  r.tl = r:TextLabel()
+  r.tl:SetLabel(label)
+  r.tl:SetFontHeight(12)
+  r.tl:SetColor(0,0,0,255) 	
+	r.t = r:Texture(image)
+	r.t:SetTexCoord(0,BUTTONIMAGESIZE/128,BUTTONIMAGESIZE/128,0)
+	r.t:SetBlendMode("BLEND")
+	-- r:SetAnchor(anchor, UIParent)
+	r:SetLayer("TOOLTIP")
+	r:SetHeight(BUTTONSIZE)
+	r:SetWidth(BUTTONSIZE)
+	r:MoveToTop()
+	-- r:Show()
+	r:Hide()
+	-- r:Handle("OnTouchDown",OptEventFunc)
+	
+	r.func = func
+	r.anchorpos = anchor
+	r.parent = regionMenu
+	table.insert(regionMenu.items, r)
+end
+regionMenu.show = 0
+regionMenu.v = nil
 
 
+-- initialize connection receiver menu graphics
+regionConMenu.items = {}
+
+for k,item in pairs(regionConMenu.cmdList) do
+	label = item[1]
+	func = item[2]
+	anchor = item[3]
+	image = item[4]
+	
+  local r = Region('region','menu',UIParent)
+  r.tl = r:TextLabel()
+  -- r.tl:SetLabel(label)
+  r.tl:SetFontHeight(13)
+  r.tl:SetColor(0,0,0,255) 	
+	r.t = r:Texture(image)
+	r.t:SetTexCoord(0,BUTTONIMAGESIZE/128,BUTTONIMAGESIZE/128,0)
+	r.t:SetBlendMode("BLEND")
+	-- r:SetAnchor(anchor, UIParent)
+	r:SetLayer("TOOLTIP")
+	r:SetHeight(BUTTONSIZE)
+	r:SetWidth(BUTTONSIZE)
+	r:MoveToTop()
+	-- r:Show()
+	r:Hide()
+	r:Handle("OnTouchDown",OptEventFunc)
+	
+	r.func = func
+	r.anchorpos = anchor
+	table.insert(regionConMenu.items, r)
+end
+regionConMenu.show = 0
 
 function OpenMenu(self)
-    if regionMenu.show == 0 then
-        for i = 1,#regionMenu do
-            regionMenu[i]:Show()
-            regionMenu[i]:EnableInput(true)
-            regionMenu[i]:MoveToTop()
-        end
-        regionMenu.v = self
-        
-        while #regionMenu.selectedregions > 0 do
-            regions[regionMenu.selectedregions[1]].selected = 0
-            table.remove(regionMenu.selectedregions,1)
-        end
-        table.insert(regionMenu.selectedregions,self.id)
-        self.selected = 1
-        regionMenu.show = 1
-        CloseColorWheel(color_wheel)
-        mykb:Hide()
-        backdrop:SetClipRegion(0,HEIGHT_LINE,ScreenWidth(),ScreenHeight())
-        hold_button:Show()
-        hold_button:MoveToTop()
-        hold_button:EnableInput(true)
+
+  -- if regionMenu.show == 0 then
+		DPrint("opens menu!")
+		
+    regionMenu.v = self
+		
+    for i = 1,#regionMenu.items do
+        regionMenu.items[i]:Show()
+        regionMenu.items[i]:EnableInput(true)
+				-- regionMenu.items[i]:Handle("OnTouchDown", testMenu)
+        regionMenu.items[i]:Handle("OnTouchUp", OptEventFunc)
+        regionMenu.items[i]:MoveToTop()
+				pos = regionMenu.items[i].anchorpos
+				regionMenu.items[i]:SetAnchor("CENTER", self,
+																			buttonLocation[pos][1],
+																			buttonLocation[pos][2],
+																			buttonLocation[pos][3])
     end
+      
+		self.menu = regionMenu
+    -- regionMenu.show = 1
+  -- end
 end
 
-function CloseMenuBar(self)
-    if regionMenu.openmenu ~= -1 then
-        regionMenu[regionMenu.openmenu].menu:CloseMenu()
-        regionMenu.openmenu = -1 
-    end
-    CloseMenubarHelper()
-    regionMenu.v = nil
-    hold_button:Hide()
-    hold_button:EnableInput(false)
+function OpenRegionMenu(self)
+	OpenMenu(self, regionMenu)
 end
+
+-- keep menu on top of pesky things, like regions
+function RaiseMenu(self)
+  -- if regionMenu.show == 1 then
+    for i = 1,#regionMenu.items do
+        regionMenu.items[i]:MoveToTop()
+    end
+	-- end
+end
+
+function CloseMenu(self)
+  -- if regionMenu.show == 1 then
+    for i = 1,#regionMenu.items do
+        regionMenu.items[i]:Hide()
+        regionMenu.items[i]:EnableInput(false)
+        -- regionMenu.items[i]:MoveToTop()
+				-- regionMenu.items[i]:SetAnchor(regionMenu.items[i].anchorpos, self, "CENTER")
+    end
+		regionMenu.show = 0
+		regionMenu.v = nil
+		self.menu = nil
+	-- end
+end
+
+
+
+-- this actually calls all the menu function on the right region(s)
+function OptEventFunc(self)
+	-- DPrint("optevent func")
+	
+	local target = self.parent.v
+	CloseMenu(target)
+	self.func(target)
+    -- Highlight(self)
+    -- first close other opened menu options
+    -- if self.parent.openopt ~= self.k and self.parent.openopt ~= -1 and #self.parent[self.parent.openopt].menu > 0 then
+    --     self.parent[self.parent.openopt].menu:CloseMenu()
+    -- end
+    
+    -- self.parent.openopt = self.k
+    -- if self.func == OpenOrCloseMenu then -- when there is sub-menu
+    --     OpenOrCloseMenu(self)
+    -- else
+    --     for k,i in pairs (self.boss.selectedregions) do
+    --         self.func(self,regions[i])
+    --     end
+    -- end
+end
+
+-- ==========================
+-- = Menu command functions =
+-- ==========================
 
 
 
@@ -201,13 +313,13 @@ end
 function MenuMoving(opt,vv)
     OpenMyDialog(vv)
     UnHighlight(opt)
-    CloseMenuBar()
+    CloseMenu()
 end
 
 function menuGradient(opt,vv)
     OpenGradDialog(vv,pics)
     UnHighlight(opt)
-    CloseMenuBar()
+    CloseMenu()
 end
 
 function MenuSelfFly(opt,vv) 
@@ -222,7 +334,7 @@ function MenuSelfFly(opt,vv)
     StartMoving(vv,1)
     DPrint(vv:Name().." randomly flies. Click it to stop.")
     UnHighlight(opt)
-    CloseMenuBar()
+    CloseMenu()
 end
 
 function SelfShowHideEvent(self,e) -- event called with OnUpdate
@@ -248,7 +360,7 @@ function MenuSelfShowHide(opt,vv)
     vv:Handle("OnUpdate",VUpdate)
     DPrint(vv:Name().." randomly shows and hides. Click it to stop.")
     UnHighlight(opt)
-    CloseMenuBar()
+    CloseMenu()
 end
 
 function MenuStickBoundary(opt,vv)
@@ -284,5 +396,5 @@ function MenuFPS(opt, vv)
     vv.fps = 0
     vv.sec = 0
     UnHighlight(opt)
-    CloseMenuBar()
+    CloseMenu()
 end
