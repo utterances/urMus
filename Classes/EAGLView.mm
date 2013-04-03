@@ -25,6 +25,7 @@
 #import "httpServer.h"
 #include <arpa/inet.h>
 
+#define DEGREES_TO_RADIANS(x) (M_PI * x / 180.0)
 
 #define SLEEPER
 /* If GPUIMAGE is used or not is defined in EAGLView.h" */
@@ -646,7 +647,8 @@ void decCameraUseBy(int dec)
         rotateFilter = NULL;
     }
     rotateFilter = [[GPUImageTransformFilter alloc] init];
-    [rotateFilter setAffineTransform:CGAffineTransformMakeRotation(0)];
+//    [rotateFilter setAffineTransform:CGAffineTransformMakeRotation(DEGREES_TO_RADIANS(180))];
+    [rotateFilter setAffineTransform:CGAffineTransformScale(CGAffineTransformMakeRotation(DEGREES_TO_RADIANS(0)), 1, 1)];
     [textureInput addTarget:rotateFilter];
     [rotateFilter addTarget:movieWriter];
     // kGPUImageRotateRightFlipVertical
@@ -656,12 +658,12 @@ void decCameraUseBy(int dec)
     
     [movieWriter setCompletionBlock:^{
 //        [textureInput removeTarget:movieWriter];
-        [textureInput removeAllTargets];
-        [movieWriter finishRecording];
+//        [textureInput removeAllTargets];
+//        [movieWriter finishRecording];
 //        [textureInput dealloc];
-        [movieWriter dealloc];
-        [rotateFilter dealloc];
-        rotateFilter = NULL;
+//        [movieWriter dealloc];
+//        [rotateFilter dealloc];
+//        rotateFilter = NULL;
     }];
 }
 
@@ -689,10 +691,20 @@ void decCameraUseBy(int dec)
     cropfilter = [[GPUImageCropFilter alloc] initWithCropRegion:CGRectMake(0.0,0.0,1.0,1.0)];
     [cropfilter setCropRegion:crop];
     [textureInput addTarget:cropfilter];
-    [cropfilter addTarget:movieWriter];
+    if(rotateFilter != NULL)
+    {
+        [rotateFilter dealloc];
+        rotateFilter = NULL;
+    }
+    rotateFilter = [[GPUImageTransformFilter alloc] init];
+    [rotateFilter setAffineTransform:CGAffineTransformScale(CGAffineTransformMakeRotation(DEGREES_TO_RADIANS(180)), -1, 1)];
+//    [rotateFilter setAffineTransform:CGAffineTransformMake(CGRectGetWidth(crop),0,CGRectGetHeight(crop),0,0,0)];
+    [cropfilter addTarget:rotateFilter];
+    [rotateFilter addTarget:movieWriter];
     // kGPUImageRotateRightFlipVertical
 //    [textureInput addTarget:movieWriter];
-    [movieWriter setInputRotation:kGPUImageFlipVertical atIndex:0];
+//    [movieWriter setInputRotation:kGPUImageFlipVertical atIndex:0];
+    [movieWriter setInputRotation:kGPUImageFlipHorizonal atIndex:0];
     [movieWriter startRecording];
     
     [movieWriter setCompletionBlock:^{
@@ -717,7 +729,15 @@ void decCameraUseBy(int dec)
     long w=size.width;
     long h=size.height;
     
-    assert(!movieWriter);
+    if(movieWriter)
+    {
+        char errorstrbuf[120];
+        sprintf(errorstrbuf,"Recording of a movie is currently in progress.\nCall FinishMovie() before starting a new movie recording.");
+        errorstr = errorstrbuf;
+        newerror = true;
+        ur_Log(errorstr.c_str());
+        return;
+    }
     
     movieWriter = [[GPUImageMovieWriter alloc] initWithMovieURL:movieURL size:CGSizeMake(w,h)];
     
@@ -751,8 +771,16 @@ void decCameraUseBy(int dec)
     if(w < 128) w = 128; // Crash prevention initiative (donate to "UsingBuggyLibraryFund")
     if(h < 128) h = 128;
     
-    assert(!movieWriter);
-
+    if(movieWriter)
+    {
+        char errorstrbuf[120];
+        sprintf(errorstrbuf,"Recording of a movie is currently in progress.\nCall FinishMovie() before starting a new movie recording.");
+        errorstr = errorstrbuf;
+        newerror = true;
+        ur_Log(errorstr.c_str());
+        return;
+    }
+    
     movieWriter = [[GPUImageMovieWriter alloc] initWithMovieURL:movieURL size:CGSizeMake(w,h)];
 
     
@@ -794,14 +822,14 @@ void decCameraUseBy(int dec)
     
     if(cropfilter != NULL)
     {
-       [cropfilter removeTarget:movieWriter];
+       [cropfilter removeAllTargets];
        [cropfilter dealloc];
         cropfilter = NULL;
     }
     
     if(rotateFilter != NULL)
     {
-        [rotateFilter removeTarget:movieWriter];
+        [rotateFilter removeAllTargets];
        [rotateFilter dealloc];
         rotateFilter = NULL;
     }

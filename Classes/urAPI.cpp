@@ -339,6 +339,7 @@ bool callScriptWithOscArgs(enum eventIDs event, int func_ref, urAPI_Region_t* re
         std::string eventstr(urEventNames[event]);
 		errorstr = eventstr+error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
 	
@@ -364,6 +365,7 @@ bool callScriptWith5Args(enum eventIDs event, int func_ref, urAPI_Region_t* regi
 		const char* error = lua_tostring(lua, -1);
 		errorstr = error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
 	
@@ -390,6 +392,7 @@ bool callScriptWith4Args(enum eventIDs event, int func_ref, urAPI_Region_t* regi
 		errorstr = eventstr+": "+error; // DPrinting errors for now
 		errorstr = error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
 	
@@ -414,6 +417,7 @@ bool callScriptWith3Args(enum eventIDs event, int func_ref, urAPI_Region_t* regi
         std::string eventstr(urEventNames[event]);
 		errorstr = eventstr+": "+error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
 	
@@ -440,6 +444,7 @@ bool callScriptWith2Args(enum eventIDs event, int func_ref, urAPI_Region_t* regi
         else
             errorstr = eventstr+": Unknown error";
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
 	
@@ -463,6 +468,7 @@ bool callScriptWith1Args(enum eventIDs event, int func_ref, urAPI_Region_t* regi
         std::string eventstr(urEventNames[event]);
 		errorstr = eventstr+": "+error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
     
@@ -486,6 +492,7 @@ bool callScriptWith1Global(enum eventIDs event, int func_ref, urAPI_Region_t* re
         std::string eventstr(urEventNames[event]);
 		errorstr = eventstr+": "+error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
 	
@@ -509,6 +516,7 @@ bool callScriptWith1String(enum eventIDs event, int func_ref, urAPI_Region_t* re
         std::string eventstr(urEventNames[event]);
 		errorstr = eventstr+": "+error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
 	
@@ -533,6 +541,7 @@ bool callScriptWith2String(enum eventIDs event, int func_ref, urAPI_Region_t* re
         std::string eventstr(urEventNames[event]);
 		errorstr = eventstr+": "+error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
 	
@@ -554,6 +563,7 @@ bool callScript(enum eventIDs event, int func_ref, urAPI_Region_t* region)
         std::string eventstr(urEventNames[event]);
 		errorstr = eventstr+": "+error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
     
@@ -813,6 +823,7 @@ bool callScriptWith2ActionTableArgs(enum eventIDs event, int func_ref, urAPI_Reg
 		const char* error = lua_tostring(lua, -1);
 		errorstr = error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
 	
@@ -1452,6 +1463,7 @@ int region_Handle(lua_State* lua)
         {
 			luaL_error(lua, "Trying to set a script for an unknown event: %s",handler);
             newerror = true;
+            ur_Log(errorstr.c_str());
 			return 0; // Error, unknown event
         }
 		return 1;
@@ -1481,6 +1493,7 @@ int region_Handle(lua_State* lua)
                 luaL_unref(lua, LUA_REGISTRYINDEX, func_ref);
                 luaL_error(lua, "Trying to set a script for an unknown event: %s",handler);
                 newerror = true;
+                ur_Log(errorstr.c_str());
                 return 0; // Error, unknown event
             }
 
