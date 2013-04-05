@@ -37,8 +37,10 @@ end
 
 local buttonLocation = {
 	[1]={"TOPLEFT", BUTTONOFFSET, -BUTTONOFFSET},
+	[2]={"TOP", 0, -BUTTONOFFSET},
 	[3]={"TOPRIGHT", -BUTTONOFFSET, -BUTTONOFFSET},
 	[4]={"LEFT", BUTTONOFFSET, 0},
+	[5]={"RIGHT", -BUTTONOFFSET, 0},
 	[6]={"BOTTOMLEFT", BUTTONOFFSET, BUTTONOFFSET},
 	[7]={"BOTTOM", 0, BUTTONOFFSET},	
 	[8]={"BOTTOMRIGHT", -BUTTONOFFSET, BUTTONOFFSET},
@@ -53,7 +55,7 @@ regionMenu.cmdList = {
 	{"", SwitchRegionTypeAction, 4, "tw_varswitcher.png"},
 	{"", testMenu, 6, "tw_timer.png"},
 	{"", testMenu, 7, "tw_paint.png"},
-	{"", testMenu, 8, "tw_run.png"},
+	{"", testMenu, 8, "tw_run.png"}
 }
 
 local linkReceiverMenu = {}
@@ -61,7 +63,10 @@ local linkReceiverMenu = {}
 linkReceiverMenu.cmdList = {
 	{"", CloseRegion, 1, "tw_closebox.png"},
 	{"+", ReceiveLinkRegion, 4, "tw_socket2.png"},
-	{"-", ReceiveLinkRegion, 6, "tw_socket2.png"}
+	{"-", ReceiveLinkRegion, 6, "tw_socket2.png"},
+	{"", testMenu, 3, "tw_unlock"},
+	{"", testMenu, 5, "tw_sound"},
+	{"", testMenu, 8, "tw_more"}
 }
 
 -- initialize regionMenu graphics

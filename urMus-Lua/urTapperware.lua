@@ -13,7 +13,7 @@
 
 CREATION_MARGIN = 40	-- margin for creating via tapping
 INITSIZE = 150	-- initial size for regions
-MENUHOLDWAIT = 0.4 -- seconds to wait for hold to menu
+MENUHOLDWAIT = 0.5 -- seconds to wait for hold to menu
 
 regions = {}
 recycledregions = {}
