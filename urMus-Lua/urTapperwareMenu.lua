@@ -51,7 +51,7 @@ local regionMenu = {}
 -- label, func, anchor relative to region, image file
 regionMenu.cmdList = {
 	{"", CloseRegion, 1, "tw_closebox.png"},
-	{"LINK", StartLinkRegionAction, 3, "tw_socket1.png"},
+	{"Link", StartLinkRegionAction, 3, "tw_socket1.png"},
 	{"", SwitchRegionTypeAction, 4, "tw_varswitcher.png"},
 	{"", testMenu, 6, "tw_timer.png"},
 	{"", testMenu, 7, "tw_paint.png"},
@@ -80,10 +80,12 @@ for k,item in pairs(regionMenu.cmdList) do
 	
   local r = Region('region','menu',UIParent)
   r.tl = r:TextLabel()
-  r.tl:SetLabel(label)
-	-- r.tl:SetVerticalAlign("TOP")
+  r.tl:SetLabel("\n\n"..label)
+	r.tl:SetVerticalAlign("TOP")
+	r.tl:SetHorizontalAlign("CENTER")
 	-- r.tl:SetSpacing(40)
-  r.tl:SetFontHeight(12)
+  r.tl:SetFontHeight(13)
+	r.tl:SetFont("Avenir Next") --"AvenirNext-Medium.ttf")
   r.tl:SetColor(0,0,0,255) 	
 	r.t = r:Texture(image)
 	r.t:SetTexCoord(0,BUTTONIMAGESIZE/128,BUTTONIMAGESIZE/128,0)

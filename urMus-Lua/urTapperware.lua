@@ -17,6 +17,7 @@ MENUHOLDWAIT = 0.5 -- seconds to wait for hold to menu
 
 regions = {}
 recycledregions = {}
+links = {}
 initialLinkRegion = nil
 
 FreeAllRegions()
@@ -113,24 +114,9 @@ backdrop.t:SetBlendMode("BLEND")
 -- backdrop.t:SetFill(true)
 -- backdrop.t:SetBrushColor(150,150,150,255)
 -- backdrop.t:Rect(0,0,ScreenWidth(),ScreenHeight())
-backdrop.t:SetBrushColor(255,100,100,255)
-backdrop.t:Ellipse(ScreenWidth()/2, ScreenHeight()/2, 200, 200)
+-- backdrop.t:SetBrushColor(255,100,100,255)
+-- backdrop.t:Ellipse(ScreenWidth()/2, ScreenHeight()/2, 200, 200)
 backdrop:Show()
-
--- connections = Region('region', 'backdrop', UIParent)
--- connections:SetWidth(ScreenWidth())
--- connections:SetHeight(ScreenHeight())
--- connections:SetLayer("LOW")
--- connections:SetAnchor('BOTTOMLEFT',0,0)
--- connections.t = connections:Texture(0,0,0,255)
--- connections.t:SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
--- connections.t:SetBlendMode("BLEND")
--- 
--- connections.t:SetBrushColor(255,100,100,0)
--- connections.t:Ellipse(ScreenWidth()/2, ScreenHeight()/2, 200, 200)
--- 
--- connections:MoveToTop()
--- connections:Show()
 
 -- set up shadow for when tap down and hold, show future region creation location
 shadow = Region('region', 'shadow', UIParent)
@@ -155,7 +141,7 @@ function CreateorRecycleregion(ftype, name, parent)
         region = regions[recycledregions[#recycledregions]]
         table.remove(recycledregions)
         region:EnableMoving(true)
-        -- region:EnableResizing(true)
+        region:EnableResizing(true)
         region:EnableInput(true)
         region.usable = 1
 				region.t:SetTexture("tw_roundrec.png")	-- reset texture
@@ -177,13 +163,13 @@ function VRegion(ttype,name,parent,id) -- customized initialization of region
   r_s:SetWidth(INITSIZE+70)
   r_s:SetHeight(INITSIZE+70)
 	-- r_s:EnableMoving(true)
-	r_s:SetLayer("MEDIUM")
+	r_s:SetLayer("LOW")
 	r_s:Show()
 	
-  local r = Region(ttype,"R#"..id,parent)
+  local r = Region(ttype,"Region "..id,parent)
   r.tl = r:TextLabel()
   r.t = r:Texture("tw_roundrec.png")
-	r:SetLayer("MEDIUM")
+	r:SetLayer("LOW")
 	r.shadow = r_s
 	r.shadow:SetAnchor("CENTER",r,"CENTER",0,0) 
   -- initialize for regions{} and recycledregions{}
@@ -192,7 +178,7 @@ function VRegion(ttype,name,parent,id) -- customized initialization of region
   PlainVRegion(r)
   
   r:EnableMoving(true)
-  -- r:EnableResizing(true)
+  r:EnableResizing(true)
   r:EnableInput(true)
   
   r:Handle("OnDoubleTap",VDoubleTap)
@@ -298,7 +284,7 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
 		r.t:SetBlendMode("BLEND")
     r.tl:SetLabel(r:Name())
     r.tl:SetFontHeight(16)
-		r.tl:SetFont("Avenir.ttc")
+		r.tl:SetFont("AvenirNext-Medium.ttf")
     r.tl:SetColor(0,0,0,255) 
     r.tl:SetHorizontalAlign("JUSTIFY")
     r.tl:SetVerticalAlign("MIDDLE")
@@ -398,9 +384,9 @@ function VTouchDown(self)
   CallEvents("OnTouchDown",self)
 	-- DPrint("hold for menu")
 	self.shadow:MoveToTop()
-	self.shadow:SetLayer("MEDIUM")
+	self.shadow:SetLayer("LOW")
 	self:MoveToTop()
-	self:SetLayer("MEDIUM")
+	self:SetLayer("LOW")
 	hold_region = true
 	local x,y = InputPosition()
 	hold_x = x

@@ -16,6 +16,8 @@
 		2211BD32170359BC006C42B5 /* tw_shadow.png in Resources */ = {isa = PBXBuildFile; fileRef = 2211BD31170359BC006C42B5 /* tw_shadow.png */; };
 		2211BD3617039D09006C42B5 /* tw_roundrec.png in Resources */ = {isa = PBXBuildFile; fileRef = 2211BD3517039D09006C42B5 /* tw_roundrec.png */; };
 		2211BD381703A7B4006C42B5 /* tw_roundrec_s.png in Resources */ = {isa = PBXBuildFile; fileRef = 2211BD371703A7B4006C42B5 /* tw_roundrec_s.png */; };
+		2231CCEF171298AA00F4EAD2 /* AvenirNext-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2231CCEC171297FE00F4EAD2 /* AvenirNext-Regular.ttf */; };
+		2231CCF1171299A100F4EAD2 /* AvenirNext-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2231CCF0171299A100F4EAD2 /* AvenirNext-Medium.ttf */; };
 		2234782516DFFD4200E9B741 /* Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 2234782416DFFD4200E9B741 /* Icon@2x.png */; };
 		2234782A16DFFD5600E9B741 /* Icon-72.png in Resources */ = {isa = PBXBuildFile; fileRef = 2234782816DFFD5600E9B741 /* Icon-72.png */; };
 		2234782B16DFFD5600E9B741 /* Icon-72@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 2234782916DFFD5600E9B741 /* Icon-72@2x.png */; };
@@ -45,6 +47,8 @@
 		22AB137D170C88DA006402CF /* tw_more.png in Resources */ = {isa = PBXBuildFile; fileRef = 22AB1379170C88DA006402CF /* tw_more.png */; };
 		22AB137E170C88DA006402CF /* tw_sound.png in Resources */ = {isa = PBXBuildFile; fileRef = 22AB137A170C88DA006402CF /* tw_sound.png */; };
 		22AB137F170C88DA006402CF /* tw_unlock.png in Resources */ = {isa = PBXBuildFile; fileRef = 22AB137B170C88DA006402CF /* tw_unlock.png */; };
+		22E579E817150FF000B0EF24 /* urTapper.lua in Resources */ = {isa = PBXBuildFile; fileRef = 22E579E717150FF000B0EF24 /* urTapper.lua */; };
+		22E579EC1715268E00B0EF24 /* urTapperwareLink.lua in Resources */ = {isa = PBXBuildFile; fileRef = 22E579EB1715268E00B0EF24 /* urTapperwareLink.lua */; };
 		23C56097119295D200758BB9 /* html in Resources */ = {isa = PBXBuildFile; fileRef = 23C56095119295D200758BB9 /* html */; };
 		23C5609A119295E200758BB9 /* mongoose.c in Sources */ = {isa = PBXBuildFile; fileRef = 23C56099119295E200758BB9 /* mongoose.c */; };
 		23C5612A1192A56900758BB9 /* httpServer.c in Sources */ = {isa = PBXBuildFile; fileRef = 23C561291192A56900758BB9 /* httpServer.c */; };
@@ -593,6 +597,8 @@
 		2211BD31170359BC006C42B5 /* tw_shadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_shadow.png; path = Textures/tw_shadow.png; sourceTree = "<group>"; };
 		2211BD3517039D09006C42B5 /* tw_roundrec.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_roundrec.png; path = Textures/tw_roundrec.png; sourceTree = "<group>"; };
 		2211BD371703A7B4006C42B5 /* tw_roundrec_s.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_roundrec_s.png; path = Textures/tw_roundrec_s.png; sourceTree = "<group>"; };
+		2231CCEC171297FE00F4EAD2 /* AvenirNext-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "AvenirNext-Regular.ttf"; path = "Textures/AvenirNext-Regular.ttf"; sourceTree = "<group>"; };
+		2231CCF0171299A100F4EAD2 /* AvenirNext-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "AvenirNext-Medium.ttf"; path = "Textures/AvenirNext-Medium.ttf"; sourceTree = "<group>"; };
 		2234782416DFFD4200E9B741 /* Icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon@2x.png"; sourceTree = "<group>"; };
 		2234782816DFFD5600E9B741 /* Icon-72.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-72.png"; sourceTree = "<group>"; };
 		2234782916DFFD5600E9B741 /* Icon-72@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon-72@2x.png"; sourceTree = "<group>"; };
@@ -609,7 +615,6 @@
 		22A87B851709F60400DF29BF /* tw_closebox.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_closebox.png; path = Textures/tw_closebox.png; sourceTree = "<group>"; };
 		22A87B891709FA8A00DF29BF /* tw_socket1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_socket1.png; path = Textures/tw_socket1.png; sourceTree = "<group>"; };
 		22A87B8A1709FA8A00DF29BF /* tw_socket2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_socket2.png; path = Textures/tw_socket2.png; sourceTree = "<group>"; };
-		22A87B8D170A1B3500DF29BF /* Avenir.ttc */ = {isa = PBXFileReference; lastKnownFileType = file; name = Avenir.ttc; path = Textures/Avenir.ttc; sourceTree = "<group>"; };
 		22A87B8E170A1F3900DF29BF /* urTapperwareMenu.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urTapperwareMenu.lua; path = "urMus-Lua/urTapperwareMenu.lua"; sourceTree = "<group>"; };
 		22AB1366170B6D2F006402CF /* tw_varswitcher.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_varswitcher.png; path = Textures/tw_varswitcher.png; sourceTree = "<group>"; };
 		22AB136A170C065E006402CF /* tw_paint.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_paint.png; path = Textures/tw_paint.png; sourceTree = "<group>"; };
@@ -623,6 +628,8 @@
 		22AB1379170C88DA006402CF /* tw_more.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_more.png; path = Textures/tw_more.png; sourceTree = "<group>"; };
 		22AB137A170C88DA006402CF /* tw_sound.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_sound.png; path = Textures/tw_sound.png; sourceTree = "<group>"; };
 		22AB137B170C88DA006402CF /* tw_unlock.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_unlock.png; path = Textures/tw_unlock.png; sourceTree = "<group>"; };
+		22E579E717150FF000B0EF24 /* urTapper.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urTapper.lua; path = "urMus-Lua/urTapper.lua"; sourceTree = "<group>"; };
+		22E579EB1715268E00B0EF24 /* urTapperwareLink.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urTapperwareLink.lua; path = "urMus-Lua/urTapperwareLink.lua"; sourceTree = "<group>"; };
 		23C56095119295D200758BB9 /* html */ = {isa = PBXFileReference; lastKnownFileType = folder; path = html; sourceTree = "<group>"; };
 		23C56098119295E200758BB9 /* mongoose.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mongoose.h; sourceTree = "<group>"; };
 		23C56099119295E200758BB9 /* mongoose.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mongoose.c; sourceTree = "<group>"; };
@@ -2141,6 +2148,8 @@
 				778A7FC413F468FA00846B59 /* urTopBar.lua */,
 				220321A516F7B38800599CFE /* urTapperware.lua */,
 				22A87B8E170A1F3900DF29BF /* urTapperwareMenu.lua */,
+				22E579EB1715268E00B0EF24 /* urTapperwareLink.lua */,
+				22E579E717150FF000B0EF24 /* urTapper.lua */,
 			);
 			name = "urMus-lua";
 			sourceTree = "<group>";
@@ -2322,6 +2331,8 @@
 		77F043941123BC3F00CB8C95 /* Textures */ = {
 			isa = PBXGroup;
 			children = (
+				2231CCEC171297FE00F4EAD2 /* AvenirNext-Regular.ttf */,
+				2231CCF0171299A100F4EAD2 /* AvenirNext-Medium.ttf */,
 				22A87B891709FA8A00DF29BF /* tw_socket1.png */,
 				22AB136A170C065E006402CF /* tw_paint.png */,
 				22AB136B170C065E006402CF /* tw_more.png */,
@@ -2368,7 +2379,6 @@
 				7751496F15ACB00900AD2D2B /* urMus-Intro_1.mp4 */,
 				7710B7DD13FB014300E3D710 /* unlock.png */,
 				7710B7DE13FB014300E3D710 /* lock.png */,
-				22A87B8D170A1B3500DF29BF /* Avenir.ttc */,
 				778A7FB013F45EF700846B59 /* color_map.png */,
 				778A7FB113F45EF700846B59 /* trashbin.png */,
 				778A7FB213F45EF700846B59 /* right.png */,
@@ -2953,6 +2963,10 @@
 				22AB137D170C88DA006402CF /* tw_more.png in Resources */,
 				22AB137E170C88DA006402CF /* tw_sound.png in Resources */,
 				22AB137F170C88DA006402CF /* tw_unlock.png in Resources */,
+				2231CCEF171298AA00F4EAD2 /* AvenirNext-Regular.ttf in Resources */,
+				2231CCF1171299A100F4EAD2 /* AvenirNext-Medium.ttf in Resources */,
+				22E579E817150FF000B0EF24 /* urTapper.lua in Resources */,
+				22E579EC1715268E00B0EF24 /* urTapperwareLink.lua in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
