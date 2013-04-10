@@ -843,9 +843,10 @@ void decCameraUseBy(int dec)
 - (GPUImageMovie *)loadMovie:(NSString*)filename
 {
     NSString *filePath;
-    BOOL fileExists = [[NSFileManager defaultManager] fileExistsAtPath:texturepathstr];
+    BOOL isDir;
+    BOOL fileExists = [[NSFileManager defaultManager] fileExistsAtPath:texturepathstr isDirectory:&isDir];
 
-    if(fileExists)
+    if(fileExists && !isDir)
     {
         filePath = filename;
     }
@@ -854,8 +855,8 @@ void decCameraUseBy(int dec)
         NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
         filePath = [resourcePath stringByAppendingPathComponent:filename];
         
-        fileExists = [[NSFileManager defaultManager] fileExistsAtPath:filePath];
-        if(!fileExists)
+        fileExists = [[NSFileManager defaultManager] fileExistsAtPath:filePath isDirectory:&isDir];
+        if(!fileExists || isDir)
             return nil;
     }
 //    NSURL *movieURL = [[NSBundle mainBundle] URLForResource:filename withExtension:nil];
@@ -3407,12 +3408,55 @@ void freeMovieTexture(urAPI_Region_t* t)
 #endif
 }
 
+char currentmediapath[PATH_MAX];
+
+char* accessiblePathSystemFirst(char* fn)
+{
+//    if(strlen(fn)<1) return NULL;
+    
+    if( access( fn, F_OK ) != -1 ) {
+        return fn;
+        // file exists
+    } else {
+        const char* syspath = getSystemPath();
+        strcpy(currentmediapath,syspath);
+        int len = strlen(currentmediapath);
+        currentmediapath[len]='/'; // System path does not have a trailing / in iOS
+        currentmediapath[len+1]='\0';
+        strcat(currentmediapath,fn);
+        if( access( currentmediapath, F_OK ) != -1 ) {
+            return currentmediapath;
+            // file exists
+        } else {
+            const char* docpath = getDocumentPath();
+            strcpy(currentmediapath,docpath);
+            //            int len = strlen(currentmediapath); // Document path DOES have a trailing / in iOS. Consistency ftw.
+            //            currentmediapath[len]='/';
+            //            currentmediapath[len+1]='\0';
+            
+            strcat(currentmediapath,fn);
+            if( access( currentmediapath, F_OK ) != -1 ) {
+                return currentmediapath;
+                // file exists
+            } else {
+                return NULL;
+                // file doesn't exist
+            }
+        }
+    }
+}
+
 void instantiateTexture(urAPI_Region_t* t)
 {
 //#ifdef UISTRINGS
-	texturepathstr = [[NSString alloc] initWithUTF8String:t->texture->texturepath];
+//	texturepathstr = [[NSString alloc] initWithUTF8String:t->texture->texturepath];
 //	NSString *filePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:texturepathstr]; // Leak here, fix.
 //	UIImage* textureimage = [UIImage imageNamed:texturepathstr];
+    
+    char* pathstr = accessiblePathSystemFirst(t->texture->texturepath);
+    if(pathstr!=NULL)
+    {
+    texturepathstr = [[NSString alloc] initWithUTF8String:pathstr];
     
     // Try as image file
 	UIImage* textureimage = [UIImage imageWithContentsOfFile:texturepathstr];
@@ -3465,7 +3509,11 @@ void instantiateTexture(urAPI_Region_t* t)
 		t->texture->width = [textureimage size].width;
 		t->texture->height = [textureimage size].height;
 	}
-	[texturepathstr release];	
+	[texturepathstr release];
+    }
+    else
+        instantiateBlankTexture(t);
+    
 }
 
 void instantiateBlankTexture(urAPI_Region_t* t)

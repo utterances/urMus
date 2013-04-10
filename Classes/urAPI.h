@@ -325,5 +325,8 @@ void FreeAllFlowboxes(int patch);
 
 void ur_Log(const char * str);
 
+const char* getSystemPath();
+const char* getDocumentPath();
+
 #endif /* __URAPI_H__ */
 

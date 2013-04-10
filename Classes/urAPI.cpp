@@ -5437,6 +5437,30 @@ int l_GetUrOuts(lua_State *lua)
 // Path-related global API
 //------------------------------------------------------------------------------
 
+const char* getSystemPath()
+{
+	NSString *filename2 = @"";
+	NSString *filePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:filename2];
+    return [filePath UTF8String];
+}
+
+const char* getDocumentPath()
+{
+	NSString *filename2 = @"";
+	NSArray *paths;
+	paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+	if ([paths count] > 0) {
+		NSString *filePath = [paths objectAtIndex:0];
+		NSString *resultPath = [NSString stringWithFormat:@"%@/%@", filePath, filename2];
+		return [resultPath UTF8String];
+	}
+	else
+	{
+        assert(0); // This should never happen!
+        return NULL;
+	}
+}
+
 int l_SystemPath(lua_State *lua)
 {
 	const char* filename = luaL_checkstring(lua,1);
