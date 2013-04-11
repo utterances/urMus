@@ -26,6 +26,7 @@ modes = {"EDIT","RELEASE"}
 current_mode = modes[1]
 
 dofile(SystemPath("urTapperwareMenu.lua"))
+dofile(SystemPath("urTapperwareLink.lua"))
 
 -- ============
 -- = Backdrop =
@@ -124,6 +125,8 @@ shadow:SetLayer("BACKGROUND")
 shadow.t = shadow:Texture("tw_roundrec_create.png")
 -- shadow.t:SetTexture(195,210,220,100)
 shadow.t:SetBlendMode("BLEND")
+
+link:init()
 
 -- ==========================
 -- = Global event functions =
@@ -461,6 +464,10 @@ function EndLinkRegion(self)
 		-- TODO create the link here!
 		table.insert(initialLinkRegion.links["OnTouchUp"], {VTouchUp, self})
 		CloseMenu(initialLinkRegion)
+		
+		-- add visual link too:
+		link:add(initialLinkRegion, self)
+		link:draw()
 		
 		initialLinkRegion = nil
 	end
