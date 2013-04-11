@@ -2144,9 +2144,17 @@ int region_Lower(lua_State* lua)
 	if(region->prev != nil)
 	{
 		urAPI_Region_t* temp = region->prev;
+        if(firstRegion[currentPage] == temp)
+            firstRegion[currentPage] = region;
+        if(lastRegion[currentPage] == region)
+            lastRegion[currentPage] = temp;
 		region->prev = temp->prev;
 		temp->next = region->next;
+        if(temp->prev)
+            temp->prev->next = region;
 		temp->prev = region;
+        if(region->next)
+            region->next->prev = temp;
 		region->next = temp;
 	}
 	return 0;
@@ -2158,9 +2166,17 @@ int region_Raise(lua_State* lua)
 	if(region->next != nil)
 	{
 		urAPI_Region_t* temp = region->next;
+        if(firstRegion[currentPage] == region)
+            firstRegion[currentPage] = temp;
+        if(lastRegion[currentPage] == temp)
+            lastRegion[currentPage] = region;
 		region->next = temp->next;
 		temp->prev = region->prev;
+        if(temp->next)
+            temp->next->prev = region;
 		temp->next = region;
+        if(region->prev)
+            region->prev->next = temp;
 		region->prev = temp;
 	}
 	return 0;
