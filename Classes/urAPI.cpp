@@ -5575,6 +5575,20 @@ int l_LinkExternalDisplay(lua_State *lua)
         currentExternalPage = currentPage;
     return 0;
 }
+
+int l_SetExternalOrientation(lua_State *lua)
+{
+    int num = luaL_checknumber(lua,1);
+    if(num == 0)
+        [[UIApplication sharedApplication] setStatusBarOrientation:UIDeviceOrientationPortrait animated:NO];
+    else if(num == 1)
+        [[UIApplication sharedApplication] setStatusBarOrientation:UIInterfaceOrientationPortraitUpsideDown animated:NO];
+    else if(num == 2)
+        [[UIApplication sharedApplication] setStatusBarOrientation:UIDeviceOrientationLandscapeLeft animated:NO];
+    else
+        [[UIApplication sharedApplication] setStatusBarOrientation:UIDeviceOrientationLandscapeRight animated:NO];
+    return 0;
+}
     	
 //------------------------------------------------------------------------------
 // Camera-related global API
@@ -6093,6 +6107,8 @@ void l_setupAPI(lua_State *lua)
 	lua_setglobal(lua, "DisplayExternalPage");
 	lua_pushcfunction(lua, l_LinkExternalDisplay);
 	lua_setglobal(lua, "LinkExternalDisplay");
+    lua_pushcfunction(lua, l_SetExternalOrientation);
+    lua_setglobal(lua, "SetExternalOrientation");
 	
 #ifdef SOAR_SUPPORT_OLD
 	lua_pushcfunction(lua, l_SoarCreateID);

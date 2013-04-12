@@ -15,6 +15,9 @@
 // Enable or disable Camera code. Needs to be disabled for devices without camera
 #define USECAMERA
 
+// Enable or disable urMus handling mirror displays. Disabling this currently also disables separate external page display.
+// If disabled, SetExternalOrientation() allows to set the mirror display orientation and uses Apple's centering code
+#undef HANDLEEXTERNALDISPLAYS
 
 // OpenGLES2 enabled. Many code parts such as the camera filter code require opengles2 shaders. This flag will enable opengles1 versions of the code as they exist. Usually newer features are only written in opengles2.
 #define OPENGLES2

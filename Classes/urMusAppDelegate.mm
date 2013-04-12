@@ -40,7 +40,7 @@ extern bool newerror;
 extern int SCREEN_WIDTH;
 extern int SCREEN_HEIGHT;
 
-
+#ifdef HANDLEEXTERNALDISPLAYS
 - (void)screenDidChange:(NSNotification *)notification
 {
     
@@ -111,6 +111,7 @@ extern int SCREEN_HEIGHT;
         
     }
 }
+#endif
 
 extern std::string g_fontPath;
 extern std::string g_storagePath;
@@ -122,7 +123,7 @@ extern std::string g_storagePath;
 
 -(void)applicationDidFinishLaunching:(UIApplication *)application {
 
-
+    [[UIApplication sharedApplication] setStatusBarOrientation:UIDeviceOrientationPortrait animated:NO];
 //- (void)applicationDidFinishLaunching:(UIApplication *)application {
     
 #ifdef NOXIB
@@ -148,6 +149,7 @@ extern std::string g_storagePath;
 	[window makeKeyAndVisible];
 #endif
     
+#ifdef HANDLEEXTERNALDISPLAYS
     // Register for screen connect and disconnect notifications.
 	[[NSNotificationCenter defaultCenter] addObserver:self
 											 selector:@selector(screenDidChange:)
@@ -158,7 +160,7 @@ extern std::string g_storagePath;
 											 selector:@selector(screenDidChange:)
 												 name:UIScreenDidDisconnectNotification 
 											   object:nil];
-
+#endif
 
 	g_glView = glView;
 	/* Declare a Lua State, open the Lua State and load the libraries (see above). */
@@ -195,9 +197,11 @@ extern std::string g_storagePath;
 	[glView startAnimation];
 	[glView drawView];
     
+#ifdef HANDLEEXTERNALDISPLAYS
     // Catches a launch with two screens and sets reasonable default values otherwise
     [self screenDidChange:nil];
-
+#endif
+    
 #ifdef EARLY_LAUNCH
 #ifdef UISTRINGS
 	NSString *resourcePath = [[NSBundle mainBundle] resourcePath];

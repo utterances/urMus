@@ -24,6 +24,7 @@
 #import "urSound.h"
 #import "httpServer.h"
 #include <arpa/inet.h>
+#include <stdlib.h>
 
 #define DEGREES_TO_RADIANS(x) (M_PI * x / 180.0)
 
@@ -4044,7 +4045,6 @@ void renderTextLabel(urAPI_Region_t* t)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glBindFramebufferOES(GL_FRAMEBUFFER_OES, viewFramebuffer);
     glViewport(0, 0, backingWidth, backingHeight);
-//	glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
 #ifdef RENDERTOTEXTURE
     if(bgtextureFrameBuffer == -1)
@@ -4969,9 +4969,55 @@ void renderTextLabel(urAPI_Region_t* t)
         float extScreenWidth = externalWindow.frame.size.width;
         float extScreenHeight = externalWindow.frame.size.height;
         NSArray			*screens;
-        
         screens = [UIScreen screens];
+/*        UIScreen		*aScreen;
+        UIScreenMode	*mode;
+        UIScreenMode *bestmode = NULL;
+        uint32_t  bestwidth=0;
+        uint32_t  bestheight=0;
+        
 
+        
+        uint32_t screenNum = 1;
+        for (aScreen in screens) {
+            NSArray *displayModes;
+            
+            displayModes = [aScreen availableModes];
+            for (mode in displayModes) {
+                    uint32_t width = mode.size.width;
+                    uint32_t height = mode.size.height;
+                    if(abs(height-SCREEN_HEIGHT)<abs(bestheight-SCREEN_HEIGHT))
+                    {
+                        bestmode = mode;
+                    }
+           }
+            
+            extScreen.currentMode
+            
+            screenNum++;
+        }
+        
+        NSUInteger screenCount = [screens count];
+        
+        if (screenCount > 1) {
+            // 2.
+            
+            // Select first external screen
+            self.extScreen = [screens objectAtIndex:1];
+            self.availableModes = [extScreen availableModes];
+            
+            // Update picker with display modes
+            [modePicker reloadAllComponents];
+            
+            // Enable mode set option
+            modeSetButton.enabled = YES;
+            
+            // Set initial display mode to highest resolution
+            [modePicker selectRow:([modePicker numberOfRowsInComponent:0] - 1) inComponent:0 animated:NO];
+            [self buttonAction:modeSetButton];
+        }
+        */
+        
         float deviceScreenRatio = [[screens objectAtIndex:0] bounds].size.width/[[screens objectAtIndex:0] bounds].size.height;
         CGRect finalExtFrame;
         
@@ -5050,15 +5096,38 @@ void renderTextLabel(urAPI_Region_t* t)
     }
     else
     {
-        UIWindow* externalWindow = [self window];
-        
-        float extScreenWidth = externalWindow.frame.size.width;
-        float extScreenHeight = externalWindow.frame.size.height;
         NSArray			*screens;
         
         screens = [UIScreen screens];
+        UIScreen* extScreen = [screens objectAtIndex:1];
+//        extScreen.currentMode = [availableModes objectAtIndex:selectedRow];
+//        UIWindow* externalWindow = [self window];
+        UIScreenMode	*mode;
+        NSArray *displayModes;
+        UIScreenMode *bestmode = NULL;
+        uint32_t  bestwidth=0;
+        uint32_t  bestheight=0;
+        displayModes = [extScreen availableModes];
+        for (mode in displayModes) {
+            uint32_t width = mode.size.width;
+            uint32_t height = mode.size.height;
+            if(abs((int)(height-SCREEN_HEIGHT))<abs((int)(bestheight-SCREEN_HEIGHT)))
+            {
+                bestmode = mode;
+                bestwidth = width;
+                bestheight = height;
+            }
+        }
         
-        float deviceScreenRatio = [[screens objectAtIndex:0] bounds].size.width/[[screens objectAtIndex:0] bounds].size.height;
+        extScreen.currentMode = bestmode;
+        
+        UIWindow* externalWindow;
+        externalWindow = [[UIWindow alloc] initWithFrame:[extScreen bounds]];
+       
+        float extScreenWidth = externalWindow.frame.size.width;
+        float extScreenHeight = externalWindow.frame.size.height;
+        
+        float deviceScreenRatio = [extScreen bounds].size.width/[extScreen bounds].size.height;
         CGRect finalExtFrame;
         
         if (extScreenHeight < extScreenWidth) {
@@ -5089,8 +5158,10 @@ void renderTextLabel(urAPI_Region_t* t)
         
 		glGenRenderbuffers(1, &depthRenderbuffer);
 		glBindRenderbuffer(GL_RENDERBUFFER, depthRenderbuffer);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, backingWidth, backingHeight);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer);				
+
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, backingWidth, backingHeight);
+
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer);
         
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
             NSLog(@"Failed to make complete framebuffer object %x", glCheckFramebufferStatus(GL_FRAMEBUFFER));
@@ -5149,6 +5220,7 @@ void renderTextLabel(urAPI_Region_t* t)
         esOrtho(&projection, 0.0f, SCREEN_WIDTH*scalex, 0.0f, SCREEN_HEIGHT*scaley, -1.0f, 1.0f);
         esMatrixLoadIdentity(&modelView);
         glViewport(0, 0, backingWidth, backingHeight);
+//        glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
         /*
         esOrtho(&projection, 0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);

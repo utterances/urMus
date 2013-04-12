@@ -191,6 +191,8 @@ enum recordsource { SOURCE_TEXTURE, SOURCE_CAMERA, SOURCE_MOVIE };
     /* The pixel dimensions of the backbuffer */
     GLint backingWidth;
     GLint backingHeight;
+    GLint extbackingWidth;
+    GLint extbackingHeight;
     
     EAGLContext *context;
     
