@@ -153,9 +153,7 @@
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
          startingLineNumber = "2667"
-         endingLineNumber = "2667"
-         landmarkName = "Sitar_Trigger(ursObject* gself, double indata)"
-         landmarkType = "7">
+         endingLineNumber = "2667">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
@@ -167,7 +165,7 @@
          endingColumnNumber = "9223372036854775807"
          startingLineNumber = "2710"
          endingLineNumber = "2710"
-         landmarkName = "StifKarp_Trigger(ursObject* gself, double indata)"
+         landmarkName = "StifKarp_Tick(ursObject* gself)"
          landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
@@ -180,7 +178,7 @@
          endingColumnNumber = "9223372036854775807"
          startingLineNumber = "2708"
          endingLineNumber = "2708"
-         landmarkName = "StifKarp_Trigger(ursObject* gself, double indata)"
+         landmarkName = "StifKarp_Tick(ursObject* gself)"
          landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
@@ -193,7 +191,7 @@
          endingColumnNumber = "9223372036854775807"
          startingLineNumber = "2664"
          endingLineNumber = "2664"
-         landmarkName = "Sitar_Trigger(ursObject* gself, double indata)"
+         landmarkName = "Sitar_Out(ursObject* gself)"
          landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
@@ -231,7 +229,9 @@
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
          startingLineNumber = "5099"
-         endingLineNumber = "5099">
+         endingLineNumber = "5099"
+         landmarkName = "l_StopNetAdvertise(lua_State* lua)"
+         landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
@@ -242,7 +242,9 @@
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
          startingLineNumber = "5100"
-         endingLineNumber = "5100">
+         endingLineNumber = "5100"
+         landmarkName = "l_StopNetAdvertise(lua_State* lua)"
+         landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
@@ -254,7 +256,7 @@
          endingColumnNumber = "9223372036854775807"
          startingLineNumber = "5107"
          endingLineNumber = "5107"
-         landmarkName = "l_StartAudio(lua_State* lua)"
+         landmarkName = "l_StopNetFind(lua_State* lua)"
          landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
@@ -266,9 +268,7 @@
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
          startingLineNumber = "1889"
-         endingLineNumber = "1889"
-         landmarkName = "Noise_Tick(ursObject* gself)"
-         landmarkType = "7">
+         endingLineNumber = "1889">
       </FileBreakpoint>
       <FileBreakpoint
          shouldBeEnabled = "No"
@@ -280,7 +280,7 @@
          endingColumnNumber = "9223372036854775807"
          startingLineNumber = "1975"
          endingLineNumber = "1975"
-         landmarkName = "OnePole_Tick(ursObject* gself)"
+         landmarkName = "OnePole_Constructor()"
          landmarkType = "7">
       </FileBreakpoint>
       <FileBreakpoint
@@ -292,9 +292,7 @@
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
          startingLineNumber = "1959"
-         endingLineNumber = "1959"
-         landmarkName = "OnePole_Constructor()"
-         landmarkType = "7">
+         endingLineNumber = "1959">
       </FileBreakpoint>
    </FileBreakpoints>
 </Bucket>

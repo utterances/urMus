@@ -10,7 +10,7 @@
 #define __CONFIG_H__
 
 // If you compile for pre 4.3 devices (2nd gen iPod Touches for example)
-#define LEGACY42
+#undef LEGACY42
 
 // Enable or disable Camera code. Needs to be disabled for devices without camera
 #define USECAMERA
@@ -25,7 +25,7 @@
 //#define GPUIMAGE
 #endif
 // Enabled Apple's font rendering rather than FreeType2/Glyph Atlas code. The Apple rendering is stable but not portable.
-#define UISTRINGS
+#undef UISTRINGS
 
 #ifndef UISTRINGS
 // Use FTGL library for gylph atlas code. Recommended for speed.

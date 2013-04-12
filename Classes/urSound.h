@@ -11,6 +11,10 @@
 #define __URSOUND_H__
 
 #include <CoreFoundation/CoreFoundation.h>
+#define OLDINOUTS
+#ifndef OLDINOUTS
+#include <vector>
+#endif
 
 #define URSOUND_BUFFERSIZE 256
 #define URS_OBJHISTORY URSOUND_BUFFERSIZE
@@ -97,10 +101,17 @@ public:
 	int instancenumber;
 	int nr_ins;
 	int nr_outs;
+#ifdef OLDINOUTS
 	urSoundIn* ins;
-	urSoundPullIn** firstpullin;
 	urSoundOut* outs;
+	urSoundPullIn** firstpullin;
 	urSoundPushOut** firstpushout;
+#else
+    std::vector<urSoundIn> ins;
+    std::vector<urSoundOut> outs;
+    std::vector<urSoundPullIn*> firstpullin;
+    std::vector<urSoundPushOut*> firstpushout;
+#endif
 	int couple_in;
 	int couple_out;
 	bool iscoupled;
@@ -116,6 +127,8 @@ public:
 	ursObjectArray(int initmax = 256);
 	~ursObjectArray();
 	void Append(ursObject*);
+	void Remove(ursObject*);
+    void TestObjects();
 	ursObject* Get(int);
 	ursObject* operator[](int);
 	int Last() { return current; };

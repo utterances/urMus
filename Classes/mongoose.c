@@ -1667,6 +1667,7 @@ static const struct {
 	{".swf",	4,	"application/x-shockwave-flash",29},
 	{".mpg",	4,	"video/mpeg",			10},
 	{".mpeg",	5,	"video/mpeg",			10},
+    {".mp4",    4,  "video/mp4",            9},
 	{".asf",	4,	"video/x-ms-asf",		14},
 	{".avi",	4,	"video/x-msvideo",		15},
 	{".bmp",	4,	"image/bmp",			9},

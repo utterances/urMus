@@ -1868,36 +1868,50 @@ void Moog_SetModulationDepth(ursObject* gself, double indata)
 
 // Interface - Noise
 
+class EXNoise : public Noise
+{
+public:
+    EXNoise():Noise() { amplitude = DEFAULT_INSTRUMENT_AMPLITUDE;}
+    double amplitude;
+};
+
 void* Noise_Constructor()
 {
-	Noise* self = new Noise();
+	EXNoise* self = new EXNoise();
 	return (void*)self;
 }
 
 void Noise_Destructor(ursObject* gself)
 {
-	Noise* self = (Noise*)gself->objectdata;
-	delete (Noise*)self;
+	EXNoise* self = (EXNoise*)gself->objectdata;
+	delete (EXNoise*)self;
 }
 
 double Noise_Tick(ursObject* gself)
 {
-	Noise* self = (Noise*)gself->objectdata;
+	EXNoise* self = (EXNoise*)gself->objectdata;
 	
 	gself->FeedAllPullIns(1); // This is decoupled so no forwarding, just pulling to propagate our natural rate
 
 //	return gself->CallAllPullIns()*self->tick();
-	return self->tick();
+	return self->tick()* self->amplitude;
 }
 
 void Noise_SetSeed(ursObject* gself, double indata)
 {
-	Noise* self = (Noise*)gself->objectdata;
+	EXNoise* self = (EXNoise*)gself->objectdata;
     
     unsigned int seed = (indata +1 ) /2.0 * INT_MAX;
-
+    
     self->setSeed(seed);
     
+}
+
+void Noise_SetAmp(ursObject* gself, double indata)
+{
+	EXNoise* self = (EXNoise*)gself->objectdata;
+    
+    self->amplitude = indata;
 }
 
 double Noise_Out(ursObject* gself)
@@ -3443,9 +3457,11 @@ void urSTK_Setup()
 	
 	// Sources
 	
-	object = new ursObject("Noise", Noise_Constructor, Noise_Destructor,1,1);
+	object = new ursObject("Noise", Noise_Constructor, Noise_Destructor,2,1);
 	object->AddOut("Out", "TimeSeries", Noise_Tick, Noise_Out, NULL);
 	object->AddIn("Seed", "Generic", Noise_SetSeed);
+   	object->AddIn("Amp", "Amplitude", Noise_SetAmp);
+    
 	urmanipulatorobjectlist.Append(object);
 
 
