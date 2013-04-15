@@ -114,6 +114,21 @@ string errorfontPath;
 
 @end
 
+
+
+@implementation urFilterHandler
+#ifdef GPUIMAGE
+#pragma mark -
+#pragma mark GPUImageTextureOutputDelegate delegate metho
+
+- (void)newFrameReadyFromTextureOutput:(GPUImageTextureOutput *)callbackTextureOutput;
+{
+    if(callbackTextureOutput && region && region->texture)
+        region->texture->_filterTexture = callbackTextureOutput.texture;
+}
+#endif
+@end
+
 // A class extension to declare private methods
 @interface EAGLView ()
 
@@ -871,10 +886,10 @@ void decCameraUseBy(int dec)
 
 // Based on GPUImage example code
 
-- (void)setCameraFilterParameter:(double)value;
+- (void)setFilterParameter:(double)value forFilter:(GPUImageOutput<GPUImageInput> *)inputFilter withType:(GPUImageFilterType)currentfiltertype
 {
     value = (value+1)/2.0;
-     switch(currentfiltertype)
+    switch(currentfiltertype)
     {
         case GPUIMAGE_SEPIA: [(GPUImageSepiaFilter *)inputFilter setIntensity:value]; break;
         case GPUIMAGE_PIXELLATE: [(GPUImagePixellateFilter *)inputFilter setFractionalWidthOfAPixel:value]; break;
@@ -893,23 +908,23 @@ void decCameraUseBy(int dec)
 		case GPUIMAGE_HAZE: [(GPUImageHazeFilter *)inputFilter setDistance:value]; break;
 		case GPUIMAGE_THRESHOLD: [(GPUImageLuminanceThresholdFilter *)inputFilter setThreshold:value]; break;
         case GPUIMAGE_ADAPTIVETHRESHOLD: [(GPUImageAdaptiveThresholdFilter *)inputFilter setBlurSize:value]; break;
-//        case GPUIMAGE_DISSOLVE: [(GPUImageDissolveBlendFilter *)inputFilter setMix:value]; break;
-//        case GPUIMAGE_CHROMAKEY: [(GPUImageChromaKeyBlendFilter *)inputFilter setThresholdSensitivity:value]; break;
-//        case GPUIMAGE_KUWAHARA: [(GPUImageKuwaharaFilter *)inputFilter setRadius:round(value)]; break;
+            //        case GPUIMAGE_DISSOLVE: [(GPUImageDissolveBlendFilter *)inputFilter setMix:value]; break;
+            //        case GPUIMAGE_CHROMAKEY: [(GPUImageChromaKeyBlendFilter *)inputFilter setThresholdSensitivity:value]; break;
+            //        case GPUIMAGE_KUWAHARA: [(GPUImageKuwaharaFilter *)inputFilter setRadius:round(value)]; break;
         case GPUIMAGE_SWIRL: [(GPUImageSwirlFilter *)inputFilter setAngle:value*3]; break;
         case GPUIMAGE_EMBOSS: [(GPUImageEmbossFilter *)inputFilter setIntensity:value]; break;
         case GPUIMAGE_CANNYEDGEDETECTION: [(GPUImageCannyEdgeDetectionFilter *)inputFilter setBlurSize:value]; break;
             //        case GPUIMAGE_CANNYEDGEDETECTION: [(GPUImageCannyEdgeDetectionFilter *)inputFilter setLowerThreshold:value]; break;
-//        case GPUIMAGE_HARRISCORNERDETECTION: [(GPUImageHarrisCornerDetectionFilter *)inputFilter setThreshold:value]; break;
-//        case GPUIMAGE_NOBLECORNERDETECTION: [(GPUImageNobleCornerDetectionFilter *)inputFilter setThreshold:value]; break;
-//        case GPUIMAGE_SHITOMASIFEATUREDETECTION: [(GPUImageShiTomasiFeatureDetectionFilter *)inputFilter setThreshold:value]; break;
+            //        case GPUIMAGE_HARRISCORNERDETECTION: [(GPUImageHarrisCornerDetectionFilter *)inputFilter setThreshold:value]; break;
+            //        case GPUIMAGE_NOBLECORNERDETECTION: [(GPUImageNobleCornerDetectionFilter *)inputFilter setThreshold:value]; break;
+            //        case GPUIMAGE_SHITOMASIFEATUREDETECTION: [(GPUImageShiTomasiFeatureDetectionFilter *)inputFilter setThreshold:value]; break;
             //        case GPUIMAGE_HARRISCORNERDETECTION: [(GPUImageHarrisCornerDetectionFilter *)inputFilter setSensitivity:value]; break;
         case GPUIMAGE_SMOOTHTOON: [(GPUImageSmoothToonFilter *)inputFilter setBlurSize:value]; break;
             //        case GPUIMAGE_BULGE: [(GPUImageBulgeDistortionFilter *)inputFilter setRadius:value]; break;
         case GPUIMAGE_BULGE: [(GPUImageBulgeDistortionFilter *)inputFilter setScale:value*3]; break;
         case GPUIMAGE_TONECURVE: [(GPUImageToneCurveFilter *)inputFilter setBlueControlPoints:[NSArray arrayWithObjects:[NSValue valueWithCGPoint:CGPointMake(0.0, 0.0)], [NSValue valueWithCGPoint:CGPointMake(0.5, value)], [NSValue valueWithCGPoint:CGPointMake(1.0, 0.75)], nil]]; break;
         case GPUIMAGE_PINCH: [(GPUImagePinchDistortionFilter *)inputFilter setScale:value*2]; break;
-//        case GPUIMAGE_PERLINNOISE:  [(GPUImagePerlinNoiseFilter *)inputFilter setScale:value]; break;
+            //        case GPUIMAGE_PERLINNOISE:  [(GPUImagePerlinNoiseFilter *)inputFilter setScale:value]; break;
         case GPUIMAGE_MOSAIC:  [(GPUImageMosaicFilter *)inputFilter setDisplayTileSize:CGSizeMake(value, value)]; break;
         case GPUIMAGE_VIGNETTE: [(GPUImageVignetteFilter *)inputFilter setVignetteEnd:value]; break;
         case GPUIMAGE_GAUSSIAN: [(GPUImageGaussianBlurFilter *)inputFilter setBlurSize:value]; break;
@@ -947,36 +962,29 @@ void decCameraUseBy(int dec)
         case GPUIMAGE_MONOCHROME: [(GPUImageMonochromeFilter *)inputFilter setIntensity:value]; break;
         case GPUIMAGE_HUE: [(GPUImageHueFilter *)inputFilter setHue:(value+1.0)*180.0]; break;
         case GPUIMAGE_WHITEBALANCE: [(GPUImageWhiteBalanceFilter *)inputFilter setTemperature:value]; break;
-//        case GPUIMAGE_LOWPASS: [(GPUImageLowPassFilter *)inputFilter setFilterStrength:value]; break;
-//        case GPUIMAGE_HIGHPASS: [(GPUImageHighPassFilter *)inputFilter setFilterStrength:value]; break;
-//        case GPUIMAGE_MOTIONDETECTOR: [(GPUImageMotionDetector *)inputFilter setLowPassFilterStrength:value]; break;
-//        case GPUIMAGE_THRESHOLDSKETCH: [(GPUImageThresholdSketchFilter *)inputFilter setThreshold:value]; break;
+            //        case GPUIMAGE_LOWPASS: [(GPUImageLowPassFilter *)inputFilter setFilterStrength:value]; break;
+            //        case GPUIMAGE_HIGHPASS: [(GPUImageHighPassFilter *)inputFilter setFilterStrength:value]; break;
+            //        case GPUIMAGE_MOTIONDETECTOR: [(GPUImageMotionDetector *)inputFilter setLowPassFilterStrength:value]; break;
+            //        case GPUIMAGE_THRESHOLDSKETCH: [(GPUImageThresholdSketchFilter *)inputFilter setThreshold:value]; break;
         case GPUIMAGE_SPHEREREFRACTION: [(GPUImageSphereRefractionFilter *)inputFilter setRadius:value]; break;
         case GPUIMAGE_GLASSSPHERE: [(GPUImageGlassSphereFilter *)inputFilter setRadius:value]; break;
-//        case GPUIMAGE_HIGHLIGHTSHADOW: [(GPUImageHighlightShadowFilter *)inputFilter setHighlights:value]; break;
+            //        case GPUIMAGE_HIGHLIGHTSHADOW: [(GPUImageHighlightShadowFilter *)inputFilter setHighlights:value]; break;
         case GPUIMAGE_LOCALBINARYPATTERN:
         {
-                [(GPUImageLocalBinaryPatternFilter *)inputFilter setTexelWidth:value];
-                [(GPUImageLocalBinaryPatternFilter *)inputFilter setTexelHeight:value];
+            [(GPUImageLocalBinaryPatternFilter *)inputFilter setTexelWidth:value];
+            [(GPUImageLocalBinaryPatternFilter *)inputFilter setTexelHeight:value];
         }; break;
         default: break;
     }
 }
 
-- (void)setCameraFilter:(GPUImageFilterType)filterType
+- (void)setCameraFilterParameter:(double)value;
 {
-    if(inputFilter == nil)
-    {
-        [videoCamera removeTarget:textureOutput];
-    }
-    else
-    {
-        [videoCamera removeTarget:inputFilter];
-        [inputFilter removeTarget:textureOutput];
-    }
+    [self setFilterParameter:value forFilter:inputFilter];
+}
 
-    currentfiltertype = filterType;
-    
+- (GPUImageOutput<GPUImageInput> *)createFilter:(GPUImageFilterType)filterType
+{
     switch (filterType)
     {
         case GPUIMAGE_SEPIA:
@@ -1056,10 +1064,10 @@ void decCameraUseBy(int dec)
         {
             inputFilter = [[GPUImageCropFilter alloc] initWithCropRegion:CGRectMake(0.0, 0.0, 1.0, 0.25)];
         }; break;
-/*		case GPUIMAGE_MASK:
-		{
-			[(GPUImageFilter*)inputFilter setBackgroundColorRed:0.0 green:1.0 blue:0.0 alpha:1.0];
-        }; break;*/
+            /*		case GPUIMAGE_MASK:
+             {
+             [(GPUImageFilter*)inputFilter setBackgroundColorRed:0.0 green:1.0 blue:0.0 alpha:1.0];
+             }; break;*/
         case GPUIMAGE_TRANSFORM:
         {
             inputFilter = [[GPUImageTransformFilter alloc] init];
@@ -1085,21 +1093,21 @@ void decCameraUseBy(int dec)
         {
             inputFilter = [[GPUImageXYDerivativeFilter alloc] init];
         }; break;
-/*        case GPUIMAGE_HARRISCORNERDETECTION:
-        {
-            inputFilter = (GPUImageFilter*)[[GPUImageHarrisCornerDetectionFilter alloc] init];
-            [(GPUImageHarrisCornerDetectionFilter *)inputFilter setThreshold:0.20];            
-        }; break;
-        case GPUIMAGE_NOBLECORNERDETECTION:
-        {
-            inputFilter = (GPUImageFilter*)[[GPUImageNobleCornerDetectionFilter alloc] init];
-            [(GPUImageNobleCornerDetectionFilter *)inputFilter setThreshold:0.20];            
-        }; break;
-        case GPUIMAGE_SHITOMASIFEATUREDETECTION:
-        {
-            inputFilter = (GPUImageFilter*)[[GPUImageShiTomasiFeatureDetectionFilter alloc] init];
-            [(GPUImageShiTomasiFeatureDetectionFilter *)inputFilter setThreshold:0.20];            
-        }; break;*/
+            /*        case GPUIMAGE_HARRISCORNERDETECTION:
+             {
+             inputFilter = (GPUImageFilter*)[[GPUImageHarrisCornerDetectionFilter alloc] init];
+             [(GPUImageHarrisCornerDetectionFilter *)inputFilter setThreshold:0.20];
+             }; break;
+             case GPUIMAGE_NOBLECORNERDETECTION:
+             {
+             inputFilter = (GPUImageFilter*)[[GPUImageNobleCornerDetectionFilter alloc] init];
+             [(GPUImageNobleCornerDetectionFilter *)inputFilter setThreshold:0.20];
+             }; break;
+             case GPUIMAGE_SHITOMASIFEATUREDETECTION:
+             {
+             inputFilter = (GPUImageFilter*)[[GPUImageShiTomasiFeatureDetectionFilter alloc] init];
+             [(GPUImageShiTomasiFeatureDetectionFilter *)inputFilter setThreshold:0.20];
+             }; break;*/
         case GPUIMAGE_PREWITTEDGEDETECTION:
         {
             inputFilter = [[GPUImagePrewittEdgeDetectionFilter alloc] init];
@@ -1116,11 +1124,11 @@ void decCameraUseBy(int dec)
         case GPUIMAGE_TOON:
         {
             inputFilter = [[GPUImageToonFilter alloc] init];
-        }; break;            
+        }; break;
         case GPUIMAGE_SMOOTHTOON:
         {
             inputFilter = (GPUImageFilter*)[[GPUImageSmoothToonFilter alloc] init];
-        }; break;            
+        }; break;
         case GPUIMAGE_TILTSHIFT:
         {
             inputFilter = (GPUImageFilter*)[[GPUImageTiltShiftFilter alloc] init];
@@ -1132,16 +1140,16 @@ void decCameraUseBy(int dec)
         {
             inputFilter = [[GPUImageCGAColorspaceFilter alloc] init];
         }; break;
-/*        case GPUIMAGE_CONVOLUTION:
-        {
-            inputFilter = [[GPUImage3x3ConvolutionFilter alloc] init];
-            [(GPUImage3x3ConvolutionFilter *)inputFilter setConvolutionKernel:(GPUMatrix3x3){
-                {-1.0f,  0.0f, 1.0f},
-                {-2.0f, 0.0f, 2.0f},
-                {-1.0f,  0.0f, 1.0f}
-            }];
-            
-        }; break;*/
+            /*        case GPUIMAGE_CONVOLUTION:
+             {
+             inputFilter = [[GPUImage3x3ConvolutionFilter alloc] init];
+             [(GPUImage3x3ConvolutionFilter *)inputFilter setConvolutionKernel:(GPUMatrix3x3){
+             {-1.0f,  0.0f, 1.0f},
+             {-2.0f, 0.0f, 2.0f},
+             {-1.0f,  0.0f, 1.0f}
+             }];
+             
+             }; break;*/
         case GPUIMAGE_EMBOSS:
         {
             inputFilter = [[GPUImageEmbossFilter alloc] init];
@@ -1183,105 +1191,105 @@ void decCameraUseBy(int dec)
             inputFilter = (GPUImageFilter*)[[GPUImageRGBClosingFilter alloc] initWithRadius:4];
 		}; break;
             
-/*        case GPUIMAGE_PERLINNOISE:
-        {
-            inputFilter = [[GPUImagePerlinNoiseFilter alloc] init];
-        }; break;*/
-/*        case GPUIMAGE_VORONI: 
-        {
-            GPUImageJFAVoroniFilter *jfa = [[GPUImageJFAVoroniFilter alloc] init];
-            [jfa setSizeInPixels:CGSizeMake(1024.0, 1024.0)];
-            
-            sourcePicture = [[GPUImagePicture alloc] initWithImage:[UIImage imageNamed:@"voroni_points2.png"]];
-            
-            [sourcePicture addTarget:jfa];
-            
-            inputFilter = [[GPUImageVoroniConsumerFilter alloc] init];
-            
-            [jfa setSizeInPixels:CGSizeMake(1024.0, 1024.0)];
-            [(GPUImageVoroniConsumerFilter *)inputFilter setSizeInPixels:CGSizeMake(1024.0, 1024.0)];
-            
-            [videoCamera addTarget:filter];
-            [jfa addTarget:filter];
-            [sourcePicture processImage];
-            
-        }; break; */
+            /*        case GPUIMAGE_PERLINNOISE:
+             {
+             inputFilter = [[GPUImagePerlinNoiseFilter alloc] init];
+             }; break;*/
+            /*        case GPUIMAGE_VORONI:
+             {
+             GPUImageJFAVoroniFilter *jfa = [[GPUImageJFAVoroniFilter alloc] init];
+             [jfa setSizeInPixels:CGSizeMake(1024.0, 1024.0)];
+             
+             sourcePicture = [[GPUImagePicture alloc] initWithImage:[UIImage imageNamed:@"voroni_points2.png"]];
+             
+             [sourcePicture addTarget:jfa];
+             
+             inputFilter = [[GPUImageVoroniConsumerFilter alloc] init];
+             
+             [jfa setSizeInPixels:CGSizeMake(1024.0, 1024.0)];
+             [(GPUImageVoroniConsumerFilter *)inputFilter setSizeInPixels:CGSizeMake(1024.0, 1024.0)];
+             
+             [videoCamera addTarget:filter];
+             [jfa addTarget:filter];
+             [sourcePicture processImage];
+             
+             }; break; */
         case GPUIMAGE_MOSAIC:
         {
             inputFilter = [[GPUImageMosaicFilter alloc] init];
             [(GPUImageMosaicFilter *)inputFilter setTileSet:@"Ornament1.png"];
             [(GPUImageMosaicFilter *)inputFilter setColorOn:NO];
             //[(GPUImageMosaicFilter *)inputFilter setTileSet:@"dotletterstiles.png"];
-            //[(GPUImageMosaicFilter *)inputFilter setTileSet:@"curvies.png"]; 
+            //[(GPUImageMosaicFilter *)inputFilter setTileSet:@"curvies.png"];
             
             [inputFilter setInputRotation:kGPUImageRotateRight atIndex:0];
             
         }; break;
-/*        case GPUIMAGE_CHROMAKEY:
-        {
-            inputFilter = [[GPUImageChromaKeyBlendFilter alloc] init];
-            [(GPUImageChromaKeyBlendFilter *)inputFilter setColorToReplaceRed:0.0 green:1.0 blue:0.0];
-        }; break;*/
-/*        case GPUIMAGE_MULTIPLY:
-        {
-            inputFilter = [[GPUImageMultiplyBlendFilter alloc] init];
-        }; break;*/
-/*        case GPUIMAGE_OVERLAY:
-        {
-            inputFilter = [[GPUImageOverlayBlendFilter alloc] init];
-        }; break;*/
-/*        case GPUIMAGE_LIGHTEN:
-        {
-            inputFilter = [[GPUImageLightenBlendFilter alloc] init];
-        }; break;
-        case GPUIMAGE_DARKEN:
-        {
-            inputFilter = [[GPUImageDarkenBlendFilter alloc] init];
-        }; break;*/
-/*        case GPUIMAGE_DISSOLVE:
-        {
-            inputFilter = [[GPUImageDissolveBlendFilter alloc] init];
-        }; break;*/
-/*        case GPUIMAGE_SCREENBLEND:
-        {
-            inputFilter = [[GPUImageScreenBlendFilter alloc] init];
-        }; break;
-        case GPUIMAGE_COLORBURN:
-        {
-            inputFilter = [[GPUImageColorBurnBlendFilter alloc] init];
-        }; break;
-        case GPUIMAGE_COLORDODGE:
-        {
-            inputFilter = [[GPUImageColorDodgeBlendFilter alloc] init];
-        }; break;*/
-/*        case GPUIMAGE_EXCLUSIONBLEND:
-        {
-            inputFilter = [[GPUImageExclusionBlendFilter alloc] init];
-        }; break;*/
-/*        case GPUIMAGE_DIFFERENCEBLEND:
-        {
-            inputFilter = [[GPUImageDifferenceBlendFilter alloc] init];
-        }; break;
-		case GPUIMAGE_SUBTRACTBLEND:
-        {
-            inputFilter = [[GPUImageSubtractBlendFilter alloc] init];
-        }; break;
-        case GPUIMAGE_HARDLIGHTBLEND:
-        {
-            inputFilter = [[GPUImageHardLightBlendFilter alloc] init];
-        }; break;
-        case GPUIMAGE_SOFTLIGHTBLEND:
-        {
-            inputFilter = [[GPUImageSoftLightBlendFilter alloc] init];
-        }; break;*/
-/*        case GPUIMAGE_CUSTOM:
-        {
-            inputFilter = [[GPUImageFilter alloc] initWithFragmentShaderFromFile:@"CustomFilter"];
-        }; break;*/
-/*        case GPUIMAGE_KUWAHARA:
-        {
-            inputFilter = [[GPUImageKuwaharaFilter alloc] init];
-        }; break;*/
+            /*        case GPUIMAGE_CHROMAKEY:
+             {
+             inputFilter = [[GPUImageChromaKeyBlendFilter alloc] init];
+             [(GPUImageChromaKeyBlendFilter *)inputFilter setColorToReplaceRed:0.0 green:1.0 blue:0.0];
+             }; break;*/
+            /*        case GPUIMAGE_MULTIPLY:
+             {
+             inputFilter = [[GPUImageMultiplyBlendFilter alloc] init];
+             }; break;*/
+            /*        case GPUIMAGE_OVERLAY:
+             {
+             inputFilter = [[GPUImageOverlayBlendFilter alloc] init];
+             }; break;*/
+            /*        case GPUIMAGE_LIGHTEN:
+             {
+             inputFilter = [[GPUImageLightenBlendFilter alloc] init];
+             }; break;
+             case GPUIMAGE_DARKEN:
+             {
+             inputFilter = [[GPUImageDarkenBlendFilter alloc] init];
+             }; break;*/
+            /*        case GPUIMAGE_DISSOLVE:
+             {
+             inputFilter = [[GPUImageDissolveBlendFilter alloc] init];
+             }; break;*/
+            /*        case GPUIMAGE_SCREENBLEND:
+             {
+             inputFilter = [[GPUImageScreenBlendFilter alloc] init];
+             }; break;
+             case GPUIMAGE_COLORBURN:
+             {
+             inputFilter = [[GPUImageColorBurnBlendFilter alloc] init];
+             }; break;
+             case GPUIMAGE_COLORDODGE:
+             {
+             inputFilter = [[GPUImageColorDodgeBlendFilter alloc] init];
+             }; break;*/
+            /*        case GPUIMAGE_EXCLUSIONBLEND:
+             {
+             inputFilter = [[GPUImageExclusionBlendFilter alloc] init];
+             }; break;*/
+            /*        case GPUIMAGE_DIFFERENCEBLEND:
+             {
+             inputFilter = [[GPUImageDifferenceBlendFilter alloc] init];
+             }; break;
+             case GPUIMAGE_SUBTRACTBLEND:
+             {
+             inputFilter = [[GPUImageSubtractBlendFilter alloc] init];
+             }; break;
+             case GPUIMAGE_HARDLIGHTBLEND:
+             {
+             inputFilter = [[GPUImageHardLightBlendFilter alloc] init];
+             }; break;
+             case GPUIMAGE_SOFTLIGHTBLEND:
+             {
+             inputFilter = [[GPUImageSoftLightBlendFilter alloc] init];
+             }; break;*/
+            /*        case GPUIMAGE_CUSTOM:
+             {
+             inputFilter = [[GPUImageFilter alloc] initWithFragmentShaderFromFile:@"CustomFilter"];
+             }; break;*/
+            /*        case GPUIMAGE_KUWAHARA:
+             {
+             inputFilter = [[GPUImageKuwaharaFilter alloc] init];
+             }; break;*/
             
         case GPUIMAGE_VIGNETTE:
         {
@@ -1342,7 +1350,7 @@ void decCameraUseBy(int dec)
         {
             inputFilter = [[GPUImageMonochromeFilter alloc] init];
             [(GPUImageMonochromeFilter *)filter setColor:(GPUVector4){0.0f, 0.0f, 1.0f, 1.f}];
-        }; break;            
+        }; break;
         case GPUIMAGE_HUE:
         {
             inputFilter = [[GPUImageHueFilter alloc] init];
@@ -1351,22 +1359,22 @@ void decCameraUseBy(int dec)
         {
             inputFilter = [[GPUImageWhiteBalanceFilter alloc] init];
         }; break;
-/*        case GPUIMAGE_LOWPASS:
-        {
-            inputFilter = [[GPUImageLowPassFilter alloc] init];
-        }; break;
-        case GPUIMAGE_HIGHPASS:
-        {
-            inputFilter = [[GPUImageHighPassFilter alloc] init];
-        }; break;*/
-/*        case GPUIMAGE_MOTIONDETECTOR:
-        {
-            inputFilter = [[GPUImageMotionDetector alloc] init];
-        }; break;*/
-/*        case GPUIMAGE_THRESHOLDSKETCH:
-        {
-            inputFilter = [[GPUImageThresholdSketchFilter alloc] init];
-        }; break;*/
+            /*        case GPUIMAGE_LOWPASS:
+             {
+             inputFilter = [[GPUImageLowPassFilter alloc] init];
+             }; break;
+             case GPUIMAGE_HIGHPASS:
+             {
+             inputFilter = [[GPUImageHighPassFilter alloc] init];
+             }; break;*/
+            /*        case GPUIMAGE_MOTIONDETECTOR:
+             {
+             inputFilter = [[GPUImageMotionDetector alloc] init];
+             }; break;*/
+            /*        case GPUIMAGE_THRESHOLDSKETCH:
+             {
+             inputFilter = [[GPUImageThresholdSketchFilter alloc] init];
+             }; break;*/
         case GPUIMAGE_SPHEREREFRACTION:
         {
             inputFilter = [[GPUImageSphereRefractionFilter alloc] init];
@@ -1375,10 +1383,10 @@ void decCameraUseBy(int dec)
         {
             inputFilter = [[GPUImageGlassSphereFilter alloc] init];
         }; break;
-/*        case GPUIMAGE_HIGHLIGHTSHADOW:
-        {
-            inputFilter = [[GPUImageHighlightShadowFilter alloc] init];
-        }; break;*/
+            /*        case GPUIMAGE_HIGHLIGHTSHADOW:
+             {
+             inputFilter = [[GPUImageHighlightShadowFilter alloc] init];
+             }; break;*/
         case GPUIMAGE_LOCALBINARYPATTERN:
         {
             inputFilter = [[GPUImageLocalBinaryPatternFilter alloc] init];
@@ -1386,13 +1394,31 @@ void decCameraUseBy(int dec)
             
             
         default: 
-/*            inputFilter = nil; 
-            currentfiltertype = GPUIMAGE_NONE;
-            [videoCamera addTarget:textureOutput];
-            return;*/
+            /*            inputFilter = nil; 
+             currentfiltertype = GPUIMAGE_NONE;
+             [videoCamera addTarget:textureOutput];
+             return;*/
             inputFilter = [[GPUImageSaturationFilter alloc] init];
             break;
     }
+    return inputFilter;
+}
+
+- (void)setCameraFilter:(GPUImageFilterType)filterType
+{
+    if(inputFilter == nil)
+    {
+        [videoCamera removeTarget:textureOutput];
+    }
+    else
+    {
+        [videoCamera removeTarget:inputFilter];
+        [inputFilter removeTarget:textureOutput];
+    }
+
+    currentfiltertype = filterType;
+    
+    inputFilter = [self createFilter:filterType];
     [inputFilter addTarget:textureOutput];
     [videoCamera addTarget:inputFilter];
 //    [videoCamera addTarget:filter];
@@ -4367,7 +4393,7 @@ void renderTextLabel(urAPI_Region_t* t)
 #endif
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-					if(t->texture->usecamera)
+					if(t->texture->usecamera || t->texture->inputFilter)
 					{
 						CGRect rect = CGRectMake(t->left,t->bottom,t->width,t->height);
 						GLfloat vertices[] = {  rect.origin.x,                                                  rect.origin.y,                                                  0.0,
@@ -4375,7 +4401,14 @@ void renderTextLabel(urAPI_Region_t* t)
 							rect.origin.x,                                                  rect.origin.y + rect.size.height,               0.0,
 							rect.origin.x + rect.size.width,                rect.origin.y + rect.size.height,               0.0 };
 						
-						glBindTexture(GL_TEXTURE_2D, cameraTexture);
+                        if(!t->texture->filterHandler)
+                            glBindTexture(GL_TEXTURE_2D, cameraTexture);
+                        else
+                        {
+//                            [t->texture->filterInput processTextureWithFrameTime:CMTimeMake(totalelapsedtime*1000,1000)];
+                            glBindTexture(GL_TEXTURE_2D, t->texture->_filterTexture);
+                        }
+                        
 
 #ifdef DEBUGSHOWFRAMECOUNT
                         char errorstrbuf[16];

@@ -2215,6 +2215,22 @@ void freeTexture(urAPI_Texture_t* texture)
     if(texture->usecamera != 0)
         decCameraUse();
     
+    if(texture->filterHandler)
+    {
+        //                    [t->filterInput removeAllTargets];
+        //                    [t->filterInput release];
+        //                    t->filterInput = NULL;
+        [g_glView->videoCamera removeTarget:texture->inputFilter];
+        [texture->inputFilter removeTarget:texture->filterOutput];
+        [texture->inputFilter release];
+        texture->inputFilter = NULL;
+        [texture->filterOutput release];
+        texture->filterOutput = NULL;
+        [texture->filterHandler release];
+        texture->filterHandler = NULL;
+    }
+    
+    
 	if(texture->backgroundTex!= NULL)
 //		delete texture->backgroundTex;
         free(texture->backgroundTex);
@@ -2421,6 +2437,12 @@ int region_Texture(lua_State* lua)
     mytexture->regionMovie = NULL;
     mytexture->textureOutput = NULL;
     mytexture->textureInput = NULL;
+    mytexture->filterInput = NULL;
+    mytexture->filterOutput = NULL;
+    mytexture->inputFilter = NULL;
+    mytexture->filterValue = 0;
+    mytexture->filterHandler = NULL;
+    mytexture->_filterTexture = 0;
 #endif
    
 	mytexture->usecamera = 0;
@@ -3176,6 +3198,97 @@ int texture_PixelColor(lua_State* lua)
     lua_pushnumber(lua, colors[3]);
     return 4;
 }
+
+const char* urFilterModeNames[] = { "NONE", "SATURATION", "CONTRAST", "BRIGHTNESS", "EXPOSURE", "RGB", "SHARPEN", "UNSHARPMASK",
+    "TRANSFORM", "TRANSFORM3D", "CROP", /*"MASK",*/ "GAMMA", "TONECURVE", "HAZE", "SEPIA", "COLORINVERT", "GRAYSCALE",
+    "THRESHOLD", "ADAPTIVETHRESHOLD", "PIXELLATE", "POLARPIXELLATE", "CROSSHATCH", "SOBELEDGEDETECTION",
+    "PREWITTEDGEDETECTION", "CANNYEDGEDETECTION", "XYGRADIENT", /*"HARRISCORNERDETECTION", "NOBLECORNERDETECTION",
+                                                                 "SHITOMASIFEATUREDETECTION",*/ "SKETCH", "TOON", "SMOOTHTOON", "TILTSHIFT", "CGA", "POSTERIZE", /*"CONVOLUTION",*/
+    "EMBOSS", /*"KUWAHARA",*/ "VIGNETTE", "GAUSSIAN", "GAUSSIAN_SELECTIVE", "FASTBLUR", "BOXBLUR", "MEDIAN", "BILATERAL",
+    "SWIRL", "BULGE", "PINCH", "STRETCH", "DILATION", "EROSION", "OPENING", "CLOSING",
+    /*"PERLINNOISE",*/ /*"VORONI",*/  "MOSAIC", /*"DISSOLVE", "CHROMAKEY", "MULTIPLY", "OVERLAY",*/ /*"LIGHTEN", "DARKEN", "COLORBURN",
+                                                                                                     "COLORDODGE", "SCREENBLEND", "DIFFERENCEBLEND", "SUBTRACTBLEND", "EXCLUSIONBLEND", "HARDLIGHTBLEND", "SOFTLIGHTBLEND",*/
+    /*"CUSTOM",*/ "SEPIAPIXELLATE",
+    "POLKADOT", "HALFTONE", "LEVELS", "MONOCHROME", "HUE",
+    "WHITEBALANCE", /*"LOWPASS", "HIGHPASS", "MOTIONDETECTOR",*/ /*"THRESHOLDSKETCH",*/
+    "SPHEREREFRACTION", "GLASSSPHERE", /*"HIGHLIGHTSHADOW",*/ "LOCALBINARYPATTERN"
+};
+
+
+int texture_SetFilter(lua_State *lua)
+{
+   	urAPI_Texture_t* t = checktexture(lua, 1);
+	const char* filtermode = luaL_checkstring(lua, 2);
+#ifdef GPUIMAGE
+    for(int i=0; i<maxFilterMode; i++)
+    {
+        if(!strcmp(filtermode,urFilterModeNames[i]))
+        {
+            
+            if(i==0)
+            {
+                if(t->filterHandler)
+                {
+//                    [t->filterInput removeAllTargets];
+//                    [t->filterInput release];
+//                    t->filterInput = NULL;
+                    [g_glView->videoCamera removeTarget:t->inputFilter];
+                    [t->inputFilter removeTarget:t->filterOutput];
+                    [t->inputFilter release];
+                    t->inputFilter = NULL;
+                    [t->filterOutput release];
+                    t->filterOutput = NULL;
+                    [t->filterHandler release];
+                    t->filterHandler = NULL;
+                    t->filtertype = GPUIMAGE_NONE;
+                }
+                return 0; // No filter
+            }
+
+            t->inputFilter = [g_glView createFilter:(GPUImageFilterType)i];
+            if(t->inputFilter)
+            {
+                if(t->usecamera)
+                {
+//                    t->filterInput = [[GPUImageTextureInput alloc] initWithTexture:cameraTexture size:CGSizeMake(t->region->width, t->region->height)];
+//                    t->filterInput = [[GPUImageTextureInput alloc] initWithTexture:cameraTexture size:CGSizeMake(640, 480)];
+                }
+                else
+                    assert(0);
+                t->filtertype = (GPUImageFilterType)i;
+                t->filterOutput = [[GPUImageTextureOutput alloc] init];
+                t->filterHandler = [[urFilterHandler alloc] init];
+                t->filterHandler->region = t->region;
+                t->filterOutput.delegate = t->filterHandler;
+                [t->inputFilter addTarget:t->filterOutput];
+                if(t->usecamera)
+                    [g_glView->videoCamera addTarget:t->inputFilter];
+                
+//                [t->filterInput addTarget:t->filterOutput];
+                
+            }
+            else
+                assert(0);
+
+            return 0;
+        }
+    }
+#endif
+    luaL_error(lua, "Unknown camera filter mode: %s", filtermode);
+    return 0;
+}
+
+int texture_SetFilterParameter(lua_State *lua)
+{
+    urAPI_Texture_t* t = checktexture(lua, 1);
+	double value = luaL_checknumber(lua,2);
+#ifdef GPUIMAGE
+    t->filterValue = value;
+    [g_glView setFilterParameter:value forFilter:t->inputFilter withType:t->filtertype];
+#endif
+    return 0;
+}
+
 
 int region_UseAsBrush(lua_State* lua)
 {
@@ -3983,6 +4096,8 @@ static const struct luaL_reg texturefuncs [] =
 	{"Height", texture_Height},
 	{"UseCamera", texture_UseCamera},
     {"PixelColor", texture_PixelColor},
+    {"SetFilter", texture_SetFilter},
+    {"SetFilterParameter", texture_SetFilterParameter},
 	{"__gc",       texture_gc},
 	{NULL, NULL}
 };
@@ -5636,21 +5751,6 @@ int l_SetTorchFlashFrequency(lua_State *lua)
 
 	return 0;
 }
-
-const char* urFilterModeNames[] = { "NONE", "SATURATION", "CONTRAST", "BRIGHTNESS", "EXPOSURE", "RGB", "SHARPEN", "UNSHARPMASK", 
-"TRANSFORM", "TRANSFORM3D", "CROP", /*"MASK",*/ "GAMMA", "TONECURVE", "HAZE", "SEPIA", "COLORINVERT", "GRAYSCALE",
-"THRESHOLD", "ADAPTIVETHRESHOLD", "PIXELLATE", "POLARPIXELLATE", "CROSSHATCH", "SOBELEDGEDETECTION",
-"PREWITTEDGEDETECTION", "CANNYEDGEDETECTION", "XYGRADIENT", /*"HARRISCORNERDETECTION", "NOBLECORNERDETECTION", 
-"SHITOMASIFEATUREDETECTION",*/ "SKETCH", "TOON", "SMOOTHTOON", "TILTSHIFT", "CGA", "POSTERIZE", /*"CONVOLUTION",*/
-"EMBOSS", /*"KUWAHARA",*/ "VIGNETTE", "GAUSSIAN", "GAUSSIAN_SELECTIVE", "FASTBLUR", "BOXBLUR", "MEDIAN", "BILATERAL",
-"SWIRL", "BULGE", "PINCH", "STRETCH", "DILATION", "EROSION", "OPENING", "CLOSING", 
-/*"PERLINNOISE",*/ /*"VORONI",*/  "MOSAIC", /*"DISSOLVE", "CHROMAKEY", "MULTIPLY", "OVERLAY",*/ /*"LIGHTEN", "DARKEN", "COLORBURN",
-"COLORDODGE", "SCREENBLEND", "DIFFERENCEBLEND", "SUBTRACTBLEND", "EXCLUSIONBLEND", "HARDLIGHTBLEND", "SOFTLIGHTBLEND",*/ 
-/*"CUSTOM",*/ "SEPIAPIXELLATE",
-    "POLKADOT", "HALFTONE", "LEVELS", "MONOCHROME", "HUE",
-    "WHITEBALANCE", /*"LOWPASS", "HIGHPASS", "MOTIONDETECTOR",*/ /*"THRESHOLDSKETCH",*/
-    "SPHEREREFRACTION", "GLASSSPHERE", /*"HIGHLIGHTSHADOW",*/ "LOCALBINARYPATTERN"
-};
 
 int l_CameraFilters(lua_State *lua)
 {

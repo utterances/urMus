@@ -160,6 +160,14 @@ typedef struct urAPI_Texture
         urRegionMovie* regionMovie;
         GPUImageTextureOutput *textureOutput;
         GPUImageTextureInput *textureInput;
+        GPUImageTextureInput *filterInput;
+        GPUImageTextureOutput *filterOutput;
+        GPUImageOutput<GPUImageInput> *inputFilter;
+        float filterValue;
+        urFilterHandler *filterHandler;
+        GLuint	_filterTexture;
+        GPUImageFilterType filtertype;
+
 #endif
 		urAPI_Region_t *region;
 	} urAPI_Texture_t;

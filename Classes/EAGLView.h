@@ -157,6 +157,14 @@ typedef struct urAPI_Region urAPI_Region_t;
     urAPI_Region_t* region;
 }
 @end
+
+@interface urFilterHandler: NSObject <GPUImageTextureOutputDelegate>
+{
+@public
+    urAPI_Region_t* region;
+}
+@end
+
 #endif
 #endif
 
@@ -248,6 +256,7 @@ enum recordsource { SOURCE_TEXTURE, SOURCE_CAMERA, SOURCE_MOVIE };
     GPUImageFilterType currentfiltertype;
     CGSize sourcesize;
     GPUImageTextureInput *textureInput;
+    GPUImageTextureInput *textureFilterInput;
     GPUImageCropFilter* cropfilter;
     GPUImageTransformFilter* rotateFilter;
     enum recordsource recordfrom;
@@ -314,6 +323,8 @@ enum recordsource { SOURCE_TEXTURE, SOURCE_CAMERA, SOURCE_MOVIE };
 #ifdef GPUIMAGE
 - (void)setCameraFilterParameter:(double)value;
 - (void)setCameraFilter:(GPUImageFilterType)filterType;
+- (void)setFilterParameter:(double)value forFilter:(GPUImageOutput<GPUImageInput> *)inputFilter withType:(GPUImageFilterType)currentfiltertype;
+- (GPUImageOutput<GPUImageInput> *)createFilter:(GPUImageFilterType)filterType;
 #endif
 
 #ifdef SANDWICH_SUPPORT
