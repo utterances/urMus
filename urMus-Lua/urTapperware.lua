@@ -460,14 +460,15 @@ end
 
 function EndLinkRegion(self)
 	if initialLinkRegion ~= nil then
-		DPrint("linked from "..initialLinkRegion:Name().." to "..self:Name())
+		-- DPrint("linked from "..initialLinkRegion:Name().." to "..self:Name())
 		-- TODO create the link here!
 		table.insert(initialLinkRegion.links["OnTouchUp"], {VTouchUp, self})
-		CloseMenu(initialLinkRegion)
 		
 		-- add visual link too:
 		link:add(initialLinkRegion, self)
 		link:draw()
+
+		CloseMenu(initialLinkRegion)
 		
 		initialLinkRegion = nil
 	end
