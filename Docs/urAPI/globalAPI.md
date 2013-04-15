@@ -13,7 +13,7 @@ DPrint
     DPrint("output")
 ### Description
 Debug print a give string in the center of the screen. This will also be used
-for system errors and should not be used for normal user interactions.
+for system errors and should not be used for normal user interactions. DPrints also appear in the error log of the urMus web editing environment.
 ### Arguments
 - output (String)
     The string to print to the debug console.
@@ -63,22 +63,21 @@ Pauses the audio engine. Audio-related events will not work while paused.
 FlowBox
 -------------
 ### Synopsis
-    flowbox = FlowBox("type", "name", inheritedFlowbox)
+    flowbox = FlowBox(inheritedFlowbox)
 ### Description
 Creates a new instance of a specified flowbox. To seed cloning use global
 instances of flowboxes via `_G["FB"..objectname]`.
 ### Arguments
-- type (String) [unused]
-    String identifying the opject type.
-- name (String) [unused]
-	  User-specified name of the object.
 - inheritedFlowbox (Flowbox)
-	  The parent flowbox to inherit from. If specified, this creates a deep-copy of the 
-    parent.
+    The parent flowbox to inherit from. If specified, this creates a new instance of the 
+    parent. If the parent cannot be instanced it simply returns the parent.
 
 ### Returns
 - flowbox (Flowbox)
-  A new instance of the given flowbox.
+  A new instance of the given flowbox. Returns the original if it cannot be instanced.
+
+### Note
+  Old API flowbox = FlowBox("type", "name", inheritedFlowbox) is considered obsolete after v1.0.
   
 SourceNames
 ----------------
@@ -312,6 +311,49 @@ Sets the flashing frequency of the camera flash-light if present.
 ### Arguments
 - frequency (Number)
 	Frequency at which the light is turned on and off
+
+CameraFilters
+--------------
+### Synopsis
+	filtername1, filtername2,.. = CameraFilters()
+### Description
+Returns all currently available camera filter effects. The returned strings can be used with SetCameraFilter() to activate the effect.
+
+### Returns
+- filtername1, filtername2,.. (List)
+  A list of names of camera filter effects.
+	
+### Note
+Requires v1.0 or later, requires camera.
+
+SetCameraFilter
+----------------
+### Synopsis
+	SetCameraFilter(filtername)
+### Description
+Sets the currently active camera filter effect. Applies to all regions using cameras as textures via texture:UseCamera(). Applicabile parameters can be changed via SetCameraFilterParameter().
+
+### Arguments
+- filtername (String)
+   Name of a filter to active. Allowable filter names can be identified by using CameraFilters().
+	
+### Note
+Requires v1.0 or later, requires camera.
+
+SetCameraFilterParameter
+-------------------------
+### Synopsis
+	SetCameraFilter(filterparam)
+### Description
+Sets the parameter of the currently active camera filter effect. See also SetCameraFilter().
+
+### Arguments
+- filterparam (Number)
+  Parameter for the active camera filter, range -1 to 1.
+
+### Note
+Requires v1.0 or later, requires camera.
+
 
 Networking API
 ======================

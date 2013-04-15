@@ -55,6 +55,36 @@ type. If nil is passed for the function parameter, the current handler will be r
 </ul>
 
 
+<h2>Region:ReadHandle</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>function = region:ReadHandle("handler")
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Reads the action handler callback function for this given region. Will return nil if no function is currently set for a given handler.</p>
+
+<h3>Arguments</h3>
+
+<ul>
+<li><code>handler</code> (String)
+  A string of the event type we're looking to handle events for. Should be an
+  event string of the kind "OnDragStart", "OnDragEnd", etc. See Overview for
+  possible event handler types.
+
+<h3>Returns</h3></li>
+<li><code>function</code> (Function)
+  The function associated with the given handler. If nil, no current handler
+  is associated.
+
+<h3>Note</h3>
+
+<p>Requires V1.0 or later.</p></li>
+</ul>
+
+
 <h2>Region:SetHeight</h2>
 
 <h3>Synopsis</h3>

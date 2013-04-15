@@ -476,6 +476,36 @@ on the texture.</p>
 
 <p>Uses the live camera image of the currently active camera as texture.</p>
 
+<h2>Texture:PixelColor</h2>
+
+<h3>Synopsis</h3>
+
+<pre><code>r,g,b,a = texture:PixelColor(x,y)
+</code></pre>
+
+<h3>Description</h3>
+
+<p>Reads the pixel color and alpha value at texture coordinate x and y within a texture.</p>
+
+<h3>Returns</h3>
+
+<ul>
+<li>r (Number)
+  A number [0,255] describing the intensity of red in the pixel color.</li>
+<li>g (Number)
+  A number [0,255] describing the intensity of green in the pixel color.</li>
+<li>b (Number)
+  A number [0,255] describing the intensity of blue in the pixel color.</li>
+<li>a (Number)
+  A number [0,255] describing the alpha transparency of the pixel. 0 is fully
+  transparent, 255 is opaque.
+
+<h1>Note</h1>
+
+<p>Requires V1.0 or later.</p></li>
+</ul>
+
+
 <p><a href="overview.html">urMus API Overview</a></p>
 
 <center>

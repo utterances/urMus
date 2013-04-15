@@ -9,6 +9,13 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
+// If you compile for pre 4.3 devices (2nd gen iPod Touches for example)
+#undef LEGACY42
+
+// Enable or disable Camera code. Needs to be disabled for devices without camera
+#define USECAMERA
+
+
 // OpenGLES2 enabled. Many code parts such as the camera filter code require opengles2 shaders. This flag will enable opengles1 versions of the code as they exist. Usually newer features are only written in opengles2.
 #define OPENGLES2
 // GPUIMAGE enables GPUIMAGE based shader/camera filters. Only guaranteed to work when OPENGLES2 is enabled.

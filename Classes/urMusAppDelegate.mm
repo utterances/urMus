@@ -204,7 +204,8 @@ extern std::string g_storagePath;
 #endif
 #ifndef SLEEPER
 	NSString *filePath = [resourcePath stringByAppendingPathComponent:@"urMus.lua"];
-//	NSString *filePath = [resourcePath stringByAppendingPathComponent:@"urSmudge.lua"];
+//	NSString *filePath = [resourcePath stringByAppendingPathComponent:@"urBlank.lua"];
+//	NSString *filePath = [resourcePath stringByAppendingPathComponent:@"urVen2.lua"];
 #else
 	NSString *filePath = [resourcePath stringByAppendingPathComponent:@"urSleeperLaunch.lua"];
 #endif
@@ -219,7 +220,7 @@ extern std::string g_storagePath;
     }
 		
 	// start off http server
-//#define HTTP_EDITING
+#define HTTP_EDITING
 #ifdef HTTP_EDITING
 	http_start([resourcePath UTF8String],
 			   [documentPath UTF8String]);

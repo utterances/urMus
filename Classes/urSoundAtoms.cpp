@@ -45,7 +45,7 @@ double norm2ModIndex(double norm)
 	return (norm+1.0)*6.0;
 }
 
-// This is a normed value to pitchshift. Allowing a range of 0-2. We offset by 1.0 to make 0 be neutral (no pitch change). Quadratic relationship.
+// This is a normed value to pitchshift. Allowing a range of 0-4. We offset by 1.0 to make 0 be neutral (no pitch change). Quadratic relationship.
 double norm2PitchShift(double norm)
 {
 	return (norm+1.0)*(norm+1.0);
@@ -147,7 +147,12 @@ inline double norm2NegativeLinear(double norm)
 	return norm/2.0-0.5;
 }
 
-
+// This converts to a rate scale of 0-4 seconds assuming a 48000 Hz base rate
+double norm2Rate(double norm)
+{
+    return 1.0/(95999.5*capNorm(norm)+96000.5);
+//    return (norm+1.0)*2.0/48000.0;
+}
 
 double Nope_Tick(ursObject* gself)
 {

@@ -1,4 +1,5 @@
- /*
+
+/*
  *  urAPI.c
  *  urMus
  *
@@ -152,7 +153,7 @@ urAPI_Region_t* UIParent = nil;
 // Flowbox patches (NYI)
 //------------------------------------------------------------------------------
 
-ursAPI_FlowBox_t* FBNope = nil;
+//ursAPI_FlowBox_t* FBNope = nil;
 
 int currentPatch = 0;
 ursAPI_FlowBox_t** firstFlowbox[MAX_PATCHES] = {nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil};
@@ -338,6 +339,7 @@ bool callScriptWithOscArgs(enum eventIDs event, int func_ref, urAPI_Region_t* re
         std::string eventstr(urEventNames[event]);
 		errorstr = eventstr+error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
 	
@@ -363,6 +365,7 @@ bool callScriptWith5Args(enum eventIDs event, int func_ref, urAPI_Region_t* regi
 		const char* error = lua_tostring(lua, -1);
 		errorstr = error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
 	
@@ -389,6 +392,7 @@ bool callScriptWith4Args(enum eventIDs event, int func_ref, urAPI_Region_t* regi
 		errorstr = eventstr+": "+error; // DPrinting errors for now
 		errorstr = error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
 	
@@ -413,6 +417,7 @@ bool callScriptWith3Args(enum eventIDs event, int func_ref, urAPI_Region_t* regi
         std::string eventstr(urEventNames[event]);
 		errorstr = eventstr+": "+error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
 	
@@ -439,6 +444,7 @@ bool callScriptWith2Args(enum eventIDs event, int func_ref, urAPI_Region_t* regi
         else
             errorstr = eventstr+": Unknown error";
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
 	
@@ -462,6 +468,7 @@ bool callScriptWith1Args(enum eventIDs event, int func_ref, urAPI_Region_t* regi
         std::string eventstr(urEventNames[event]);
 		errorstr = eventstr+": "+error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
     
@@ -485,6 +492,7 @@ bool callScriptWith1Global(enum eventIDs event, int func_ref, urAPI_Region_t* re
         std::string eventstr(urEventNames[event]);
 		errorstr = eventstr+": "+error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
 	
@@ -508,6 +516,7 @@ bool callScriptWith1String(enum eventIDs event, int func_ref, urAPI_Region_t* re
         std::string eventstr(urEventNames[event]);
 		errorstr = eventstr+": "+error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
 	
@@ -532,6 +541,7 @@ bool callScriptWith2String(enum eventIDs event, int func_ref, urAPI_Region_t* re
         std::string eventstr(urEventNames[event]);
 		errorstr = eventstr+": "+error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
 	
@@ -553,6 +563,7 @@ bool callScript(enum eventIDs event, int func_ref, urAPI_Region_t* region)
         std::string eventstr(urEventNames[event]);
 		errorstr = eventstr+": "+error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
     
@@ -812,6 +823,7 @@ bool callScriptWith2ActionTableArgs(enum eventIDs event, int func_ref, urAPI_Reg
 		const char* error = lua_tostring(lua, -1);
 		errorstr = error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 		return false;
 	}
 	
@@ -966,6 +978,7 @@ void callAllOnEnterLeaveRegions(int nr, float* x, float* y, float* ox, float* oy
     enum eventIDs event = OnLeave;
     for(int i=0; i<nr; i++)
     {
+        event = OnLeave;
         if(EventChain[event].first != NULL)
         {
             EventChain[event].next = EventChain[event].first->next; // Helps save-guard the chain should a region unhook itself
@@ -1450,6 +1463,7 @@ int region_Handle(lua_State* lua)
         {
 			luaL_error(lua, "Trying to set a script for an unknown event: %s",handler);
             newerror = true;
+            ur_Log(errorstr.c_str());
 			return 0; // Error, unknown event
         }
 		return 1;
@@ -1479,6 +1493,7 @@ int region_Handle(lua_State* lua)
                 luaL_unref(lua, LUA_REGISTRYINDEX, func_ref);
                 luaL_error(lua, "Trying to set a script for an unknown event: %s",handler);
                 newerror = true;
+                ur_Log(errorstr.c_str());
                 return 0; // Error, unknown event
             }
 
@@ -1487,6 +1502,23 @@ int region_Handle(lua_State* lua)
 		}
 		return 0;
 	}
+}
+
+int region_ReadHandle(lua_State* lua)
+{
+	urAPI_Region_t* region = checkregion(lua,1);
+	//get parameter
+	const char* handler = luaL_checkstring(lua, 2);
+    
+    for(int i=0; i<MAX_EVENTS; i++)
+    {
+        if(!strcmp(handler, urEventNames[i]))
+        {
+            lua_rawgeti(lua,LUA_REGISTRYINDEX, region->OnEvents[i]);
+            return 1;
+        }
+    }
+    return 0;
 }
 
 void ClampRegion(urAPI_Region_t* region);
@@ -2112,9 +2144,17 @@ int region_Lower(lua_State* lua)
 	if(region->prev != nil)
 	{
 		urAPI_Region_t* temp = region->prev;
+        if(firstRegion[currentPage] == temp)
+            firstRegion[currentPage] = region;
+        if(lastRegion[currentPage] == region)
+            lastRegion[currentPage] = temp;
 		region->prev = temp->prev;
 		temp->next = region->next;
+        if(temp->prev)
+            temp->prev->next = region;
 		temp->prev = region;
+        if(region->next)
+            region->next->prev = temp;
 		region->next = temp;
 	}
 	return 0;
@@ -2126,9 +2166,17 @@ int region_Raise(lua_State* lua)
 	if(region->next != nil)
 	{
 		urAPI_Region_t* temp = region->next;
+        if(firstRegion[currentPage] == region)
+            firstRegion[currentPage] = temp;
+        if(lastRegion[currentPage] == temp)
+            lastRegion[currentPage] = region;
 		region->next = temp->next;
 		temp->prev = region->prev;
+        if(temp->next)
+            temp->next->prev = region;
 		temp->next = region;
+        if(region->prev)
+            region->prev->next = temp;
 		region->prev = temp;
 	}
 	return 0;
@@ -3093,12 +3141,42 @@ int texture_UseCamera(lua_State* lua)
 //        [g_glView IncCameraUse];
 	t->usecamera = 1;
 	t->isTiled = false; // Camera textures cannot be tiled
+    t->width =480 ;//640;
+    t->height = 640;
     
     if(UsesTextureBrush())
         SetBrushAsCamera(true);
 	return 0;
 }
-	
+
+void readPixelColor(GLuint t, int x, int y, unsigned char* colors);
+
+extern GLuint	cameraTexture;
+
+int texture_PixelColor(lua_State* lua)
+{
+   	urAPI_Texture_t* t = checktexture(lua, 1);
+    lua_Number x = luaL_checknumber(lua,2);
+    lua_Number y = luaL_checknumber(lua,3);
+    unsigned char colors[4*4];
+    y = t->height-y;
+    GLuint	texture;
+    if(t->usecamera)
+        texture = cameraTexture;
+    else
+    {
+        if(t->backgroundTex==0)
+            instantiateTexture(t->region);
+        texture = (GLuint)t->backgroundTex.name;
+    }
+    readPixelColor(texture, (int)x, (int)y, (unsigned char*)colors);
+    lua_pushnumber(lua, colors[0]);
+    lua_pushnumber(lua, colors[1]);
+    lua_pushnumber(lua, colors[2]);
+    lua_pushnumber(lua, colors[3]);
+    return 4;
+}
+
 int region_UseAsBrush(lua_State* lua)
 {
 	urAPI_Region_t* t = checkregion(lua, 1);
@@ -3904,6 +3982,7 @@ static const struct luaL_reg texturefuncs [] =
 	{"Width", texture_Width},
 	{"Height", texture_Height},
 	{"UseCamera", texture_UseCamera},
+    {"PixelColor", texture_PixelColor},
 	{"__gc",       texture_gc},
 	{NULL, NULL}
 };
@@ -3921,6 +4000,7 @@ static const struct luaL_reg regionfuncs [] =
 	{"EnableMoving", region_EnableMoving},
 	{"EnableResizing", region_EnableResizing},
 	{"Handle", region_Handle},
+    {"ReadHandle", region_ReadHandle},
 	{"SetHeight", region_SetHeight},
 	{"SetWidth", region_SetWidth},
 	{"Show", region_Show},
@@ -4360,7 +4440,10 @@ int flowbox_Pull(lua_State *lua)
 {
 	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
 	
-	fb->object->lastindata[0] = fb->object->CallAllPullIns();
+    if(fb->object->firstpullin[0]!=NULL)
+    {
+        fb->object->lastindata[0] = fb->object->CallAllPullIns();
+    }
 	
     lua_pushnumber(lua, fb->object->lastindata[0]);
     
@@ -4377,6 +4460,18 @@ int flowbox_Get(lua_State *lua)
 	lua_pushnumber(lua, visoutdata);
 	
 	return 1;
+}
+
+int flowbox_Note(lua_State *lua)
+{
+	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
+    if(fb->object && fb->object->note)
+    {
+        lua_pushstring(lua, fb->object->note);
+        return 1;
+    }
+    return 0;
+    
 }
 
 int flowbox_AddFile(lua_State *lua)
@@ -4484,6 +4579,7 @@ static const struct luaL_reg flowboxfuncs [] =
     {"Push", flowbox_Push},
     {"Pull", flowbox_Pull},
     {"Get", flowbox_Get},
+    {"Note", flowbox_Note},
     {"AddFile", flowbox_AddFile},
     {"ReadFile", flowbox_ReadFile},
     {"WriteFile", flowbox_WriteFile},
@@ -4549,13 +4645,18 @@ void ur_Log(const char * str) {
 char * ur_GetLog(int since, int *nlog) {
 	if(since<0) since=0;
 	std::string str="";
-	for(int i=since;i<ur_log.size();i++) {
+    long loglen = ur_log.size();
+    int i;
+	for(i=since;i<loglen && (str.length()+ur_log[i].length()+1) < 7800;i++) { // HTTP Length restriction is 8192, giving 300+ char slack for header.
 		str+=ur_log[i];
 		str+="\n";
 	}
 	char *result=(char *)malloc(str.length()+1);
 	strcpy(result, str.c_str());
-	*nlog=ur_log.size();
+    if (since >= loglen)
+        *nlog=loglen;
+    else
+        *nlog = i;
 	return result;
 }
 
@@ -5352,6 +5453,30 @@ int l_GetUrOuts(lua_State *lua)
 // Path-related global API
 //------------------------------------------------------------------------------
 
+const char* getSystemPath()
+{
+	NSString *filename2 = @"";
+	NSString *filePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:filename2];
+    return [filePath UTF8String];
+}
+
+const char* getDocumentPath()
+{
+	NSString *filename2 = @"";
+	NSArray *paths;
+	paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+	if ([paths count] > 0) {
+		NSString *filePath = [paths objectAtIndex:0];
+		NSString *resultPath = [NSString stringWithFormat:@"%@/%@", filePath, filename2];
+		return [resultPath UTF8String];
+	}
+	else
+	{
+        assert(0); // This should never happen!
+        return NULL;
+	}
+}
+
 int l_SystemPath(lua_State *lua)
 {
 	const char* filename = luaL_checkstring(lua,1);
@@ -5499,19 +5624,32 @@ int l_SetTorchFlashFrequency(lua_State *lua)
 }
 
 const char* urFilterModeNames[] = { "NONE", "SATURATION", "CONTRAST", "BRIGHTNESS", "EXPOSURE", "RGB", "SHARPEN", "UNSHARPMASK", 
-"TRANSFORM", "TRANSFORM3D", "CROP", "MASK", "GAMMA", "TONECURVE", "HAZE", "SEPIA", "COLORINVERT", "GRAYSCALE", 
+"TRANSFORM", "TRANSFORM3D", "CROP", /*"MASK",*/ "GAMMA", "TONECURVE", "HAZE", "SEPIA", "COLORINVERT", "GRAYSCALE",
 "THRESHOLD", "ADAPTIVETHRESHOLD", "PIXELLATE", "POLARPIXELLATE", "CROSSHATCH", "SOBELEDGEDETECTION",
 "PREWITTEDGEDETECTION", "CANNYEDGEDETECTION", "XYGRADIENT", /*"HARRISCORNERDETECTION", "NOBLECORNERDETECTION", 
-"SHITOMASIFEATUREDETECTION",*/ "SKETCH", "TOON", "SMOOTHTOON", "TILTSHIFT", "CGA", "POSTERIZE", "CONVOLUTION", 
+"SHITOMASIFEATUREDETECTION",*/ "SKETCH", "TOON", "SMOOTHTOON", "TILTSHIFT", "CGA", "POSTERIZE", /*"CONVOLUTION",*/
 "EMBOSS", /*"KUWAHARA",*/ "VIGNETTE", "GAUSSIAN", "GAUSSIAN_SELECTIVE", "FASTBLUR", "BOXBLUR", "MEDIAN", "BILATERAL",
 "SWIRL", "BULGE", "PINCH", "STRETCH", "DILATION", "EROSION", "OPENING", "CLOSING", 
-"PERLINNOISE", /*"VORONI",*/  "MOSAIC", "DISSOLVE", "CHROMAKEY", "MULTIPLY", "OVERLAY", "LIGHTEN", "DARKEN", "COLORBURN",
-"COLORDODGE", "SCREENBLEND", "DIFFERENCEBLEND", "SUBTRACTBLEND", "EXCLUSIONBLEND", "HARDLIGHTBLEND", "SOFTLIGHTBLEND", 
-/*"CUSTOM",*/ "FILTERGROUP",
+/*"PERLINNOISE",*/ /*"VORONI",*/  "MOSAIC", /*"DISSOLVE", "CHROMAKEY", "MULTIPLY", "OVERLAY",*/ /*"LIGHTEN", "DARKEN", "COLORBURN",
+"COLORDODGE", "SCREENBLEND", "DIFFERENCEBLEND", "SUBTRACTBLEND", "EXCLUSIONBLEND", "HARDLIGHTBLEND", "SOFTLIGHTBLEND",*/ 
+/*"CUSTOM",*/ "SEPIAPIXELLATE",
     "POLKADOT", "HALFTONE", "LEVELS", "MONOCHROME", "HUE",
-    "WHITEBALANCE", "LOWPASS", "HIGHPASS", "MOTIONDETECTOR", "THRESHOLDSKETCH",
-    "SPHEREREFRACTION", "GLASSSPHERE", "HIGHLIGHTSHADOW", "LOCALBINARYPATTERN"
+    "WHITEBALANCE", /*"LOWPASS", "HIGHPASS", "MOTIONDETECTOR",*/ /*"THRESHOLDSKETCH",*/
+    "SPHEREREFRACTION", "GLASSSPHERE", /*"HIGHLIGHTSHADOW",*/ "LOCALBINARYPATTERN"
 };
+
+int l_CameraFilters(lua_State *lua)
+{
+#ifdef GPUIMAGE
+    for(int i=0; i<maxFilterMode-1; i++)
+    {
+        lua_pushstring(lua,urFilterModeNames[i]);
+    }
+    return maxFilterMode-1;
+#else
+    return 0;
+#endif
+}
 
 int l_SetCameraFilter(lua_State *lua)
 {
@@ -5781,7 +5919,7 @@ void l_setupAPI(lua_State *lua)
 	lua_setglobal(lua, "UIParent");
 
 	urs_SetupObjects();
-	
+
 	char fbname[255];
 	for(int source=0; source<ursourceobjectlist.Last(); source++)
 	{
@@ -5795,12 +5933,12 @@ void l_setupAPI(lua_State *lua)
 		//	luaL_getmetatable(lua, "URAPI.region");
 		//	lua_setmetatable(lua, -2);
 		myflowbox->object = ursourceobjectlist[source];
-		FBNope = myflowbox;
+        populateFlowboxPorts(myflowbox);
+        //		FBNope = myflowbox;
 		strcpy(fbname, "FB");
 		strcat(fbname, myflowbox->object->name);
 		lua_setglobal(lua, fbname);
-        lua_getglobal(lua, fbname);        
-        populateFlowboxPorts(myflowbox);
+        //        lua_getglobal(lua, fbname);
 	}
 	for(int manipulator=0; manipulator<urmanipulatorobjectlist.Last(); manipulator++)
 	{
@@ -5814,12 +5952,12 @@ void l_setupAPI(lua_State *lua)
 		//	luaL_getmetatable(lua, "URAPI.region");
 		//	lua_setmetatable(lua, -2);
 		myflowbox->object = urmanipulatorobjectlist[manipulator];
-		FBNope = myflowbox;
+        populateFlowboxPorts(myflowbox);
+        //		FBNope = myflowbox;
 		strcpy(fbname, "FB");
 		strcat(fbname, myflowbox->object->name);
 		lua_setglobal(lua, fbname);
-        lua_getglobal(lua, fbname);
-        populateFlowboxPorts(myflowbox);
+        //        lua_getglobal(lua, fbname);
 	}
 	for(int sink=0; sink<ursinkobjectlist.Last(); sink++)
 	{
@@ -5833,12 +5971,12 @@ void l_setupAPI(lua_State *lua)
 		//	luaL_getmetatable(lua, "URAPI.region");
 		//	lua_setmetatable(lua, -2);
 		myflowbox->object = ursinkobjectlist[sink];
-		FBNope = myflowbox;
+        populateFlowboxPorts(myflowbox);
+        //		FBNope = myflowbox;
 		strcpy(fbname, "FB");
 		strcat(fbname, myflowbox->object->name);
 		lua_setglobal(lua, fbname);
-        lua_getglobal(lua, fbname);
-        populateFlowboxPorts(myflowbox);
+        //        lua_getglobal(lua, fbname);
 	}
 	
 	luaL_newmetatable(lua, "URAPI.texture");
@@ -5975,6 +6113,8 @@ void l_setupAPI(lua_State *lua)
 	lua_setglobal(lua, "SetTorchFlashFrequency");
 	lua_pushcfunction(lua, l_SetCameraAutoBalance);
     lua_setglobal(lua, "SetCameraAutoBalance");
+    lua_pushcfunction(lua, l_CameraFilters);
+    lua_setglobal(lua, "CameraFilters");
     lua_pushcfunction(lua, l_SetCameraFilter);
     lua_setglobal(lua, "SetCameraFilter");
     lua_pushcfunction(lua, l_SetCameraFilterParameter);

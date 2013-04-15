@@ -51,7 +51,7 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 </ul>
 
 
-<h2>Camera</h2>
+<h2>Cam</h2>
 
 <h3>Description</h3>
 
@@ -127,7 +127,7 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 </ul>
 
 
-<h2>Net</h2>
+<h2>NetIn</h2>
 
 <h3>Description</h3>
 
@@ -226,11 +226,11 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 
 <h3>Description</h3>
 
-<p>Generates a sine wave. It is not self-timed and derives its time update from being pulled at the output WaveForm. It provides not couples.</p>
+<p>Generates a sine wave. It is not self-timed and derives its time update from being pulled at the output Out. It provides not couples.</p>
 
 <h3>Source of Rate</h3>
 
-<p>Pulling output WaveForm (0)</p>
+<p>Pulling output Out (0)</p>
 
 <h3>Couples</h3>
 
@@ -249,7 +249,7 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 <h3>Output</h3>
 
 <ul>
-<li>WaveForm (0): (-1,1)</li>
+<li>Out (0): (-1,1)</li>
 </ul>
 
 
@@ -271,7 +271,7 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 
 <ul>
 <li>In (0): (-1,1)</li>
-<li>Avg (1): (-1,1) -> (1,511), default = 256</li>
+<li>Len (1): (-1,1) -> (1,511), default = 256</li>
 </ul>
 
 
@@ -296,6 +296,35 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 <li>In2 (1): (-1,1)</li>
 <li>In3 (2): (-1,1)</li>
 <li>Train (3): (-1,1)</li>
+</ul>
+
+
+<h3>Output</h3>
+
+<ul>
+<li>Out (0): (-1,1)</li>
+</ul>
+
+
+<h2>Add</h2>
+
+<h3>Description</h3>
+
+<p>Provides the sum of two inputs at the output. It is not self-timed and has no couples.</p>
+
+<h3>Source of Rate</h3>
+
+<p>Pulling output Out (0)</p>
+
+<h3>Couples</h3>
+
+<p>None</p>
+
+<h3>Inputs</h3>
+
+<ul>
+<li>In1 (0): (-1,1)</li>
+<li>In2 (1): (-1,1)</li>
 </ul>
 
 
@@ -1004,7 +1033,7 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 
 <ul>
 <li>In (0): (-1,1)</li>
-<li>Gain (1): (-1,1)</li>
+<li>Amp (1): (-1,1)</li>
 </ul>
 
 
@@ -1084,11 +1113,11 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 
 <h3>Description</h3>
 
-<p>Generates a circle map wave. A circle map is a non-linear oscillator. If the non-linearity is -1 it will behave like a linear sine oscillator. It is not self-timed and derives its time update from being pulled at the output WaveForm. It provides not couples.</p>
+<p>Generates a circle map wave. A circle map is a non-linear oscillator. If the non-linearity is -1 it will behave like a linear sine oscillator. It is not self-timed and derives its time update from being pulled at the output Out. It provides not couples.</p>
 
 <h3>Source of Rate</h3>
 
-<p>Pulling output WaveForm (0)</p>
+<p>Pulling output Out (0)</p>
 
 <h3>Couples</h3>
 
@@ -1108,7 +1137,7 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 <h3>Output</h3>
 
 <ul>
-<li>WaveForm (0): (-1,1)</li>
+<li>Out (0): (-1,1)</li>
 </ul>
 
 
@@ -1129,7 +1158,7 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 <h3>Inputs</h3>
 
 <ul>
-<li>In (0): (-1,1)</li>
+<li>Trigger (0): (-1,1) -> nonzero value for amplitude</li>
 <li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
 </ul>
 
@@ -1149,23 +1178,20 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 
 <h3>Source of Rate</h3>
 
-<p>Any change at input In (0) or output Out (0)</p>
+<p>Pulling output Out (0)</p>
 
 <h3>Couples</h3>
 
-<ul>
-<li>In (0) &lt;-> Out (0)</li>
-</ul>
-
+<p>None</p>
 
 <h3>Inputs</h3>
 
 <ul>
-<li>In (0): (-1,1)</li>
-<li>Attack (1): (-1,1)</li>
-<li>Decay (2): (-1,1)</li>
-<li>Sustain (3): (-1,1)</li>
-<li>Release (4): (-1,1)</li>
+<li>Trigger (0): (-1,1) -> positive value for ATTACK, nonpositive for RELEASE</li>
+<li>Attack (1): (-1,1) -> attack rate</li>
+<li>Decay (2): (-1,1) -> decay rate</li>
+<li>Sustain (3): (-1,1) -> sustain level</li>
+<li>Release (4): (-1,1) -> release rate</li>
 </ul>
 
 
@@ -1197,7 +1223,7 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 
 <ul>
 <li>In (0): (-1,1)</li>
-<li>Tau (1): Rate (-1,0,1) -> (-4,0,4) with 0.25->1 being standard rate</li>
+<li>Tau (1): Rate (-1,1) -> (0,1)</li>
 </ul>
 
 
@@ -1260,10 +1286,9 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 <h3>Inputs</h3>
 
 <ul>
-<li>In (0): (-1,1)</li>
-<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
-<li>Phase (2): (-1,1)</li>
-<li>Harms (3): (-1,1)</li>
+<li>Freq (0): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>Phase (1): (-1,1)</li>
+<li>Harms (2): (-1,1)</li>
 </ul>
 
 
@@ -1291,9 +1316,8 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 <h3>Inputs</h3>
 
 <ul>
-<li>In (0): (-1,1)</li>
-<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
-<li>Harms (2): (-1,1)</li>
+<li>Freq (0): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>Harms (1): (-1,1)</li>
 </ul>
 
 
@@ -1321,10 +1345,9 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 <h3>Inputs</h3>
 
 <ul>
-<li>In (0): (-1,1)</li>
-<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
-<li>Phase (2): (-1,1)</li>
-<li>Harms (3): (-1,1)</li>
+<li>Freq (0): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>Phase (1): (-1,1)</li>
+<li>Harms (2): (-1,1)</li>
 </ul>
 
 
@@ -1352,8 +1375,9 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 <h3>Inputs</h3>
 
 <ul>
-<li>In (0): (-1,1)</li>
-<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>Freq (0): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>Amp (1): Amplitude (0,1)</li>
+<li>Rate (2) : Rate (-1,1) -> (sample, 4sec)</li>
 </ul>
 
 
@@ -1381,8 +1405,11 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 <h3>Inputs</h3>
 
 <ul>
-<li>In (0): (-1,1)</li>
-<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>Freq (0): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>ToneHole (1) : Tonehole state (-1,1) -> (closed, fully open)</li>
+<li>Vent (2) : Vent state (-1,1) -> (closed, fully open)</li>
+<li>Amp (3): Amplitude (0,1)</li>
+<li>Rate (4) : Rate (-1,1) -> (sample, 4sec)</li>
 </ul>
 
 
@@ -1410,9 +1437,9 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 <h3>Inputs</h3>
 
 <ul>
-<li>In (0): (-1,1)</li>
-<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
-<li>Vibrato (2): (-1,1)</li>
+<li>Freq (0): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>Vibrato (1): Vibrato Gain (-1,1)</li>
+<li>Amp (2): Amplitude (0,1)</li>
 </ul>
 
 
@@ -1473,8 +1500,8 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 <h3>Inputs</h3>
 
 <ul>
-<li>In (0): (-1,1)</li>
-<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>Freq (0): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>Amp (1): Amplitude (0,1)</li>
 </ul>
 
 
@@ -1502,8 +1529,9 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 <h3>Inputs</h3>
 
 <ul>
-<li>In (0): (-1,1)</li>
-<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>Freq (0): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>Amp (1): Amplitude (0,1)</li>
+<li>Rate (2) : Rate (-1,1) -> (sample, 4sec)</li>
 </ul>
 
 
@@ -1535,7 +1563,7 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 
 <ul>
 <li>In (0): (-1,1)</li>
-<li>Delay (1): (-1,1)</li>
+<li>Delay (1): (-1,1) -> (0, 1sec)</li>
 </ul>
 
 
@@ -1567,7 +1595,7 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 
 <ul>
 <li>In (0): (-1,1)</li>
-<li>Delay (1): (-1,1)</li>
+<li>Delay (1): (-1,1) -> (0, 1sec)</li>
 </ul>
 
 
@@ -1663,8 +1691,8 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 <h3>Inputs</h3>
 
 <ul>
-<li>In (0): (-1,1)</li>
-<li>Time (1): (-1,1)</li>
+<li>Target (0): (-1,1)</li>
+<li>Rate (1) : Rate (-1,1) -> (sample, 4sec)</li>
 </ul>
 
 
@@ -1692,11 +1720,12 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 <h3>Inputs</h3>
 
 <ul>
-<li>In (0): (-1,1)</li>
-<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
-<li>JetRefl (2): (-1,1)</li>
-<li>EndRefl (3): (-1,1)</li>
-<li>JetDelay (4): (-1,1)</li>
+<li>Freq (0): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>JetRefl (1): (-1,1)</li>
+<li>EndRefl (2): (-1,1)</li>
+<li>JetDelay (3): (-1,1)</li>
+<li>Amp (4): Amplitude (0,1)</li>
+<li>Rate (5) : Rate (-1,1) -> (sample, 4sec)</li>
 </ul>
 
 
@@ -1787,42 +1816,9 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 <h3>Inputs</h3>
 
 <ul>
-<li>In (0): (-1,1)</li>
-<li>VibRate (1): (-1,1)</li>
-<li>VibGain (2): (-1,1)</li>
-<li>RandGain (3): (-1,1)</li>
-</ul>
-
-
-<h3>Output</h3>
-
-<ul>
-<li>Out (0): (-1,1)</li>
-</ul>
-
-
-<h2>NRev</h2>
-
-<h1>Description</h1>
-
-<p>This is the STK NRev reverb algorithm.</p>
-
-<h3>Source of Rate</h3>
-
-<p>Any change at input In (0) or output Out (0)</p>
-
-<h3>Couples</h3>
-
-<ul>
-<li>In (0) &lt;-> Out (0)</li>
-</ul>
-
-
-<h3>Inputs</h3>
-
-<ul>
-<li>In (0): (-1,1)</li>
-<li>T60 (1): (-1,1)</li>
+<li>VibFreq (0): Vibrato Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>VibGain (1): Vibrato Gain(0,1)</li>
+<li>RandGain (2): Random Gain(0,1)</li>
 </ul>
 
 
@@ -1855,7 +1851,6 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 <ul>
 <li>In (0): (-1,1)</li>
 <li>Reson (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
-<li>Q (2): (-1,1)</li>
 </ul>
 
 
@@ -1888,7 +1883,6 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 <ul>
 <li>In (0): (-1,1)</li>
 <li>Notch (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
-<li>B1 (2): (-1,1)</li>
 </ul>
 
 
@@ -1920,7 +1914,7 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 
 <ul>
 <li>In (0): (-1,1)</li>
-<li>Shift (1): (-1,1)</li>
+<li>Shift (1): (-1,0,1) -> (0,1,4)</li>
 </ul>
 
 
@@ -2076,8 +2070,10 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 <h3>Inputs</h3>
 
 <ul>
-<li>In (0): (-1,1)</li>
-<li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>Freq (0): Frequency (-1,0,1) -> log(.,55,24000)</li>
+<li>Pos (1): blowing position (-1,1) -> (0,1)</li>
+<li>Amp (2): Amplitude (0,1)</li>
+<li>Rate (3) : Rate (-1,1) -> (sample, 4sec)</li>
 </ul>
 
 
@@ -2105,7 +2101,7 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 <h3>Inputs</h3>
 
 <ul>
-<li>In (0): (-1,1)</li>
+<li>Trigger (0): (-1,1) -> nonzero value for amplitude</li>
 <li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
 </ul>
 
@@ -2134,7 +2130,7 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 <h3>Inputs</h3>
 
 <ul>
-<li>In (0): (-1,1)</li>
+<li>Trigger (0): (-1,1) -> nonzero value for amplitude</li>
 <li>Freq (1): Frequency (-1,0,1) -> log(.,55,24000)</li>
 <li>Stretch (2): (-1,1)</li>
 <li>Pos (3): (-1,1)</li>
@@ -2201,6 +2197,23 @@ style='color:#548DD4'>Mus</span></font><font size="4" face="Verdana"> - Audio an
 
 <ul>
 <li>In (0): Pulled visual data (-1,1)</li>
+</ul>
+
+
+<h2>Pull</h2>
+
+<h3>Description</h3>
+
+<p>Provides data pulled by an urMus lua program. This flowbox is self-timed but does not provide a stable rate. It must be instanced. Calling its :Pull(data) method will increase time and send data to its output.</p>
+
+<h3>Typical native rate</h3>
+
+<p>rate = variable, depending on the pattern Pull:Pull() is called</p>
+
+<h3>Input</h3>
+
+<ul>
+<li>In (0): Programmatic pushed data (-1,1)</li>
 </ul>
 
 

@@ -194,8 +194,10 @@ void propListener( void * inClientData,
 			}
 			else if (CFStringCompare(newRoute, CFSTR("ReceiverAndMicrophone"), NULL) == kCFCompareEqualTo) // headset plugged in
 			{
-                const CFStringRef routeDestination = kAudioSessionOutputRoute_BuiltInSpeaker;
-                AudioSessionSetProperty(kAudioSessionProperty_OutputDestination, sizeof(routeDestination), &routeDestination);
+#ifndef LEGACY42
+                    const CFStringRef routeDestination = kAudioSessionOutputRoute_BuiltInSpeaker;
+                    AudioSessionSetProperty(kAudioSessionProperty_OutputDestination, sizeof(routeDestination), &routeDestination);
+#endif
                 
 			}
 			else if (CFStringCompare(newRoute, CFSTR("HeadphonesAndMicrophone"), NULL) == kCFCompareEqualTo) // headset plugged in
@@ -335,8 +337,10 @@ void initializeRIOAudioLayer()
     UInt32 doChangeDefaultRoute = 1;
     AudioSessionSetProperty(kAudioSessionProperty_OverrideCategoryDefaultToSpeaker, sizeof (doChangeDefaultRoute), &doChangeDefaultRoute);
     
+#ifndef LEGACY42
     const CFStringRef routeDestination = kAudioSessionOutputRoute_BuiltInSpeaker;
     AudioSessionSetProperty(kAudioSessionProperty_OutputDestination, sizeof(routeDestination), &routeDestination);
+#endif // BACKC
     
 /*    UInt32 audioRouteOverride = kAudioSessionOverrideAudioRoute_Speaker;
     AudioSessionSetProperty (kAudioSessionProperty_OverrideAudioRoute,sizeof (audioRouteOverride),&audioRouteOverride);

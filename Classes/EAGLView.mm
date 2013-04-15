@@ -25,9 +25,9 @@
 #import "httpServer.h"
 #include <arpa/inet.h>
 
+#define DEGREES_TO_RADIANS(x) (M_PI * x / 180.0)
 
 #define SLEEPER
-#define USECAMERA
 /* If GPUIMAGE is used or not is defined in EAGLView.h" */
 
 #ifdef SANDWICH_SUPPORT
@@ -355,7 +355,7 @@ Texture2D       *errorStrTex = nil;
 urTexture       *errorStrTex = nil;
 #endif
 std::string errorstr = "";
-bool newerror = true;
+bool newerror = false;
 
 //#define LATE_LAUNCH
 // Main drawing loop. This does everything but brew coffee.
@@ -647,7 +647,8 @@ void decCameraUseBy(int dec)
         rotateFilter = NULL;
     }
     rotateFilter = [[GPUImageTransformFilter alloc] init];
-    [rotateFilter setAffineTransform:CGAffineTransformMakeRotation(0)];
+//    [rotateFilter setAffineTransform:CGAffineTransformMakeRotation(DEGREES_TO_RADIANS(180))];
+    [rotateFilter setAffineTransform:CGAffineTransformScale(CGAffineTransformMakeRotation(DEGREES_TO_RADIANS(0)), 1, 1)];
     [textureInput addTarget:rotateFilter];
     [rotateFilter addTarget:movieWriter];
     // kGPUImageRotateRightFlipVertical
@@ -657,12 +658,12 @@ void decCameraUseBy(int dec)
     
     [movieWriter setCompletionBlock:^{
 //        [textureInput removeTarget:movieWriter];
-        [textureInput removeAllTargets];
-        [movieWriter finishRecording];
+//        [textureInput removeAllTargets];
+//        [movieWriter finishRecording];
 //        [textureInput dealloc];
-        [movieWriter dealloc];
-        [rotateFilter dealloc];
-        rotateFilter = NULL;
+//        [movieWriter dealloc];
+//        [rotateFilter dealloc];
+//        rotateFilter = NULL;
     }];
 }
 
@@ -690,13 +691,24 @@ void decCameraUseBy(int dec)
     cropfilter = [[GPUImageCropFilter alloc] initWithCropRegion:CGRectMake(0.0,0.0,1.0,1.0)];
     [cropfilter setCropRegion:crop];
     [textureInput addTarget:cropfilter];
-    [cropfilter addTarget:movieWriter];
+    if(rotateFilter != NULL)
+    {
+        [rotateFilter dealloc];
+        rotateFilter = NULL;
+    }
+    rotateFilter = [[GPUImageTransformFilter alloc] init];
+    [rotateFilter setAffineTransform:CGAffineTransformScale(CGAffineTransformMakeRotation(DEGREES_TO_RADIANS(180)), -1, 1)];
+//    [rotateFilter setAffineTransform:CGAffineTransformMake(CGRectGetWidth(crop),0,CGRectGetHeight(crop),0,0,0)];
+    [cropfilter addTarget:rotateFilter];
+    [rotateFilter addTarget:movieWriter];
     // kGPUImageRotateRightFlipVertical
 //    [textureInput addTarget:movieWriter];
-    [movieWriter setInputRotation:kGPUImageFlipVertical atIndex:0];
+//    [movieWriter setInputRotation:kGPUImageFlipVertical atIndex:0];
+    [movieWriter setInputRotation:kGPUImageFlipHorizonal atIndex:0];
     [movieWriter startRecording];
     
     [movieWriter setCompletionBlock:^{
+        /*
         [textureInput removeAllTargets];
 //        [textureInput removeTarget:movieWriter];
         [movieWriter finishRecording];
@@ -704,7 +716,7 @@ void decCameraUseBy(int dec)
 //        [textureInput removeAllTargets];
         [movieWriter dealloc];
         [cropfilter dealloc];
-        cropfilter = NULL;
+        cropfilter = NULL;*/
     }];
 }
 
@@ -717,7 +729,15 @@ void decCameraUseBy(int dec)
     long w=size.width;
     long h=size.height;
     
-    assert(!movieWriter);
+    if(movieWriter)
+    {
+        char errorstrbuf[120];
+        sprintf(errorstrbuf,"Recording of a movie is currently in progress.\nCall FinishMovie() before starting a new movie recording.");
+        errorstr = errorstrbuf;
+        newerror = true;
+        ur_Log(errorstr.c_str());
+        return;
+    }
     
     movieWriter = [[GPUImageMovieWriter alloc] initWithMovieURL:movieURL size:CGSizeMake(w,h)];
     
@@ -751,8 +771,16 @@ void decCameraUseBy(int dec)
     if(w < 128) w = 128; // Crash prevention initiative (donate to "UsingBuggyLibraryFund")
     if(h < 128) h = 128;
     
-    assert(!movieWriter);
-
+    if(movieWriter)
+    {
+        char errorstrbuf[120];
+        sprintf(errorstrbuf,"Recording of a movie is currently in progress.\nCall FinishMovie() before starting a new movie recording.");
+        errorstr = errorstrbuf;
+        newerror = true;
+        ur_Log(errorstr.c_str());
+        return;
+    }
+    
     movieWriter = [[GPUImageMovieWriter alloc] initWithMovieURL:movieURL size:CGSizeMake(w,h)];
 
     
@@ -778,6 +806,9 @@ void decCameraUseBy(int dec)
 
 - (void)finishMovie
 {
+    if(movieWriter)
+        [movieWriter finishRecording];
+
     if(textureInput)
     {
         [textureInput removeAllTargets];
@@ -785,23 +816,26 @@ void decCameraUseBy(int dec)
     }
 //        [textureInput removeTarget:movieWriter];
     
-    [movieWriter finishRecording];
     
 //    if(textureInput)
 //        [textureInput dealloc];
-    [movieWriter dealloc];
-    movieWriter = NULL;
     
-    if(cropfilter)
+    if(cropfilter != NULL)
     {
-        [cropfilter dealloc];
+       [cropfilter removeAllTargets];
+       [cropfilter dealloc];
         cropfilter = NULL;
     }
+    
     if(rotateFilter != NULL)
     {
-        [rotateFilter dealloc];
+        [rotateFilter removeAllTargets];
+       [rotateFilter dealloc];
         rotateFilter = NULL;
     }
+    
+    [movieWriter dealloc];
+    movieWriter = NULL;
 
     recordfrom = SOURCE_TEXTURE;
 }
@@ -809,9 +843,10 @@ void decCameraUseBy(int dec)
 - (GPUImageMovie *)loadMovie:(NSString*)filename
 {
     NSString *filePath;
-    BOOL fileExists = [[NSFileManager defaultManager] fileExistsAtPath:texturepathstr];
+    BOOL isDir;
+    BOOL fileExists = [[NSFileManager defaultManager] fileExistsAtPath:texturepathstr isDirectory:&isDir];
 
-    if(fileExists)
+    if(fileExists && !isDir)
     {
         filePath = filename;
     }
@@ -820,8 +855,8 @@ void decCameraUseBy(int dec)
         NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
         filePath = [resourcePath stringByAppendingPathComponent:filename];
         
-        fileExists = [[NSFileManager defaultManager] fileExistsAtPath:filePath];
-        if(!fileExists)
+        fileExists = [[NSFileManager defaultManager] fileExistsAtPath:filePath isDirectory:&isDir];
+        if(!fileExists || isDir)
             return nil;
     }
 //    NSURL *movieURL = [[NSBundle mainBundle] URLForResource:filename withExtension:nil];
@@ -857,8 +892,8 @@ void decCameraUseBy(int dec)
 		case GPUIMAGE_HAZE: [(GPUImageHazeFilter *)inputFilter setDistance:value]; break;
 		case GPUIMAGE_THRESHOLD: [(GPUImageLuminanceThresholdFilter *)inputFilter setThreshold:value]; break;
         case GPUIMAGE_ADAPTIVETHRESHOLD: [(GPUImageAdaptiveThresholdFilter *)inputFilter setBlurSize:value]; break;
-        case GPUIMAGE_DISSOLVE: [(GPUImageDissolveBlendFilter *)inputFilter setMix:value]; break;
-        case GPUIMAGE_CHROMAKEY: [(GPUImageChromaKeyBlendFilter *)inputFilter setThresholdSensitivity:value]; break;
+//        case GPUIMAGE_DISSOLVE: [(GPUImageDissolveBlendFilter *)inputFilter setMix:value]; break;
+//        case GPUIMAGE_CHROMAKEY: [(GPUImageChromaKeyBlendFilter *)inputFilter setThresholdSensitivity:value]; break;
 //        case GPUIMAGE_KUWAHARA: [(GPUImageKuwaharaFilter *)inputFilter setRadius:round(value)]; break;
         case GPUIMAGE_SWIRL: [(GPUImageSwirlFilter *)inputFilter setAngle:value*3]; break;
         case GPUIMAGE_EMBOSS: [(GPUImageEmbossFilter *)inputFilter setIntensity:value]; break;
@@ -873,7 +908,7 @@ void decCameraUseBy(int dec)
         case GPUIMAGE_BULGE: [(GPUImageBulgeDistortionFilter *)inputFilter setScale:value*3]; break;
         case GPUIMAGE_TONECURVE: [(GPUImageToneCurveFilter *)inputFilter setBlueControlPoints:[NSArray arrayWithObjects:[NSValue valueWithCGPoint:CGPointMake(0.0, 0.0)], [NSValue valueWithCGPoint:CGPointMake(0.5, value)], [NSValue valueWithCGPoint:CGPointMake(1.0, 0.75)], nil]]; break;
         case GPUIMAGE_PINCH: [(GPUImagePinchDistortionFilter *)inputFilter setScale:value*2]; break;
-        case GPUIMAGE_PERLINNOISE:  [(GPUImagePerlinNoiseFilter *)inputFilter setScale:value]; break;
+//        case GPUIMAGE_PERLINNOISE:  [(GPUImagePerlinNoiseFilter *)inputFilter setScale:value]; break;
         case GPUIMAGE_MOSAIC:  [(GPUImageMosaicFilter *)inputFilter setDisplayTileSize:CGSizeMake(value, value)]; break;
         case GPUIMAGE_VIGNETTE: [(GPUImageVignetteFilter *)inputFilter setVignetteEnd:value]; break;
         case GPUIMAGE_GAUSSIAN: [(GPUImageGaussianBlurFilter *)inputFilter setBlurSize:value]; break;
@@ -911,13 +946,13 @@ void decCameraUseBy(int dec)
         case GPUIMAGE_MONOCHROME: [(GPUImageMonochromeFilter *)inputFilter setIntensity:value]; break;
         case GPUIMAGE_HUE: [(GPUImageHueFilter *)inputFilter setHue:(value+1.0)*180.0]; break;
         case GPUIMAGE_WHITEBALANCE: [(GPUImageWhiteBalanceFilter *)inputFilter setTemperature:value]; break;
-        case GPUIMAGE_LOWPASS: [(GPUImageLowPassFilter *)inputFilter setFilterStrength:value]; break;
-        case GPUIMAGE_HIGHPASS: [(GPUImageHighPassFilter *)inputFilter setFilterStrength:value]; break;
-        case GPUIMAGE_MOTIONDETECTOR: [(GPUImageMotionDetector *)inputFilter setLowPassFilterStrength:value]; break;
-        case GPUIMAGE_THRESHOLDSKETCH: [(GPUImageThresholdSketchFilter *)inputFilter setThreshold:value]; break;
+//        case GPUIMAGE_LOWPASS: [(GPUImageLowPassFilter *)inputFilter setFilterStrength:value]; break;
+//        case GPUIMAGE_HIGHPASS: [(GPUImageHighPassFilter *)inputFilter setFilterStrength:value]; break;
+//        case GPUIMAGE_MOTIONDETECTOR: [(GPUImageMotionDetector *)inputFilter setLowPassFilterStrength:value]; break;
+//        case GPUIMAGE_THRESHOLDSKETCH: [(GPUImageThresholdSketchFilter *)inputFilter setThreshold:value]; break;
         case GPUIMAGE_SPHEREREFRACTION: [(GPUImageSphereRefractionFilter *)inputFilter setRadius:value]; break;
         case GPUIMAGE_GLASSSPHERE: [(GPUImageGlassSphereFilter *)inputFilter setRadius:value]; break;
-        case GPUIMAGE_HIGHLIGHTSHADOW: [(GPUImageHighlightShadowFilter *)inputFilter setHighlights:value]; break;
+//        case GPUIMAGE_HIGHLIGHTSHADOW: [(GPUImageHighlightShadowFilter *)inputFilter setHighlights:value]; break;
         case GPUIMAGE_LOCALBINARYPATTERN:
         {
                 [(GPUImageLocalBinaryPatternFilter *)inputFilter setTexelWidth:value];
@@ -1020,10 +1055,10 @@ void decCameraUseBy(int dec)
         {
             inputFilter = [[GPUImageCropFilter alloc] initWithCropRegion:CGRectMake(0.0, 0.0, 1.0, 0.25)];
         }; break;
-		case GPUIMAGE_MASK:
+/*		case GPUIMAGE_MASK:
 		{
 			[(GPUImageFilter*)inputFilter setBackgroundColorRed:0.0 green:1.0 blue:0.0 alpha:1.0];
-        }; break;
+        }; break;*/
         case GPUIMAGE_TRANSFORM:
         {
             inputFilter = [[GPUImageTransformFilter alloc] init];
@@ -1096,7 +1131,7 @@ void decCameraUseBy(int dec)
         {
             inputFilter = [[GPUImageCGAColorspaceFilter alloc] init];
         }; break;
-        case GPUIMAGE_CONVOLUTION:
+/*        case GPUIMAGE_CONVOLUTION:
         {
             inputFilter = [[GPUImage3x3ConvolutionFilter alloc] init];
             [(GPUImage3x3ConvolutionFilter *)inputFilter setConvolutionKernel:(GPUMatrix3x3){
@@ -1105,7 +1140,7 @@ void decCameraUseBy(int dec)
                 {-1.0f,  0.0f, 1.0f}
             }];
             
-        }; break;
+        }; break;*/
         case GPUIMAGE_EMBOSS:
         {
             inputFilter = [[GPUImageEmbossFilter alloc] init];
@@ -1147,10 +1182,10 @@ void decCameraUseBy(int dec)
             inputFilter = (GPUImageFilter*)[[GPUImageRGBClosingFilter alloc] initWithRadius:4];
 		}; break;
             
-        case GPUIMAGE_PERLINNOISE:
+/*        case GPUIMAGE_PERLINNOISE:
         {
             inputFilter = [[GPUImagePerlinNoiseFilter alloc] init];
-        }; break;
+        }; break;*/
 /*        case GPUIMAGE_VORONI: 
         {
             GPUImageJFAVoroniFilter *jfa = [[GPUImageJFAVoroniFilter alloc] init];
@@ -1181,32 +1216,32 @@ void decCameraUseBy(int dec)
             [inputFilter setInputRotation:kGPUImageRotateRight atIndex:0];
             
         }; break;
-        case GPUIMAGE_CHROMAKEY:
+/*        case GPUIMAGE_CHROMAKEY:
         {
             inputFilter = [[GPUImageChromaKeyBlendFilter alloc] init];
             [(GPUImageChromaKeyBlendFilter *)inputFilter setColorToReplaceRed:0.0 green:1.0 blue:0.0];
-        }; break;
-        case GPUIMAGE_MULTIPLY:
+        }; break;*/
+/*        case GPUIMAGE_MULTIPLY:
         {
             inputFilter = [[GPUImageMultiplyBlendFilter alloc] init];
-        }; break;
-        case GPUIMAGE_OVERLAY:
+        }; break;*/
+/*        case GPUIMAGE_OVERLAY:
         {
             inputFilter = [[GPUImageOverlayBlendFilter alloc] init];
-        }; break;
-        case GPUIMAGE_LIGHTEN:
+        }; break;*/
+/*        case GPUIMAGE_LIGHTEN:
         {
             inputFilter = [[GPUImageLightenBlendFilter alloc] init];
         }; break;
         case GPUIMAGE_DARKEN:
         {
             inputFilter = [[GPUImageDarkenBlendFilter alloc] init];
-        }; break;
-        case GPUIMAGE_DISSOLVE:
+        }; break;*/
+/*        case GPUIMAGE_DISSOLVE:
         {
             inputFilter = [[GPUImageDissolveBlendFilter alloc] init];
-        }; break;
-        case GPUIMAGE_SCREENBLEND:
+        }; break;*/
+/*        case GPUIMAGE_SCREENBLEND:
         {
             inputFilter = [[GPUImageScreenBlendFilter alloc] init];
         }; break;
@@ -1217,12 +1252,12 @@ void decCameraUseBy(int dec)
         case GPUIMAGE_COLORDODGE:
         {
             inputFilter = [[GPUImageColorDodgeBlendFilter alloc] init];
-        }; break;
-        case GPUIMAGE_EXCLUSIONBLEND:
+        }; break;*/
+/*        case GPUIMAGE_EXCLUSIONBLEND:
         {
             inputFilter = [[GPUImageExclusionBlendFilter alloc] init];
-        }; break;
-        case GPUIMAGE_DIFFERENCEBLEND:
+        }; break;*/
+/*        case GPUIMAGE_DIFFERENCEBLEND:
         {
             inputFilter = [[GPUImageDifferenceBlendFilter alloc] init];
         }; break;
@@ -1237,7 +1272,7 @@ void decCameraUseBy(int dec)
         case GPUIMAGE_SOFTLIGHTBLEND:
         {
             inputFilter = [[GPUImageSoftLightBlendFilter alloc] init];
-        }; break;
+        }; break;*/
 /*        case GPUIMAGE_CUSTOM:
         {
             inputFilter = [[GPUImageFilter alloc] initWithFragmentShaderFromFile:@"CustomFilter"];
@@ -1315,22 +1350,22 @@ void decCameraUseBy(int dec)
         {
             inputFilter = [[GPUImageWhiteBalanceFilter alloc] init];
         }; break;
-        case GPUIMAGE_LOWPASS:
+/*        case GPUIMAGE_LOWPASS:
         {
             inputFilter = [[GPUImageLowPassFilter alloc] init];
         }; break;
         case GPUIMAGE_HIGHPASS:
         {
             inputFilter = [[GPUImageHighPassFilter alloc] init];
-        }; break;
-        case GPUIMAGE_MOTIONDETECTOR:
+        }; break;*/
+/*        case GPUIMAGE_MOTIONDETECTOR:
         {
             inputFilter = [[GPUImageMotionDetector alloc] init];
-        }; break;
-        case GPUIMAGE_THRESHOLDSKETCH:
+        }; break;*/
+/*        case GPUIMAGE_THRESHOLDSKETCH:
         {
             inputFilter = [[GPUImageThresholdSketchFilter alloc] init];
-        }; break;
+        }; break;*/
         case GPUIMAGE_SPHEREREFRACTION:
         {
             inputFilter = [[GPUImageSphereRefractionFilter alloc] init];
@@ -1339,10 +1374,10 @@ void decCameraUseBy(int dec)
         {
             inputFilter = [[GPUImageGlassSphereFilter alloc] init];
         }; break;
-        case GPUIMAGE_HIGHLIGHTSHADOW:
+/*        case GPUIMAGE_HIGHLIGHTSHADOW:
         {
             inputFilter = [[GPUImageHighlightShadowFilter alloc] init];
-        }; break;
+        }; break;*/
         case GPUIMAGE_LOCALBINARYPATTERN:
         {
             inputFilter = [[GPUImageLocalBinaryPatternFilter alloc] init];
@@ -1373,7 +1408,11 @@ void decCameraUseBy(int dec)
 	// path to the default font
     g_storagePath = [resourcePath UTF8String];
 //    errorfontPath = storagePath + "/arial.ttf";
+#ifndef UISTRINGS
     errorfontPath = storagePath + "/DroidSansMono.ttf";
+#else
+    errorfontPath = "Helvetica";
+#endif
     
     // Hide top navigation bar
 	[[UIApplication sharedApplication] setStatusBarHidden:YES animated:NO];
@@ -1474,7 +1513,10 @@ void decCameraUseBy(int dec)
         [locationManager startUpdatingHeading];
 		
     }
-	
+    
+    if ([UIImagePickerController isSourceTypeAvailable: UIImagePickerControllerSourceTypeCamera])
+        // Has camera
+	{
 #ifdef USECAMERA
 #ifdef GPUIMAGE
 
@@ -1511,6 +1553,7 @@ void decCameraUseBy(int dec)
 //    [captureManager.captureSession stopRunning];
 #endif
 #endif	
+    }
 	//Create and advertise networking and discover others
 //	[self setup];
 	[self setupNetConnects];
@@ -1538,13 +1581,14 @@ void decCameraUseBy(int dec)
 		const char* error = lua_tostring(lua, -1);
 		errorstr = error; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 	}
 #endif
 }
 
 #define TEST_CAMERA
 
-static GLuint	cameraTexture= 0;
+GLuint	cameraTexture= 0;
 static bool cameraBeingUsedAsBrush = false;
 
 - (void)newCameraTextureForDisplay:(GLuint)texture {
@@ -1958,10 +2002,14 @@ static EAGLSharegroup* theSharegroup = nil;
         CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
         
         eaglLayer.opaque = TRUE;
-        eaglLayer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys:
-                                        [NSNumber numberWithBool:FALSE], kEAGLDrawablePropertyRetainedBacking,
-                                        kEAGLColorFormatRGBA8, kEAGLDrawablePropertyColorFormat,
-                                        nil];
+        eaglLayer.drawableProperties = @{
+                                         kEAGLDrawablePropertyRetainedBacking: [NSNumber numberWithBool:YES],
+                                         kEAGLDrawablePropertyColorFormat: kEAGLColorFormatRGBA8
+                                         };
+//        eaglLayer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys:
+//                                        [NSNumber numberWithBool:YES], kEAGLDrawablePropertyRetainedBacking,
+//                                        kEAGLColorFormatRGBA8, kEAGLDrawablePropertyColorFormat,
+//                                        nil];
     }
     
     return self;
@@ -1977,9 +2025,11 @@ static EAGLSharegroup* theSharegroup = nil;
         // Get the layer
         CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
         
-        eaglLayer.opaque = YES;
-        eaglLayer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys:
-                                        [NSNumber numberWithBool:YES], kEAGLDrawablePropertyRetainedBacking, kEAGLColorFormatRGBA8, kEAGLDrawablePropertyColorFormat, nil];
+        eaglLayer.opaque = TRUE;
+        eaglLayer.drawableProperties = @{
+                                         kEAGLDrawablePropertyRetainedBacking: [NSNumber numberWithBool:YES],
+                                         kEAGLDrawablePropertyColorFormat: kEAGLColorFormatRGBA8
+                                         };
         
 		context = [self createContext];
 		//       context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
@@ -2012,9 +2062,11 @@ static EAGLSharegroup* theSharegroup = nil;
         // Get the layer
         CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
         
-        eaglLayer.opaque = YES;
-        eaglLayer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys:
-                                        [NSNumber numberWithBool:YES], kEAGLDrawablePropertyRetainedBacking, kEAGLColorFormatRGBA8, kEAGLDrawablePropertyColorFormat, nil];
+        eaglLayer.opaque = TRUE;
+        eaglLayer.drawableProperties = @{
+                                         kEAGLDrawablePropertyRetainedBacking: [NSNumber numberWithBool:YES],
+                                         kEAGLDrawablePropertyColorFormat: kEAGLColorFormatRGBA8
+                                         };
         
 		context = [self createContext];
 		//       context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
@@ -2049,9 +2101,11 @@ static EAGLSharegroup* theSharegroup = nil;
         // Get the layer
         CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
         
-        eaglLayer.opaque = YES;
-        eaglLayer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys:
-                                        [NSNumber numberWithBool:YES], kEAGLDrawablePropertyRetainedBacking, kEAGLColorFormatRGBA8, kEAGLDrawablePropertyColorFormat, nil];
+        eaglLayer.opaque = TRUE;
+        eaglLayer.drawableProperties = @{
+                                         kEAGLDrawablePropertyRetainedBacking: [NSNumber numberWithBool:YES],
+                                         kEAGLDrawablePropertyColorFormat: kEAGLColorFormatRGBA8
+                                         };
         
 		//context = passedContext;
 		//       context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
@@ -2409,7 +2463,9 @@ GLuint textureFrameBuffer=-1;
 GLuint bgtextureFrameBuffer=-1;
 GLuint bgname=-1;
 
+#ifndef LEGACY42
 #define RENDERTOTEXTURE
+#endif
 
 void CreateFrameBuffer()
 {
@@ -3189,7 +3245,7 @@ void drawLineToTexture(urAPI_Texture_t *texture, float startx, float starty, flo
             
             glVertexPointer(2, GL_FLOAT, 0, vertexBuffer);
             glDrawArrays(GL_POINTS, 0, vertexCount);
-        }
+//        } BACKC
 #endif
         
 	}
@@ -3275,6 +3331,58 @@ void clearTexture(Texture2D* texture, float r, float g, float b, float a)
 
 }
 
+void readPixelColor(GLuint	t,int x, int y, unsigned char *colors)
+{
+    [EAGLContext setCurrentContext:g_glView->context];
+    GLenum err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    glBindFramebufferOES(GL_FRAMEBUFFER_OES, g_glView->viewFramebuffer);
+    glViewport(0, 0, g_glView->backingWidth, g_glView->backingHeight);
+    
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+	// allocate frame buffer
+	if(textureFrameBuffer == -1)
+		CreateFrameBuffer();
+	// bind frame buffer
+	glBindFramebufferOES(GL_FRAMEBUFFER_OES, textureFrameBuffer);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    glFramebufferTexture2DOES(GL_FRAMEBUFFER_OES, GL_COLOR_ATTACHMENT0_OES, GL_TEXTURE_2D, t, 0);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    GLenum errf = glCheckFramebufferStatus(GL_FRAMEBUFFER_OES);
+    if(errf!= GL_FRAMEBUFFER_COMPLETE)
+    {
+        NSLog(@"Frame buffer incomplete: %d",errf);
+        int a=0;
+    }
+    glReadPixels(x, y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, colors);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+    glBindFramebufferOES(GL_FRAMEBUFFER_OES, 0);
+    err = glGetError();
+    if(err != GL_NO_ERROR)
+    {
+        int a = err;
+    }
+}
+
 // Create a texture instance for a given region
 
 Texture2D* createBlankTexture(float width, float height)
@@ -3300,12 +3408,55 @@ void freeMovieTexture(urAPI_Region_t* t)
 #endif
 }
 
+char currentmediapath[PATH_MAX];
+
+char* accessiblePathSystemFirst(char* fn)
+{
+//    if(strlen(fn)<1) return NULL;
+    
+    if( access( fn, F_OK ) != -1 ) {
+        return fn;
+        // file exists
+    } else {
+        const char* syspath = getSystemPath();
+        strcpy(currentmediapath,syspath);
+        int len = strlen(currentmediapath);
+        currentmediapath[len]='/'; // System path does not have a trailing / in iOS
+        currentmediapath[len+1]='\0';
+        strcat(currentmediapath,fn);
+        if( access( currentmediapath, F_OK ) != -1 ) {
+            return currentmediapath;
+            // file exists
+        } else {
+            const char* docpath = getDocumentPath();
+            strcpy(currentmediapath,docpath);
+            //            int len = strlen(currentmediapath); // Document path DOES have a trailing / in iOS. Consistency ftw.
+            //            currentmediapath[len]='/';
+            //            currentmediapath[len+1]='\0';
+            
+            strcat(currentmediapath,fn);
+            if( access( currentmediapath, F_OK ) != -1 ) {
+                return currentmediapath;
+                // file exists
+            } else {
+                return NULL;
+                // file doesn't exist
+            }
+        }
+    }
+}
+
 void instantiateTexture(urAPI_Region_t* t)
 {
 //#ifdef UISTRINGS
-	texturepathstr = [[NSString alloc] initWithUTF8String:t->texture->texturepath];
+//	texturepathstr = [[NSString alloc] initWithUTF8String:t->texture->texturepath];
 //	NSString *filePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:texturepathstr]; // Leak here, fix.
 //	UIImage* textureimage = [UIImage imageNamed:texturepathstr];
+    
+    char* pathstr = accessiblePathSystemFirst(t->texture->texturepath);
+    if(pathstr!=NULL)
+    {
+    texturepathstr = [[NSString alloc] initWithUTF8String:pathstr];
     
     // Try as image file
 	UIImage* textureimage = [UIImage imageWithContentsOfFile:texturepathstr];
@@ -3358,7 +3509,11 @@ void instantiateTexture(urAPI_Region_t* t)
 		t->texture->width = [textureimage size].width;
 		t->texture->height = [textureimage size].height;
 	}
-	[texturepathstr release];	
+	[texturepathstr release];
+    }
+    else
+        instantiateBlankTexture(t);
+    
 }
 
 void instantiateBlankTexture(urAPI_Region_t* t)
@@ -3403,9 +3558,14 @@ UILineBreakMode tolinebreakmode(int wrap)
 
 int refreshLabelYAlign(urAPI_Region_t* t)
 {
+#ifndef UISTRINGS
     int fontheight = t->textlabel->textlabelTex->getFontBlockHeight(); // NYI
-    int lineheight = t->textlabel->textlabelTex->getLineHeight();
+//    int lineheight = t->textlabel->textlabelTex->getLineHeight();
     int linegap = t->textlabel->textlabelTex->getLineGap();
+#else
+    int fontheight = [t->textlabel->textlabelTex fontblockHeight]; // NYI
+    int linegap = t->textlabel->textheight*1.43; // NYI BACKC
+#endif
     int justify = 0;
     switch(t->textlabel->justifyv)
     {
@@ -3433,7 +3593,9 @@ int refreshLabelYAlign(urAPI_Region_t* t)
     
     if(t->textlabel->textlabelTex)
     {
+#ifndef UISTRINGS
         t->textlabel->textlabelTex->setYAlign(justify);
+#endif
     }
     return justify;
 }
@@ -3535,7 +3697,9 @@ void renderTextLabel(urAPI_Region_t* t)
     [fontname release];
     [textlabelstr release];
 #endif
+#ifndef UISTRINGS
     refreshLabelYAlign(t);
+#endif
 }
 
 -(void) startMovieWriter:(const char*)fname
@@ -3862,10 +4026,6 @@ void renderTextLabel(urAPI_Region_t* t)
 #ifdef SOAR_SUPPORT
         callAllOnSoarOutput();
 #endif
-      	if(newerror)
-        {
-            ur_Log(errorstr.c_str());
-        }
   
 	}	
 	CGRect  bounds = [self bounds];
@@ -4222,6 +4382,7 @@ void renderTextLabel(urAPI_Region_t* t)
                         sprintf(errorstrbuf,"Frame %d",cameraTexture);
                         errorstr = errorstrbuf;
                         newerror = true;
+                        ur_Log(errorstr.c_str());
 #endif
 
 #ifdef OPENGLES2    
@@ -4611,7 +4772,7 @@ void renderTextLabel(urAPI_Region_t* t)
         shadowColors[3] = 80;
         errorStrTex = [[Texture2D alloc] initWithString:[NSString stringWithUTF8String:errorstr.c_str()]
                                                             dimensions:CGSizeMake(SCREEN_WIDTH, 128) alignment:UITextAlignmentCenter
-                                                              fontName:@"Helvetica" fontSize:14 lineBreakMode:UILineBreakModeWordWrap
+                                               fontName:[NSString stringWithUTF8String:errorfontPath.c_str()] fontSize:14 lineBreakMode:UILineBreakModeWordWrap
                                                           shadowOffset:CGSizeMake(0,0) shadowBlur:2 shadowColor:shadowColors];
 #else
         errorStrTex = new urTexture(errorstr.c_str(),errorfontPath.c_str(),20,SCREEN_WIDTH,128);
@@ -4636,7 +4797,7 @@ void renderTextLabel(urAPI_Region_t* t)
         shadowColors[3] = 80;
         errorStrTex = [[Texture2D alloc] initWithString:[NSString stringWithUTF8String:errorstr.c_str()]
                                              dimensions:CGSizeMake(SCREEN_WIDTH, 128) alignment:UITextAlignmentCenter
-                                               fontName:@"Helvetica" fontSize:14 lineBreakMode:UILineBreakModeWordWrap
+                                               fontName:[NSString stringWithUTF8String:errorfontPath.c_str()] fontSize:14 lineBreakMode:UILineBreakModeWordWrap
                                            shadowOffset:CGSizeMake(0,0) shadowBlur:2 shadowColor:shadowColors];
 #else
         errorStrTex = new urTexture(errorstr.c_str(),errorfontPath.c_str(),20,SCREEN_WIDTH,128);
@@ -4760,6 +4921,7 @@ void renderTextLabel(urAPI_Region_t* t)
             framecnt ++;
             errorstr = errorstrbuf;
             newerror = true;
+            ur_Log(errorstr.c_str());
 #endif
             [textureInput processTextureWithFrameTime:CMTimeMake(totalelapsedtime*1000,1000)];
         }
@@ -4913,7 +5075,8 @@ void renderTextLabel(urAPI_Region_t* t)
     if (context && !viewFramebuffer)
     {
         [EAGLContext setCurrentContext:context];
-        
+
+#ifdef OPENGLES2
         glGenFramebuffers(1, &viewFramebuffer);
         glGenRenderbuffers(1, &viewRenderbuffer);
         glBindFramebuffer(GL_FRAMEBUFFER, viewFramebuffer);
@@ -4928,9 +5091,21 @@ void renderTextLabel(urAPI_Region_t* t)
 		glBindRenderbuffer(GL_RENDERBUFFER, depthRenderbuffer);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, backingWidth, backingHeight);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer);				
-
+        
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
             NSLog(@"Failed to make complete framebuffer object %x", glCheckFramebufferStatus(GL_FRAMEBUFFER));
+#else
+        glGenFramebuffersOES(1, &viewFramebuffer);
+        glGenRenderbuffersOES(1, &viewRenderbuffer);
+        glBindFramebufferOES(GL_FRAMEBUFFER_OES, viewFramebuffer);
+        glBindRenderbufferOES(GL_RENDERBUFFER_OES, viewRenderbuffer);
+        [context renderbufferStorage:GL_RENDERBUFFER_OES fromDrawable:(CAEAGLLayer*)self.layer];
+        glFramebufferRenderbufferOES(GL_FRAMEBUFFER_OES, GL_COLOR_ATTACHMENT0_OES, GL_RENDERBUFFER_OES, viewRenderbuffer);
+        
+        glGetRenderbufferParameterivOES(GL_RENDERBUFFER_OES, GL_RENDERBUFFER_WIDTH_OES, &backingWidth);
+        glGetRenderbufferParameterivOES(GL_RENDERBUFFER_OES, GL_RENDERBUFFER_HEIGHT_OES, &backingHeight);
+#endif
+        
     }
 }
 
@@ -4949,6 +5124,7 @@ void renderTextLabel(urAPI_Region_t* t)
 */
 
 - (void) setupView {
+#ifdef OPENGLES2 // BACKC
 //	const GLfloat zNear = 1, zFar = 600, fieldOfView = 40*M_PI/180.0;
 	
 /*	esMatrixLoadIdentity(&projection);
@@ -4990,6 +5166,7 @@ void renderTextLabel(urAPI_Region_t* t)
 	
 //    glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 //	glViewport(0, 0, self.frame.size.width, self.frame.size.height);
+#endif
 }
 
 
@@ -5002,8 +5179,9 @@ void renderTextLabel(urAPI_Region_t* t)
         
         if (!viewFramebuffer)
             [self createFramebuffer2];
-        
+#ifdef OPENGLES2        // BACKC
         glBindFramebuffer(GL_FRAMEBUFFER, viewFramebuffer);
+#endif
         
         glViewport(0, 0, backingWidth, backingHeight);
     }
@@ -5017,9 +5195,11 @@ void renderTextLabel(urAPI_Region_t* t)
     {
         [EAGLContext setCurrentContext:context];
         
+#ifdef OPENGLES2 // BACKC
         glBindRenderbuffer(GL_RENDERBUFFER, viewRenderbuffer);
         
         success = [context presentRenderbuffer:GL_RENDERBUFFER];
+#endif
     }
     
     return success;
@@ -5081,8 +5261,9 @@ void renderTextLabel(urAPI_Region_t* t)
 		const char* error = lua_tostring(lua, -1);
 		errorstr = [[NSString alloc] initWithCString:error ]; // DPrinting errors for now
 		newerror = true;
+        ur_Log(errorstr.c_str());
 	}
-#endif	
+#endif
 	
 }
 
@@ -5483,6 +5664,7 @@ void onTouchDragEnd(int t,int touch, float posx, float posy)
 	sprintf(errorstrbuf,"Begin %d",numTouches);
 	errorstr = errorstrbuf;
 	newerror = true;
+    ur_Log(errorstr.c_str());
 #endif
 	
 	// Event for all fingers (global). We do this first so people can choose to create/remove regions that can also receive events for the locations (yay)
@@ -5550,6 +5732,7 @@ void onTouchDragEnd(int t,int touch, float posx, float posy)
 	sprintf(errorstrbuf,"Move %d",numTouches);
 	errorstr = errorstrbuf;
 	newerror = true;
+    ur_Log(errorstr.c_str());
 #endif
 
 	
@@ -5623,6 +5806,7 @@ void onTouchDragEnd(int t,int touch, float posx, float posy)
 #ifdef DEBUG_TOUCH
 	errorstr = "End";
 	newerror = true;
+    ur_Log(errorstr.c_str());
 #endif
     for (UITouch *touch in touches) {
         [ActiveTouches removeObject:touch];

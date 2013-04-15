@@ -11,6 +11,10 @@
 #define __URSOUND_H__
 
 #include <CoreFoundation/CoreFoundation.h>
+#define OLDINOUTS
+#ifndef OLDINOUTS
+#include <vector>
+#endif
 
 #define URSOUND_BUFFERSIZE 256
 #define URS_OBJHISTORY URSOUND_BUFFERSIZE
@@ -24,6 +28,8 @@ inline double csaporm(double norm);
 double norm2PositiveLinear(double norm);
 double norm2ModIndex(double norm);
 double norm2PitchShift(double norm);
+double norm2Rate(double norm);
+double capNorm(double norm);
 
 void urs_PullActiveDacSinks(SInt16 *buff, UInt32 len);
 void urs_PullActiveAudioFrameSinks();
@@ -60,7 +66,7 @@ class ursObjectArray;
 class ursObject
 {
 public:
-	ursObject(const char* objname, void* (*objconst)(), void (*objdest)(ursObject*),int nrins = 0, int nrouts = 0, bool dontinstance = false, bool coupled = false, ursObjectArray* instancearray = NULL);
+	ursObject(const char* objname, void* (*objconst)(), void (*objdest)(ursObject*),int nrins = 0, int nrouts = 0, bool dontinstance = false, bool coupled = false, ursObjectArray* instancearray = NULL, char* objnote = NULL);
 	~ursObject();
 	ursObject* Clone();
 	void AddOut(const char* outname, const char* outsemantics, double (*func)(ursObject *), double (*func3)(ursObject *), void (*func2)(ursObject*, SInt16*, UInt32));
@@ -95,15 +101,23 @@ public:
 	int instancenumber;
 	int nr_ins;
 	int nr_outs;
+#ifdef OLDINOUTS
 	urSoundIn* ins;
-	urSoundPullIn** firstpullin;
 	urSoundOut* outs;
+	urSoundPullIn** firstpullin;
 	urSoundPushOut** firstpushout;
+#else
+    std::vector<urSoundIn> ins;
+    std::vector<urSoundOut> outs;
+    std::vector<urSoundPullIn*> firstpullin;
+    std::vector<urSoundPushOut*> firstpushout;
+#endif
 	int couple_in;
 	int couple_out;
 	bool iscoupled;
 	void* (*DataConstructor)();
 	void (*DataDestructor)(ursObject*);
+    char* note;
 	void* objectdata;
 };
 
@@ -113,6 +127,8 @@ public:
 	ursObjectArray(int initmax = 256);
 	~ursObjectArray();
 	void Append(ursObject*);
+	void Remove(ursObject*);
+    void TestObjects();
 	ursObject* Get(int);
 	ursObject* operator[](int);
 	int Last() { return current; };
