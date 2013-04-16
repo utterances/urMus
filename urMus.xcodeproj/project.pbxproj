@@ -3110,8 +3110,8 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
-				CODE_SIGN_IDENTITY = "iPhone Developer: Sang Won Lee (87C9FBN9D9)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Sang Won Lee (87C9FBN9D9)";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -3134,8 +3134,8 @@
 					"-fobjc-arc",
 				);
 				PRODUCT_NAME = urMus;
-				PROVISIONING_PROFILE = "1A1E5A9E-CBB5-4972-A7FB-86762A2282AB";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "1A1E5A9E-CBB5-4972-A7FB-86762A2282AB";
+				PROVISIONING_PROFILE = "";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = "i386 armv7 armv7s";
@@ -3147,8 +3147,8 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
-				CODE_SIGN_IDENTITY = "iPhone Developer: Sang Won Lee (87C9FBN9D9)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Sang Won Lee (87C9FBN9D9)";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = urMus_Prefix.pch;
@@ -3169,8 +3169,8 @@
 					"-fobjc-arc",
 				);
 				PRODUCT_NAME = urMus;
-				PROVISIONING_PROFILE = "1A1E5A9E-CBB5-4972-A7FB-86762A2282AB";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "1A1E5A9E-CBB5-4972-A7FB-86762A2282AB";
+				PROVISIONING_PROFILE = "";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = "i386 armv7 armv7s";
