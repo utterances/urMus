@@ -24,6 +24,12 @@ patchdir = "Patches"
 
 pagefile = {
 "urMus",
+"urFalling.lua",
+"urSwarm.lua",
+"theremin_ipad_light.lua",
+"theremin_ipad_sound.lua",
+"theremin_ipod_light.lua",
+"theremin_ipod_sound.lua",
 "urFontTest.lua",
 "urTurn.lua",
 "urTextLabelHighlight.lua",

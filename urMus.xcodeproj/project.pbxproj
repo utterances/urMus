@@ -134,6 +134,24 @@
 		772D8A72163B22E000E86D6F /* urTextLabelHighlight.lua in Resources */ = {isa = PBXBuildFile; fileRef = 772D8A70163B229200E86D6F /* urTextLabelHighlight.lua */; };
 		7732723F125E3FF000627FB1 /* urTiles2.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77A37401125E3CA900153905 /* urTiles2.lua */; };
 		77327240125E3FF000627FB1 /* urPaint.lua in Resources */ = {isa = PBXBuildFile; fileRef = 77A37402125E3CA900153905 /* urPaint.lua */; };
+		773571B1171CDC6100B0FBA6 /* livecoding_helper_final.lua in Sources */ = {isa = PBXBuildFile; fileRef = 773571A8171CDC6100B0FBA6 /* livecoding_helper_final.lua */; };
+		773571B2171CDC6100B0FBA6 /* livecoding_interface_final.lua in Sources */ = {isa = PBXBuildFile; fileRef = 773571A9171CDC6100B0FBA6 /* livecoding_interface_final.lua */; };
+		773571B3171CDC6100B0FBA6 /* livecoding_sound_final.lua in Sources */ = {isa = PBXBuildFile; fileRef = 773571AA171CDC6100B0FBA6 /* livecoding_sound_final.lua */; };
+		773571B4171CDC6100B0FBA6 /* theremin_ipad_light.lua in Sources */ = {isa = PBXBuildFile; fileRef = 773571AB171CDC6100B0FBA6 /* theremin_ipad_light.lua */; };
+		773571B5171CDC6100B0FBA6 /* theremin_ipad_sound.lua in Sources */ = {isa = PBXBuildFile; fileRef = 773571AC171CDC6100B0FBA6 /* theremin_ipad_sound.lua */; };
+		773571B6171CDC6100B0FBA6 /* theremin_ipod_light.lua in Sources */ = {isa = PBXBuildFile; fileRef = 773571AD171CDC6100B0FBA6 /* theremin_ipod_light.lua */; };
+		773571B7171CDC6100B0FBA6 /* theremin_ipod_sound.lua in Sources */ = {isa = PBXBuildFile; fileRef = 773571AE171CDC6100B0FBA6 /* theremin_ipod_sound.lua */; };
+		773571B8171CDC6100B0FBA6 /* urFalling.lua in Sources */ = {isa = PBXBuildFile; fileRef = 773571AF171CDC6100B0FBA6 /* urFalling.lua */; };
+		773571B9171CDC6100B0FBA6 /* urSwarm.lua in Sources */ = {isa = PBXBuildFile; fileRef = 773571B0171CDC6100B0FBA6 /* urSwarm.lua */; };
+		773571BC171CDC8000B0FBA6 /* livecoding_helper_final.lua in Resources */ = {isa = PBXBuildFile; fileRef = 773571A8171CDC6100B0FBA6 /* livecoding_helper_final.lua */; };
+		773571BD171CDC8000B0FBA6 /* livecoding_interface_final.lua in Resources */ = {isa = PBXBuildFile; fileRef = 773571A9171CDC6100B0FBA6 /* livecoding_interface_final.lua */; };
+		773571BE171CDC8000B0FBA6 /* livecoding_sound_final.lua in Resources */ = {isa = PBXBuildFile; fileRef = 773571AA171CDC6100B0FBA6 /* livecoding_sound_final.lua */; };
+		773571BF171CDC8000B0FBA6 /* theremin_ipad_light.lua in Resources */ = {isa = PBXBuildFile; fileRef = 773571AB171CDC6100B0FBA6 /* theremin_ipad_light.lua */; };
+		773571C0171CDC8000B0FBA6 /* theremin_ipad_sound.lua in Resources */ = {isa = PBXBuildFile; fileRef = 773571AC171CDC6100B0FBA6 /* theremin_ipad_sound.lua */; };
+		773571C1171CDC8000B0FBA6 /* theremin_ipod_light.lua in Resources */ = {isa = PBXBuildFile; fileRef = 773571AD171CDC6100B0FBA6 /* theremin_ipod_light.lua */; };
+		773571C2171CDC8000B0FBA6 /* theremin_ipod_sound.lua in Resources */ = {isa = PBXBuildFile; fileRef = 773571AE171CDC6100B0FBA6 /* theremin_ipod_sound.lua */; };
+		773571C3171CDC8000B0FBA6 /* urFalling.lua in Resources */ = {isa = PBXBuildFile; fileRef = 773571AF171CDC6100B0FBA6 /* urFalling.lua */; };
+		773571C4171CDC8000B0FBA6 /* urSwarm.lua in Resources */ = {isa = PBXBuildFile; fileRef = 773571B0171CDC6100B0FBA6 /* urSwarm.lua */; };
 		7735D94016397159006AACCF /* edtaa3func.c in Sources */ = {isa = PBXBuildFile; fileRef = 7735D8EA16397159006AACCF /* edtaa3func.c */; };
 		7735D94116397159006AACCF /* font-manager.c in Sources */ = {isa = PBXBuildFile; fileRef = 7735D8EC16397159006AACCF /* font-manager.c */; };
 		7735D94216397159006AACCF /* ObelixPro.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7735D8EF16397159006AACCF /* ObelixPro.ttf */; };
@@ -802,6 +820,15 @@
 		772D509615A2AF6E0085E952 /* Shader.fsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = Shader.fsh; sourceTree = "<group>"; };
 		772D509715A2AF6E0085E952 /* Shader.vsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = Shader.vsh; sourceTree = "<group>"; };
 		772D8A70163B229200E86D6F /* urTextLabelHighlight.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urTextLabelHighlight.lua; path = "urMus-Lua/urTextLabelHighlight.lua"; sourceTree = "<group>"; };
+		773571A8171CDC6100B0FBA6 /* livecoding_helper_final.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = livecoding_helper_final.lua; path = "urMus-Lua/livecoding_helper_final.lua"; sourceTree = "<group>"; };
+		773571A9171CDC6100B0FBA6 /* livecoding_interface_final.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = livecoding_interface_final.lua; path = "urMus-Lua/livecoding_interface_final.lua"; sourceTree = "<group>"; };
+		773571AA171CDC6100B0FBA6 /* livecoding_sound_final.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = livecoding_sound_final.lua; path = "urMus-Lua/livecoding_sound_final.lua"; sourceTree = "<group>"; };
+		773571AB171CDC6100B0FBA6 /* theremin_ipad_light.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = theremin_ipad_light.lua; path = "urMus-Lua/theremin_ipad_light.lua"; sourceTree = "<group>"; };
+		773571AC171CDC6100B0FBA6 /* theremin_ipad_sound.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = theremin_ipad_sound.lua; path = "urMus-Lua/theremin_ipad_sound.lua"; sourceTree = "<group>"; };
+		773571AD171CDC6100B0FBA6 /* theremin_ipod_light.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = theremin_ipod_light.lua; path = "urMus-Lua/theremin_ipod_light.lua"; sourceTree = "<group>"; };
+		773571AE171CDC6100B0FBA6 /* theremin_ipod_sound.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = theremin_ipod_sound.lua; path = "urMus-Lua/theremin_ipod_sound.lua"; sourceTree = "<group>"; };
+		773571AF171CDC6100B0FBA6 /* urFalling.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urFalling.lua; path = "urMus-Lua/urFalling.lua"; sourceTree = "<group>"; };
+		773571B0171CDC6100B0FBA6 /* urSwarm.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urSwarm.lua; path = "urMus-Lua/urSwarm.lua"; sourceTree = "<group>"; };
 		7735D8B416397159006AACCF /* arial-16.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "arial-16.h"; sourceTree = "<group>"; };
 		7735D8EA16397159006AACCF /* edtaa3func.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = edtaa3func.c; sourceTree = "<group>"; };
 		7735D8EB16397159006AACCF /* edtaa3func.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = edtaa3func.h; sourceTree = "<group>"; };
@@ -1966,6 +1993,15 @@
 		77B9FC5C1194AEF9006D5007 /* urMus-lua */ = {
 			isa = PBXGroup;
 			children = (
+				773571A8171CDC6100B0FBA6 /* livecoding_helper_final.lua */,
+				773571A9171CDC6100B0FBA6 /* livecoding_interface_final.lua */,
+				773571AA171CDC6100B0FBA6 /* livecoding_sound_final.lua */,
+				773571AB171CDC6100B0FBA6 /* theremin_ipad_light.lua */,
+				773571AC171CDC6100B0FBA6 /* theremin_ipad_sound.lua */,
+				773571AD171CDC6100B0FBA6 /* theremin_ipod_light.lua */,
+				773571AE171CDC6100B0FBA6 /* theremin_ipod_sound.lua */,
+				773571AF171CDC6100B0FBA6 /* urFalling.lua */,
+				773571B0171CDC6100B0FBA6 /* urSwarm.lua */,
 				77B9FC6C1194AF12006D5007 /* urMus.lua */,
 				77231810162AB486004B1D4E /* urSimplePatch.lua */,
 				776F2DED163889B400F7FC90 /* urBasicFM.lua */,
@@ -2521,6 +2557,15 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				773571BC171CDC8000B0FBA6 /* livecoding_helper_final.lua in Resources */,
+				773571BD171CDC8000B0FBA6 /* livecoding_interface_final.lua in Resources */,
+				773571BE171CDC8000B0FBA6 /* livecoding_sound_final.lua in Resources */,
+				773571BF171CDC8000B0FBA6 /* theremin_ipad_light.lua in Resources */,
+				773571C0171CDC8000B0FBA6 /* theremin_ipad_sound.lua in Resources */,
+				773571C1171CDC8000B0FBA6 /* theremin_ipod_light.lua in Resources */,
+				773571C2171CDC8000B0FBA6 /* theremin_ipod_sound.lua in Resources */,
+				773571C3171CDC8000B0FBA6 /* urFalling.lua in Resources */,
+				773571C4171CDC8000B0FBA6 /* urSwarm.lua in Resources */,
 				77014236164059E800978B4D /* urAlignTest.lua in Resources */,
 				772D8A72163B22E000E86D6F /* urTextLabelHighlight.lua in Resources */,
 				774D92FC16534B43000C651D /* FAIAP.lua in Resources */,
@@ -3031,6 +3076,15 @@
 				774D92FB16534910000C651D /* FAIAP.lua in Sources */,
 				77076DAD166411D100004C22 /* urNetDiscoveryTest.lua in Sources */,
 				77076DAE166411D100004C22 /* urTest.lua in Sources */,
+				773571B1171CDC6100B0FBA6 /* livecoding_helper_final.lua in Sources */,
+				773571B2171CDC6100B0FBA6 /* livecoding_interface_final.lua in Sources */,
+				773571B3171CDC6100B0FBA6 /* livecoding_sound_final.lua in Sources */,
+				773571B4171CDC6100B0FBA6 /* theremin_ipad_light.lua in Sources */,
+				773571B5171CDC6100B0FBA6 /* theremin_ipad_sound.lua in Sources */,
+				773571B6171CDC6100B0FBA6 /* theremin_ipod_light.lua in Sources */,
+				773571B7171CDC6100B0FBA6 /* theremin_ipod_sound.lua in Sources */,
+				773571B8171CDC6100B0FBA6 /* urFalling.lua in Sources */,
+				773571B9171CDC6100B0FBA6 /* urSwarm.lua in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
