@@ -50,7 +50,6 @@ function TouchUp(self)
   local x,y = InputPosition()
 
 	-- if hold_region then
-	-- 	DrawConnection(x,y,hold_x,hold_y)
 	-- 	backdrop:Show()
 	-- 	DPrint("line"..x..","..y.."-"..hold_x..","..hold_y)
 	-- else
@@ -70,7 +69,6 @@ function Move(self)
 	local x,y = InputPosition()
 	DPrint("moved")
 	-- if hold_region then
-	-- 	DrawConnection(x,y,hold_x,hold_y)
 	-- 	backdrop:Show()
 	-- 	DPrint("line"..x..","..y.."-"..hold_x..","..hold_y)
 	-- else
@@ -417,13 +415,6 @@ function VDrag(self)
 	-- end
 	link:Draw()
 end
-
--- function DrawConnection(x1,y1,x2,y2)
--- 	backdrop.t = backdrop:Texture('gridback.jpg')
--- 	backdrop.t:SetBrushColor(100,255,190,255)
--- 	backdrop.t:SetBrushSize(3)
--- 	backdrop.t:Line(x1, y1, x2, y2)
--- end
 	
 function AddOneToCounter(self)
 	-- DPrint("adding one")
@@ -473,7 +464,14 @@ function EndLinkRegion(self)
 		
 	end
 end
+
+
+function RemoveLinkBetween(r1, r2)
+	link:Remove(r1, r2)
+	link:Draw()
+end
 	
+
 function RemoveV(vv)
     -- Unstick(vv)
     -- 

@@ -11,6 +11,8 @@ BUTTONSIZE = 56	-- on screen size in points/pixels
 BUTTONOFFSET = 3
 BUTTONIMAGESIZE = 80		-- size of the square icon image
 
+recycledLinkMenu = {}
+
 function testMenu(self)
 	DPrint("touched menu on"..self:Name())
 end
@@ -34,8 +36,8 @@ function DuplicateDraglet(r)
 	
 end
 
-function DeleteLinkAction(menu)
-
+function DeleteLinkAction(r1, r2)
+	RemoveLinkBetween(r1, r2)
 end
 
 -- radial menu layout:
@@ -119,11 +121,10 @@ function initMenus(menuObj)
 end
 
 
-function initLinkMenus(menuObj)
+function initLinkMenus()
 	linkMenu = {}
+
 	local r = Region('region','menu',UIParent)
-		
-  local r = Region('region','menu',UIParent)
 	r.t = r:Texture("tw_closebox.png")
 	r.t:SetTexCoord(0,BUTTONIMAGESIZE/128,BUTTONIMAGESIZE/128,0)
 	r.t:SetBlendMode("BLEND")
@@ -132,11 +133,10 @@ function initLinkMenus(menuObj)
 	r:SetHeight(BUTTONSIZE)
 	r:SetWidth(BUTTONSIZE)
 	r:MoveToTop()
-	-- r:Show()
 	r:Hide()
-	-- r:Handle("OnTouchDown",OptEventFunc)
-
-	linkMenu.func = DeleteLinkAction
+	r.parent = linkMenu
+	r.func = DeleteLinkAction
+	
 	linkMenu.r = r
 	linkMenu.sender = nil
 	linkMenu.receiver = nil
@@ -173,6 +173,7 @@ for k,item in pairs(linkReceiverMenu.cmdList) do
 	-- r:Show()
 	r:Hide()
 	r:Handle("OnTouchDown",OptEventFunc)
+	r.parent = linkReceiverMenu
 	
 	r.func = func
 	r.anchorpos = anchor
@@ -272,32 +273,65 @@ function CloseMenu(self)
 end
 
 
+function CallLinkFunc(self)
+	-- use this to call function on the link menu button
+	-- because we have reference to the link, not just one region
+	CloseLinkMenu(self)
+	self.func(self.parent.sender, self.parent.receiver)
+end
 
 -- this actually calls all the menu function on the right region(s)
 function OptEventFunc(self)
 	-- DPrint("optevent func")
-	
 	local target = self.parent.v
-	-- CloseMenu(target)
 	self.func(target)
-    -- Highlight(self)
-    -- first close other opened menu options
-    -- if self.parent.openopt ~= self.k and self.parent.openopt ~= -1 and #self.parent[self.parent.openopt].menu > 0 then
-    --     self.parent[self.parent.openopt].menu:CloseMenu()
-    -- end
-    
-    -- self.parent.openopt = self.k
-    -- if self.func == OpenOrCloseMenu then -- when there is sub-menu
-    --     OpenOrCloseMenu(self)
-    -- else
-    --     for k,i in pairs (self.boss.selectedregions) do
-    --         self.func(self,regions[i])
-    --     end
-    -- end
 end
 
-function OpenNewLinkMenu(r1, r2)
+-- ============================
+-- = public link menu methods =
+-- ============================
+function newLinkMenu(r1, r2)
+	-- recycling constructor
+	local linkMenu
+	if # recycledLinkMenu > 0 then
+		linkMenu = table.remove(recycledLinkMenu, 1)
+	else
+		linkMenu = initLinkMenus()
+	end
+	linkMenu.sender = r1
+	linkMenu.receiver = r2
 	
+	return linkMenu
+end
+	
+function OpenLinkMenu(menu)
+	-- shows the actual menu
+	menu.r:Show()
+  menu.r:EnableInput(true)
+  menu.r:Handle("OnTouchUp", CallLinkFunc)
+  menu.r:MoveToTop()
+	
+	X1,Y1 = menu.sender:Center()
+	X2,Y2 = menu.receiver:Center()
+	menu.r:SetAnchor("CENTER", (X1+X2)/2, (Y1+Y2)/2)	   
+end
+	
+function deleteLinkMenu(menu)
+	menu.sender = nil
+	menu.receiver = nil
+	-- CloseLinkMenu(menu)
+	-- menu = self.parent
+	table.insert(recycledLinkMenu, menu)
+end
+
+-- =============================
+-- = private link menu methods =
+-- =============================
+
+function CloseLinkMenu(self)
+	-- DPrint("close link menu")
+	self:Hide()
+	self:EnableInput(false)
 end
 
 -- ==========================
