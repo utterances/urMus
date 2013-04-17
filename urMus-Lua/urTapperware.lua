@@ -21,11 +21,15 @@ regions = {}
 recycledregions = {}
 initialLinkRegion = nil
 
+-- touch event state machine:
+-- isHoldingRegion = false
+heldRegions = {}
+
 FreeAllRegions()
 
 modes = {"EDIT","RELEASE"}
 current_mode = modes[1]
-
+dofile(SystemPath("urTapperwareTools.lua"))
 dofile(SystemPath("urTapperwareMenu.lua"))	-- first!
 dofile(SystemPath("urTapperwareLink.lua"))	-- needs menu
 
@@ -51,7 +55,7 @@ function TouchUp(self)
 	-- only create if we are not too close to the edge
   local x,y = InputPosition()
 
-	-- if hold_region then
+	-- if isHoldingRegion then
 	-- 	backdrop:Show()
 	-- 	DPrint("line"..x..","..y.."-"..hold_x..","..hold_y)
 	-- else
@@ -70,7 +74,7 @@ end
 function Move(self)
 	local x,y = InputPosition()
 	DPrint("moved")
-	-- if hold_region then
+	-- if isHoldingRegion then
 	-- 	backdrop:Show()
 	-- 	DPrint("line"..x..","..y.."-"..hold_x..","..hold_y)
 	-- else
@@ -110,12 +114,6 @@ backdrop.player = {}
 backdrop.t = backdrop:Texture("gridback.jpg")
 backdrop.t:SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
 backdrop.t:SetBlendMode("BLEND")
-
--- backdrop.t:SetFill(true)
--- backdrop.t:SetBrushColor(150,150,150,255)
--- backdrop.t:Rect(0,0,ScreenWidth(),ScreenHeight())
--- backdrop.t:SetBrushColor(255,100,100,255)
--- backdrop.t:Ellipse(ScreenWidth()/2, ScreenHeight()/2, 200, 200)
 backdrop:Show()
 
 -- set up shadow for when tap down and hold, show future region creation location
@@ -129,15 +127,26 @@ linkIcon = Region('region', 'linkicon', UIParent)
 linkIcon:SetLayer("TOOLTIP")
 linkIcon.t = linkIcon:Texture("tw_link.png")
 linkIcon.t:SetBlendMode("BLEND")
+linkIcon.t:SetTexCoord(0,160/256,160/256,0)
+linkIcon:SetWidth(100)
+linkIcon:SetHeight(100)
+linkIcon:SetAnchor('CENTER',ScreenWidth()/2,ScreenHeight()/2)
+-- linkIcon:Handle(OnUpdate, IconUpdate)
 
 function linkIcon:ShowLinked(x,y)
-
+	self:Show()
+	self:MoveToTop()
+	self:Handle("OnUpdate", IconUpdate)
 end
 
-function linkIcon:Reset()
-
+function IconUpdate(self, e)
+	if self:Alpha() > 0 then
+		self:SetAlpha(self:Alpha() - self:Alpha() * e/.5)
+	else
+		self:Hide()
+		self:Handle("OnUpdate", nil)
+	end
 end
-
 
 linkLayer:Init()
 
@@ -214,8 +223,6 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
 		r.menu = nil	--contextual menu
 		r.counter = 0	--if this is a counter
 		r.isHeld = false -- if the r is held by tap currently
-		
-		
 		
 		-- event handling
 		r.links = {}
@@ -382,10 +389,8 @@ function VTouchDown(self)
 	self:MoveToTop()
 	self:SetLayer("LOW")
 	self.alpha = .4
-	hold_region = true
-	local x,y = InputPosition()
-	hold_x = x
-	hold_y = y
+	-- isHoldingRegion = true
+	table.insert(heldRegions, self)
 	
 	-- bring menu up if they are already open
 	if self.menu ~= nil then
@@ -401,13 +406,33 @@ end
 function VTouchUp(self)
 	self.alpha = 1
 	if initialLinkRegion == nil then
-		-- DPrint("")
-		hold_region = false
+		DPrint("")
+		-- see if we can make links here, check how many regions are held
+		if #heldRegions >= 2 then
+			-- by default let's just link self and the first one that's different
+			for i = 1, #heldRegions do
+				if heldRegions[i] ~= self and RegionOverLap(self, heldRegions[i]) then
+					initialLinkRegion = self
+					EndLinkRegion(heldRegions[i])
+					break
+				end
+			end
+			
+		end
+		
+		tableRemoveObj(heldRegions, self)
+		
+		-- isHoldingRegion = false
 	else
 		EndLinkRegion(self)
 		initialLinkRegion = nil
 	end
   CallEvents("OnTouchUp",self)
+end
+
+function VLeave(self)
+	DPrint("left")
+	
 end
 
 function VDrag(self)
@@ -458,9 +483,28 @@ function SwitchRegionType(self) -- TODO: change method name to reflect
 	CloseMenu(self)
 end
 	
-function StartLinkRegion(self)
-	DPrint("Tap another region to link")
+function StartLinkRegion(self, draglet)
 	initialLinkRegion = self
+	
+	if draglet ~= nil then
+		-- if we have drag target, try creating a link right away
+		tx, ty = draglet:Center()
+		for i = 1, #regions do
+			if regions[i] ~= self then
+				rx, ry = regions[i]:Center()
+				if math.abs(tx-rx) < INITSIZE and math.abs(ty-ry) < INITSIZE then
+					-- found a match, create a link here
+					EndLinkRegion(regions[i])
+					return
+				end
+			end
+		end
+		CloseMenu(self)
+		OpenRegionMenu(self)
+	else
+		-- otherwise ask for a target
+		DPrint("Tap another region to link")
+	end
 end
 
 function EndLinkRegion(self)
@@ -473,7 +517,9 @@ function EndLinkRegion(self)
 		-- add visual link too:
 		linkLayer:Add(initialLinkRegion, self)
 		linkLayer:Draw()
-
+		-- add notification
+		linkIcon:ShowLinked()
+		
 		CloseMenu(initialLinkRegion)
 		initialLinkRegion = nil
 		
@@ -516,12 +562,15 @@ function RemoveV(vv)
     DPrint(vv:Name().." removed")
 end
 
-function DuplicateRegion(vv)
+function DuplicateRegion(vv, cx, cy)
 	x,y = vv:Center()
 	local copyRegion = CreateorRecycleregion('region', 'backdrop', UIParent)
 	copyRegion:Show()
-	copyRegion:SetAnchor("CENTER",x+INITSIZE+20,y)
-		
+	if cx ~= nil then
+		copyRegion:SetAnchor("CENTER", cx, cy)
+	else
+		copyRegion:SetAnchor("CENTER",x+INITSIZE+20,y)
+	end		
 	copyRegion.counter = vv.counter
 	copyRegion.links = vv.links
 		
@@ -552,6 +601,7 @@ function DuplicateRegion(vv)
 	if copyRegion.counter == 1 then
 		SwitchRegionType(copyRegion)
 		copyRegion.value = vv.value
+	  copyRegion.tl:SetLabel(copyRegion.value)
 	end
 	
 	linkLayer:Draw()
@@ -561,19 +611,21 @@ function DuplicateRegion(vv)
 	copyRegion.shadow:SetLayer("LOW")
 	copyRegion:MoveToTop()
 	copyRegion:SetLayer("LOW")
+	
+	CloseMenu(vv)
+	OpenRegionMenu(vv)
 end
 
--- function CloseRegion(self)
--- 	DPrint("touched close")
--- end
--- 
--- function LinkRegion(r)
--- 	DPrint("initiating linking")
--- end
--- 
--- function SwitchRegionType(r)
--- 	DPrint("switch type")
--- end
+function ShowPotentialLink(region, draglet)
+	linkLayer:DrawPotentialLink(region, draglet)
+end
+
+function RegionOverLap(r1, r2)
+	x1,y1 = r1:Center()
+	x2,y2 = r2:Center()
+	return (r1:Width() + r2:Width())/1.8 > math.abs(x1-x2) and 
+				(r1:Height() + r2:Height())/1.8 > math.abs(y1-y2)
+end
 
 ----------------- v11.pagebutton -------------------
 local pagebutton=Region('region', 'pagebutton', UIParent)

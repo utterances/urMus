@@ -7,7 +7,8 @@
 -- ============================
 -- we need region specific menu for hooking up signals(sender and receiver), and then creation menu
 
-BUTTONSIZE = 56	-- on screen size in points/pixels
+BUTTONSIZE = 54	-- on screen size in points/pixels
+SMALLBUTTONSIZE = 40 -- small size
 BUTTONOFFSET = 3
 BUTTONIMAGESIZE = 80		-- size of the square icon image
 
@@ -22,9 +23,18 @@ function CloseRegion(self)
 	RemoveV(self)
 end
 
-function StartLinkRegionAction(r)
-	DPrint("initiating linking")
-	StartLinkRegion(r)
+function StartLinkRegionAction(r, draglet)
+	StartLinkRegion(r, draglet)
+end
+
+-- TODO this is not working yet since ondragstart is not implemented
+function StartLinkOnDrag(self)
+	DPrint("startlink on drag")
+	-- self is the menu button/draglet
+	-- target is the parent region
+	local target = self.parent.v
+	-- draw the potential link line here:
+	ShowPotentialLink(target, self)
 end
 
 function SwitchRegionTypeAction(r)
@@ -32,14 +42,25 @@ function SwitchRegionTypeAction(r)
 	SwitchRegionType(r)
 end
 
-function DuplicateAction(r)
+function DuplicateAction(r, draglet)
 	-- DPrint("copy action")
-	DuplicateRegion(r)
+	if draglet ~= nil then
+		x,y = draglet:Center()
+		DuplicateRegion(r, x, y)
+	else
+		DuplicateRegion(r)
+	end
+end
+
+function DupOnDrag(r)
+	DPrint("drag dup")
 end
 
 function DeleteLinkAction(r1, r2)
 	RemoveLinkBetween(r1, r2)
 end
+
+
 
 -- radial menu layout:
 -- 1 2 3
@@ -62,9 +83,9 @@ local regionMenu = {}
 -- label, func, anchor relative to region, image file, draggable or not
 regionMenu.cmdList = {
 	{"", CloseRegion, 1, "tw_closebox.png"},
-	{"Link", StartLinkRegionAction, 3, "tw_socket1.png"},
+	{"Link", StartLinkRegionAction, 3, "tw_socket1.png", StartLinkOnDrag},
 	{"", SwitchRegionTypeAction, 4, "tw_varswitcher.png"},
-	{"", DuplicateAction, 5, "tw_dup.png", true},
+	{"", DuplicateAction, 5, "tw_dup.png", DupOnDrag},
 	{"", testMenu, 6, "tw_timer.png"}
 	-- {"", testMenu, 7, "tw_paint.png"}
 	-- {"", testMenu, 8, "tw_run.png"}
@@ -115,6 +136,7 @@ function initMenus(menuObj)
 		r.anchorpos = anchor
 		r.parent = menuObj
 		r.draglet = item[5]
+	
 		table.insert(menuObj.items, r)
 	end
 	menuObj.show = 0
@@ -131,8 +153,8 @@ function initLinkMenus()
 	r.t:SetBlendMode("BLEND")
 	-- r:SetAnchor(anchor, UIParent)
 	r:SetLayer("TOOLTIP")
-	r:SetHeight(BUTTONSIZE)
-	r:SetWidth(BUTTONSIZE)
+	r:SetHeight(SMALLBUTTONSIZE)
+	r:SetWidth(SMALLBUTTONSIZE)
 	r:MoveToTop()
 	r:Hide()
 	r.parent = linkMenu
@@ -192,6 +214,11 @@ function OpenMenu(self)
     for i = 1,#regionMenu.items do
         regionMenu.items[i]:Show()
         regionMenu.items[i]:EnableInput(true)
+				if regionMenu.items[i].draglet ~= nil then
+					regionMenu.items[i]:EnableMoving(true)
+					regionMenu.items[i]:Handle("OnMove", regionMenu.items[i].draglet)
+				end
+				
 				-- regionMenu.items[i]:Handle("OnTouchDown", testMenu)
         regionMenu.items[i]:Handle("OnTouchUp", OptEventFunc)
         regionMenu.items[i]:MoveToTop()
@@ -285,7 +312,7 @@ end
 function OptEventFunc(self)
 	-- DPrint("optevent func")
 	local target = self.parent.v
-	self.func(target)
+	self.func(target, self)
 end
 
 -- ============================

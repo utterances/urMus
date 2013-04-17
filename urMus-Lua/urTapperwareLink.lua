@@ -62,7 +62,7 @@ function linkLayer:Remove(r1, r2)
 end
 
 -- draw a line between linked regions, also draws menu
-function linkLayer:Draw()	
+function linkLayer:Draw()
 	self.r.t:Clear(0,0,0,0)
 	self.r.t:SetBrushColor(100,255,240,200)
 	self.r.t:SetBrushSize(8)
@@ -75,14 +75,23 @@ function linkLayer:Draw()
 			self.r.t:Line(X1,Y1,X2,Y2)			
 		end
 	end
-	
+
+	-- draw the link menu (close button), it will compute centroid using
+	-- region locations	
 	for _,menu in ipairs(self.menus) do
 		OpenLinkMenu(menu)
-	end
-	-- draw the link menu (close button), it will compute centroid using
-	-- region locations
+	end	
+end
+
+function linkLayer:DrawPotentialLink(region, draglet)
+	DPrint("draw pote")
+	self:Draw()
+	self.r.t:SetBrushColor(100,255,240,100)
+	self.r.t:SetBrushSize(8)
 	
-	-- self.r:MoveToTop() --TODO better way to handle this?
+	rx, ry = region:Center()
+	posx, posy = draglet:Center()
+	self.r.t:Line(X1,Y1,posx,poy)
 end
 
 function linkLayer:SendMessageToReceivers(sender, message)
