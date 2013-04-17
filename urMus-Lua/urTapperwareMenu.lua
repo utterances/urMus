@@ -30,6 +30,14 @@ function SwitchRegionTypeAction(r)
 	SwitchRegionType(r)
 end
 
+function DuplicateDraglet(r)
+	
+end
+
+function DeleteLinkAction(menu)
+
+end
+
 -- radial menu layout:
 -- 1 2 3
 -- 4 9 5
@@ -48,14 +56,15 @@ local buttonLocation = {
 }
 
 local regionMenu = {}
--- label, func, anchor relative to region, image file
+-- label, func, anchor relative to region, image file, draggable or not
 regionMenu.cmdList = {
 	{"", CloseRegion, 1, "tw_closebox.png"},
 	{"Link", StartLinkRegionAction, 3, "tw_socket1.png"},
 	{"", SwitchRegionTypeAction, 4, "tw_varswitcher.png"},
-	{"", testMenu, 6, "tw_timer.png"},
-	{"", testMenu, 7, "tw_paint.png"},
-	{"", testMenu, 8, "tw_run.png"}
+	{"", DuplicateDraglet, 5, "tw_dup.png", true},
+	{"", testMenu, 6, "tw_timer.png"}
+	-- {"", testMenu, 7, "tw_paint.png"}
+	-- {"", testMenu, 8, "tw_run.png"}
 }
 
 local linkReceiverMenu = {}
@@ -64,30 +73,58 @@ linkReceiverMenu.cmdList = {
 	{"", CloseRegion, 1, "tw_closebox.png"},
 	{"+", ReceiveLinkRegion, 4, "tw_socket2.png"},
 	{"-", ReceiveLinkRegion, 6, "tw_socket2.png"},
-	{"", testMenu, 3, "tw_unlock"},
-	{"", testMenu, 5, "tw_sound"},
-	{"", testMenu, 8, "tw_more"}
+	{"", testMenu, 3, "tw_unlock.png"},
+	{"", testMenu, 5, "tw_sound.png"},
+	{"", testMenu, 8, "tw_more.png"}
 }
 
--- initialize regionMenu graphics
-regionMenu.items = {}
+function initMenus(menuObj)
+	menuObj.items = {}
 
-for k,item in pairs(regionMenu.cmdList) do
-	label = item[1]
-	func = item[2]
-	anchor = item[3]
-	image = item[4]
+	for _,item in pairs(menuObj.cmdList) do
+		label = item[1]
+		func = item[2]
+		anchor = item[3]
+		image = item[4]
+		
+	  local r = Region('region','menu',UIParent)
+	  r.tl = r:TextLabel()
+	  r.tl:SetLabel("\n\n"..label)
+		r.tl:SetVerticalAlign("TOP")
+		r.tl:SetHorizontalAlign("CENTER")
+		-- r.tl:SetSpacing(40)
+	  r.tl:SetFontHeight(13)
+		r.tl:SetFont("Avenir Next") --"AvenirNext-Medium.ttf")
+	  r.tl:SetColor(0,0,0,255) 	
+		r.t = r:Texture(image)
+		r.t:SetTexCoord(0,BUTTONIMAGESIZE/128,BUTTONIMAGESIZE/128,0)
+		r.t:SetBlendMode("BLEND")
+		-- r:SetAnchor(anchor, UIParent)
+		r:SetLayer("TOOLTIP")
+		r:SetHeight(BUTTONSIZE)
+		r:SetWidth(BUTTONSIZE)
+		r:MoveToTop()
+		-- r:Show()
+		r:Hide()
+		-- r:Handle("OnTouchDown",OptEventFunc)
 	
+		r.func = func
+		r.anchorpos = anchor
+		r.parent = menuObj
+		r.draglet = item[5]
+		table.insert(menuObj.items, r)
+	end
+	menuObj.show = 0
+	menuObj.v = nil
+end
+
+
+function initLinkMenus(menuObj)
+	linkMenu = {}
+	local r = Region('region','menu',UIParent)
+		
   local r = Region('region','menu',UIParent)
-  r.tl = r:TextLabel()
-  r.tl:SetLabel("\n\n"..label)
-	r.tl:SetVerticalAlign("TOP")
-	r.tl:SetHorizontalAlign("CENTER")
-	-- r.tl:SetSpacing(40)
-  r.tl:SetFontHeight(13)
-	r.tl:SetFont("Avenir Next") --"AvenirNext-Medium.ttf")
-  r.tl:SetColor(0,0,0,255) 	
-	r.t = r:Texture(image)
+	r.t = r:Texture("tw_closebox.png")
 	r.t:SetTexCoord(0,BUTTONIMAGESIZE/128,BUTTONIMAGESIZE/128,0)
 	r.t:SetBlendMode("BLEND")
 	-- r:SetAnchor(anchor, UIParent)
@@ -98,15 +135,18 @@ for k,item in pairs(regionMenu.cmdList) do
 	-- r:Show()
 	r:Hide()
 	-- r:Handle("OnTouchDown",OptEventFunc)
-	
-	r.func = func
-	r.anchorpos = anchor
-	r.parent = regionMenu
-	table.insert(regionMenu.items, r)
-end
-regionMenu.show = 0
-regionMenu.v = nil
 
+	linkMenu.func = DeleteLinkAction
+	linkMenu.r = r
+	linkMenu.sender = nil
+	linkMenu.receiver = nil
+	
+	return linkMenu
+end
+
+
+-- initialize regionMenu graphics
+initMenus(regionMenu)
 
 -- initialize connection receiver menu graphics
 linkReceiverMenu.items = {}
@@ -188,7 +228,9 @@ function OpenMenu(self)
 end
 
 function OpenRegionMenu(self)
-	OpenMenu(self, regionMenu)
+	-- OpenMenu(self, regionMenu)
+	OpenMenu(self)
+	DPrint(self:Name())
 end
 
 -- keep menu on top of pesky things, like regions
@@ -252,6 +294,10 @@ function OptEventFunc(self)
     --         self.func(self,regions[i])
     --     end
     -- end
+end
+
+function OpenNewLinkMenu(r1, r2)
+	
 end
 
 -- ==========================

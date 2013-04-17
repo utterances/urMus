@@ -17,7 +17,6 @@ MENUHOLDWAIT = 0.5 -- seconds to wait for hold to menu
 
 regions = {}
 recycledregions = {}
-links = {}
 initialLinkRegion = nil
 
 FreeAllRegions()
@@ -25,8 +24,8 @@ FreeAllRegions()
 modes = {"EDIT","RELEASE"}
 current_mode = modes[1]
 
-dofile(SystemPath("urTapperwareMenu.lua"))
-dofile(SystemPath("urTapperwareLink.lua"))
+dofile(SystemPath("urTapperwareMenu.lua"))	-- first!
+dofile(SystemPath("urTapperwareLink.lua"))	-- needs menu
 
 -- ============
 -- = Backdrop =
@@ -43,7 +42,7 @@ end
 	
 function TouchUp(self)
 	shadow:Hide()
-	DPrint("")
+	-- DPrint("")
  	-- DPrint("MU")
   -- CloseSharedStuff(nil)
     
@@ -69,7 +68,7 @@ end
 
 function Move(self)
 	local x,y = InputPosition()
-	
+	DPrint("moved")
 	-- if hold_region then
 	-- 	DrawConnection(x,y,hold_x,hold_y)
 	-- 	backdrop:Show()
@@ -126,7 +125,7 @@ shadow.t = shadow:Texture("tw_roundrec_create.png")
 -- shadow.t:SetTexture(195,210,220,100)
 shadow.t:SetBlendMode("BLEND")
 
-link:init()
+link:Init()
 
 -- ==========================
 -- = Global event functions =
@@ -187,8 +186,9 @@ function VRegion(ttype,name,parent,id) -- customized initialization of region
   r:Handle("OnDoubleTap",VDoubleTap)
   r:Handle("OnTouchDown",VTouchDown)
   r:Handle("OnTouchUp",VTouchUp)
-  r:Handle("OnMove",VMove)
-		
+  r:Handle("OnDragStop",VDrag)
+  -- r:Handle("OnMove",VDrag)
+	
   return r
 end
 
@@ -355,14 +355,6 @@ function DeTrigger(self) -- for long tap
     self:Handle("OnUpdate",VUpdate)
 end
 
-
-function VMove(self)
-	DPrint("moved")
-	-- if self.menu ~= nil then
-	-- 	CloseMenu(self)
-	-- end
-end
-
 function CallEvents(signal,vv)
     local list = {}
     if current_mode == modes[1] then
@@ -409,13 +401,21 @@ end
 function VTouchUp(self)
 	
 	if initialLinkRegion == nil then
-		DPrint("")
+		-- DPrint("")
 		hold_region = false
 	else
 		EndLinkRegion(self)
 		initialLinkRegion = nil
 	end
   CallEvents("OnTouchUp",self)
+end
+
+function VDrag(self)
+	-- DPrint("moved")
+	-- if self.menu ~= nil then
+	-- 	CloseMenu(self)
+	-- end
+	link:Draw()
 end
 
 -- function DrawConnection(x1,y1,x2,y2)
@@ -465,12 +465,12 @@ function EndLinkRegion(self)
 		table.insert(initialLinkRegion.links["OnTouchUp"], {VTouchUp, self})
 		
 		-- add visual link too:
-		link:add(initialLinkRegion, self)
-		link:draw()
+		link:Add(initialLinkRegion, self)
+		link:Draw()
 
 		CloseMenu(initialLinkRegion)
-		
 		initialLinkRegion = nil
+		
 	end
 end
 	
