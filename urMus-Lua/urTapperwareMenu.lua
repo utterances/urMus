@@ -32,8 +32,9 @@ function SwitchRegionTypeAction(r)
 	SwitchRegionType(r)
 end
 
-function DuplicateDraglet(r)
-	
+function DuplicateAction(r)
+	-- DPrint("copy action")
+	DuplicateRegion(r)
 end
 
 function DeleteLinkAction(r1, r2)
@@ -63,7 +64,7 @@ regionMenu.cmdList = {
 	{"", CloseRegion, 1, "tw_closebox.png"},
 	{"Link", StartLinkRegionAction, 3, "tw_socket1.png"},
 	{"", SwitchRegionTypeAction, 4, "tw_varswitcher.png"},
-	{"", DuplicateDraglet, 5, "tw_dup.png", true},
+	{"", DuplicateAction, 5, "tw_dup.png", true},
 	{"", testMenu, 6, "tw_timer.png"}
 	-- {"", testMenu, 7, "tw_paint.png"}
 	-- {"", testMenu, 8, "tw_run.png"}

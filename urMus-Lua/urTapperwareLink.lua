@@ -5,9 +5,9 @@
 -- methods and appearances and menus for deleting / editing
 -- assumes urTapperwareMenu.lua is already processed
 
-link = {}
+linkLayer = {}
 
-function link:Init()
+function linkLayer:Init()
 	self.list = {}
 	self.menus = {}
 	self.r = Region('region', 'backdrop', UIParent)
@@ -32,7 +32,7 @@ function link:Init()
 end
 
 -- add links to our list
-function link:Add(r1, r2)
+function linkLayer:Add(r1, r2)
 	if self.list[r1] == nil then
 		self.list[r1] = {r2}
 	else
@@ -43,7 +43,7 @@ function link:Add(r1, r2)
 end
 
 -- remove links
-function link:Remove(r1, r2)	
+function linkLayer:Remove(r1, r2)	
 	if self.list[r1] ~= nil then
 		
 		for i = 1, #self.list[r1] do
@@ -62,7 +62,7 @@ function link:Remove(r1, r2)
 end
 
 -- draw a line between linked regions, also draws menu
-function link:Draw()	
+function linkLayer:Draw()	
 	self.r.t:Clear(0,0,0,0)
 	self.r.t:SetBrushColor(100,255,240,200)
 	self.r.t:SetBrushSize(8)
@@ -85,7 +85,7 @@ function link:Draw()
 	-- self.r:MoveToTop() --TODO better way to handle this?
 end
 
-function link:SendMessageToReceivers(sender, message)
+function linkLayer:SendMessageToReceivers(sender, message)
 	for _, r in pairs(self.list[sender]) do
 		-- sender:message
 		

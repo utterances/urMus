@@ -14,6 +14,8 @@
 CREATION_MARGIN = 40	-- margin for creating via tapping
 INITSIZE = 150	-- initial size for regions
 MENUHOLDWAIT = 0.5 -- seconds to wait for hold to menu
+FADEINTIME = .2 -- seconds for things to fade in, TESTING for now
+EPSILON = 0.001	--small number for rounding
 
 regions = {}
 recycledregions = {}
@@ -123,7 +125,7 @@ shadow.t = shadow:Texture("tw_roundrec_create.png")
 -- shadow.t:SetTexture(195,210,220,100)
 shadow.t:SetBlendMode("BLEND")
 
-link:Init()
+linkLayer:Init()
 
 -- ==========================
 -- = Global event functions =
@@ -149,7 +151,8 @@ function CreateorRecycleregion(ftype, name, parent)
         region = VRegion(ftype, name, parent, #regions+1)
         table.insert(regions,region)
     end
-    
+    region:SetAlpha(.1)
+		region.shadow:SetAlpha(.1)
     region:MoveToTop()
     return region
 end
@@ -185,6 +188,7 @@ function VRegion(ttype,name,parent,id) -- customized initialization of region
   r:Handle("OnTouchDown",VTouchDown)
   r:Handle("OnTouchUp",VTouchUp)
   r:Handle("OnDragStop",VDrag)
+	r:Handle("OnUpdate",VUpdate)
   -- r:Handle("OnMove",VDrag)
 	
   return r
@@ -192,6 +196,7 @@ end
 
 function PlainVRegion(r) -- customized parameter initialization of region, events are initialized in VRegion()
     -- r.selected = 0 -- for multiple selection of menubar
+		r.alpha = 1
 		r.menu = nil
 		r.counter = 0
 		r.links = {}
@@ -258,30 +263,6 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
     -- r.bgspeed = 0
     -- r.bgdir = 0
     -- 
-    -- -- initialize texture, label and size
-    -- r.r = 255
-    -- r.g = 255
-    -- r.b = 255
-    -- r.a = 255
-    -- r.bkg = ""
-    -- --initialize gradient
-    -- r.r1 = nil
-    -- r.r2 = nil
-    -- r.r3 = nil
-    -- r.r4 = nil
-    -- r.g1 = nil
-    -- r.g2 = nil
-    -- r.g3 = nil
-    -- r.g4 = nil
-    -- r.b1 = nil
-    -- r.b2 = nil
-    -- r.b3 = nil
-    -- r.b4 = nil
-    -- r.a1 = nil
-    -- r.a2 = nil
-    -- r.a3 = nil
-    -- r.a4 = nil
-    -- r.t:SetTexture(r.r,r.g,r.b,r.a)
 		r.t:SetBlendMode("BLEND")
     r.tl:SetLabel(r:Name())
     r.tl:SetFontHeight(16)
@@ -380,6 +361,7 @@ function VTouchDown(self)
 	self.shadow:SetLayer("LOW")
 	self:MoveToTop()
 	self:SetLayer("LOW")
+	self.alpha = .4
 	hold_region = true
 	local x,y = InputPosition()
 	hold_x = x
@@ -397,7 +379,7 @@ function VDoubleTap(self)
 end
 
 function VTouchUp(self)
-	
+	self.alpha = 1
 	if initialLinkRegion == nil then
 		-- DPrint("")
 		hold_region = false
@@ -413,9 +395,21 @@ function VDrag(self)
 	-- if self.menu ~= nil then
 	-- 	CloseMenu(self)
 	-- end
-	link:Draw()
+	linkLayer:Draw()
 end
 	
+function VUpdate(self,elapsed)
+	-- DPrint(elapsed)
+	if self:Alpha() ~= self.alpha then
+		if math.abs(self:Alpha() - self.alpha) < EPSILON then	-- just set if it's close enough
+			self:SetAlpha(self.alpha)
+		else
+			self:SetAlpha(self:Alpha() + (self.alpha-self:Alpha()) * elapsed/FADEINTIME)
+		end
+		self.shadow:SetAlpha(self:Alpha())
+	end
+end
+
 function AddOneToCounter(self)
 	-- DPrint("adding one")
 	if self.counter == 1 then
@@ -453,11 +447,12 @@ function EndLinkRegion(self)
 	if initialLinkRegion ~= nil then
 		-- DPrint("linked from "..initialLinkRegion:Name().." to "..self:Name())
 		-- TODO create the link here!
+
 		table.insert(initialLinkRegion.links["OnTouchUp"], {VTouchUp, self})
 		
 		-- add visual link too:
-		link:Add(initialLinkRegion, self)
-		link:Draw()
+		linkLayer:Add(initialLinkRegion, self)
+		linkLayer:Draw()
 
 		CloseMenu(initialLinkRegion)
 		initialLinkRegion = nil
@@ -465,10 +460,15 @@ function EndLinkRegion(self)
 	end
 end
 
-
 function RemoveLinkBetween(r1, r2)
-	link:Remove(r1, r2)
-	link:Draw()
+	linkLayer:Remove(r1, r2)
+	linkLayer:Draw()
+	
+	for i,v in ipairs(r1.links["OnTouchUp"]) do
+		if v[2] == r2 then
+			table.remove(r1.links["OnTouchUp"], i)
+		end
+	end
 end
 	
 
@@ -494,6 +494,53 @@ function RemoveV(vv)
     
     table.insert(recycledregions, vv.id)
     DPrint(vv:Name().." removed")
+end
+
+function DuplicateRegion(vv)
+	x,y = vv:Center()
+	local copyRegion = CreateorRecycleregion('region', 'backdrop', UIParent)
+	copyRegion:Show()
+	copyRegion:SetAnchor("CENTER",x+INITSIZE,y)
+		
+	copyRegion.counter = vv.counter
+	copyRegion.links = vv.links
+		
+	list = copyRegion.links["OnTouchUp"]
+	if list ~= nil then
+		for k = 1,#list do
+			linkLayer:Add(copyRegion, list[k][2])
+		end
+	end
+	
+	-- TODO: optimize this part: right now it's a messy search for every inbound links
+	for i = 1, #regions do
+		if regions[i] ~= vv or regions[i] ~= copyRegion then
+			
+			linkList = regions[i].links["OnTouchUp"]
+			if linkList ~= nil then
+				
+				for k = 1,#linkList do
+					if linkList[k][2] == vv then
+						table.insert(linkList, {VTouchUp, copyRegion})
+						linkLayer:Add(regions[i], copyRegion)
+					end
+				end
+			end			
+		end
+	end
+	
+	if copyRegion.counter == 1 then
+		SwitchRegionType(copyRegion)
+		copyRegion.value = vv.value
+	end
+	
+	linkLayer:Draw()
+	
+-- 	TODO: make this a common function to raise region to top
+	copyRegion.shadow:MoveToTop()
+	copyRegion.shadow:SetLayer("LOW")
+	copyRegion:MoveToTop()
+	copyRegion:SetLayer("LOW")
 end
 
 -- function CloseRegion(self)
