@@ -173,7 +173,7 @@ for k,item in pairs(linkReceiverMenu.cmdList) do
 	r:MoveToTop()
 	-- r:Show()
 	r:Hide()
-	r:Handle("OnTouchDown",OptEventFunc)
+	r:Handle("OnTouchUp",OptEventFunc)
 	r.parent = linkReceiverMenu
 	
 	r.func = func

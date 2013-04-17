@@ -48,6 +48,7 @@
 		22AB137D170C88DA006402CF /* tw_more.png in Resources */ = {isa = PBXBuildFile; fileRef = 22AB1379170C88DA006402CF /* tw_more.png */; };
 		22AB137E170C88DA006402CF /* tw_sound.png in Resources */ = {isa = PBXBuildFile; fileRef = 22AB137A170C88DA006402CF /* tw_sound.png */; };
 		22AB137F170C88DA006402CF /* tw_unlock.png in Resources */ = {isa = PBXBuildFile; fileRef = 22AB137B170C88DA006402CF /* tw_unlock.png */; };
+		22BD3819171E6D9E003B532E /* tw_link.png in Resources */ = {isa = PBXBuildFile; fileRef = 22BD3818171E6D9E003B532E /* tw_link.png */; };
 		22E579E817150FF000B0EF24 /* urTapper.lua in Resources */ = {isa = PBXBuildFile; fileRef = 22E579E717150FF000B0EF24 /* urTapper.lua */; };
 		22E579EC1715268E00B0EF24 /* urTapperwareLink.lua in Resources */ = {isa = PBXBuildFile; fileRef = 22E579EB1715268E00B0EF24 /* urTapperwareLink.lua */; };
 		23C56097119295D200758BB9 /* html in Resources */ = {isa = PBXBuildFile; fileRef = 23C56095119295D200758BB9 /* html */; };
@@ -630,6 +631,7 @@
 		22AB1379170C88DA006402CF /* tw_more.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_more.png; path = Textures/tw_more.png; sourceTree = "<group>"; };
 		22AB137A170C88DA006402CF /* tw_sound.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_sound.png; path = Textures/tw_sound.png; sourceTree = "<group>"; };
 		22AB137B170C88DA006402CF /* tw_unlock.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_unlock.png; path = Textures/tw_unlock.png; sourceTree = "<group>"; };
+		22BD3818171E6D9E003B532E /* tw_link.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_link.png; path = Textures/tw_link.png; sourceTree = "<group>"; };
 		22E579E717150FF000B0EF24 /* urTapper.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urTapper.lua; path = "urMus-Lua/urTapper.lua"; sourceTree = "<group>"; };
 		22E579EB1715268E00B0EF24 /* urTapperwareLink.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urTapperwareLink.lua; path = "urMus-Lua/urTapperwareLink.lua"; sourceTree = "<group>"; };
 		23C56095119295D200758BB9 /* html */ = {isa = PBXFileReference; lastKnownFileType = folder; path = html; sourceTree = "<group>"; };
@@ -2355,6 +2357,7 @@
 				22A87B851709F60400DF29BF /* tw_closebox.png */,
 				2211BD31170359BC006C42B5 /* tw_shadow.png */,
 				2277352C171E195100C8ADA9 /* tw_dup.png */,
+				22BD3818171E6D9E003B532E /* tw_link.png */,
 				7790B95916BB14CF008120B7 /* arrow.png */,
 				7701938F161FF2FF00FDBD4B /* DroidSansMono.ttf */,
 				2211BD3517039D09006C42B5 /* tw_roundrec.png */,
@@ -2972,6 +2975,7 @@
 				22E579E817150FF000B0EF24 /* urTapper.lua in Resources */,
 				22E579EC1715268E00B0EF24 /* urTapperwareLink.lua in Resources */,
 				2277352D171E195100C8ADA9 /* tw_dup.png in Resources */,
+				22BD3819171E6D9E003B532E /* tw_link.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

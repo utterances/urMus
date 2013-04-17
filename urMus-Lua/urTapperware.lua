@@ -122,8 +122,22 @@ backdrop:Show()
 shadow = Region('region', 'shadow', UIParent)
 shadow:SetLayer("BACKGROUND")
 shadow.t = shadow:Texture("tw_roundrec_create.png")
--- shadow.t:SetTexture(195,210,220,100)
 shadow.t:SetBlendMode("BLEND")
+
+-- link action icon, shows briefly when a link is made
+linkIcon = Region('region', 'linkicon', UIParent)
+linkIcon:SetLayer("TOOLTIP")
+linkIcon.t = linkIcon:Texture("tw_link.png")
+linkIcon.t:SetBlendMode("BLEND")
+
+function linkIcon:ShowLinked(x,y)
+
+end
+
+function linkIcon:Reset()
+
+end
+
 
 linkLayer:Init()
 
@@ -151,8 +165,8 @@ function CreateorRecycleregion(ftype, name, parent)
         region = VRegion(ftype, name, parent, #regions+1)
         table.insert(regions,region)
     end
-    region:SetAlpha(.1)
-		region.shadow:SetAlpha(.1)
+    region:SetAlpha(0)
+		region.shadow:SetAlpha(0)
     region:MoveToTop()
     return region
 end
@@ -196,10 +210,16 @@ end
 
 function PlainVRegion(r) -- customized parameter initialization of region, events are initialized in VRegion()
     -- r.selected = 0 -- for multiple selection of menubar
-		r.alpha = 1
-		r.menu = nil
-		r.counter = 0
+		r.alpha = 1	--target alpha for animation
+		r.menu = nil	--contextual menu
+		r.counter = 0	--if this is a counter
+		r.isHeld = false -- if the r is held by tap currently
+		
+		
+		
+		-- event handling
 		r.links = {}
+		
     r.links["OnTouchDown"] = {}
 		r.links["OnTouchUp"] = {}
     r.links["OnDoubleTap"] = {} --{CloseSharedStuff,OpenOrCloseKeyboard} 
@@ -500,7 +520,7 @@ function DuplicateRegion(vv)
 	x,y = vv:Center()
 	local copyRegion = CreateorRecycleregion('region', 'backdrop', UIParent)
 	copyRegion:Show()
-	copyRegion:SetAnchor("CENTER",x+INITSIZE,y)
+	copyRegion:SetAnchor("CENTER",x+INITSIZE+20,y)
 		
 	copyRegion.counter = vv.counter
 	copyRegion.links = vv.links
