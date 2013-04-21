@@ -111,7 +111,7 @@ backdrop:EnableInput(true)
 backdrop:SetClipRegion(0,0,ScreenWidth(),ScreenHeight())
 backdrop:EnableClipping(true)
 backdrop.player = {}
-backdrop.t = backdrop:Texture("gridback.jpg")
+backdrop.t = backdrop:Texture("tw_gridback.jpg")
 backdrop.t:SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
 backdrop.t:SetBlendMode("BLEND")
 backdrop:Show()
@@ -495,12 +495,17 @@ function StartLinkRegion(self, draglet)
 				if math.abs(tx-rx) < INITSIZE and math.abs(ty-ry) < INITSIZE then
 					-- found a match, create a link here
 					EndLinkRegion(regions[i])
+					
 					return
 				end
 			end
 		end
 		CloseMenu(self)
 		OpenRegionMenu(self)
+		
+		-- linkLayer:DrawPotentialLink(region, draglet) DEBUG here!
+		-- CloseMenu(self)
+		-- OpenRegionMenu(self)
 	else
 		-- otherwise ask for a target
 		DPrint("Tap another region to link")
