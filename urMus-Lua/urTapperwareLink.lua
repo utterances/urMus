@@ -9,26 +9,42 @@ linkLayer = {}
 
 function linkLayer:Init()
 	self.list = {}
+	-- this is actually a dictionary, key = sender, value = {list of receivers}
+	self.potentialLinkList = {}
 	self.menus = {}
-	self.r = Region('region', 'backdrop', UIParent)
-	self.r:SetWidth(ScreenWidth())
-	self.r:SetHeight(ScreenHeight())
-	self.r:SetLayer("TOOLTIP")
-	self.r:SetAnchor('BOTTOMLEFT',0,0)
-	self.r.t = self.r:Texture()
-	self.r.t:Clear(0,0,0,0)
-	self.r.t:SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
-	self.r.t:SetBlendMode("BLEND")
-	self.r.t:SetBrushColor(255,100,100,255)
-	self.r.t:SetBrushSize(2)
-	-- REMOVE later:
-	self.r.t:Ellipse(ScreenWidth()/3, ScreenHeight()/2, 200, 200)
-	self.r:EnableInput(false)
-	self.r:EnableMoving(false)
 	
-	self.r:MoveToTop()
-	self.r:Show()
-	-- DPrint("link init")
+	-- one region for drawing formed links
+	self.links = Region('region', 'backdrop', UIParent)
+	self.links:SetWidth(ScreenWidth())
+	self.links:SetHeight(ScreenHeight())
+	self.links:SetLayer("TOOLTIP")
+	self.links:SetAnchor('BOTTOMLEFT',0,0)
+	self.links.t = self.links:Texture()
+	self.links.t:Clear(0,0,0,0)
+	self.links.t:SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
+	self.links.t:SetBlendMode("BLEND")
+	self.links:EnableInput(false)
+	self.links:EnableMoving(false)
+	
+	self.links:MoveToTop()
+	self.links:Show()
+	
+	-- set up another region for drawing guides or potential links
+	self.linkGuides = Region('region', 'backdrop', UIParent)
+	self.linkGuides:SetWidth(ScreenWidth())
+	self.linkGuides:SetHeight(ScreenHeight())
+	self.linkGuides:SetLayer("TOOLTIP")
+	self.linkGuides:SetAnchor('BOTTOMLEFT',0,0)
+	self.linkGuides.t = self.linkGuides:Texture()
+	self.linkGuides.t:Clear(0,0,0,0)
+	self.linkGuides.t:SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
+	self.linkGuides.t:SetBlendMode("BLEND")
+	self.linkGuides:EnableInput(false)
+	self.linkGuides:EnableMoving(false)
+	
+	self.linkGuides:MoveToTop()
+	self.linkGuides:Show()
+	
 end
 
 -- add links to our list
@@ -63,16 +79,16 @@ end
 
 -- draw a line between linked regions, also draws menu
 function linkLayer:Draw()
-	self.r.t:Clear(0,0,0,0)
-	self.r.t:SetBrushColor(100,255,240,200)
-	self.r.t:SetBrushSize(8)
+	self.links.t:Clear(0,0,0,0)
+	self.links.t:SetBrushColor(100,255,240,200)
+	self.links.t:SetBrushSize(8)
 	
 	for sender, receivers in pairs(self.list) do
 		X1, Y1 = sender:Center()		
 		for _, r in ipairs(receivers) do
 			
 			X2, Y2 = r:Center()
-			self.r.t:Line(X1,Y1,X2,Y2)			
+			self.links.t:Line(X1,Y1,X2,Y2)			
 		end
 	end
 
@@ -84,14 +100,18 @@ function linkLayer:Draw()
 end
 
 function linkLayer:DrawPotentialLink(region, draglet)
-	DPrint("draw pote")
-	self:Draw()
-	self.r.t:SetBrushColor(100,255,240,100)
-	self.r.t:SetBrushSize(8)
+	self.linkGuides.t:Clear(0,0,0,0)
+	self.linkGuides.t:SetBrushColor(100,255,240,100)
+	self.linkGuides.t:SetBrushSize(12)
 	
 	rx, ry = region:Center()
 	posx, posy = draglet:Center()
-	self.r.t:Line(X1,Y1,posx,poy)
+	self.linkGuides.t:Line(rx,ry,posx,posy)
+	DPrint(region:Name())
+end
+
+function linkLayer:ResetPotentialLink()
+	self.linkGuides.t:Clear(0,0,0,0)
 end
 
 function linkLayer:SendMessageToReceivers(sender, message)

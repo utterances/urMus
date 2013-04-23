@@ -135,13 +135,14 @@ linkIcon:SetAnchor('CENTER',ScreenWidth()/2,ScreenHeight()/2)
 
 function linkIcon:ShowLinked(x,y)
 	self:Show()
+	self:SetAlpha(1)
 	self:MoveToTop()
 	self:Handle("OnUpdate", IconUpdate)
 end
 
 function IconUpdate(self, e)
 	if self:Alpha() > 0 then
-		self:SetAlpha(self:Alpha() - self:Alpha() * e/.5)
+		self:SetAlpha(self:Alpha() - self:Alpha() * e/.7)
 	else
 		self:Hide()
 		self:Handle("OnUpdate", nil)
@@ -223,73 +224,27 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
 		r.menu = nil	--contextual menu
 		r.counter = 0	--if this is a counter
 		r.isHeld = false -- if the r is held by tap currently
+
+		r.dx = 0	-- compute storing current movement speed, for gesture detection
+		r.dy = 0
+		x,y = r:Center()
+		r.oldx = x
+		r.oldy = y
 		
 		-- event handling
 		r.links = {}
-		
     r.links["OnTouchDown"] = {}
 		r.links["OnTouchUp"] = {}
     r.links["OnDoubleTap"] = {} --{CloseSharedStuff,OpenOrCloseKeyboard} 
 		
-    -- r.kbopen = 0 -- for keyboard isopen
-    -- 
     -- -- initialize for events and signals
     r.eventlist = {}
-    -- r.eventlist["OnTouchDown"] = {HoldTrigger,CloseSharedStuff,SelectObj,AddAnchorIcon}
     r.eventlist["OnTouchDown"] = {HoldTrigger}
     r.eventlist["OnTouchUp"] = {DeTrigger} 
     r.eventlist["OnDoubleTap"] = {} --{CloseSharedStuff,OpenOrCloseKeyboard} 
     r.eventlist["OnUpdate"] = {} 
-    -- r.eventlist["OnUpdate"]["selfshowhide"] = 0
-    -- r.eventlist["OnUpdate"]["selfcolor"] = 0
-    -- r.eventlist["OnUpdate"]["move"] = 0
-    -- r.eventlist["OnUpdate"]["animate"] = 0
-    -- r.eventlist["OnUpdate"]["generate"] = 0
-    -- r.eventlist["OnUpdate"]["collision"] = 0
-    -- r.eventlist["OnUpdate"]["background"] = 0
-    -- r.eventlist["OnUpdate"]["projectile"] = 0
-    -- r.eventlist["OnUpdate"]["fps"] = 0
     r.eventlist["OnUpdate"].currentevent = nil
-    -- r.reventlist = {} -- eventlist for release mode
-    -- r.reventlist["OnTouchDown"] = {}
-    -- r.reventlist["OnTouchUp"] = {AutoCheckStick} 
-    -- r.reventlist["OnDoubleTap"] = {OpenOrCloseKeyboard}
-    -- 
-    -- -- auto stick
-    -- r.group = r.id
-    -- r.sticker = -1
-    -- r.stickee = {}
-    -- r.large = Region()
-    -- r.large:SetAnchor("CENTER",r,"CENTER")
-    
-    -- -- Initialize for generation
-    -- r.gencontrollerL = nil
-    -- r.gencontrollerR = nil
-    -- r.gencontrolle = nil
-    -- r.gencontrollerD = nil
-    -- r[1] = nil
-    -- 
-    -- -- initialize for moving
-    -- r.random = 0
-    -- r.speed = tonumber(moving_default_speed)
-    -- r.dir = tonumber(moving_default_dir)
-    -- r.moving = 0
-    -- r.dx = 0
-    -- r.dy = 0
-    -- r.bounceobjects = {}
-    -- r.bounceremoveobjects = {}
-    -- r.bound = boundary
-    
-    -- -- Initialize for Collisions
-    -- r.regionregion = {}
-    -- r.regionproj = {}
-    -- r.projregion = {}
-    -- r.projproj = {}
-    -- 
-    -- -- Initialize for Background
-    -- r.bgspeed = 0
-    -- r.bgdir = 0
-    -- 
+
 		r.t:SetBlendMode("BLEND")
     r.tl:SetLabel(r:Name())
     r.tl:SetFontHeight(16)
@@ -302,24 +257,6 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
     r.tl:SetShadowBlur(1)
     r:SetWidth(INITSIZE)
     r:SetHeight(INITSIZE)
-    
-    -- -- anchor
-    -- r.fixed = 0
-    -- -- AddAnchorIcon(r)
-    -- 
-    -- -- move controller
-    -- r.left_controller = nil
-    -- r.right_controller = nil
-    -- r.up_controller = nil
-    -- r.down_controller = nil
-    -- 
-    -- -- global text exchange
-    -- r.is_text_sender = 0
-    -- r.is_text_receiver = 0
-    -- r.text_sharee = -1
-    -- 
-    -- -- stickboundary
-    -- r.stickboundary = "none"
 end
 
 function HoldToTrigger(self, elapsed) -- for long tap
@@ -440,7 +377,7 @@ function VDrag(self)
 	-- if self.menu ~= nil then
 	-- 	CloseMenu(self)
 	-- end
-	linkLayer:Draw()
+	-- linkLayer:Draw()
 end
 	
 function VUpdate(self,elapsed)
@@ -453,6 +390,9 @@ function VUpdate(self,elapsed)
 		end
 		self.shadow:SetAlpha(self:Alpha())
 	end
+	
+	-- TODO save cycle by checking if we moved or not, redraw only if it's moved
+	linkLayer:Draw()
 end
 
 function AddOneToCounter(self)
@@ -501,11 +441,7 @@ function StartLinkRegion(self, draglet)
 			end
 		end
 		CloseMenu(self)
-		OpenRegionMenu(self)
-		
-		-- linkLayer:DrawPotentialLink(region, draglet) DEBUG here!
-		-- CloseMenu(self)
-		-- OpenRegionMenu(self)
+		OpenRegionMenu(self)		
 	else
 		-- otherwise ask for a target
 		DPrint("Tap another region to link")
@@ -521,9 +457,10 @@ function EndLinkRegion(self)
 		
 		-- add visual link too:
 		linkLayer:Add(initialLinkRegion, self)
+		linkLayer:ResetPotentialLink()
 		linkLayer:Draw()
 		-- add notification
-		linkIcon:ShowLinked()
+		linkIcon:ShowLinked()		
 		
 		CloseMenu(initialLinkRegion)
 		initialLinkRegion = nil
@@ -544,16 +481,6 @@ end
 	
 
 function RemoveV(vv)
-    -- Unstick(vv)
-    -- 
-    -- if vv.text_sharee ~= -1 then
-    --     for k,i in pairs(global_text_senders) do
-    --         if i == vv.id then
-    --             table.remove(global_text_senders,k)
-    --         end
-    --     end
-    --     regions[vv.text_sharee].text_sharee = -1
-    -- end
 		CloseMenu(vv)
 		
     PlainVRegion(vv)

@@ -216,7 +216,7 @@ function OpenMenu(self)
         regionMenu.items[i]:EnableInput(true)
 				if regionMenu.items[i].draglet ~= nil then
 					regionMenu.items[i]:EnableMoving(true)
-					regionMenu.items[i]:Handle("OnMove", regionMenu.items[i].draglet)
+					regionMenu.items[i]:Handle("OnUpdate", regionMenu.items[i].draglet)
 				end
 				
 				-- regionMenu.items[i]:Handle("OnTouchDown", testMenu)
@@ -281,6 +281,8 @@ function CloseMenu(self)
     for i = 1,#regionMenu.items do
         regionMenu.items[i]:Hide()
         regionMenu.items[i]:EnableInput(false)
+				regionMenu.items[i]:Handle("OnTouchUp", nil)
+				regionMenu.items[i]:Handle("OnUpdate", nil)
     end
 		regionMenu.show = 0
 		regionMenu.v = nil
