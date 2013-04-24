@@ -19,7 +19,6 @@ function testMenu(self)
 end
 
 function CloseRegion(self)
-	DPrint("touched close")
 	RemoveV(self)
 end
 
@@ -29,7 +28,6 @@ end
 
 -- TODO this is not working yet since ondragstart is not implemented
 function StartLinkOnDrag(self)
-	DPrint("startlink on drag")
 	-- self is the menu button/draglet
 	-- target is the parent region
 	local target = self.parent.v
@@ -53,7 +51,7 @@ function DuplicateAction(r, draglet)
 end
 
 function DupOnDrag(r)
-	DPrint("drag dup")
+	-- DPrint("drag dup")
 end
 
 function DeleteLinkAction(r1, r2)

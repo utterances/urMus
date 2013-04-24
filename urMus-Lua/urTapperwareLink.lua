@@ -107,7 +107,6 @@ function linkLayer:DrawPotentialLink(region, draglet)
 	rx, ry = region:Center()
 	posx, posy = draglet:Center()
 	self.linkGuides.t:Line(rx,ry,posx,posy)
-	DPrint(region:Name())
 end
 
 function linkLayer:ResetPotentialLink()

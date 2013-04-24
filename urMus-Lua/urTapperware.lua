@@ -73,7 +73,6 @@ end
 
 function Move(self)
 	local x,y = InputPosition()
-	DPrint("moved")
 	-- if isHoldingRegion then
 	-- 	backdrop:Show()
 	-- 	DPrint("line"..x..","..y.."-"..hold_x..","..hold_y)
@@ -169,7 +168,7 @@ function CreateorRecycleregion(ftype, name, parent)
         region:EnableMoving(true)
         region:EnableResizing(true)
         region:EnableInput(true)
-        region.usable = 1
+        region.usable = true
 				region.t:SetTexture("tw_roundrec.png")	-- reset texture
     else
         region = VRegion(ftype, name, parent, #regions+1)
@@ -200,7 +199,7 @@ function VRegion(ttype,name,parent,id) -- customized initialization of region
 	r.shadow = r_s
 	r.shadow:SetAnchor("CENTER",r,"CENTER",0,0) 
   -- initialize for regions{} and recycledregions{}
-  r.usable = 1
+  r.usable = true
   r.id = id
   PlainVRegion(r)
   
@@ -351,6 +350,7 @@ function VTouchUp(self)
 				if heldRegions[i] ~= self and RegionOverLap(self, heldRegions[i]) then
 					initialLinkRegion = self
 					EndLinkRegion(heldRegions[i])
+					initialLinkRegion = nil
 					break
 				end
 			end
@@ -430,18 +430,18 @@ function StartLinkRegion(self, draglet)
 		-- if we have drag target, try creating a link right away
 		tx, ty = draglet:Center()
 		for i = 1, #regions do
-			if regions[i] ~= self then
+			if regions[i] ~= self and regions[i].usable == true then
 				rx, ry = regions[i]:Center()
 				if math.abs(tx-rx) < INITSIZE and math.abs(ty-ry) < INITSIZE then
 					-- found a match, create a link here
 					EndLinkRegion(regions[i])
-					
+					initialLinkRegion = nil
 					return
 				end
 			end
 		end
 		CloseMenu(self)
-		OpenRegionMenu(self)		
+		OpenRegionMenu(self)
 	else
 		-- otherwise ask for a target
 		DPrint("Tap another region to link")
@@ -488,7 +488,7 @@ function RemoveV(vv)
     vv:EnableMoving(false)
     vv:EnableResizing(false)
     vv:Hide()
-    vv.usable = 0
+    vv.usable = false
     
     table.insert(recycledregions, vv.id)
     DPrint(vv:Name().." removed")
