@@ -14,6 +14,13 @@ BUTTONIMAGESIZE = 80		-- size of the square icon image
 
 recycledLinkMenu = {}
 
+-- function Menu:new (o)
+--    o = o or {}   -- create object if user does not provide one
+--    setmetatable(o, self)
+--    self.__index = self
+--    return o	 
+-- end
+
 function testMenu(self)
 	DPrint("touched menu on"..self:Name())
 end

@@ -14,16 +14,22 @@
 CREATION_MARGIN = 40	-- margin for creating via tapping
 INITSIZE = 150	-- initial size for regions
 MENUHOLDWAIT = 0.5 -- seconds to wait for hold to menu
+
 FADEINTIME = .2 -- seconds for things to fade in, TESTING for now
 EPSILON = 0.001	--small number for rounding
+
+-- selection param
+LASSOSEPDISTANCE = 30 -- pixels between each point when drawing seleciton lasso
 
 regions = {}
 recycledregions = {}
 initialLinkRegion = nil
-
+startedSelection = false
 -- touch event state machine:
 -- isHoldingRegion = false
 heldRegions = {}
+-- selection data structs
+selectionPoly = {}
 
 FreeAllRegions()
 
@@ -51,10 +57,15 @@ function TouchUp(self)
 	-- DPrint("")
  	-- DPrint("MU")
   -- CloseSharedStuff(nil)
-    
+  if startedSelection then
+		startedSelection = false
+		selectionPoly = {}
+		return
+	end
+	
 	-- only create if we are not too close to the edge
   local x,y = InputPosition()
-
+	
 	-- if isHoldingRegion then
 	-- 	backdrop:Show()
 	-- 	DPrint("line"..x..","..y.."-"..hold_x..","..hold_y)
@@ -69,25 +80,26 @@ function TouchUp(self)
 			-- DPrint(region:Name().." created, centered at "..x..", "..y)
 		end
 	-- end
+	
+	startedSelection = false
 end
 
 function Move(self)
+	startedSelection = true
+	shadow:Hide()
+	-- change creation behavior to selection box/lasso
 	local x,y = InputPosition()
-	-- if isHoldingRegion then
-	-- 	backdrop:Show()
-	-- 	DPrint("line"..x..","..y.."-"..hold_x..","..hold_y)
-	-- else
-		-- backdrop:Hide()
-		if x>CREATION_MARGIN and x<ScreenWidth()-CREATION_MARGIN and 
-			y>CREATION_MARGIN and y<ScreenHeight()-CREATION_MARGIN then
-			shadow:SetAnchor('CENTER',x,y)
-			shadow:Show()
-		  -- DPrint("release to create region")
-		else
-			shadow:Hide()
-			DPrint("")
+	if #selectionPoly > 0 then
+		last = selectionPoly[#selectionPoly]
+		if math.sqrt((x - last[1])^2 + (y - last[2])^2) > LASSOSEPDISTANCE then
+			--more than the lasso point distance, add a new point to selection poly
+			table.insert(selectionPoly, {x,y})
+			selectionLayer:DrawSelectionPoly()
 		end
-	-- end
+	else
+		table.insert(selectionPoly, {x,y})
+		selectionLayer:DrawSelectionPoly()
+	end
 end
 
 function Leave(self)
@@ -121,6 +133,70 @@ shadow:SetLayer("BACKGROUND")
 shadow.t = shadow:Texture("tw_roundrec_create.png")
 shadow.t:SetBlendMode("BLEND")
 
+-- set up layer for drawing selection boxes or lasso:
+selectionLayer = Region('region', 'selection', UIParent)
+selectionLayer:SetLayer("BACKGROUND")
+selectionLayer:SetWidth(ScreenWidth())
+selectionLayer:SetWidth(ScreenWidth())
+selectionLayer:SetHeight(ScreenHeight())
+selectionLayer:SetAnchor('BOTTOMLEFT',0,0)
+selectionLayer:EnableInput(false)
+selectionLayer.t = selectionLayer:Texture()
+selectionLayer.t:Clear(0,0,0,0)
+selectionLayer.t:SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
+selectionLayer.t:SetBlendMode("BLEND")
+selectionLayer:Show()
+
+function selectionLayer:DrawSelectionPoly()
+	if #selectionPoly < 2 then	-- need at least two points to draw
+		return
+	end
+	
+	self.t:Clear(0,0,0,0)
+	self.t:SetBrushColor(255,255,255,200)
+	self.t:SetBrushSize(3)
+
+	local lastPoint = selectionPoly[#selectionPoly]
+	for i = 2,#selectionPoly do
+		self.t:Line(lastPoint[1], lastPoint[2],
+													selectionPoly[i][1], selectionPoly[i][2])
+		lastPoint = selectionPoly[i]
+	end
+	
+	-- also draw boxes around *selected* regions
+	
+	for i = 1, #regions do
+		x,y = regions[i]:Center()
+		if pointInSelectionPolygon(x,y) then
+			self.t:SetBrushColor(255,100,100,200)
+			self.t:Rect(x,y,200,200)
+		end
+	end
+end
+
+function pointInSelectionPolygon(x, y)
+	-- find if a point is in our selection
+	-- adapted from C code: http://alienryderflex.com/polygon/
+	-- simple ray casting algo
+	oddNodes = false
+	j=#selectionPoly
+
+  for i=1, #selectionPoly do		
+		if ((selectionPoly[i][2] < y and selectionPoly[j][2] >=y
+		    or   selectionPoly[j][2]< y and selectionPoly[i][2]>=y)
+		    and  (selectionPoly[i][1]<=x or selectionPoly[j][1]<=x)) then
+			
+      if (selectionPoly[i][1]+(y-selectionPoly[i][2])
+					/(selectionPoly[j][2]-selectionPoly[i][2])
+					*(selectionPoly[j][1]-selectionPoly[i][1])<x) then
+      	oddNodes = not oddNodes
+			end
+		end
+    j=i
+	end
+	return oddNodes
+end
+
 -- link action icon, shows briefly when a link is made
 linkIcon = Region('region', 'linkicon', UIParent)
 linkIcon:SetLayer("TOOLTIP")
@@ -131,6 +207,7 @@ linkIcon:SetWidth(100)
 linkIcon:SetHeight(100)
 linkIcon:SetAnchor('CENTER',ScreenWidth()/2,ScreenHeight()/2)
 -- linkIcon:Handle(OnUpdate, IconUpdate)
+
 
 function linkIcon:ShowLinked(x,y)
 	self:Show()
