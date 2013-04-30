@@ -172,7 +172,6 @@ function initLinkMenus()
 	return linkMenu
 end
 
-
 -- initialize regionMenu graphics
 initMenus(regionMenu)
 

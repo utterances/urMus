@@ -39,7 +39,7 @@ current_mode = modes[1]
 dofile(SystemPath("urTapperwareTools.lua"))
 dofile(SystemPath("urTapperwareMenu.lua"))	-- first!
 dofile(SystemPath("urTapperwareLink.lua"))	-- needs menu
-
+dofile(SystemPath("urTapperwareGroup.lua"))
 -- ============
 -- = Backdrop =
 -- ============
@@ -69,6 +69,9 @@ function TouchUp(self)
 		end
 		if #tempSelected > 0 then
 			selectedRegions = tempSelected
+			groupmenu = newGroupMenu()
+			x,y = InputPosition()
+			OpenGroupMenu(groupmenu, x, y, selectedRegions)
 		end
 		selectionPoly = {}
 		selectionLayer.t:Clear(0,0,0,0)
@@ -173,8 +176,10 @@ function selectionLayer:DrawSelectionPoly()
 	for i = 1, #regions do
 		x,y = regions[i]:Center()
 		if pointInSelectionPolygon(x,y) then
+			w = regions[i]:Width()
+			h = regions[i]:Height()
 			self.t:SetBrushColor(255,100,100,200)
-			self.t:Ellipse(x,y,100,100)
+			self.t:Ellipse(x,y,w,h)
 		end
 	end
 end
@@ -305,7 +310,7 @@ function VRegion(ttype,name,parent,id) -- customized initialization of region
   r:Handle("OnDoubleTap",VDoubleTap)
   r:Handle("OnTouchDown",VTouchDown)
   r:Handle("OnTouchUp",VTouchUp)
-  r:Handle("OnDragStop",VDrag)
+  -- r:Handle("OnDragStop",VDrag)
 	r:Handle("OnUpdate",VUpdate)
   -- r:Handle("OnMove",VDrag)
 	
@@ -467,14 +472,6 @@ function VLeave(self)
 	DPrint("left")
 	
 end
-
-function VDrag(self)
-	-- DPrint("moved")
-	-- if self.menu ~= nil then
-	-- 	CloseMenu(self)
-	-- end
-	-- linkLayer:Draw()
-end
 	
 function VUpdate(self,elapsed)
 	-- DPrint(elapsed)
@@ -487,8 +484,19 @@ function VUpdate(self,elapsed)
 		self.shadow:SetAlpha(self:Alpha())
 	end
 	
-	-- TODO save cycle by checking if we moved or not, redraw only if it's moved
-	linkLayer:Draw()
+	x,y = self:Center()
+	if x ~= self.oldx then
+		self.dx = x - self.oldx
+	end
+	if y ~= self.oldy then
+		self.dy = y - self.oldy
+	
+		if x ~= self.oldx then
+			linkLayer:Draw()
+		end			
+	end
+	self.oldx = x
+	self.oldy = y
 end
 
 function AddOneToCounter(self)

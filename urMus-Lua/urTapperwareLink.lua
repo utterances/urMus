@@ -1,6 +1,6 @@
--- ================
+-- ===============================
 -- = Visual Links between regions=
--- ================
+-- ===============================
 
 -- methods and appearances and menus for deleting / editing
 -- assumes urTapperwareMenu.lua is already processed
