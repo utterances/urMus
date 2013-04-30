@@ -19,7 +19,7 @@ FADEINTIME = .2 -- seconds for things to fade in, TESTING for now
 EPSILON = 0.001	--small number for rounding
 
 -- selection param
-LASSOSEPDISTANCE = 30 -- pixels between each point when drawing seleciton lasso
+LASSOSEPDISTANCE = 30 -- pixels between each point when drawing selection lasso
 
 regions = {}
 recycledregions = {}
@@ -30,6 +30,7 @@ startedSelection = false
 heldRegions = {}
 -- selection data structs
 selectionPoly = {}
+selectedRegions = {}
 
 FreeAllRegions()
 
@@ -54,24 +55,29 @@ end
 	
 function TouchUp(self)
 	shadow:Hide()
-	-- DPrint("")
- 	-- DPrint("MU")
-  -- CloseSharedStuff(nil)
   if startedSelection then
 		startedSelection = false
+		local tempSelected = {}
+		for i = 1, #regions do
+			x,y = regions[i]:Center()
+			if pointInSelectionPolygon(x,y) then
+				table.insert(tempSelected, regions[i])
+				ChangeSelectionStateRegion(regions[i], true)
+			else
+				ChangeSelectionStateRegion(regions[i], false)
+			end
+		end
+		if #tempSelected > 0 then
+			selectedRegions = tempSelected
+		end
 		selectionPoly = {}
+		selectionLayer.t:Clear(0,0,0,0)
 		return
 	end
-	
+		
 	-- only create if we are not too close to the edge
   local x,y = InputPosition()
-	
-	-- if isHoldingRegion then
-	-- 	backdrop:Show()
-	-- 	DPrint("line"..x..","..y.."-"..hold_x..","..hold_y)
-	-- else
-		-- backdrop:Hide()
-		
+			
 		if x>CREATION_MARGIN and x<ScreenWidth()-CREATION_MARGIN and 
 			y>CREATION_MARGIN and y<ScreenHeight()-CREATION_MARGIN then
 			local region = CreateorRecycleregion('region', 'backdrop', UIParent)
@@ -79,7 +85,6 @@ function TouchUp(self)
 			region:SetAnchor("CENTER",x,y)
 			-- DPrint(region:Name().." created, centered at "..x..", "..y)
 		end
-	-- end
 	
 	startedSelection = false
 end
@@ -169,10 +174,23 @@ function selectionLayer:DrawSelectionPoly()
 		x,y = regions[i]:Center()
 		if pointInSelectionPolygon(x,y) then
 			self.t:SetBrushColor(255,100,100,200)
-			self.t:Rect(x,y,200,200)
+			self.t:Ellipse(x,y,100,100)
 		end
 	end
 end
+
+-- function selectionLayer:DrawSelectionRegions()
+-- 	self.t:Clear(0,0,0,0)
+-- 	self.t:SetBrushColor(255,255,255,200)
+-- 	self.t:SetBrushSize(3)
+-- 	
+-- 	for i = 1, #selectedRegions do
+-- 		x,y = selectedRegions[i]:Center()
+-- 		w = selectedRegions[i]:Width()/2
+-- 		h = selectedRegions[i]:Height()/2
+-- 		self.t:Rect(x-w,y-h,x+w,y+h)
+-- 	end
+-- end
 
 function pointInSelectionPolygon(x, y)
 	-- find if a point is in our selection
@@ -300,7 +318,8 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
 		r.menu = nil	--contextual menu
 		r.counter = 0	--if this is a counter
 		r.isHeld = false -- if the r is held by tap currently
-
+		r.isSelected = false
+		
 		r.dx = 0	-- compute storing current movement speed, for gesture detection
 		r.dy = 0
 		x,y = r:Center()
@@ -498,6 +517,24 @@ function SwitchRegionType(self) -- TODO: change method name to reflect
   table.insert(self.eventlist["OnTouchUp"], AddOneToCounter)
 	
 	CloseMenu(self)
+end
+	
+function ChangeSelectionStateRegion(self, select)
+	if select ~= self.isSelected then
+		if select then
+			self.t:SetTexture("tw_roundrec_s.png")
+			self.tl:SetColor(0,0,0,255)
+		else
+			if self.counter == 1 then
+				self.t:SetTexture("tw_roundrec_slate.png")
+				self.tl:SetColor(255,255,255,255)
+			else
+				self.t:SetTexture("tw_roundrec.png")
+			end
+		end
+	end
+
+	self.isSelected = select
 end
 	
 function StartLinkRegion(self, draglet)

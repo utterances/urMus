@@ -240,25 +240,25 @@ function OpenMenu(self)
 	
 	-- TODO change this later
 	-- open receiver menu for all another region(s)
-	for i = 1, #regions do
-		if regions[i] ~= self then
-			for j = 1, #linkReceiverMenu.items do
-	      linkReceiverMenu.items[j]:Show()
-	      linkReceiverMenu.items[j]:EnableInput(true)
-	      -- linkReceiverMenu.items[i]:Handle("OnTouchUp", OptEventFunc)
-	      linkReceiverMenu.items[j]:MoveToTop()
-				pos = linkReceiverMenu.items[j].anchorpos
-				linkReceiverMenu.items[j]:SetAnchor("CENTER", regions[i],
-																		buttonLocation[pos][1],
-																		buttonLocation[pos][2],
-																		buttonLocation[pos][3])
-				regions[i].menu = linkReceiverMenu
-				linkReceiverMenu.v = regions[i]
-			end
-			
-			break															
-		end
-	end
+	-- for i = 1, #regions do
+	-- 	if regions[i] ~= self then
+	-- 		for j = 1, #linkReceiverMenu.items do
+	--       linkReceiverMenu.items[j]:Show()
+	--       linkReceiverMenu.items[j]:EnableInput(true)
+	--       -- linkReceiverMenu.items[i]:Handle("OnTouchUp", OptEventFunc)
+	--       linkReceiverMenu.items[j]:MoveToTop()
+	-- 			pos = linkReceiverMenu.items[j].anchorpos
+	-- 			linkReceiverMenu.items[j]:SetAnchor("CENTER", regions[i],
+	-- 																	buttonLocation[pos][1],
+	-- 																	buttonLocation[pos][2],
+	-- 																	buttonLocation[pos][3])
+	-- 			regions[i].menu = linkReceiverMenu
+	-- 			linkReceiverMenu.v = regions[i]
+	-- 		end
+	-- 		
+	-- 		break															
+	-- 	end
+	-- end
 end
 
 function OpenRegionMenu(self)
@@ -294,14 +294,15 @@ function CloseMenu(self)
 		self.menu = nil
 	-- end
 	
-	  for i = 1,#linkReceiverMenu.items do
-	      linkReceiverMenu.items[i]:Hide()
-	      linkReceiverMenu.items[i]:EnableInput(false)
-	      -- regionMenu.items[i]:MoveToTop()
-			-- regionMenu.items[i]:SetAnchor(regionMenu.items[i].anchorpos, self, "CENTER")
-	  end
-	linkReceiverMenu.show = 0
-	linkReceiverMenu.v = nil
+	--   for i = 1,#linkReceiverMenu.items do
+	--       linkReceiverMenu.items[i]:Hide()
+	--       linkReceiverMenu.items[i]:EnableInput(false)
+	--       -- regionMenu.items[i]:MoveToTop()
+	-- 		-- regionMenu.items[i]:SetAnchor(regionMenu.items[i].anchorpos, self, "CENTER")
+	--   end
+	-- linkReceiverMenu.show = 0
+	-- linkReceiverMenu.v = nil
+	linkLayer:ResetPotentialLink()
 	for i = 1,#regions do
 		regions[i].menu = nil
 	end	
