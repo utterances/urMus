@@ -12,14 +12,14 @@
 -- ==================================
 
 CREATION_MARGIN = 40	-- margin for creating via tapping
-INITSIZE = 150	-- initial size for regions
+INITSIZE = 140	-- initial size for regions
 MENUHOLDWAIT = 0.5 -- seconds to wait for hold to menu
 
 FADEINTIME = .2 -- seconds for things to fade in, TESTING for now
 EPSILON = 0.001	--small number for rounding
 
 -- selection param
-LASSOSEPDISTANCE = 30 -- pixels between each point when drawing selection lasso
+LASSOSEPDISTANCE = 25 -- pixels between each point when drawing selection lasso
 
 regions = {}
 recycledregions = {}
@@ -46,11 +46,9 @@ dofile(SystemPath("urTapperwareGroup.lua"))
 
 function TouchDown(self)
 	local x,y = InputPosition()
-	
+
 	shadow:Show()
 	shadow:SetAnchor('CENTER',x,y)
-  -- DPrint("release to create region")
-		
 end
 	
 function TouchUp(self)
@@ -59,25 +57,26 @@ function TouchUp(self)
 		startedSelection = false
 		local tempSelected = {}
 		for i = 1, #regions do
-			x,y = regions[i]:Center()
-			if pointInSelectionPolygon(x,y) then
-				table.insert(tempSelected, regions[i])
-				ChangeSelectionStateRegion(regions[i], true)
-			else
-				ChangeSelectionStateRegion(regions[i], false)
+			if regions[i].usable then
+				x,y = regions[i]:Center()
+				if pointInSelectionPolygon(x,y) then
+					table.insert(tempSelected, regions[i])
+					ChangeSelectionStateRegion(regions[i], true)
+				else
+					ChangeSelectionStateRegion(regions[i], false)
+				end
 			end
 		end
-		if #tempSelected > 0 then
+		if #tempSelected > 1 then
 			selectedRegions = tempSelected
-			groupmenu = newGroupMenu()
 			x,y = InputPosition()
-			OpenGroupMenu(groupmenu, x, y, selectedRegions)
+			OpenGroupMenu(lassoGroupMenu, x, y, selectedRegions)
 		end
 		selectionPoly = {}
 		selectionLayer.t:Clear(0,0,0,0)
 		return
 	end
-		
+	
 	-- only create if we are not too close to the edge
   local x,y = InputPosition()
 			
@@ -95,6 +94,8 @@ end
 function Move(self)
 	startedSelection = true
 	shadow:Hide()
+	CloseGroupMenu(lassoGroupMenu)
+	
 	-- change creation behavior to selection box/lasso
 	local x,y = InputPosition()
 	if #selectionPoly > 0 then
@@ -174,12 +175,14 @@ function selectionLayer:DrawSelectionPoly()
 	-- also draw boxes around *selected* regions
 	
 	for i = 1, #regions do
-		x,y = regions[i]:Center()
-		if pointInSelectionPolygon(x,y) then
-			w = regions[i]:Width()
-			h = regions[i]:Height()
-			self.t:SetBrushColor(255,100,100,200)
-			self.t:Ellipse(x,y,w,h)
+		if regions[i].usable then
+			x,y = regions[i]:Center()
+			if pointInSelectionPolygon(x,y) then
+				w = regions[i]:Width()
+				h = regions[i]:Height()
+				self.t:SetBrushColor(255,100,100,200)
+				self.t:Ellipse(x,y,w,h)
+			end
 		end
 	end
 end
@@ -254,34 +257,31 @@ linkLayer:Init()
 -- = Global event functions =
 -- ==========================
 
-
-
 -- ===================
 -- = Region Creation =
 -- ===================
 
 function CreateorRecycleregion(ftype, name, parent)
-    local region
-    if #recycledregions > 0 then
-        region = regions[recycledregions[#recycledregions]]
-        table.remove(recycledregions)
-        region:EnableMoving(true)
-        region:EnableResizing(true)
-        region:EnableInput(true)
-        region.usable = true
-				region.t:SetTexture("tw_roundrec.png")	-- reset texture
-    else
-        region = VRegion(ftype, name, parent, #regions+1)
-        table.insert(regions,region)
-    end
-    region:SetAlpha(0)
-		region.shadow:SetAlpha(0)
-    region:MoveToTop()
-    return region
+	local region
+	if #recycledregions > 0 then
+		region = regions[recycledregions[#recycledregions]]
+		table.remove(recycledregions)
+		region:EnableMoving(true)
+		region:EnableResizing(true)
+		region:EnableInput(true)
+		region.usable = true
+		region.t:SetTexture("tw_roundrec.png")	-- reset texture
+	else
+		region = VRegion(ftype, name, parent, #regions+1)
+		table.insert(regions,region)
+	end
+	region:SetAlpha(0)
+	region.shadow:SetAlpha(0)
+	region:MoveToTop()
+	return region
 end
 
 function VRegion(ttype,name,parent,id) -- customized initialization of region
-
 	-- add a visual shadow as a second layer	
 	local r_s = Region(ttype,"drops"..id,parent)
 	r_s.t = r_s:Texture("tw_shadow.png")
@@ -324,12 +324,15 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
 		r.counter = 0	--if this is a counter
 		r.isHeld = false -- if the r is held by tap currently
 		r.isSelected = false
+		r.group = nil
 		
 		r.dx = 0	-- compute storing current movement speed, for gesture detection
 		r.dy = 0
 		x,y = r:Center()
 		r.oldx = x
 		r.oldy = y
+		r.sx = 0
+		r.sy = 0
 		
 		-- event handling
 		r.links = {}
@@ -452,6 +455,25 @@ function VTouchUp(self)
 					initialLinkRegion = self
 					EndLinkRegion(heldRegions[i])
 					initialLinkRegion = nil
+					
+					-- initialize bounce back animation, it runs in VUpdate later
+					x1,y1 = self:Center()
+					x2,y2 = heldRegions[i]:Center()
+					EXRATE = 100000
+					mx = (x1+x2)/2
+					my = (y1+y2)/2
+					ds = (x1-x2)^2 + (y1-y2)^2
+					
+					self.sx = EXRATE*(x1 - mx)/ds
+					self.sy = EXRATE*(y1 - my)/ds
+					-- self.tl:SetLabel(self.sx.." "..self.sy)
+					heldRegions[i].sx = EXRATE*(x2 - mx)/ds
+					heldRegions[i].sy = EXRATE*(y2 - my)/ds
+					-- heldRegions[i].tl:SetLabel(heldRegions[i].sx.." "..heldRegions[i].sy)
+					DPrint(self:Name().." vs "..heldRegions[i]:Name())
+					-- temp remove touch input
+					-- self:EnableInput(false)
+					-- heldRegions[i]:EnableInput(false)
 					break
 				end
 			end
@@ -468,10 +490,9 @@ function VTouchUp(self)
   CallEvents("OnTouchUp",self)
 end
 
-function VLeave(self)
-	DPrint("left")
-	
-end
+-- function VLeave(self)
+-- 	DPrint("left")
+-- end
 	
 function VUpdate(self,elapsed)
 	-- DPrint(elapsed)
@@ -489,12 +510,51 @@ function VUpdate(self,elapsed)
 		self.dx = x - self.oldx
 	end
 	if y ~= self.oldy then
-		self.dy = y - self.oldy
-	
-		if x ~= self.oldx then
-			linkLayer:Draw()
-		end			
+		self.dy = y - self.oldy	
 	end
+	if x ~= self.oldx or y ~= self.oldy then
+		-- moved, draw link
+		linkLayer:Draw()
+		-- also update the rest of the group, if needed: TODO change this later
+		if self.group ~= nil then
+			rx,ry = self.group.r:Center()
+			self.group.r:SetAnchor('CENTER', rx+self.dx, ry+self.dy)
+			
+			for i=1, #self.group.regions do
+				if self.group.regions[i] ~= self then
+					rx,ry = self.group.regions[i]:Center()
+					self.group.regions[i].oldx = rx+self.dx	-- FIXME: stopgap
+					self.group.regions[i].oldy = ry+self.dy
+					self.group.regions[i]:SetAnchor('CENTER', rx+self.dx, ry+self.dy)
+				end				
+			end
+		end
+	end
+	
+	-- move if we have none zero speed
+	newx = x
+	newy = y
+	if self.sx ~= 0 then
+		newx = x + self.sx*elapsed
+		self.sx = self.sx*0.9
+		if self.sx < 2 then
+			self.sx = 0
+		end
+	end
+
+	if self.sy ~= 0 then
+		newy = y + self.sy*elapsed
+		self.sy = self.sy*0.9
+		if self.sy < 2 then
+			self.sy = 0
+		end
+	end
+	if self.sy ~= 0 or self.sx ~= 0 then
+		DPrint(self:Name().." bounced "..self.sx.." "..self.sy)
+		self:SetAnchor('CENTER', newx, newy)
+		self:EnableInput(true)
+	end
+	
 	self.oldx = x
 	self.oldy = y
 end
@@ -552,7 +612,7 @@ function StartLinkRegion(self, draglet)
 		-- if we have drag target, try creating a link right away
 		tx, ty = draglet:Center()
 		for i = 1, #regions do
-			if regions[i] ~= self and regions[i].usable == true then
+			if regions[i] ~= self and regions[i].usable then
 				rx, ry = regions[i]:Center()
 				if math.abs(tx-rx) < INITSIZE and math.abs(ty-ry) < INITSIZE then
 					-- found a match, create a link here
@@ -611,7 +671,8 @@ function RemoveV(vv)
     vv:EnableResizing(false)
     vv:Hide()
     vv.usable = false
-    
+    vv.group = nil
+
     table.insert(recycledregions, vv.id)
     DPrint(vv:Name().." removed")
 end
@@ -637,8 +698,7 @@ function DuplicateRegion(vv, cx, cy)
 	
 	-- TODO: optimize this part: right now it's a messy search for every inbound links
 	for i = 1, #regions do
-		if regions[i] ~= vv or regions[i] ~= copyRegion then
-			
+		if regions[i].usable and (regions[i] ~= vv or regions[i] ~= copyRegion) then
 			linkList = regions[i].links["OnTouchUp"]
 			if linkList ~= nil then
 				

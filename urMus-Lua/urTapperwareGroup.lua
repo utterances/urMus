@@ -43,7 +43,7 @@ end
 function CallGroupFunc(self)
 	-- use this to call function on the link menu button
 	-- because we have reference to the link, not just one region
-	CloseGroupMenu(self)
+	CloseGroupMenu(self.parent)
 	self.func(self.parent.selectedRegions)
 end
 
@@ -79,13 +79,13 @@ function deleteGroupMenu(menu)
 	table.insert(recycledLinkMenu, menu)
 end
 
--- =============================
--- = private link menu methods =
--- =============================
+-- ==============================
+-- = private group menu methods =
+-- ==============================
 
 function CloseGroupMenu(self)
-	self:Hide()
-	self:EnableInput(false)
+	self.item:Hide()
+	self.item:EnableInput(false)
 end
 
 
@@ -117,10 +117,14 @@ end
 
 function Group:SetRegions(listOfRegions)
 	self.regions = listOfRegions
+	
+	-- assign groups to each region in the list
+	for i = 1, #self.regions do
+		self.regions[i].group = self
+	end
 end
 
 function Group:Draw()
-	DPrint("drawing now")
 	-- find out how big the group region needs to be, then resize and draw
 	minX = -1
 	minY = -1
@@ -157,8 +161,12 @@ end
 function Group:Destroy()
 	--// not sure if this is needed or actually works yet //--
 	self:Hide()
+	for i = 1, #self.regions do
+		self.regions[i].group = nil
+	end
+	
 	self.regions = nil
 	self = nil
 end
 
-function 
+lassoGroupMenu = newGroupMenu()
