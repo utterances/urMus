@@ -333,6 +333,8 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
 		r.oldy = y
 		r.sx = 0
 		r.sy = 0
+		r.w = INITSIZE
+		r.h = INITSIZE
 		
 		-- event handling
 		r.links = {}
@@ -358,8 +360,8 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
     r.tl:SetShadowColor(100,100,100,255)
     r.tl:SetShadowOffset(1,1)
     r.tl:SetShadowBlur(1)
-    r:SetWidth(INITSIZE)
-    r:SetHeight(INITSIZE)
+    r:SetWidth(50)
+    r:SetHeight(50)
 end
 
 function HoldToTrigger(self, elapsed) -- for long tap
@@ -459,10 +461,10 @@ function VTouchUp(self)
 					-- initialize bounce back animation, it runs in VUpdate later
 					x1,y1 = self:Center()
 					x2,y2 = heldRegions[i]:Center()
-					EXRATE = 100000
+					EXRATE = 150000
 					mx = (x1+x2)/2
 					my = (y1+y2)/2
-					ds = (x1-x2)^2 + (y1-y2)^2
+					ds = math.max((x1-x2)^2 + (y1-y2)^2, 400)
 					
 					self.sx = EXRATE*(x1 - mx)/ds
 					self.sy = EXRATE*(y1 - my)/ds
@@ -470,7 +472,7 @@ function VTouchUp(self)
 					heldRegions[i].sx = EXRATE*(x2 - mx)/ds
 					heldRegions[i].sy = EXRATE*(y2 - my)/ds
 					-- heldRegions[i].tl:SetLabel(heldRegions[i].sx.." "..heldRegions[i].sy)
-					DPrint(self:Name().." vs "..heldRegions[i]:Name())
+					-- DPrint(self:Name().." vs "..heldRegions[i]:Name())
 					-- temp remove touch input
 					-- self:EnableInput(false)
 					-- heldRegions[i]:EnableInput(false)
@@ -550,13 +552,36 @@ function VUpdate(self,elapsed)
 		end
 	end
 	if self.sy ~= 0 or self.sx ~= 0 then
-		DPrint(self:Name().." bounced "..self.sx.." "..self.sy)
+		-- DPrint(self:Name().." bounced "..self.sx.." "..self.sy)
 		self:SetAnchor('CENTER', newx, newy)
 		self:EnableInput(true)
 	end
 	
 	self.oldx = x
 	self.oldy = y
+	
+	-- animate size if needed:
+	if self.w ~= self:Width() then
+		if math.abs(self:Width() - self.w) < EPSILON then	-- close enough
+			self:SetWidth(self.w)
+		else
+			self:SetWidth(self:Width() + (self.w-self:Width()) * elapsed/FADEINTIME)
+		end
+		self.tl:SetHorizontalAlign("JUSTIFY")
+    self.tl:SetVerticalAlign("MIDDLE")
+	end
+
+	if self.h ~= self:Height() then
+		if math.abs(self:Height() - self.h) < EPSILON then	-- close enough
+			self:SetHeight(self.h)
+		else
+			self:SetHeight(self:Height() + (self.h-self:Height()) * elapsed/FADEINTIME)
+		end
+		self.tl:SetHorizontalAlign("JUSTIFY")
+    self.tl:SetVerticalAlign("MIDDLE")
+	end
+
+	
 end
 
 function AddOneToCounter(self)
@@ -613,15 +638,20 @@ function StartLinkRegion(self, draglet)
 		tx, ty = draglet:Center()
 		for i = 1, #regions do
 			if regions[i] ~= self and regions[i].usable then
+				DPrint("try link "..self:Name().." "..regions[i]:Name())
 				rx, ry = regions[i]:Center()
 				if math.abs(tx-rx) < INITSIZE and math.abs(ty-ry) < INITSIZE then
 					-- found a match, create a link here
+					DPrint("linked")
+					
 					EndLinkRegion(regions[i])
 					initialLinkRegion = nil
 					return
 				end
 			end
 		end
+		
+		initialLinkRegion = nil
 		CloseMenu(self)
 		OpenRegionMenu(self)
 	else

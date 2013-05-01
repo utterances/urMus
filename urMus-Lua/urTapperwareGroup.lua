@@ -151,7 +151,9 @@ function Group:Draw()
 	self.r:SetAnchor('CENTER', (maxX+minX)/2, (maxY+minY)/2)
 	-- now show everything
 	self.r:Show()
-	OpenGroupMenu(self.menu, minX, minY, self.regions)
+	OpenGroupMenu(self.menu, minX, minY, nil) -- TODO: self.regions functionality
+	self.menu.item:SetAnchor('CENTER', self.r, 'BOTTOMLEFT', 0, 0)
+	self.menu.item:EnableInput(false)
 end
 
 function Group:Hide()
