@@ -21,6 +21,14 @@
 #import <OpenGLES/ES1/glext.h>
 #endif
 
+#ifdef USEMUMOAUDIO
+#import "mo_audio.h"
+#define SRATE 48000
+#define FRAMESIZE 256
+#define NUMCHANNELS 2
+#else
+#include "RIOAudioUnitLayer.h"
+#endif
 
 #import <CoreLocation/CoreLocation.h>
 #import <CoreMotion/CoreMotion.h>
@@ -34,6 +42,8 @@
 #import "SandwichTypes.h"
 #import "SandwichUpdateListener.h"
 #endif
+
+#import "ExternalKeyboardReaderView.h"
 
 /*
 This class wraps the CAEAGLLayer from CoreAnimation into a convenient UIView subclass.
@@ -184,9 +194,9 @@ enum recordsource { SOURCE_TEXTURE, SOURCE_CAMERA, SOURCE_MOVIE };
 @interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate,SandwichUpdateDelegate, CaptureSessionManagerDelegate, NSNetServiceDelegate, NSNetServiceBrowserDelegate>
 #else
 #ifdef GPUIMAGE
-@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate, CaptureSessionManagerDelegate, NSNetServiceDelegate, NSNetServiceBrowserDelegate, GPUImageTextureOutputDelegate>
+@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate, CaptureSessionManagerDelegate, NSNetServiceDelegate, NSNetServiceBrowserDelegate, GPUImageTextureOutputDelegate, ExternalKeyboardEventDelegate>
 #else
-@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate, CaptureSessionManagerDelegate, NSNetServiceDelegate, NSNetServiceBrowserDelegate>
+@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate, CaptureSessionManagerDelegate, NSNetServiceDelegate, NSNetServiceBrowserDelegate, ExternalKeyboardEventDelegate>
 #endif
 #endif
 {
@@ -348,6 +358,8 @@ void urLoadIdentity();
 void urPopMatrix();
 void urTranslatef(GLfloat x, GLfloat y, GLfloat z);
 void urPushMatrix();
+
+const char* accessiblePathSystemFirst(const char* fn);
 
 @end
 

@@ -40,6 +40,13 @@ extern bool newerror;
 extern int SCREEN_WIDTH;
 extern int SCREEN_HEIGHT;
 
+#define GSEVENT_TYPE 2
+#define GSEVENT_FLAGS 12
+#define GSEVENTKEY_KEYCODE 15
+#define GSEVENT_TYPE_KEYUP 11
+
+NSString *const GSEventKeyUpNotification = @"GSEventKeyUpHackNotification";
+
 #ifdef HANDLEEXTERNALDISPLAYS
 - (void)screenDidChange:(NSNotification *)notification
 {
@@ -121,6 +128,14 @@ extern std::string g_storagePath;
     return YES;
 }
 
+#define HANDLEEXTERNALKEYBOARDS
+#ifdef HANDLEEXTERNALKEYBOARDS
+-(void) keyPressed: (NSNotification*) notification
+{
+    NSLog([[notification object]text]);
+}
+#endif
+
 -(void)applicationDidFinishLaunching:(UIApplication *)application {
 
     [[UIApplication sharedApplication] setStatusBarOrientation:UIDeviceOrientationPortrait animated:NO];
@@ -149,19 +164,7 @@ extern std::string g_storagePath;
 	[window makeKeyAndVisible];
 #endif
     
-#ifdef HANDLEEXTERNALDISPLAYS
-    // Register for screen connect and disconnect notifications.
-	[[NSNotificationCenter defaultCenter] addObserver:self
-											 selector:@selector(screenDidChange:)
-												 name:UIScreenDidConnectNotification 
-											   object:nil];
-	
-	[[NSNotificationCenter defaultCenter] addObserver:self
-											 selector:@selector(screenDidChange:)
-												 name:UIScreenDidDisconnectNotification 
-											   object:nil];
-#endif
-
+    
 	g_glView = glView;
 	/* Declare a Lua State, open the Lua State and load the libraries (see above). */
 	lua = lua_open();
@@ -259,9 +262,13 @@ extern std::string g_storagePath;
 }
 #endif
 
+extern MoNet myoscnet;
+
 - (void)applicationDidEnterBackground:(UIApplication *)application
 {
     [glView stopAnimation];
+    [glView stopAudio];
+    [glView stopOSCListener];
 }
 - (void)applicationWillEnterForeground:(UIApplication *)application
 {
@@ -275,7 +282,6 @@ extern std::string g_storagePath;
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
 }
-
 
 - (void)dealloc {
 	/* Remember to destroy the Lua State */

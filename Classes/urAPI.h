@@ -68,7 +68,7 @@ enum eventIDs { OnDragStart, OnDragStop, OnHide, OnShow, OnTouchDown, OnTouchUp,
 #ifdef SOAR_SUPPORT
     OnSoarOutput,
 #endif
-    OnAccelerate, OnAttitude, OnRotation, OnHeading, OnLocation, OnMicrophone, OnHorizontalScroll, OnVerticalScroll, OnMove, OnPageEntered, OnPageLeft,
+    OnAccelerate, OnAttitude, OnRotation, OnHeading, OnLocation, OnMicrophone, OnHorizontalScroll, OnVerticalScroll, OnMove, OnPageEntered, OnPageLeft, OnKeyboard, OnKeyboardBackspace,
     
     EventsCount
 };
@@ -95,6 +95,8 @@ enum eventIDs { OnDragStart, OnDragStop, OnHide, OnShow, OnTouchDown, OnTouchUp,
 #define WRAP_CHAR 1
 #define WRAP_CLIP 2
 
+enum USERDATA_IDS { UR_REGION, UR_TEXTURE, UR_TEXTLABEL, UR_FLOWBOX, UR_FLOWBOXPORT, numUserDataIDs };
+
 extern char TEXTURE_SOLID[];
 
 extern lua_State *lua;
@@ -104,6 +106,7 @@ typedef struct urAPI_Region urAPI_Region_t;
 // TextLabel user data
 typedef struct urAPI_TextLabel
 {
+    enum USERDATA_IDS ud_id = UR_TEXTLABEL;
 	char* text;
 	const char* font;
 	int	justifyh;
@@ -136,6 +139,7 @@ typedef struct DrawQueueEntry DrawQueueEntry_t;
 // Texture user data
 typedef struct urAPI_Texture
 	{
+//        enum USERDATA_IDS ud_id = UR_TEXTURE;
 		int blendmode;
 		float texcoords[8];
 		char* texturepath;
@@ -176,12 +180,14 @@ typedef struct urAPI_Texture
 
 typedef struct ursAPI_FlowBox
 	{
+        enum USERDATA_IDS ud_id = UR_FLOWBOX;
 		int tableref; // table reference which contains this flowbox
 		ursObject* object;
 	} ursAPI_FlowBox_t;
 
 typedef struct ursAPI_FlowBox_Port
     {
+        enum USERDATA_IDS ud_id = UR_FLOWBOXPORT;
         int tableref; // table reference which contains this flowbox
         int index; // Port (in/out) index
         ursObject* object;
@@ -191,6 +197,7 @@ typedef struct ursAPI_FlowBox_Port
 
 typedef struct urAPI_Region
 	{
+        enum USERDATA_IDS ud_id = UR_REGION;
 		// internals
 		struct urAPI_Region* prev; // Chained list of Regions
 		struct urAPI_Region* next;
@@ -306,6 +313,8 @@ bool callAllOnPressure(float p);
 #ifdef SOAR_SUPPORT
 bool callAllOnSoarOutput();
 #endif
+bool callAllOnKeyboard(const char *c);
+bool callAllOnKeyboardBackspace();
 bool callAllOnAttitude(float x, float y, float z, float w);
 bool callAllOnRotRate(float x, float y, float z);
 bool callAllOnHeading(float x, float y, float z, float north);

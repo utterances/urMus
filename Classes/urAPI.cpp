@@ -10,19 +10,9 @@
 #define FULL3
 #ifdef FULL3
 
-#define USEMUMOAUDIO
-
 #include "urAPI.h"
 #import "EAGLView.h"
 #import "MachTimer.h"
-#ifdef USEMUMOAUDIO
-#import "mo_audio.h"
-#define SRATE 48000
-#define FRAMESIZE 256
-#define NUMCHANNELS 2
-#else
-#include "RIOAudioUnitLayer.h"
-#endif
 #include "urSound.h"
 #include "httpServer.h"
 
@@ -194,7 +184,7 @@ const char* urEventNames[] = { "OnDragStart", "OnDragStop", "OnHide", "OnShow", 
 #ifdef SOAR_SUPPORT
     "OnSoarOutput",
 #endif
-    "OnAccelerate", "OnAttitude", "OnRotation", "OnHeading", "OnLocation", "OnMicrophone", "OnHorizontalScroll", "OnVerticalScroll", "OnMove", "OnPageEntered", "OnPageLeft"
+    "OnAccelerate", "OnAttitude", "OnRotation", "OnHeading", "OnLocation", "OnMicrophone", "OnHorizontalScroll", "OnVerticalScroll", "OnMove", "OnPageEntered", "OnPageLeft", "OnKeyboard", "OnKeyboardBackspace",
 };
 
 
@@ -476,6 +466,34 @@ bool callScriptWith1Args(enum eventIDs event, int func_ref, urAPI_Region_t* regi
 	return true;
 }
 
+bool callScriptWith1Char(enum eventIDs event, int func_ref, urAPI_Region_t* region, const char *a)
+{
+//    char st[2];
+//    st[0]=a;
+//    st[1]=0;
+    if(func_ref == 0) return false;
+	
+	//		int func_ref = region->OnDragging;
+	// Call lua function by stored Reference
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, func_ref);
+	lua_rawgeti(lua,LUA_REGISTRYINDEX, region->tableref);
+//	lua_pushstring(lua,st);
+	lua_pushstring(lua,a);
+	if(lua_pcall(lua,2,0,0) != 0)
+	{
+		//<return Error>
+		const char* error = lua_tostring(lua, -1);
+        std::string eventstr(urEventNames[event]);
+		errorstr = eventstr+": "+error; // DPrinting errors for now
+		newerror = true;
+        ur_Log(errorstr.c_str());
+		return false;
+	}
+    
+	// OK!
+	return true;
+}
+
 bool callScriptWith1Global(enum eventIDs event, int func_ref, urAPI_Region_t* region, const char* globaldata)
 {
 	if(func_ref == 0) return false;
@@ -575,6 +593,25 @@ bool callScript(enum eventIDs event, int func_ref, urAPI_Region_t* region)
 // Event Service functions (All region argument calls)
 //------------------------------------------------------------------------------
 
+bool callAllEvents(enum eventIDs event)
+{
+    if(EventChain[event].first != NULL)
+    {
+        EventChain[event].next = EventChain[event].first->next; // Helps save-guard the EventChain[event] should a region unhook itself
+        EventChain[event].next = EventChain[event].first;
+    
+        while(EventChain[event].next != NULL)
+        {
+            urAPI_Region_t* t = EventChain[event].next->region;
+            callScript(OnKeyboardBackspace,t->OnEvents[event], t);
+            EventChain[event].next = EventChain[event].next;
+            if(EventChain[event].next != NULL)
+                EventChain[event].next = EventChain[event].next->next;
+        }
+    }
+	return true;
+}
+
 bool callAllOn1Args(enum eventIDs event, float data)
 {
     if(EventChain[event].first != NULL)
@@ -586,6 +623,26 @@ bool callAllOn1Args(enum eventIDs event, float data)
         {
             urAPI_Region_t* t = EventChain[event].next->region;
             callScriptWith1Args(event,t->OnEvents[event], t, data);
+            EventChain[event].next = EventChain[event].next;
+            if(EventChain[event].next != NULL)
+                EventChain[event].next = EventChain[event].next->next;
+        }
+    }
+	return true;
+    
+}
+
+bool callAllOn1Char(enum eventIDs event, const char *data)
+{
+    if(EventChain[event].first != NULL)
+    {
+        EventChain[event].next = EventChain[event].first->next; // Helps save-guard the EventChain[event] should a region unhook itself
+        EventChain[event].next = EventChain[event].first;
+        
+        while(EventChain[event].next != NULL)
+        {
+            urAPI_Region_t* t = EventChain[event].next->region;
+            callScriptWith1Char(event,t->OnEvents[event], t, data);
             EventChain[event].next = EventChain[event].next;
             if(EventChain[event].next != NULL)
                 EventChain[event].next = EventChain[event].next->next;
@@ -901,6 +958,18 @@ bool callAllOnPressure(float p)
 	return true;
 }
 #endif
+
+bool callAllOnKeyboard(const char *c)
+{
+    callAllOn1Char(OnKeyboard, c);
+    return true;
+}
+
+bool callAllOnKeyboardBackspace()
+{
+    callAllEvents(OnKeyboardBackspace);
+    return true;
+}
 
 bool callAllOnMicrophone(SInt32* mic_buffer, UInt32 bufferlen)
 {
@@ -1399,7 +1468,7 @@ static urAPI_Region_t *checkregion(lua_State *lua, int nr)
 	lua_rawgeti(lua, nr, 0);
 	void *region = lua_touserdata(lua, -1);
 	lua_pop(lua,1);
-	luaL_argcheck(lua, region!= NULL, nr, "'region' expected");
+	luaL_argcheck(lua, region!= NULL && ((urAPI_Region_t*)region)->ud_id == UR_REGION, nr, "'region' expected");
 	return (urAPI_Region_t*)region;
 }
 
@@ -1423,7 +1492,7 @@ static ursAPI_FlowBox_t *checkflowbox(lua_State *lua, int nr)
 	lua_rawgeti(lua, nr, 0);
 	void *flowbox = lua_touserdata(lua, -1);
 	lua_pop(lua,1);
-	luaL_argcheck(lua, flowbox!= NULL, nr, "'flowbox' expected");
+	luaL_argcheck(lua, flowbox!= NULL && ((ursAPI_FlowBox_t*)flowbox)->ud_id == UR_FLOWBOX, nr, "'flowbox' expected");
 	return (ursAPI_FlowBox_t*)flowbox;
 }
 
@@ -1433,7 +1502,7 @@ static ursAPI_FlowBox_Port_t *checkflowboxport(lua_State *lua, int nr)
 	lua_rawgeti(lua, nr, 0);
 	void *flowbox = lua_touserdata(lua, -1);
 	lua_pop(lua,1);
-	luaL_argcheck(lua, flowbox!= NULL, nr, "'flowboxport' expected");
+	luaL_argcheck(lua, flowbox!= NULL && ((ursAPI_FlowBox_Port_t*)flowbox)->ud_id == UR_FLOWBOXPORT, nr, "'flowboxport' expected");
 	return (ursAPI_FlowBox_Port_t*)flowbox;
 }
 
@@ -2215,6 +2284,7 @@ void freeTexture(urAPI_Texture_t* texture)
     if(texture->usecamera != 0)
         decCameraUse();
     
+#ifdef GPUIMAGE
     if(texture->filterHandler)
     {
         //                    [t->filterInput removeAllTargets];
@@ -2229,7 +2299,7 @@ void freeTexture(urAPI_Texture_t* texture)
         [texture->filterHandler release];
         texture->filterHandler = NULL;
     }
-    
+#endif
     
 	if(texture->backgroundTex!= NULL)
 //		delete texture->backgroundTex;
@@ -2422,7 +2492,7 @@ int region_Texture(lua_State* lua)
 	}
 	mytexture->modifyRect = false;
 	mytexture->isDesaturated = false;
-	mytexture->isTiled = true;
+	mytexture->isTiled = false;
 	mytexture->fill = false;
 //	mytexture->gradientOrientation = GRADIENT_ORIENTATION_VERTICAL; OBSOLETE
 	mytexture->texturesolidcolor[0] = r; // R for solid
@@ -3220,7 +3290,7 @@ int texture_SetFilter(lua_State *lua)
    	urAPI_Texture_t* t = checktexture(lua, 1);
 	const char* filtermode = luaL_checkstring(lua, 2);
 #ifdef GPUIMAGE
-    for(int i=0; i<maxFilterMode; i++)
+    for(int i=0; i<maxFilterMode-1; i++)
     {
         if(!strcmp(filtermode,urFilterModeNames[i]))
         {
@@ -4529,10 +4599,14 @@ int flowbox_Outs(lua_State *lua)
 	return nrouts;
 }
 
+extern double lastpushout;
+
 int flowbox_Push(lua_State *lua)
 {
 	ursAPI_FlowBox_t* fb = checkflowbox(lua, 1);
 	float indata = luaL_checknumber(lua, 2);
+    
+    lastpushout = indata;
     
 	fb->object->CallAllPushOuts(indata);
     /*	if(fb->object->firstpushout[0]!=NULL)
@@ -4596,8 +4670,18 @@ int flowbox_AddFile(lua_State *lua)
     
 	if(!strcmp(fb->object->name, "Sample"))
 	{
-		Sample_AddFile(fb->object, filename);
+        const char * filepath = accessiblePathSystemFirst(filename);
+        if(filepath==NULL)
+        {
+            luaL_error(lua, "File \"%s\" not found.", filename);
+        }
+        else
+            Sample_AddFile(fb->object, filepath);
 	}
+    else
+    {
+        luaL_error(lua, "Method AddFile not available for this flowbox.");
+    }
     return 0;
 }
 
@@ -4726,6 +4810,7 @@ static int addToPatch(ursAPI_FlowBox_t* flowbox)
 	if(firstFlowbox[currentPatch] == NULL)
 	{
 		firstFlowbox[currentPatch] = (ursAPI_FlowBox_t**)malloc(sizeof(ursAPI_FlowBox_t**));
+
 		numFlowBoxes[currentPatch]++;
 		firstFlowbox[currentPatch][0]=flowbox;
 	}
@@ -4741,6 +4826,8 @@ static void removeFlowboxLinks(ursAPI_FlowBox_t* flowbox)
 {
     flowbox->object->RemoveAllPullIns();
     flowbox->object->RemoveAllPushOuts();
+    flowbox->object->RemoveFromSinks();
+    flowbox->object->RemoveFromSources();
 
 }
 
@@ -4815,7 +4902,7 @@ static int l_Region(lua_State *lua)
 		luaL_checktype(lua, 3, LUA_TTABLE);
 		lua_rawgeti(lua, 3, 0);
 		parentRegion = (urAPI_Region_t*)lua_touserdata(lua,4);
-		luaL_argcheck(lua, parentRegion!= NULL, 4, "'region' expected");
+		luaL_argcheck(lua, parentRegion!= NULL && parentRegion->ud_id==UR_REGION, 3, "'region' expected");
 		//	const char *inheritsRegion = luaL_checkstring(lua, 1); //NYI
 	}
 	else
@@ -4827,6 +4914,8 @@ static int l_Region(lua_State *lua)
 	luaL_register(lua, NULL, regionfuncs);
 	//	urAPI_Region_t *myregion = (urAPI_Region_t*)lua_newuserdata(lua, sizeof(urAPI_Region_t)); // User data is our value
 	urAPI_Region_t *myregion = (urAPI_Region_t*)malloc(sizeof(urAPI_Region_t)); // User data is our value
+    myregion->ud_id = UR_REGION;
+    
 	lua_pushlightuserdata(lua, myregion);
     //	luaL_register(lua, NULL, regionmetas);
     //	luaL_openlib(lua, 0, regionmetas, 0);  /* fill metatable */
@@ -5313,18 +5402,29 @@ void FreeAllFlowboxes(int patch)
 	free(firstFlowbox[patch]);
 	firstFlowbox[patch] = NULL;
 	numFlowBoxes[patch] = 0;
+   
 }
+
+#ifdef FLAGBASEDCAFB
+bool fb_clearing = false;
+#endif
 
 static int l_FreeAllFlowboxes(lua_State* lua)
 {
+#ifndef FLAGBASEDCAFB
     pthread_mutex_lock( &fb_mutex );
+    FreeAllFlowboxes(currentPatch);
+    pthread_mutex_unlock( &fb_mutex );
+#else
+    pthread_mutex_lock( &fb_mutex );
+    fb_clearing = true;
+    pthread_mutex_unlock( &fb_mutex );
+#endif
 #ifdef RELOCATE_FAFB
     if(freePatches[currentPatch]==0)
         freePatches[currentPatch]=1;
 #else
-    FreeAllFlowboxes(currentPatch);
-#endif
-    pthread_mutex_unlock( &fb_mutex );
+#endif   
 	return 0;
 }
 	
@@ -5338,6 +5438,8 @@ static void populateFlowboxPorts(ursAPI_FlowBox_t *myflowbox)
         lua_newtable(lua);
         luaL_register(lua, NULL, flowboxinfuncs);
         ursAPI_FlowBox_Port_t *myflowboxport = (ursAPI_FlowBox_Port_t*)malloc(sizeof(ursAPI_FlowBox_Port_t)); // User data is our value
+        myflowboxport->ud_id = UR_FLOWBOXPORT;
+
         lua_pushlightuserdata(lua, myflowboxport);
         lua_rawseti(lua, -2, 0); // Set this to index 0
         myflowboxport->tableref = myflowbox->tableref;
@@ -5351,6 +5453,8 @@ static void populateFlowboxPorts(ursAPI_FlowBox_t *myflowbox)
         lua_newtable(lua);
         luaL_register(lua, NULL, flowboxoutfuncs);
         ursAPI_FlowBox_Port_t *myflowboxport = (ursAPI_FlowBox_Port_t*)malloc(sizeof(ursAPI_FlowBox_Port_t)); // User data is our value
+        myflowboxport->ud_id = UR_FLOWBOXPORT;
+
         lua_pushlightuserdata(lua, myflowboxport);
         lua_rawseti(lua, -2, 0); // Set this to index 0
         myflowboxport->tableref = myflowbox->tableref;
@@ -5362,8 +5466,6 @@ static void populateFlowboxPorts(ursAPI_FlowBox_t *myflowbox)
 
 static int l_FlowBox(lua_State* lua)
 {
-    pthread_mutex_lock( &fb_mutex );
-
 	int idx = 1;
 	if(lua_gettop(lua)>1) // Allow for no arg construction
 	{
@@ -5374,15 +5476,19 @@ static int l_FlowBox(lua_State* lua)
 	}
 	luaL_checktype(lua, idx, LUA_TTABLE);
 
+    pthread_mutex_lock( &fb_mutex );
+    
 	//	urAPI_flowbox_t *parentflowbox = (urAPI_flowbox_t*)luaL_checkudata(lua, 4, "URAPI.flowbox");
 	lua_rawgeti(lua, idx, 0);
 	ursAPI_FlowBox_t *parentFlowBox = (ursAPI_FlowBox_t*)lua_touserdata(lua,idx+1);
-	luaL_argcheck(lua, parentFlowBox!= NULL, idx+1, "'flowbox' expected");
+	luaL_argcheck(lua, parentFlowBox!= NULL  && parentFlowBox->ud_id == UR_FLOWBOX, idx+1, "'flowbox' expected");
 	//	const char *inheritsflowbox = luaL_checkstring(lua, 1); //NYI
 
 	lua_newtable(lua);
 	luaL_register(lua, NULL, flowboxfuncs);
 	ursAPI_FlowBox_t *myflowbox = (ursAPI_FlowBox_t*)malloc(sizeof(ursAPI_FlowBox_t)); // User data is our value
+    myflowbox->ud_id = UR_FLOWBOX;
+
 	lua_pushlightuserdata(lua, myflowbox);
 	lua_rawseti(lua, -2, 0); // Set this to index 0
 	myflowbox->tableref = luaL_ref(lua, LUA_REGISTRYINDEX);
@@ -5769,7 +5875,7 @@ int l_SetCameraFilter(lua_State *lua)
 {
 	const char* filtermode = luaL_checkstring(lua, 1);
 #ifdef GPUIMAGE
-    for(int i=0; i<maxFilterMode; i++)
+    for(int i=0; i<maxFilterMode-1; i++)
     {
         if(!strcmp(filtermode,urFilterModeNames[i]))
         {
@@ -6008,6 +6114,7 @@ void l_setupAPI(lua_State *lua)
 	luaL_register(lua, NULL, regionfuncs);
 //	urAPI_Region_t *myregion = (urAPI_Region_t*)lua_newuserdata(lua, sizeof(urAPI_Region_t)); // User data is our value
 	urAPI_Region_t *myregion = (urAPI_Region_t*)malloc(sizeof(urAPI_Region_t)); // User data is our value
+    myregion->ud_id = UR_REGION;
 	lua_pushlightuserdata(lua, myregion);
 	lua_rawseti(lua, -2, 0); // Set this to index 0
 	myregion->tableref = luaL_ref(lua, LUA_REGISTRYINDEX);
@@ -6040,6 +6147,8 @@ void l_setupAPI(lua_State *lua)
 		lua_newtable(lua);
 		luaL_register(lua, NULL, flowboxfuncs);
 		ursAPI_FlowBox_t *myflowbox = (ursAPI_FlowBox_t*)malloc(sizeof(ursAPI_FlowBox_t)); // User data is our value
+        myflowbox->ud_id = UR_FLOWBOX;
+
 		lua_pushlightuserdata(lua, myflowbox);
 		lua_rawseti(lua, -2, 0); // Set this to index 0
 		myflowbox->tableref = luaL_ref(lua, LUA_REGISTRYINDEX);
@@ -6059,6 +6168,8 @@ void l_setupAPI(lua_State *lua)
 		lua_newtable(lua);
 		luaL_register(lua, NULL, flowboxfuncs);
 		ursAPI_FlowBox_t *myflowbox = (ursAPI_FlowBox_t*)malloc(sizeof(ursAPI_FlowBox_t)); // User data is our value
+        myflowbox->ud_id = UR_FLOWBOX;
+
 		lua_pushlightuserdata(lua, myflowbox);
 		lua_rawseti(lua, -2, 0); // Set this to index 0
 		myflowbox->tableref = luaL_ref(lua, LUA_REGISTRYINDEX);
@@ -6078,6 +6189,8 @@ void l_setupAPI(lua_State *lua)
 		lua_newtable(lua);
 		luaL_register(lua, NULL, flowboxfuncs);
 		ursAPI_FlowBox_t *myflowbox = (ursAPI_FlowBox_t*)malloc(sizeof(ursAPI_FlowBox_t)); // User data is our value
+        myflowbox->ud_id = UR_FLOWBOX;
+
 		lua_pushlightuserdata(lua, myflowbox);
 		lua_rawseti(lua, -2, 0); // Set this to index 0
 		myflowbox->tableref = luaL_ref(lua, LUA_REGISTRYINDEX);

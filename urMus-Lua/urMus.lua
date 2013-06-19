@@ -24,23 +24,26 @@ patchdir = "Patches"
 
 pagefile = {
 "urMus",
-"urFalling.lua",
-"urSwarm.lua",
-"theremin_ipad_light.lua",
-"theremin_ipad_sound.lua",
-"theremin_ipod_light.lua",
-"theremin_ipod_sound.lua",
-"urFontTest.lua",
+--"urDistress.lua",
+--"urRainstick.lua",
+--"urSwarm.lua",
+--"urScary.lua",
+--"theremin_ipad_light.lua",
+--"theremin_ipad_sound.lua",
+--"theremin_ipod_light.lua",
+--"theremin_ipod_sound.lua",
+"urTapperware.lua",
+--"urFontTest.lua",
 "urTurn.lua",
-"urTextLabelHighlight.lua",
+--"urTextLabelHighlight.lua",
 "urAlignTest.lua",
 "urSimplePatch.lua",
 "urBasicFM.lua",
-"urMovieWriteTest.lua",
+--"urMovieWriteTest.lua",
 "urPinchDemo.lua",
-"urMovieTest.lua",
+--"urMovieTest.lua",
 "urCameraFilterDemo.lua",
-"urMovieInterface2.lua",
+--"urMovieInterface2.lua",
 "urTime.lua",
 "urTurntable2.lua",
 "urColors.lua",
@@ -2064,7 +2067,7 @@ sourceselscrollright:Handle("OnTouchUp", NarrowPageRight)
 sourceselscrollright:EnableInput(true)
 sourceselscrollright:Show()
 
-SetFrameRate(1.0/50.0)
+--SetFrameRate(1.0/50.0)
 
 local phase = 1
 

@@ -21,7 +21,7 @@
 // From SpeedDial
 // -1:1->FreqSpace: 55.0*pow(2.0,96*nrparam/12.0);
 
-#define URS_SINKLISTSTARTSIZE 10
+#define URS_SINKLISTSTARTSIZE 30
 
 ursSinkList::ursSinkList() 
 {
@@ -77,23 +77,24 @@ void ursSinkList::RemoveObject(ursObject* obj)
     }
 }
 
-ursSinkList urActiveDacTickSinkList;
-ursSinkList urActiveDacArraySinkList;
+//ursSinkList urActiveDacTickSinkList;
+//ursSinkList urActiveDacArraySinkList;
 
-ursSinkList urActiveVisTickSinkList;
-ursSinkList urActiveDrainTickSinkList;
-ursSinkList urActiveDrainArraySinkList;
-ursSinkList urActiveNetTickSinkList;
+//ursSinkList urActiveVisTickSinkList;
+//ursSinkList urActiveDrainTickSinkList;
+//ursSinkList urActiveDrainArraySinkList;
+//ursSinkList urActiveNetTickSinkList;
 
-ursSinkList urActiveFlashTickSinkList;
+//ursSinkList urActiveFlashTickSinkList;
 
-ursSinkList urActiveAudioFrameSinkList;
+//ursSinkList urActiveAudioFrameSinkList;
 
 extern int freePatches[];
 extern int currentPatch;
 
 int FreeAllFlowboxes(int patch);
 
+/*
 void urs_PullActiveDacSinks(SInt16 *buff, UInt32 len)
 {
 	ursObject *self;
@@ -121,7 +122,8 @@ void urs_PullActiveDacSinks(SInt16 *buff, UInt32 len)
 //		memset(buff,0,sizeof(SInt16)*len);
 //	}
 }
-
+*/
+ 
 void urs_PullActiveTickSinks(ursSinkList& urActiveTickSinkList, SInt16 *buff, UInt32 len)
 {
 	ursObject *self;
@@ -146,6 +148,10 @@ double urs_PullActiveSingleTickSinks(ursSinkList& urActiveTickSinkList)
 	double out=0.0;
 
     pthread_mutex_lock( &fb_mutex );
+    
+    
+
+    
 	for(int i=0; i<urActiveTickSinkList.length; i++)
 	{
 		self = urActiveTickSinkList.sinks[i]->object;
@@ -158,9 +164,34 @@ double urs_PullActiveSingleTickSinks(ursSinkList& urActiveTickSinkList)
 
 double dacindata = 0.0;
 
+#ifdef FLAGBASEDCAFB
+extern bool fb_clearing;
+#endif
+
 double urs_PullActiveDacSingleTickSinks()
 {
-	double res = dacindata + urs_PullActiveSingleTickSinks(urActiveDacTickSinkList);
+    double res = 0.0;
+
+    
+    
+#ifndef FLAGBASEDCAFB
+    pthread_mutex_lock( &fb_mutex );
+    res = dacindata + dacobject->CallAllPullIns();
+    pthread_mutex_unlock( &fb_mutex );
+#else
+    if(!fb_clearing)
+    {
+        pthread_mutex_unlock( &fb_mutex );
+        res = dacindata + dacobject->CallAllPullIns();
+    }
+    else
+    {
+        FreeAllFlowboxes(currentPatch);
+        fb_clearing = false;
+        pthread_mutex_unlock( &fb_mutex );
+    }
+#endif
+	//res = dacindata + urs_PullActiveSingleTickSinks(urActiveDacTickSinkList);
 	dacindata = 0.0;
 	return res;
 }
@@ -176,6 +207,7 @@ void urs_PullActiveArraySinks(ursSinkList& urActiveArraySinkList, SInt16 *buff, 
 	}
 }
 
+/*
 #define DRAINBUFFER_MAXSIZE 512
 SInt16 drainbuffer[DRAINBUFFER_MAXSIZE];
 UInt32 drainbufferlen = DRAINBUFFER_MAXSIZE;
@@ -194,23 +226,29 @@ void urs_PullActiveAudioFrameSinks()
 {
 	urs_PullActiveSingleTickSinks(urActiveAudioFrameSinkList);
 }
-
+*/
 double visindata = 0.0;
 double visoutdata = 0.0;
 
 double urs_PullActiveVisSinks()
 {
-	double res = visindata + urs_PullActiveSingleTickSinks(urActiveVisTickSinkList);
+    double res = 0.0;
+    
+    pthread_mutex_lock( &fb_mutex );
+    res = visindata + visobject->CallAllPullIns();
+    pthread_mutex_unlock( &fb_mutex );
+    
+//	double res = visindata + urs_PullActiveSingleTickSinks(urActiveVisTickSinkList);
 //	visindata = 0.0;
 	return res;
 }
-
+/*
 double urs_PullActiveFlashSinks()
 {
 	double res = urs_PullActiveSingleTickSinks(urActiveVisTickSinkList);
 	return res;
 }
-
+*/
 void urs_PullVis()
 {
 	visoutdata = urs_PullActiveVisSinks();
@@ -221,7 +259,12 @@ double netoutdata = 0.0;
 
 double urs_PullActiveNetSinks()
 {
-	double res = netindata + urs_PullActiveSingleTickSinks(urActiveNetTickSinkList);
+    double res = 0.0;
+    
+    pthread_mutex_lock( &fb_mutex );
+    res = netindata + netobject->CallAllPullIns();
+    pthread_mutex_unlock( &fb_mutex );
+//	double res = netindata + urs_PullActiveSingleTickSinks(urActiveNetTickSinkList);
 	//	visindata = 0.0;
 	return res;
 }
@@ -231,6 +274,7 @@ void urs_PullNet()
 	netoutdata = urs_PullActiveNetSinks();
 }
 
+/*
 double pullindata = 0.0;
 
 double urs_PullActivePullSinks()
@@ -239,15 +283,25 @@ double urs_PullActivePullSinks()
 	pullindata = 0.0;
 	return res;
 }
-
+*/
 #define URS_SOURCELISTSTARTSIZE 10
 
+double lastcambright = 0.0;
+double lastcamblue = 0.0;
+double lastcamgreen = 0.0;
+double lastcamred = 0.0;
+double lastcamedge = 0.0;
 
 void callAllCameraSources(double brightness, double blueTotal, double greenTotal, double redTotal, double edginess)
 {
 	if(cameraObject)
 	{
         pthread_mutex_lock( &fb_mutex );
+        lastcambright = brightness;
+        lastcamblue = blueTotal;
+        lastcamgreen = greenTotal;
+        lastcamred = redTotal;
+        lastcamedge = edginess;
 		cameraObject->CallAllPushOuts(brightness,0);
 		cameraObject->CallAllPushOuts(blueTotal,1);
 		cameraObject->CallAllPushOuts(greenTotal,2);
@@ -258,6 +312,10 @@ void callAllCameraSources(double brightness, double blueTotal, double greenTotal
 }
 
 
+float lastaccelx = 0.0;
+float lastaccely = 0.0;
+float lastaccelz = 0.0;
+
 void callAllAccelerateSources(double tilt_x, double tilt_y, double tilt_z)
 {
 	double tilt;
@@ -267,9 +325,9 @@ void callAllAccelerateSources(double tilt_x, double tilt_y, double tilt_z)
 	{
 		switch(i)
 		{
-			case 0 : tilt = tilt_x; break;
-			case 1 : tilt = tilt_y; break;
-			case 2 : tilt = tilt_z; break;
+			case 0 : tilt = lastaccelx = tilt_x; break;
+			case 1 : tilt = lastaccely = tilt_y; break;
+			case 2 : tilt = lastaccelz = tilt_z; break;
 		}
 		
 		accelobject->CallAllPushOuts(tilt, i);
@@ -277,6 +335,10 @@ void callAllAccelerateSources(double tilt_x, double tilt_y, double tilt_z)
     pthread_mutex_unlock( &fb_mutex );
 
 }
+
+double lastrotratex = 0.0;
+double lastrotratey = 0.0;
+double lastrotratez = 0.0;
 
 void callAllGyroSources(double rate_x, double rate_y, double rate_z)
 {
@@ -287,9 +349,9 @@ void callAllGyroSources(double rate_x, double rate_y, double rate_z)
 	{
 		switch(i)
 		{
-			case 0 : rate = rate_x; break;
-			case 1 : rate = rate_y; break;
-			case 2 : rate = rate_z; break;
+			case 0 : rate = lastrotratex = rate_x; break;
+			case 1 : rate = lastrotratey = rate_y; break;
+			case 2 : rate = lastrotratez = rate_z; break;
 		}
 		
 		gyroobject->CallAllPushOuts(rate, i);
@@ -297,6 +359,10 @@ void callAllGyroSources(double rate_x, double rate_y, double rate_z)
     pthread_mutex_unlock( &fb_mutex );
 }
 
+double lastcompassx = 0.0;
+double lastcompassy = 0.0;
+double lastcompassz = 0.0;
+double lastcompassnorth = 0.0;
 
 void callAllCompassSources(double heading_x, double heading_y, double heading_z, double heading_north)
 {
@@ -307,16 +373,19 @@ void callAllCompassSources(double heading_x, double heading_y, double heading_z,
 	{
 		switch(i)
 		{
-			case 0 : heading = heading_x; break;
-			case 1 : heading = heading_y; break;
-			case 2 : heading = heading_z; break;
-			case 3 : heading = heading_north; break;
+			case 0 : heading = lastcompassx = heading_x; break;
+			case 1 : heading = lastcompassy = heading_y; break;
+			case 2 : heading = lastcompassz = heading_z; break;
+			case 3 : heading = lastcompassnorth = heading_north; break;
 		}
 		
 		compassobject->CallAllPushOuts(heading, i);
 	}
     pthread_mutex_unlock( &fb_mutex );
 }
+
+double lastlocationlat = 0.0;
+double lastlocationlong = 0.0;
 
 void callAllLocationSources(double latitude, double longitude)
 {
@@ -327,14 +396,17 @@ void callAllLocationSources(double latitude, double longitude)
 	{
 		switch(i)
 		{
-			case 0 : coord = latitude; break;
-			case 1 : coord = longitude; break;
+			case 0 : coord = lastlocationlat = latitude; break;
+			case 1 : coord = lastlocationlong = longitude; break;
 		}
 		
 		locationobject->CallAllPushOuts(coord, i);
 	}
     pthread_mutex_unlock( &fb_mutex );
 }
+
+double lasttouchx[11];
+double lasttouchy[11];
 
 void callAllTouchSources(double touch_x, double touch_y, int idx)
 {
@@ -345,8 +417,8 @@ void callAllTouchSources(double touch_x, double touch_y, int idx)
 	{
 		switch(i)
 		{
-			case 0 : touch = touch_x; break;
-			case 1 : touch = touch_y; break;
+			case 0 : touch = lasttouchx[idx] = touch_x; break;
+			case 1 : touch = lasttouchy[idx] = touch_y; break;
 		}
 		
 		touchobject->CallAllPushOuts(touch, i+2*idx);
@@ -354,6 +426,7 @@ void callAllTouchSources(double touch_x, double touch_y, int idx)
     pthread_mutex_unlock( &fb_mutex );
 }
 
+double lastmic;
 
 void callAllMicSources(SInt16* buff, UInt32 len)
 {
@@ -363,12 +436,14 @@ void callAllMicSources(SInt16* buff, UInt32 len)
 	{
 		micobject->CallAllPushOuts(buff[i]/32768.0);
 	}
+    lastmic = buff[len-1];
     pthread_mutex_unlock( &fb_mutex );
 }
 
 void callAllMicSingleTickSourcesF(double data)
 {
     pthread_mutex_lock( &fb_mutex );
+    lastmic = data;
     micobject->CallAllPushOuts(data);
     pthread_mutex_unlock( &fb_mutex );
 }
@@ -377,10 +452,10 @@ void callAllMicSingleTickSources(SInt16 data)
 {
 	
     pthread_mutex_lock( &fb_mutex );
+    lastmic = data/32768.0;
 	micobject->CallAllPushOuts(data/32768.0);
     pthread_mutex_unlock( &fb_mutex );
 }
-
 
 void callAllNetSingleTickSources(SInt16 data)
 {
@@ -398,13 +473,13 @@ double NetIn_Tick(ursObject* gself)
 	double res;
 	res = gself->lastindata[0];
 	
-	res += gself->CallAllPullIns();
+//	res += gself->CallAllPullIns();
 	return res;
 }
 
 double NetIn_Out(ursObject* gself)
 {
-	return gself->lastindata[0]+gself->CallAllPullIns();
+	return gself->lastindata[0];//+gself->CallAllPullIns();
 }
 
 
@@ -449,7 +524,10 @@ ursObject::ursObject(const char* objname, void* (*objconst)(), void (*objdest)(u
 		instancelist->Append(this);
 	}
 	else
+    {
+        instancelist = NULL;
 		instancenumber = 0;
+    }
 	name = objname;
 	
 	couple_in = -1;
@@ -468,11 +546,12 @@ ursObject::ursObject(const char* objname, void* (*objconst)(), void (*objdest)(u
 ursObject::~ursObject()
 {
 #ifdef OLDINOUTS
+    if(instancelist)
+        instancelist->Remove(this);
 	delete ins;
 	delete outs;
     delete firstpullin;
     delete firstpushout;
-    instancelist->Remove(this);
 #endif
 }
 
@@ -670,14 +749,14 @@ void ursObject::AddPullIn(int idx, urSoundOut* out)
 		finder->next = self;
 	}
     
-    if(!strcmp(this->name,dacobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
-		urActiveDacTickSinkList.AddSink(out);
+//    if(!strcmp(this->name,dacobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
+//		urActiveDacTickSinkList.AddSink(out);
 	
-	if(!strcmp(this->name,visobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
-		urActiveVisTickSinkList.AddSink(out);
+//	if(!strcmp(this->name,visobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
+//		urActiveVisTickSinkList.AddSink(out);
     
-	if(!strcmp(this->name,netobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
-		urActiveNetTickSinkList.AddSink(out);
+//	if(!strcmp(this->name,netobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
+//		urActiveNetTickSinkList.AddSink(out);
 
 }
 
@@ -738,22 +817,41 @@ void ursObject::RemovePushOut(int idx, urSoundIn* in)
 
 void ursObject::RemoveFromSink(urSoundOut* out)
 {
-    if(!strcmp(this->name,dacobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
-		urActiveDacTickSinkList.RemoveSink(out);
+    dacobject->RemoveAllPullIns();
+    dacobject->RemoveAllPushOuts();
+
+    visobject->RemoveAllPullIns();
+    visobject->RemoveAllPushOuts();
+
+    netobject->RemoveAllPullIns();
+    netobject->RemoveAllPushOuts();
+
+//    if(!strcmp(this->name,dacobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
+//		urActiveDacTickSinkList.RemoveSink(out);
 	
-	if(!strcmp(this->name,visobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
-		urActiveVisTickSinkList.RemoveSink(out);
+//	if(!strcmp(this->name,visobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
+//		urActiveVisTickSinkList.RemoveSink(out);
     
-	if(!strcmp(this->name,netobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
-		urActiveNetTickSinkList.RemoveSink(out);
+//	if(!strcmp(this->name,netobject->name)) // This is hacky and should be done differently. Namely in the sink pulling
+//		urActiveNetTickSinkList.RemoveSink(out);
    
 }
 
 void ursObject::RemoveFromSinks()
 {
-    urActiveDacTickSinkList.RemoveObject(this);
-    urActiveVisTickSinkList.RemoveObject(this);
-    urActiveNetTickSinkList.RemoveObject(this);
+    
+    dacobject->RemoveAllPullIns();
+    dacobject->RemoveAllPushOuts();
+
+    visobject->RemoveAllPullIns();
+    visobject->RemoveAllPushOuts();
+
+    netobject->RemoveAllPullIns();
+    netobject->RemoveAllPushOuts();
+
+//    urActiveDacTickSinkList.RemoveObject(this);
+//    urActiveVisTickSinkList.RemoveObject(this);
+//    urActiveNetTickSinkList.RemoveObject(this);
 }
 
 void ursObject::RemovePushOutsByObject(ursObject* src)
@@ -806,9 +904,6 @@ void ursObject::RemoveAllPushOuts()
 		}
         firstpushout[idx] = NULL;
 	}
-    
-    RemoveFromSinks();
-    RemoveFromSources();
 }
 
 void ursObject::RemovePullIn(int idx, urSoundOut* out)
@@ -853,8 +948,6 @@ void ursObject::RemoveAllPullIns()
         firstpullin[idx] = NULL;
 
 	}
-    RemoveFromSinks();
-    RemoveFromSources();
 }
 
 
@@ -1097,6 +1190,213 @@ void Loop::SetBoundary()
 
 // DPS Objects (aka Unit Generators) below
 
+
+double Accel_Y_Out(ursObject* gself)
+{
+    return lastaccely;
+}
+
+double Accel_X_Out(ursObject* gself)
+{
+    return lastaccelx;
+}
+
+double Accel_Z_Out(ursObject* gself)
+{
+    return lastaccelz;
+}
+
+double Cam_Bright_Out(ursObject* gself)
+{
+    return lastcambright;
+}
+
+double Cam_Blue_Out(ursObject* gself)
+{
+    return lastcamblue;
+}
+
+double Cam_Green_Out(ursObject* gself)
+{
+    return lastcamgreen;
+}
+
+double Cam_Red_Out(ursObject* gself)
+{
+    return lastcamred;
+}
+
+double Cam_Edge_Out(ursObject* gself)
+{
+    return lastcamedge;
+}
+
+double Compass_X_Out(ursObject* gself)
+{
+    return lastcompassx;
+}
+
+double Compass_Y_Out(ursObject* gself)
+{
+    return lastcompassy;
+}
+
+double Compass_Z_Out(ursObject* gself)
+{
+    return lastcompassz;
+}
+
+double Compass_North_Out(ursObject* gself)
+{
+    return lastcompassnorth;
+}
+
+double Location_Lat_Out(ursObject* gself)
+{
+    return lastlocationlat;
+}
+
+double Location_Long_Out(ursObject* gself)
+{
+    return lastlocationlong;
+}
+
+double Mic_Out(ursObject* gself)
+{
+    return lastmic;
+}
+
+double Touch_X1_Out(ursObject* gself)
+{
+    return lasttouchx[0];
+}
+
+double Touch_Y1_Out(ursObject* gself)
+{
+    return lasttouchy[0];
+}
+
+double Touch_X2_Out(ursObject* gself)
+{
+    return lasttouchx[1];
+}
+
+double Touch_Y2_Out(ursObject* gself)
+{
+    return lasttouchy[1];
+}
+
+double Touch_X3_Out(ursObject* gself)
+{
+    return lasttouchx[2];
+}
+
+double Touch_Y3_Out(ursObject* gself)
+{
+    return lasttouchy[2];
+}
+
+double Touch_X4_Out(ursObject* gself)
+{
+    return lasttouchx[3];
+}
+
+double Touch_Y4_Out(ursObject* gself)
+{
+    return lasttouchy[3];
+}
+
+double Touch_X5_Out(ursObject* gself)
+{
+    return lasttouchx[4];
+}
+
+double Touch_Y5_Out(ursObject* gself)
+{
+    return lasttouchy[4];
+}
+
+double Touch_X6_Out(ursObject* gself)
+{
+    return lasttouchx[5];
+}
+
+double Touch_Y6_Out(ursObject* gself)
+{
+    return lasttouchy[5];
+}
+
+double Touch_X7_Out(ursObject* gself)
+{
+    return lasttouchx[6];
+}
+
+double Touch_Y7_Out(ursObject* gself)
+{
+    return lasttouchy[6];
+}
+
+double Touch_X8_Out(ursObject* gself)
+{
+    return lasttouchx[7];
+}
+
+double Touch_Y8_Out(ursObject* gself)
+{
+    return lasttouchy[7];
+}
+
+double Touch_X9_Out(ursObject* gself)
+{
+    return lasttouchx[8];
+}
+
+double Touch_Y9_Out(ursObject* gself)
+{
+    return lasttouchy[8];
+}
+
+double Touch_X10_Out(ursObject* gself)
+{
+    return lasttouchx[9];
+}
+
+double Touch_Y10_Out(ursObject* gself)
+{
+    return lasttouchy[9];
+}
+
+double Touch_X11_Out(ursObject* gself)
+{
+    return lasttouchx[10];
+}
+
+double Touch_Y11_Out(ursObject* gself)
+{
+    return lasttouchy[10];
+}
+
+double RotRate_X_Out(ursObject* gself)
+{
+    return lastrotratex;
+}
+
+double RotRate_Y_Out(ursObject* gself)
+{
+    return lastrotratey;
+}
+
+double RotRate_Z_Out(ursObject* gself)
+{
+    return lastrotratez;
+}
+
+double lastpushout = 0.0;
+
+double Push_Out(ursObject* gself)
+{
+    return lastpushout;
+}
 
 void Dac_In(ursObject* gself, double in)
 {
@@ -1489,7 +1789,7 @@ void Sample_AddFile(ursObject* gself, const char* filename)
 {
 	Sample_Data* self = (Sample_Data*)gself->objectdata;
 //	UInt32 frate;
-	
+    
 	self->numsamples = self->numsamples+1;
 	if(self->numsamples == 1)
 	{
@@ -1508,6 +1808,7 @@ void Sample_AddFile(ursObject* gself, const char* filename)
     const char* filestr = multiPath(filename);
 
 	FileRead fr(filestr);
+
     UInt32 len = fr.fileSize();
     StkFrames frames(len,1);
     fr.read(frames);
@@ -2854,64 +3155,64 @@ void urs_SetupObjects()
 {
 	
 	accelobject = new ursObject("Accel", NULL, NULL, 0, 3, true);
-	accelobject->AddOut("X", "TimeSeries", NULL, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
-	accelobject->AddOut("Y", "TimeSeries", NULL, NULL, NULL);
-	accelobject->AddOut("Z", "TimeSeries", NULL, NULL, NULL);
+	accelobject->AddOut("X", "TimeSeries", Accel_X_Out, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
+	accelobject->AddOut("Y", "TimeSeries", Accel_Y_Out, NULL, NULL); // No more poetic justice: Pushers can now be pulled
+	accelobject->AddOut("Z", "TimeSeries", Accel_Z_Out, NULL, NULL);
 	ursourceobjectlist.Append(accelobject);
 	cameraObject = new ursObject("Cam",NULL,NULL,0,5,true);
-	cameraObject->AddOut("Bright","TimeSeries",NULL,NULL,NULL);
-	cameraObject->AddOut("Blue","TimeSeries",NULL,NULL,NULL);
-	cameraObject->AddOut("Green","TimeSeries",NULL,NULL,NULL);
-	cameraObject->AddOut("Red","TimeSeries",NULL,NULL,NULL);
-	cameraObject->AddOut("Edge","TimeSeries",NULL,NULL,NULL);
+	cameraObject->AddOut("Bright","TimeSeries",Cam_Bright_Out,NULL,NULL);
+	cameraObject->AddOut("Blue","TimeSeries",Cam_Blue_Out,NULL,NULL);
+	cameraObject->AddOut("Green","TimeSeries",Cam_Green_Out,NULL,NULL);
+	cameraObject->AddOut("Red","TimeSeries",Cam_Red_Out,NULL,NULL);
+	cameraObject->AddOut("Edge","TimeSeries",Cam_Edge_Out,NULL,NULL);
 	ursourceobjectlist.Append(cameraObject);
 	compassobject = new ursObject("Compass", NULL, NULL, 0, 4, true);
-	compassobject->AddOut("X", "TimeSeries", NULL, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
-	compassobject->AddOut("Y", "TimeSeries", NULL, NULL, NULL);
-	compassobject->AddOut("Z", "TimeSeries", NULL, NULL, NULL);
-	compassobject->AddOut("North", "TimeSeries", NULL, NULL, NULL);
+	compassobject->AddOut("X", "TimeSeries", Compass_X_Out, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
+	compassobject->AddOut("Y", "TimeSeries", Compass_Y_Out, NULL, NULL);
+	compassobject->AddOut("Z", "TimeSeries", Compass_Z_Out, NULL, NULL);
+	compassobject->AddOut("North", "TimeSeries", Compass_North_Out, NULL, NULL);
 	ursourceobjectlist.Append(compassobject);
 	locationobject = new ursObject("Location", NULL, NULL, 0, 2, true);
-	locationobject->AddOut("Lat", "TimeSeries", NULL, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
-	locationobject->AddOut("Long", "TimeSeries", NULL, NULL, NULL);
+	locationobject->AddOut("Lat", "TimeSeries", Location_Lat_Out, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
+	locationobject->AddOut("Long", "TimeSeries", Location_Long_Out, NULL, NULL);
 	ursourceobjectlist.Append(locationobject);
 	micobject = new ursObject("Mic", NULL, NULL, 0, 1, true);
-	micobject->AddOut("Out", "TimeSeries", NULL, NULL, NULL);
+	micobject->AddOut("Out", "TimeSeries", Mic_Out, NULL, NULL);
 	ursourceobjectlist.Append(micobject);
 	netinobject = new ursObject("NetIn", NULL, NULL, 0, 1, true);
 	netinobject->AddOut("Out", "Event", NetIn_Tick, NetIn_Out, NULL);
 	ursourceobjectlist.Append(netinobject);
 	pushobject = new ursObject("Push", NULL, NULL, 0, 1); // An event based source ("bang" in PD parlance)
-	pushobject->AddOut("Out", "Event", NULL, NULL, NULL);
+	pushobject->AddOut("Out", "Event", Push_Out, NULL, NULL);
 	ursourceobjectlist.Append(pushobject);
 	gyroobject = new ursObject("RotRate", NULL, NULL, 0, 3, true);
-	gyroobject->AddOut("X", "TimeSeries", NULL, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
-	gyroobject->AddOut("Y", "TimeSeries", NULL, NULL, NULL);
-	gyroobject->AddOut("Z", "TimeSeries", NULL, NULL, NULL);
+	gyroobject->AddOut("X", "TimeSeries", RotRate_X_Out, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
+	gyroobject->AddOut("Y", "TimeSeries", RotRate_Y_Out, NULL, NULL);
+	gyroobject->AddOut("Z", "TimeSeries", RotRate_Z_Out, NULL, NULL);
 	ursourceobjectlist.Append(gyroobject);
 	touchobject = new ursObject("Touch", NULL, NULL, 0, 22, true);
-	touchobject->AddOut("X1", "TimeSeries", NULL, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
-	touchobject->AddOut("Y1", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("X2", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("Y2", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("X3", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("Y3", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("X4", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("Y4", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("X5", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("Y5", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("X6", "TimeSeries", NULL, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
-	touchobject->AddOut("Y6", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("X7", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("Y7", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("X8", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("Y8", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("X9", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("Y9", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("X10", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("Y10", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("X11", "TimeSeries", NULL, NULL, NULL);
-	touchobject->AddOut("Y11", "TimeSeries", NULL, NULL, NULL);
+	touchobject->AddOut("X1", "TimeSeries", Touch_X1_Out, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
+	touchobject->AddOut("Y1", "TimeSeries", Touch_Y1_Out, NULL, NULL);
+	touchobject->AddOut("X2", "TimeSeries", Touch_X2_Out, NULL, NULL);
+	touchobject->AddOut("Y2", "TimeSeries", Touch_Y2_Out, NULL, NULL);
+	touchobject->AddOut("X3", "TimeSeries", Touch_X3_Out, NULL, NULL);
+	touchobject->AddOut("Y3", "TimeSeries", Touch_Y3_Out, NULL, NULL);
+	touchobject->AddOut("X4", "TimeSeries", Touch_X4_Out, NULL, NULL);
+	touchobject->AddOut("Y4", "TimeSeries", Touch_Y4_Out, NULL, NULL);
+	touchobject->AddOut("X5", "TimeSeries", Touch_X5_Out, NULL, NULL);
+	touchobject->AddOut("Y5", "TimeSeries", Touch_Y5_Out, NULL, NULL);
+	touchobject->AddOut("X6", "TimeSeries", Touch_X6_Out, NULL, NULL); // Pushers cannot be ticked (oh the poetic justice)
+	touchobject->AddOut("Y6", "TimeSeries", Touch_Y6_Out, NULL, NULL);
+	touchobject->AddOut("X7", "TimeSeries", Touch_X7_Out, NULL, NULL);
+	touchobject->AddOut("Y7", "TimeSeries", Touch_Y7_Out, NULL, NULL);
+	touchobject->AddOut("X8", "TimeSeries", Touch_X8_Out, NULL, NULL);
+	touchobject->AddOut("Y8", "TimeSeries", Touch_Y8_Out, NULL, NULL);
+	touchobject->AddOut("X9", "TimeSeries", Touch_X9_Out, NULL, NULL);
+	touchobject->AddOut("Y9", "TimeSeries", Touch_Y9_Out, NULL, NULL);
+	touchobject->AddOut("X10", "TimeSeries", Touch_X10_Out, NULL, NULL);
+	touchobject->AddOut("Y10", "TimeSeries", Touch_Y10_Out, NULL, NULL);
+	touchobject->AddOut("X11", "TimeSeries", Touch_X11_Out, NULL, NULL);
+	touchobject->AddOut("Y11", "TimeSeries", Touch_Y11_Out, NULL, NULL);
 	ursourceobjectlist.Append(touchobject);
     //	fileobject = new ursObject("File", NULL, NULL, 0, 1); // An file based source
     //	fileobject->AddOut("Out", "Event", NULL, NULL, NULL);

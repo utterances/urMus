@@ -28,7 +28,7 @@
 //#define GPUIMAGE
 #endif
 // Enabled Apple's font rendering rather than FreeType2/Glyph Atlas code. The Apple rendering is stable but not portable.
-#undef UISTRINGS
+#define UISTRINGS
 
 #ifndef UISTRINGS
 // Use FTGL library for gylph atlas code. Recommended for speed.
@@ -36,6 +36,10 @@
 // Flag that forces complete rerendering of glyphs when string is redrawn. Slow, bad etc...
 #define CACHESTRINGTEXTURE
 #endif
+
+// To use MoMu's audio handling use this call. (Recommended, alternative is not currently maintained)
+#define USEMUMOAUDIO
+
 
 
 #if defined( __WIN32__ ) || defined( _WIN32 )

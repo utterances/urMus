@@ -6,6 +6,7 @@ red = 255
 blue = 0
 green = 0
 deviceNum = 0
+StartAudio()
 
 local baseAddr= "192.168.1.113"
 
@@ -34,7 +35,7 @@ function setNote(self)
 		btnArray[i].t:SetSolidColor(255,0,0,255)
 	end
 	self.t:SetSolidColor(255,128,128,255)
-	SendOSCMessage(baseAddr,8888,"/urMus/numbers",(self.index+ 10*(deviceNum-1)))
+	SendOSCMessage(baseAddr,8888,"/urMus/numbers",(self.index +10*(deviceNum-1)))
 	else
 		deviceNum = self.index - 8
 		DPrint(deviceNum)
@@ -125,3 +126,4 @@ function display(self, x, y, z)
 end
 
 r:Handle("OnAccelerate", display)
+

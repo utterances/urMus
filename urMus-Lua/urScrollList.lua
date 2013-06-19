@@ -17,16 +17,19 @@ local maxVisiblescrollRegions = (ScreenHeight()-titleHeight)/normativeScrollRegi
 local scrollRegionGap = 1
 local scrollRegionHeight = (ScreenHeight() - titleHeight - maxVisiblescrollRegions*scrollRegionGap)/maxVisiblescrollRegions
 local text1Font = urfont
-local text1Width = ScreenWidth()*2/3
+local text1Width = ScreenWidth() --ScreenWidth()*2/3
 local text1Size = 20
+local text1Height = text1Size*2+3
 local text1Color = { 255, 255, 255, 255 }
 local text2Font = urfont
 local text2Width = ScreenWidth()/2
 local text2Size = 14
+local text2Height = text2Size+2
 local text2Color = { 255, 255, 0, 255 }
 local text3Font = urfont
 local text3Width = ScreenWidth()/2
 local text3Size = 16
+local text3Height = text3Size+2
 local text3Color = { 255, 0, 0, 255 }
 
 -- Create local name-space
@@ -178,9 +181,9 @@ function urScrollList:CreatescrollRegion(text1, text2, text3, callback, color, p
 		region:SetAnchor("TOP", self.scrollRegions[position-1], "BOTTOM", 0, -scrollRegionGap) -- Rest honor their predecessors (they might be giants!)
 	end
 	if not region.text1region then
-		region.text1region = urScrollList:CreateTextRegion(text1, text1Width, text1Font, text1Size, text1Color, "LEFT")
-		region.text2region = urScrollList:CreateTextRegion(text2, text2Width, text2Font, text2Size, text2Color, "RIGHT")
-		region.text3region = urScrollList:CreateTextRegion(text3, text3Width, text3Font, text3Size, text3Color, "RIGHT")
+		region.text1region = urScrollList:CreateTextRegion(text1, text1Width, text1Height, text1Font, text1Size, text1Color, "LEFT")
+		region.text2region = urScrollList:CreateTextRegion(text2, text2Width, text2Height, text2Font, text2Size, text2Color, "RIGHT")
+		region.text3region = urScrollList:CreateTextRegion(text3, text3Width, text3Height, text3Font, text3Size, text3Color, "RIGHT")
 		region.text1region:SetAnchor("TOPLEFT", region, "TOPLEFT", 0,0)
 		region.text2region:SetAnchor("TOPRIGHT", region, "TOPRIGHT", 0, 0)
 		region.text3region:SetAnchor("BOTTOMRIGHT", region, "BOTTOMRIGHT", 0,0)
@@ -205,10 +208,10 @@ function urScrollList:SetLabelRegion(region, label, font, color)
 end
 
 -- Creates a text-carrying region without texture
-function urScrollList:CreateTextRegion(label, width, font, size, color, justify)
+function urScrollList:CreateTextRegion(label, width, height, font, size, color, justify)
 	local region
 	region = Region('region', 'label'..(label or ""), UIParent)
-	region:SetHeight(size+2)
+	region:SetHeight(height)
 	region:SetWidth(width)
 	region:SetLayer("HIGH")
 	region.tl = region:TextLabel()

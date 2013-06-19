@@ -25,6 +25,7 @@
 #import "httpServer.h"
 #include <arpa/inet.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 #define DEGREES_TO_RADIANS(x) (M_PI * x / 180.0)
 
@@ -639,6 +640,11 @@ void decCameraUseBy(int dec)
     [super viewWillDisappear:animated];
 }
 
+- (void)viewDidDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+}
+
 #ifdef GPUIMAGE
 - (void)writeMovieFromTexture:(GLuint)textureID ofSize:(CGSize)size
 {
@@ -980,7 +986,7 @@ void decCameraUseBy(int dec)
 
 - (void)setCameraFilterParameter:(double)value;
 {
-    [self setFilterParameter:value forFilter:inputFilter];
+    [self setFilterParameter:value forFilter:inputFilter withType:currentfiltertype];
 }
 
 - (GPUImageOutput<GPUImageInput> *)createFilter:(GPUImageFilterType)filterType
@@ -2075,6 +2081,11 @@ static EAGLSharegroup* theSharegroup = nil;
 #endif
         animationInterval = 1.0 / 60.0; // We look for 60 FPS
 
+        ExternalKeyboardReaderView *control = [[ExternalKeyboardReaderView alloc] initWithFrame:CGRectZero];
+        [self addSubview:control];
+        control.active = YES;
+        control.delegate = self;
+        [control release];
     }
 	
 	// Set up the ability to track multiple touches.
@@ -2112,6 +2123,11 @@ static EAGLSharegroup* theSharegroup = nil;
 #endif
         animationInterval = 1.0 / 60.0; // We look for 60 FPS
 		
+        ExternalKeyboardReaderView *control = [[ExternalKeyboardReaderView alloc] initWithFrame:CGRectZero];
+        [self addSubview:control];
+        control.active = YES;
+        control.delegate = self;
+        [control release];
     }
 	
 	// Set up the ability to track multiple touches.
@@ -2571,7 +2587,8 @@ void drawPointToTexture(urAPI_Texture_t *texture, float x, float y)
 #endif
     
 	Texture2D *bgtexture = texture->backgroundTex;
-	y = texture->backgroundTex->_height - y;
+//	y = texture->backgroundTex->_height - y;
+	y = SCREEN_HEIGHT - y;
 
 	// allocate frame buffer
 	if(textureFrameBuffer == -1)
@@ -2734,10 +2751,14 @@ void drawQuadToTexture(urAPI_Texture_t *texture, float x1, float y1, float x2, f
 #endif
     
 	Texture2D *bgtexture = texture->backgroundTex;
-	y1 = texture->backgroundTex->_height - y1;
+/*	y1 = texture->backgroundTex->_height - y1;
 	y2 = texture->backgroundTex->_height - y2;
 	y3 = texture->backgroundTex->_height - y3;
-	y4 = texture->backgroundTex->_height - y4;
+	y4 = texture->backgroundTex->_height - y4;*/
+	y1 = SCREEN_HEIGHT - y1;
+	y2 = SCREEN_HEIGHT - y2;
+	y3 = SCREEN_HEIGHT - y3;
+	y4 = SCREEN_HEIGHT - y4;
 	
 	// allocate frame buffer
 	if(textureFrameBuffer == -1)
@@ -2907,7 +2928,8 @@ void drawEllipseToTexture(urAPI_Texture_t *texture, float x, float y, float w, f
 #endif
     
 	Texture2D *bgtexture = texture->backgroundTex;
-	y = texture->backgroundTex->_height - y;
+//	y = texture->backgroundTex->_height - y;
+	y = SCREEN_HEIGHT - y;
 	
 	// allocate frame buffer
 	if(textureFrameBuffer == -1)
@@ -3062,8 +3084,13 @@ void drawLineToTexture(urAPI_Texture_t *texture, float startx, float starty, flo
     
 	Texture2D *bgtexture = texture->backgroundTex;
 	
-	starty = texture->backgroundTex->_height - starty;
-	endy = texture->backgroundTex->_height - endy;
+//    std::cerr << starty << " " << texture->backgroundTex->_height << std::endl;
+//    NSLog(@"%f %d",starty,texture->backgroundTex->_height);
+//	starty = texture->backgroundTex->_height - starty;
+//	endy = texture->backgroundTex->_height - endy;
+    starty = SCREEN_HEIGHT - starty;
+    endy = SCREEN_HEIGHT - endy;
+
 	// allocate frame buffer
 	if(textureFrameBuffer == -1)
 		CreateFrameBuffer();
@@ -3437,10 +3464,85 @@ void freeMovieTexture(urAPI_Region_t* t)
 
 char currentmediapath[PATH_MAX];
 
-char* accessiblePathSystemFirst(char* fn)
+const char* accessiblePathSystemFirst(const char* fn)
 {
-//    if(strlen(fn)<1) return NULL;
+    //if(strlen(fn)<1) return NULL;
+
+    struct stat s;
+    if( stat(fn,&s) == 0 )
+    {
+        if( s.st_mode & S_IFDIR )
+        {
+            return NULL;
+        }
+        else if( s.st_mode & S_IFREG )
+        {
+            return fn;
+        }
+        else
+        {
+            return NULL;
+        }
+    }
+    else
+    {
+        //error
+        const char* syspath = getSystemPath();
+        strcpy(currentmediapath,syspath);
+        int len = strlen(currentmediapath);
+        currentmediapath[len]='/'; // System path does not have a trailing / in iOS
+        currentmediapath[len+1]='\0';
+        strcat(currentmediapath,fn);
+        if( stat(currentmediapath,&s) == 0 )
+        {
+            if( s.st_mode & S_IFDIR )
+            {
+                return NULL;
+            }
+            else if( s.st_mode & S_IFREG )
+            {
+                return currentmediapath;
+            }
+            else
+            {
+                return NULL;
+            }
+        }
+        else
+        {
+            //error
+            const char* docpath = getDocumentPath();
+            strcpy(currentmediapath,docpath);
+            //            int len = strlen(currentmediapath); // Document path DOES have a trailing / in iOS. Consistency ftw.
+            //            currentmediapath[len]='/';
+            //            currentmediapath[len+1]='\0';
+            
+            strcat(currentmediapath,fn);
+            if( stat(currentmediapath,&s) == 0 )
+            {
+                if( s.st_mode & S_IFDIR )
+                {
+                    return NULL;
+                }
+                else if( s.st_mode & S_IFREG )
+                {
+                    return currentmediapath;
+                }
+                else
+                {
+                    return NULL;
+                }
+            }
+            else
+            {
+                //error
+                return NULL; // No path worked.
+            }
+        }
+    }
     
+    
+/*
     if( access( fn, F_OK ) != -1 ) {
         return fn;
         // file exists
@@ -3471,6 +3573,7 @@ char* accessiblePathSystemFirst(char* fn)
             }
         }
     }
+ */
 }
 
 void instantiateTexture(urAPI_Region_t* t)
@@ -3480,7 +3583,7 @@ void instantiateTexture(urAPI_Region_t* t)
 //	NSString *filePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:texturepathstr]; // Leak here, fix.
 //	UIImage* textureimage = [UIImage imageNamed:texturepathstr];
     
-    char* pathstr = accessiblePathSystemFirst(t->texture->texturepath);
+    const char* pathstr = accessiblePathSystemFirst(t->texture->texturepath);
     if(pathstr!=NULL)
     {
     texturepathstr = [[NSString alloc] initWithUTF8String:pathstr];
@@ -3541,10 +3644,30 @@ void instantiateTexture(urAPI_Region_t* t)
     else
         instantiateBlankTexture(t);
     
+    if(t->texture->isTiled)
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        GLenum err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+    }
+    else {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
+    
 }
 
 void instantiateBlankTexture(urAPI_Region_t* t)
-{	
+{
 	t->texture->backgroundTex = createBlankTexture(t->width, t->height);
 	t->texture->width = t->width;
 	t->texture->height = t->height;
@@ -4067,8 +4190,8 @@ void renderTextLabel(urAPI_Region_t* t)
         int a = err;
     }
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glBindFramebufferOES(GL_FRAMEBUFFER_OES, viewFramebuffer);
     glViewport(0, 0, backingWidth, backingHeight);
 
@@ -4310,7 +4433,7 @@ void renderTextLabel(urAPI_Region_t* t)
                 {
                     int a = err;
                 }
-
+                
 				switch(t->texture->blendmode)
 				{
 					case BLEND_DISABLED:
@@ -4391,9 +4514,32 @@ void renderTextLabel(urAPI_Region_t* t)
 
 					glTexCoordPointer(2, GL_FLOAT, 0, coordinates);
 #endif
-                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-					if(t->texture->usecamera || t->texture->inputFilter)
+
+                    if(t->texture->isTiled)
+                    {
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                        err = glGetError();
+                        if(err != GL_NO_ERROR)
+                        {
+                            int a = err;
+                        }
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+                        err = glGetError();
+                        if(err != GL_NO_ERROR)
+                        {
+                            int a = err;
+                        }
+                    }
+                    else {
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                    }
+                    
+					if(t->texture->usecamera
+#ifdef GPUIMAGE
+                       || t->texture->inputFilter
+#endif
+                       )
 					{
 						CGRect rect = CGRectMake(t->left,t->bottom,t->width,t->height);
 						GLfloat vertices[] = {  rect.origin.x,                                                  rect.origin.y,                                                  0.0,
@@ -4401,14 +4547,17 @@ void renderTextLabel(urAPI_Region_t* t)
 							rect.origin.x,                                                  rect.origin.y + rect.size.height,               0.0,
 							rect.origin.x + rect.size.width,                rect.origin.y + rect.size.height,               0.0 };
 						
+#ifdef GPUIMAGE
                         if(!t->texture->filterHandler)
+#endif
                             glBindTexture(GL_TEXTURE_2D, cameraTexture);
+#ifdef GPUIMAGE
                         else
                         {
 //                            [t->texture->filterInput processTextureWithFrameTime:CMTimeMake(totalelapsedtime*1000,1000)];
                             glBindTexture(GL_TEXTURE_2D, t->texture->_filterTexture);
                         }
-                        
+#endif
 
 #ifdef DEBUGSHOWFRAMECOUNT
                         char errorstrbuf[16];
@@ -4524,28 +4673,33 @@ void renderTextLabel(urAPI_Region_t* t)
 #endif
                     else
 					{
+//                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                        
 						[t->texture->backgroundTex drawInRect:CGRectMake(t->left,t->bottom,t->width,t->height)];
 					}
-					
-					if(t->texture->isTiled)
-					{
-						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                    
+                    /*
+                    if(t->texture->isTiled)
+                    {
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
                         err = glGetError();
                         if(err != GL_NO_ERROR)
                         {
                             int a = err;
                         }
-						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);					
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
                         err = glGetError();
                         if(err != GL_NO_ERROR)
                         {
                             int a = err;
                         }
-					}
-					else {
-						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);					
-					}
+                    }
+                    else {
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                    }
+                    */
 					glEnable(GL_BLEND);
                     err = glGetError();
                     if(err != GL_NO_ERROR)
@@ -4566,6 +4720,9 @@ void renderTextLabel(urAPI_Region_t* t)
                         int a = err;
                     }
                     glActiveTexture(GL_TEXTURE0);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
                     glUniform1i(_textureUniform,0);
                     glBindTexture(GL_TEXTURE_2D, whiteTexture);
                     
@@ -4612,6 +4769,9 @@ void renderTextLabel(urAPI_Region_t* t)
 #ifdef OPENGLES2
                 glUseProgram(shaderProgram);
                 glActiveTexture(GL_TEXTURE0);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
                 glUniform1i(_textureUniform,0);
 #else
 				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -4891,6 +5051,8 @@ void renderTextLabel(urAPI_Region_t* t)
     glBindFramebufferOES(GL_FRAMEBUFFER_OES, viewFramebuffer);
 
     glBindTexture(GL_TEXTURE_2D, bgname);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     
     if(err != GL_NO_ERROR)
     {
@@ -4899,9 +5061,10 @@ void renderTextLabel(urAPI_Region_t* t)
     
     for(int i=0;i<16;i++) // default regions are white
 		squareColors[i] = 255;
+#ifdef OPENGLES2
     glVertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, squareColors);
     glEnableVertexAttribArray(ATTRIB_COLOR);
-    
+#endif
 	GLfloat         coordinates[] = { 0,              0,
         1.0,  0,
         0,    1.0,
@@ -4914,10 +5077,12 @@ void renderTextLabel(urAPI_Region_t* t)
 		0.0,                        backingHeight,      0.0,
         backingWidth,        backingHeight,      0.0 };
     
+#ifdef OPENGLES2
     glVertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, vertices);
     glEnableVertexAttribArray(ATTRIB_VERTEX);
     glVertexAttribPointer(ATTRIB_TEXTUREPOSITON, 2, GL_FLOAT, 0, 0, coordinates);
     glEnableVertexAttribArray(ATTRIB_TEXTUREPOSITON);
+#endif
     err = glGetError();
     if(err != GL_NO_ERROR)
     {
@@ -5376,6 +5541,20 @@ void renderTextLabel(urAPI_Region_t* t)
 - (void)stopAnimation {
     self.animationTimer = nil;
     glFinish();
+}
+
+- (void)stopAudio {
+    // CLean up audio
+#ifdef USEMUMOAUDIO
+    MoAudio::stop();
+#else
+	stopRIOAudioLayer();
+#endif
+}
+
+- (void)stopOSCListener {
+    // Clean up OSC Networking
+    myoscnet.stopListening();
 }
 
 

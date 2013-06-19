@@ -45,10 +45,10 @@ time = 0           	-- starting time
 timeMax = 0.5      	-- time to move slider
 count = 1          	-- starting count
 n = 8             	-- num columns
-m = 4             	-- num rows
+m = 8             	-- num rows
 numbuttons = 4     	-- number color buttons
-intensityHighCutoff = 85
-intensityLowCutoff = 50  -- minumum intensity (out of 765)
+intensityHighCutoff = 75
+intensityLowCutoff = 40  -- minumum intensity (out of 765)
 shift = 0
 
 DPrint("")
@@ -62,15 +62,32 @@ height = ScreenHeight() - 5.325*sidespace
 
 harm = {}
 amp = {}
-dac = {}
+dac = FBDac
 osc = {}
+sample = {}
+samp = {}
+pos = {}
+
+local drumkit = {"kick.wav","snare.wav","hihat.wav","hihat2.wav","low_tom.wav","high_tom.wav","crash.wav","cowbell.wav"}
+local beatbox = {"BBkick.wav","BBsnare.wav","BBhihat.wav","BBclick.wav","BBlongboom.wav","BBbreath.wav","BBahh.wav","BBuhuh.wav"}
 
 for j = 1, n do
     harm[j] = FlowBox(FBPush)
 	amp[j] = FlowBox(FBPush)
-    dac[j] = FBDac
     osc[j] = FlowBox(FBSinOsc)
-    dac[j].In:SetPull(osc[j].Out)
+    sample[j] = FlowBox(FBSample)
+    sample[j]:AddFile(drumkit[j])
+    sample[j]:AddFile(beatbox[j])
+    pos[j] = FlowBox(FBPush)
+    samp[j] = FlowBox(FBPush)
+    samp[j].Out:SetPush(sample[j].Sample)
+    pos[j].Out:SetPush(sample[j].Loop)
+    pos[j]:Push(-1)
+    pos[j].Out:RemovePush(sample[j].Loop)
+    pos[j].Out:SetPush(sample[j].Pos)
+    pos[j]:Push(-1)
+    dac.In:SetPull(sample[j].Out)
+    dac.In:SetPull(osc[j].Out)
     harm[j].Out:SetPush(osc[j].Freq)
 	amp[j].Out:SetPush(osc[j].Amp)
 end
@@ -81,6 +98,8 @@ freqCDEFGABC = {523.25, 587.33, 659.26, 698.46, 783.99, 880.0, 987.77, 1046.50}
 freqACCEGGCD = {440, 523.25, 523.25, 659.26, 783.99, 783.99, 1046.50, 1174.66}
 freqBDDFAACD = {493.88, 587.33, 587.33, 698.46, 880.0, 880.0, 1046.50, 1174.66}
 freqAEGBEGDB = {440, 659.26, 783.99, 987.77, 1318.51, 783.99, 1174.66, 987.77}
+freqCFACFDCF = {261.63, 349.23, 440, 523.25, 698.46, 587.33, 523.25, 698.46}
+freqGGBDFACD = {392, 392, 493.88, 587.33, 698.46, 880, 1046.50, 587.33}
 
 frequencies = freqACCEGGCD --select frequency array to use
 
@@ -96,34 +115,42 @@ end
 
 --Change the camera filter color via button press
 function MakeRed(self)
+    usesamples = null
 	frequencies = freqCDEFGABC
 end
 
 function MakeGreen(self)
+    usesamples = null
 	frequencies = freqACCEGGCD
 end
 
 function MakeBlue(self)
+    usesamples = null
 	frequencies = freqBDDFAACD
 end
 
 function MakeWhite(self)
+    usesamples = null
 	frequencies = freqAEGBEGDB 
 end
 
 function MakePurple(self)
-	frequencies = freqAEGBEGDB 
+    usesamples = null
+	frequencies = freqCFACFDCF 
 end
 
 function MakeOrange(self)
-	frequencies = freqAEGBEGDB 
+    usesamples = null
+	frequencies = freqGGBDFACD 
 end
 
 function MakeGrey(self)
+    usesamples = 0
 	frequencies = freqAEGBEGDB 
 end
 
 function MakePink(self)
+    usesamples = 1
 	frequencies = freqAEGBEGDB 
 end
 
@@ -160,11 +187,17 @@ function MoveSlider(self, elapsed)
    	 for j = 1, n do
    		 harm[j]:Push(0)
 		 amp[j]:Push(0)
+--         pos[j]:Push(1)
    	 end
    	 for j = 1, n do
    		 if Activated[j][count] == 1 then
+            if not usesamples then
    			 harm[j]:Push(Freq2Norm(frequencies[j]*(1.1224^shift)))
 			 amp[j]:Push(1)
+            else
+             samp[j]:Push(usesamples)
+             pos[j]:Push(-1)
+            end
    		 end
    	 end
    	 time = time - timeMax
@@ -356,4 +389,18 @@ pink:EnableInput(true)
 pink:Show()
 pink:Handle("OnTouchDown", MakePink)
 
+local pagebutton=Region('region', 'pagebutton', UIParent)
+pagebutton:SetWidth(pagersize)
+pagebutton:SetHeight(pagersize)
+pagebutton:SetLayer("TOOLTIP")
+pagebutton:SetAnchor('BOTTOMLEFT',ScreenWidth()-pagersize-4,ScreenHeight()-pagersize-4)
+pagebutton:EnableClamping(true)
+pagebutton:Handle("OnTouchDown", MyFlipPage)
+pagebutton.texture = pagebutton:Texture("circlebutton-16.png")
+pagebutton.texture:SetGradientColor("TOP",255,255,255,255,255,255,255,255)
+pagebutton.texture:SetGradientColor("BOTTOM",255,255,255,255,255,255,255,255)
+pagebutton.texture:SetBlendMode("BLEND")
+pagebutton.texture:SetTexCoord(0,1.0,0,1.0)
+pagebutton:EnableInput(true)
+pagebutton:Show()
 

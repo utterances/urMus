@@ -96,7 +96,21 @@ r = Region()
 r:SetWidth(ScreenWidth())
 r:SetHeight(ScreenHeight())
 r.t=r:Texture(255,255,255,255)
-r.t:SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
+
+function npow2ratio(n)
+    local npow = 1
+    while npow < n do
+        npow = npow*2
+    end
+    DPrint(n .. " "..npow)
+    return n/npow
+end
+
+
+r.t:SetTexCoord(0,npow2ratio(ScreenWidth()),npow2ratio(ScreenHeight()),0.0)
+
+
+--r.t:SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
 --r.t:SetBlendMode("BLEND")
 r:Show()
 

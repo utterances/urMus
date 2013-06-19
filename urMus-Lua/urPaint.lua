@@ -26,11 +26,26 @@ smudgebackdropregion:SetLayer("BACKGROUND")
 smudgebackdropregion:SetAnchor('BOTTOMLEFT',0,0)
 smudgebackdropregion.texture = smudgebackdropregion:Texture()
 smudgebackdropregion.texture:SetTexture(255,255,255,255)
+
+
+function npow2ratio(n)
+    local npow = 1
+    while npow < n do
+        npow = npow*2
+    end
+    DPrint(n .. " "..npow)
+    return n/npow
+end
+
+
+smudgebackdropregion.texture:SetTexCoord(0,npow2ratio(ScreenWidth()),npow2ratio(ScreenHeight()),0.0)
+--[[
 if ScreenWidth() == 320.0 then
     smudgebackdropregion.texture:SetTexCoord(0,320.0/512.0,480.0/512.0,0.0)
 else
     smudgebackdropregion.texture:SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
 end
+--]]
 
 smudgebackdropregion:Handle("OnDoubleTap", Clear)
 smudgebackdropregion:Handle("OnTouchDown", BrushDown)
