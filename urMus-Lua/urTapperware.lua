@@ -131,7 +131,8 @@ backdrop:EnableInput(true)
 backdrop:SetClipRegion(0,0,ScreenWidth(),ScreenHeight())
 backdrop:EnableClipping(true)
 backdrop.player = {}
-backdrop.t = backdrop:Texture("tw_gridback.jpg")
+-- backdrop.t = backdrop:Texture("tw_gridback.jpg")
+backdrop.t = backdrop:Texture("tw_paperback.jpg")
 backdrop.t:SetTexCoord(0,ScreenWidth()/1024.0,1.0,0.0)
 backdrop.t:SetBlendMode("BLEND")
 backdrop:Show()
@@ -329,9 +330,9 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
 		r.dx = 0	-- compute storing current movement speed, for gesture detection
 		r.dy = 0
 		x,y = r:Center()
-		r.oldx = x
+		r.oldx = x	-- last x,y
 		r.oldy = y
-		r.sx = 0
+		r.sx = 0 -- target coordinate for animation
 		r.sy = 0
 		r.w = INITSIZE
 		r.h = INITSIZE
@@ -360,8 +361,8 @@ function PlainVRegion(r) -- customized parameter initialization of region, event
     r.tl:SetShadowColor(100,100,100,255)
     r.tl:SetShadowOffset(1,1)
     r.tl:SetShadowBlur(1)
-    r:SetWidth(50)
-    r:SetHeight(50)
+    r:SetWidth(20)
+    r:SetHeight(20)
 end
 
 function HoldToTrigger(self, elapsed) -- for long tap
@@ -531,6 +532,36 @@ function VUpdate(self,elapsed)
 				end				
 			end
 		end
+		
+		-- moved, also send moved signal to anyone who needs it:
+		
+		-- fire off messages to linked regions
+		list = self.links["OnTouchUp"]
+		if list ~= nil then
+			for k = 1,#list do
+				-- DPrint(self:Name().." gets messages")
+				receiver = list[k][2] -- this region gets the message
+				if receiver.counter ~= 1 then
+					rx,ry = receiver:Center()			
+					-- change location message?
+	
+					-- receiver.oldx = rx
+					-- receiver.oldy = ry
+					-- receiver:SetAnchor('CENTER', rx + self.dx, ry - self.dy)
+								
+					-- change size message?
+
+					receiver.oldx = rx
+					receiver.oldy = ry
+				
+					receiver:SetAnchor('CENTER', rx + self.dx/3, ry- self.dy)
+					receiver.w = math.max(receiver.w + self.dx/1.5, 50)
+					receiver:SetWidth(receiver.w)
+				end
+			end
+		end
+		
+		
 	end
 	
 	-- move if we have none zero speed
@@ -589,7 +620,16 @@ function AddOneToCounter(self)
 	if self.counter == 1 then
 		self.value = self.value + 1
 		self.tl:SetLabel(self.value)
+	-- else	-- FIXME: remove later, proof of concept only
+	-- 	-- change size if it's not a counter, treat it like an indicator
+		DPrint(self:Name().."growing taller")
+		x,y = self:Center()
+		self.oldy = y
+		self:SetAnchor("CENTER", x, y + 5)
+		self.h = self.h + 10
+		self:SetHeight(self.h)
 	end
+	
 end
 
 function SwitchRegionType(self) -- TODO: change method name to reflect
@@ -597,17 +637,17 @@ function SwitchRegionType(self) -- TODO: change method name to reflect
 	self.t:SetTexture("tw_roundrec_slate.png")
 	self.value = 0
 	self.counter = 1
-  self.tl:SetLabel(self.value)
-  self.tl:SetFontHeight(42)
-  self.tl:SetColor(255,255,255,255) 
-  self.tl:SetHorizontalAlign("JUSTIFY")
-  self.tl:SetVerticalAlign("MIDDLE")
-  self.tl:SetShadowColor(10,10,10,255)
-  self.tl:SetShadowOffset(1,1)
-  self.tl:SetShadowBlur(1)
+	self.tl:SetLabel(self.value)
+	self.tl:SetFontHeight(42)
+	self.tl:SetColor(255,255,255,255) 
+	self.tl:SetHorizontalAlign("JUSTIFY")
+	self.tl:SetVerticalAlign("MIDDLE")
+	self.tl:SetShadowColor(10,10,10,255)
+	self.tl:SetShadowOffset(1,1)
+	self.tl:SetShadowBlur(1)
 	
 	-- TESTING: just for testing counter:
-  table.insert(self.eventlist["OnTouchUp"], AddOneToCounter)
+	table.insert(self.eventlist["OnTouchUp"], AddOneToCounter)
 	
 	CloseMenu(self)
 end
@@ -666,7 +706,7 @@ function EndLinkRegion(self)
 		-- TODO create the link here!
 
 		table.insert(initialLinkRegion.links["OnTouchUp"], {VTouchUp, self})
-		
+				
 		-- add visual link too:
 		linkLayer:Add(initialLinkRegion, self)
 		linkLayer:ResetPotentialLink()

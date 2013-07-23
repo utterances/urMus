@@ -96,7 +96,7 @@ function linkLayer:Draw()
 	-- region locations	
 	for _,menu in ipairs(self.menus) do
 		OpenLinkMenu(menu)
-	end	
+	end
 end
 
 function linkLayer:DrawPotentialLink(region, draglet)
