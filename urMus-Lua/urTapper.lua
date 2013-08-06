@@ -45,7 +45,7 @@ function TouchUp(self)
 					{'yes',test,'yes very good'},
 					{'no',test,'not in the least'},
 					{'cancel',dismissMenu,nil}}
-		menu = loadSimpleMenu(cmdlist)
+		menu = loadSimpleMenu(cmdlist, 'Choose something like a star')
 		menu:present(x,y)
 		showMenu = true
 	end
