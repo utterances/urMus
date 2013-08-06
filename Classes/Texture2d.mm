@@ -157,6 +157,10 @@ extern GLuint _textureUniform;
 		glGetIntegerv(GL_TEXTURE_BINDING_2D, &saveName);
 		glBindTexture(GL_TEXTURE_2D, _name);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);// Gessl
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
 		switch(pixelFormat) {
 				
 			case kTexture2DPixelFormat_RGBA8888:
@@ -371,16 +375,23 @@ extern GLuint _textureUniform;
 //	CGContextSetFillColor(context, colorComponents);
 	CGContextTranslateCTM(context, 0.0, height);
 	CGContextScaleCTM(context, 1.0, -1.0); //NOTE: NSString draws in UIKit referential i.e. renders upside-down compared to CGBitmapContext referential
-	UIGraphicsPushContext(context);
-	[string drawInRect:CGRectMake(0, 0, dimensions.width, dimensions.height) withFont:font lineBreakMode:lineBreakMode alignment:alignment];
-	UIGraphicsPopContext();
 
-	CGSize constraint = CGSizeMake(dimensions.width, dimensions.height);
- 	CGSize fontblocksize = [string sizeWithFont:font constrainedToSize:constraint lineBreakMode:lineBreakMode];
-//	CGFloat fontblockheight = MAX(fontblocksize.height, 44.0f);
+//    CGSize constraint = CGSizeMake(dimensions.width, dimensions.height);
+// 	CGSize fontblocksize = [string sizeWithFont:font constrainedToSize:constraint lineBreakMode:lineBreakMode];
+    //	CGFloat fontblockheight = MAX(fontblocksize.height, 44.0f);
+	
+    UIGraphicsPushContext(context);
+//    CGContextSetTextDrawingMode(context, kCGTextFillStrokeClip);
+	CGSize fontblocksize =[string drawInRect:CGRectMake(0, 0, dimensions.width, dimensions.height) withFont:font lineBreakMode:lineBreakMode alignment:alignment];
+    if(fontblocksize.width == 0)
+    {
+        fontblocksize =[string drawInRect:CGRectMake(0, 0, dimensions.width, dimensions.height) withFont:font lineBreakMode:NSLineBreakByCharWrapping alignment:alignment];
+    }
+	UIGraphicsPopContext();
 	CGFloat fontblockheight = fontblocksize.height;
 	_fontblockheight = fontblockheight;
 	
+    
 //	self = [self initWithData:data pixelFormat:kTexture2DPixelFormat_A8 pixelsWide:width pixelsHigh:height contentSize:dimensions];
     self = [self initWithData:data pixelFormat:kTexture2DPixelFormat_RGBA8888 pixelsWide:width pixelsHigh:height contentSize:dimensions];
 	
@@ -439,15 +450,19 @@ extern GLuint _textureUniform;
         CGColorRelease(color);
 //        CGColorSpaceRelease(cspace);
     }
-    UIGraphicsPushContext(context);
-	[string drawInRect:CGRectMake(shadowBlur, 0, dimensions.width, dimensions.height) withFont:font lineBreakMode:lineBreakMode alignment:alignment];
-    UIGraphicsPopContext();
-	
-	CGSize constraint = CGSizeMake(dimensions.width, dimensions.height);
+
+    CGSize constraint = CGSizeMake(dimensions.width, dimensions.height);
  	CGSize fontblocksize = [string sizeWithFont:font constrainedToSize:constraint lineBreakMode:lineBreakMode];
 	//	CGFloat fontblockheight = MAX(fontblocksize.height, 44.0f);
 	CGFloat fontblockheight = fontblocksize.height;
 	_fontblockheight = fontblockheight;
+
+    
+    UIGraphicsPushContext(context);
+//    CGContextSetTextDrawingMode(context, kCGTextFillStrokeClip);
+	[string drawInRect:CGRectMake(shadowBlur, 0, dimensions.width, dimensions.height) withFont:font lineBreakMode:lineBreakMode alignment:alignment];
+    UIGraphicsPopContext();
+	
 	
     self = [self initWithData:data pixelFormat:kTexture2DPixelFormat_RGBA8888 pixelsWide:width pixelsHigh:height contentSize:dimensions];
 	

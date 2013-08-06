@@ -121,7 +121,8 @@ upload_script(struct mg_connection *conn,
 // gessl this service function fixes the bug for byte-uploads.
 char* mmemmem(char* str1, long len1, char* str2, long len2)
 {
-	for(long i=0; i<len1-len2; i++)
+    long i;
+	for(i=0; i<len1-len2; i++)
 	{
 		if(!memcmp(str1+i,str2,len2)) return str1+i;
 	}

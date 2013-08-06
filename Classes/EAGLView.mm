@@ -24,6 +24,8 @@
 #import "urSound.h"
 #import "httpServer.h"
 #include <arpa/inet.h>
+#include <stdlib.h>
+#include <sys/stat.h>
 
 #define DEGREES_TO_RADIANS(x) (M_PI * x / 180.0)
 
@@ -111,6 +113,21 @@ string errorfontPath;
 }
 #endif
 
+@end
+
+
+
+@implementation urFilterHandler
+#ifdef GPUIMAGE
+#pragma mark -
+#pragma mark GPUImageTextureOutputDelegate delegate metho
+
+- (void)newFrameReadyFromTextureOutput:(GPUImageTextureOutput *)callbackTextureOutput;
+{
+    if(callbackTextureOutput && region && region->texture)
+        region->texture->_filterTexture = callbackTextureOutput.texture;
+}
+#endif
 @end
 
 // A class extension to declare private methods
@@ -623,6 +640,11 @@ void decCameraUseBy(int dec)
     [super viewWillDisappear:animated];
 }
 
+- (void)viewDidDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+}
+
 #ifdef GPUIMAGE
 - (void)writeMovieFromTexture:(GLuint)textureID ofSize:(CGSize)size
 {
@@ -870,10 +892,10 @@ void decCameraUseBy(int dec)
 
 // Based on GPUImage example code
 
-- (void)setCameraFilterParameter:(double)value;
+- (void)setFilterParameter:(double)value forFilter:(GPUImageOutput<GPUImageInput> *)inputFilter withType:(GPUImageFilterType)currentfiltertype
 {
     value = (value+1)/2.0;
-     switch(currentfiltertype)
+    switch(currentfiltertype)
     {
         case GPUIMAGE_SEPIA: [(GPUImageSepiaFilter *)inputFilter setIntensity:value]; break;
         case GPUIMAGE_PIXELLATE: [(GPUImagePixellateFilter *)inputFilter setFractionalWidthOfAPixel:value]; break;
@@ -892,23 +914,23 @@ void decCameraUseBy(int dec)
 		case GPUIMAGE_HAZE: [(GPUImageHazeFilter *)inputFilter setDistance:value]; break;
 		case GPUIMAGE_THRESHOLD: [(GPUImageLuminanceThresholdFilter *)inputFilter setThreshold:value]; break;
         case GPUIMAGE_ADAPTIVETHRESHOLD: [(GPUImageAdaptiveThresholdFilter *)inputFilter setBlurSize:value]; break;
-//        case GPUIMAGE_DISSOLVE: [(GPUImageDissolveBlendFilter *)inputFilter setMix:value]; break;
-//        case GPUIMAGE_CHROMAKEY: [(GPUImageChromaKeyBlendFilter *)inputFilter setThresholdSensitivity:value]; break;
-//        case GPUIMAGE_KUWAHARA: [(GPUImageKuwaharaFilter *)inputFilter setRadius:round(value)]; break;
+            //        case GPUIMAGE_DISSOLVE: [(GPUImageDissolveBlendFilter *)inputFilter setMix:value]; break;
+            //        case GPUIMAGE_CHROMAKEY: [(GPUImageChromaKeyBlendFilter *)inputFilter setThresholdSensitivity:value]; break;
+            //        case GPUIMAGE_KUWAHARA: [(GPUImageKuwaharaFilter *)inputFilter setRadius:round(value)]; break;
         case GPUIMAGE_SWIRL: [(GPUImageSwirlFilter *)inputFilter setAngle:value*3]; break;
         case GPUIMAGE_EMBOSS: [(GPUImageEmbossFilter *)inputFilter setIntensity:value]; break;
         case GPUIMAGE_CANNYEDGEDETECTION: [(GPUImageCannyEdgeDetectionFilter *)inputFilter setBlurSize:value]; break;
             //        case GPUIMAGE_CANNYEDGEDETECTION: [(GPUImageCannyEdgeDetectionFilter *)inputFilter setLowerThreshold:value]; break;
-//        case GPUIMAGE_HARRISCORNERDETECTION: [(GPUImageHarrisCornerDetectionFilter *)inputFilter setThreshold:value]; break;
-//        case GPUIMAGE_NOBLECORNERDETECTION: [(GPUImageNobleCornerDetectionFilter *)inputFilter setThreshold:value]; break;
-//        case GPUIMAGE_SHITOMASIFEATUREDETECTION: [(GPUImageShiTomasiFeatureDetectionFilter *)inputFilter setThreshold:value]; break;
+            //        case GPUIMAGE_HARRISCORNERDETECTION: [(GPUImageHarrisCornerDetectionFilter *)inputFilter setThreshold:value]; break;
+            //        case GPUIMAGE_NOBLECORNERDETECTION: [(GPUImageNobleCornerDetectionFilter *)inputFilter setThreshold:value]; break;
+            //        case GPUIMAGE_SHITOMASIFEATUREDETECTION: [(GPUImageShiTomasiFeatureDetectionFilter *)inputFilter setThreshold:value]; break;
             //        case GPUIMAGE_HARRISCORNERDETECTION: [(GPUImageHarrisCornerDetectionFilter *)inputFilter setSensitivity:value]; break;
         case GPUIMAGE_SMOOTHTOON: [(GPUImageSmoothToonFilter *)inputFilter setBlurSize:value]; break;
             //        case GPUIMAGE_BULGE: [(GPUImageBulgeDistortionFilter *)inputFilter setRadius:value]; break;
         case GPUIMAGE_BULGE: [(GPUImageBulgeDistortionFilter *)inputFilter setScale:value*3]; break;
         case GPUIMAGE_TONECURVE: [(GPUImageToneCurveFilter *)inputFilter setBlueControlPoints:[NSArray arrayWithObjects:[NSValue valueWithCGPoint:CGPointMake(0.0, 0.0)], [NSValue valueWithCGPoint:CGPointMake(0.5, value)], [NSValue valueWithCGPoint:CGPointMake(1.0, 0.75)], nil]]; break;
         case GPUIMAGE_PINCH: [(GPUImagePinchDistortionFilter *)inputFilter setScale:value*2]; break;
-//        case GPUIMAGE_PERLINNOISE:  [(GPUImagePerlinNoiseFilter *)inputFilter setScale:value]; break;
+            //        case GPUIMAGE_PERLINNOISE:  [(GPUImagePerlinNoiseFilter *)inputFilter setScale:value]; break;
         case GPUIMAGE_MOSAIC:  [(GPUImageMosaicFilter *)inputFilter setDisplayTileSize:CGSizeMake(value, value)]; break;
         case GPUIMAGE_VIGNETTE: [(GPUImageVignetteFilter *)inputFilter setVignetteEnd:value]; break;
         case GPUIMAGE_GAUSSIAN: [(GPUImageGaussianBlurFilter *)inputFilter setBlurSize:value]; break;
@@ -946,36 +968,29 @@ void decCameraUseBy(int dec)
         case GPUIMAGE_MONOCHROME: [(GPUImageMonochromeFilter *)inputFilter setIntensity:value]; break;
         case GPUIMAGE_HUE: [(GPUImageHueFilter *)inputFilter setHue:(value+1.0)*180.0]; break;
         case GPUIMAGE_WHITEBALANCE: [(GPUImageWhiteBalanceFilter *)inputFilter setTemperature:value]; break;
-//        case GPUIMAGE_LOWPASS: [(GPUImageLowPassFilter *)inputFilter setFilterStrength:value]; break;
-//        case GPUIMAGE_HIGHPASS: [(GPUImageHighPassFilter *)inputFilter setFilterStrength:value]; break;
-//        case GPUIMAGE_MOTIONDETECTOR: [(GPUImageMotionDetector *)inputFilter setLowPassFilterStrength:value]; break;
-//        case GPUIMAGE_THRESHOLDSKETCH: [(GPUImageThresholdSketchFilter *)inputFilter setThreshold:value]; break;
+            //        case GPUIMAGE_LOWPASS: [(GPUImageLowPassFilter *)inputFilter setFilterStrength:value]; break;
+            //        case GPUIMAGE_HIGHPASS: [(GPUImageHighPassFilter *)inputFilter setFilterStrength:value]; break;
+            //        case GPUIMAGE_MOTIONDETECTOR: [(GPUImageMotionDetector *)inputFilter setLowPassFilterStrength:value]; break;
+            //        case GPUIMAGE_THRESHOLDSKETCH: [(GPUImageThresholdSketchFilter *)inputFilter setThreshold:value]; break;
         case GPUIMAGE_SPHEREREFRACTION: [(GPUImageSphereRefractionFilter *)inputFilter setRadius:value]; break;
         case GPUIMAGE_GLASSSPHERE: [(GPUImageGlassSphereFilter *)inputFilter setRadius:value]; break;
-//        case GPUIMAGE_HIGHLIGHTSHADOW: [(GPUImageHighlightShadowFilter *)inputFilter setHighlights:value]; break;
+            //        case GPUIMAGE_HIGHLIGHTSHADOW: [(GPUImageHighlightShadowFilter *)inputFilter setHighlights:value]; break;
         case GPUIMAGE_LOCALBINARYPATTERN:
         {
-                [(GPUImageLocalBinaryPatternFilter *)inputFilter setTexelWidth:value];
-                [(GPUImageLocalBinaryPatternFilter *)inputFilter setTexelHeight:value];
+            [(GPUImageLocalBinaryPatternFilter *)inputFilter setTexelWidth:value];
+            [(GPUImageLocalBinaryPatternFilter *)inputFilter setTexelHeight:value];
         }; break;
         default: break;
     }
 }
 
-- (void)setCameraFilter:(GPUImageFilterType)filterType
+- (void)setCameraFilterParameter:(double)value;
 {
-    if(inputFilter == nil)
-    {
-        [videoCamera removeTarget:textureOutput];
-    }
-    else
-    {
-        [videoCamera removeTarget:inputFilter];
-        [inputFilter removeTarget:textureOutput];
-    }
+    [self setFilterParameter:value forFilter:inputFilter withType:currentfiltertype];
+}
 
-    currentfiltertype = filterType;
-    
+- (GPUImageOutput<GPUImageInput> *)createFilter:(GPUImageFilterType)filterType
+{
     switch (filterType)
     {
         case GPUIMAGE_SEPIA:
@@ -1055,10 +1070,10 @@ void decCameraUseBy(int dec)
         {
             inputFilter = [[GPUImageCropFilter alloc] initWithCropRegion:CGRectMake(0.0, 0.0, 1.0, 0.25)];
         }; break;
-/*		case GPUIMAGE_MASK:
-		{
-			[(GPUImageFilter*)inputFilter setBackgroundColorRed:0.0 green:1.0 blue:0.0 alpha:1.0];
-        }; break;*/
+            /*		case GPUIMAGE_MASK:
+             {
+             [(GPUImageFilter*)inputFilter setBackgroundColorRed:0.0 green:1.0 blue:0.0 alpha:1.0];
+             }; break;*/
         case GPUIMAGE_TRANSFORM:
         {
             inputFilter = [[GPUImageTransformFilter alloc] init];
@@ -1084,21 +1099,21 @@ void decCameraUseBy(int dec)
         {
             inputFilter = [[GPUImageXYDerivativeFilter alloc] init];
         }; break;
-/*        case GPUIMAGE_HARRISCORNERDETECTION:
-        {
-            inputFilter = (GPUImageFilter*)[[GPUImageHarrisCornerDetectionFilter alloc] init];
-            [(GPUImageHarrisCornerDetectionFilter *)inputFilter setThreshold:0.20];            
-        }; break;
-        case GPUIMAGE_NOBLECORNERDETECTION:
-        {
-            inputFilter = (GPUImageFilter*)[[GPUImageNobleCornerDetectionFilter alloc] init];
-            [(GPUImageNobleCornerDetectionFilter *)inputFilter setThreshold:0.20];            
-        }; break;
-        case GPUIMAGE_SHITOMASIFEATUREDETECTION:
-        {
-            inputFilter = (GPUImageFilter*)[[GPUImageShiTomasiFeatureDetectionFilter alloc] init];
-            [(GPUImageShiTomasiFeatureDetectionFilter *)inputFilter setThreshold:0.20];            
-        }; break;*/
+            /*        case GPUIMAGE_HARRISCORNERDETECTION:
+             {
+             inputFilter = (GPUImageFilter*)[[GPUImageHarrisCornerDetectionFilter alloc] init];
+             [(GPUImageHarrisCornerDetectionFilter *)inputFilter setThreshold:0.20];
+             }; break;
+             case GPUIMAGE_NOBLECORNERDETECTION:
+             {
+             inputFilter = (GPUImageFilter*)[[GPUImageNobleCornerDetectionFilter alloc] init];
+             [(GPUImageNobleCornerDetectionFilter *)inputFilter setThreshold:0.20];
+             }; break;
+             case GPUIMAGE_SHITOMASIFEATUREDETECTION:
+             {
+             inputFilter = (GPUImageFilter*)[[GPUImageShiTomasiFeatureDetectionFilter alloc] init];
+             [(GPUImageShiTomasiFeatureDetectionFilter *)inputFilter setThreshold:0.20];
+             }; break;*/
         case GPUIMAGE_PREWITTEDGEDETECTION:
         {
             inputFilter = [[GPUImagePrewittEdgeDetectionFilter alloc] init];
@@ -1115,11 +1130,11 @@ void decCameraUseBy(int dec)
         case GPUIMAGE_TOON:
         {
             inputFilter = [[GPUImageToonFilter alloc] init];
-        }; break;            
+        }; break;
         case GPUIMAGE_SMOOTHTOON:
         {
             inputFilter = (GPUImageFilter*)[[GPUImageSmoothToonFilter alloc] init];
-        }; break;            
+        }; break;
         case GPUIMAGE_TILTSHIFT:
         {
             inputFilter = (GPUImageFilter*)[[GPUImageTiltShiftFilter alloc] init];
@@ -1131,16 +1146,16 @@ void decCameraUseBy(int dec)
         {
             inputFilter = [[GPUImageCGAColorspaceFilter alloc] init];
         }; break;
-/*        case GPUIMAGE_CONVOLUTION:
-        {
-            inputFilter = [[GPUImage3x3ConvolutionFilter alloc] init];
-            [(GPUImage3x3ConvolutionFilter *)inputFilter setConvolutionKernel:(GPUMatrix3x3){
-                {-1.0f,  0.0f, 1.0f},
-                {-2.0f, 0.0f, 2.0f},
-                {-1.0f,  0.0f, 1.0f}
-            }];
-            
-        }; break;*/
+            /*        case GPUIMAGE_CONVOLUTION:
+             {
+             inputFilter = [[GPUImage3x3ConvolutionFilter alloc] init];
+             [(GPUImage3x3ConvolutionFilter *)inputFilter setConvolutionKernel:(GPUMatrix3x3){
+             {-1.0f,  0.0f, 1.0f},
+             {-2.0f, 0.0f, 2.0f},
+             {-1.0f,  0.0f, 1.0f}
+             }];
+             
+             }; break;*/
         case GPUIMAGE_EMBOSS:
         {
             inputFilter = [[GPUImageEmbossFilter alloc] init];
@@ -1182,105 +1197,105 @@ void decCameraUseBy(int dec)
             inputFilter = (GPUImageFilter*)[[GPUImageRGBClosingFilter alloc] initWithRadius:4];
 		}; break;
             
-/*        case GPUIMAGE_PERLINNOISE:
-        {
-            inputFilter = [[GPUImagePerlinNoiseFilter alloc] init];
-        }; break;*/
-/*        case GPUIMAGE_VORONI: 
-        {
-            GPUImageJFAVoroniFilter *jfa = [[GPUImageJFAVoroniFilter alloc] init];
-            [jfa setSizeInPixels:CGSizeMake(1024.0, 1024.0)];
-            
-            sourcePicture = [[GPUImagePicture alloc] initWithImage:[UIImage imageNamed:@"voroni_points2.png"]];
-            
-            [sourcePicture addTarget:jfa];
-            
-            inputFilter = [[GPUImageVoroniConsumerFilter alloc] init];
-            
-            [jfa setSizeInPixels:CGSizeMake(1024.0, 1024.0)];
-            [(GPUImageVoroniConsumerFilter *)inputFilter setSizeInPixels:CGSizeMake(1024.0, 1024.0)];
-            
-            [videoCamera addTarget:filter];
-            [jfa addTarget:filter];
-            [sourcePicture processImage];
-            
-        }; break; */
+            /*        case GPUIMAGE_PERLINNOISE:
+             {
+             inputFilter = [[GPUImagePerlinNoiseFilter alloc] init];
+             }; break;*/
+            /*        case GPUIMAGE_VORONI:
+             {
+             GPUImageJFAVoroniFilter *jfa = [[GPUImageJFAVoroniFilter alloc] init];
+             [jfa setSizeInPixels:CGSizeMake(1024.0, 1024.0)];
+             
+             sourcePicture = [[GPUImagePicture alloc] initWithImage:[UIImage imageNamed:@"voroni_points2.png"]];
+             
+             [sourcePicture addTarget:jfa];
+             
+             inputFilter = [[GPUImageVoroniConsumerFilter alloc] init];
+             
+             [jfa setSizeInPixels:CGSizeMake(1024.0, 1024.0)];
+             [(GPUImageVoroniConsumerFilter *)inputFilter setSizeInPixels:CGSizeMake(1024.0, 1024.0)];
+             
+             [videoCamera addTarget:filter];
+             [jfa addTarget:filter];
+             [sourcePicture processImage];
+             
+             }; break; */
         case GPUIMAGE_MOSAIC:
         {
             inputFilter = [[GPUImageMosaicFilter alloc] init];
             [(GPUImageMosaicFilter *)inputFilter setTileSet:@"Ornament1.png"];
             [(GPUImageMosaicFilter *)inputFilter setColorOn:NO];
             //[(GPUImageMosaicFilter *)inputFilter setTileSet:@"dotletterstiles.png"];
-            //[(GPUImageMosaicFilter *)inputFilter setTileSet:@"curvies.png"]; 
+            //[(GPUImageMosaicFilter *)inputFilter setTileSet:@"curvies.png"];
             
             [inputFilter setInputRotation:kGPUImageRotateRight atIndex:0];
             
         }; break;
-/*        case GPUIMAGE_CHROMAKEY:
-        {
-            inputFilter = [[GPUImageChromaKeyBlendFilter alloc] init];
-            [(GPUImageChromaKeyBlendFilter *)inputFilter setColorToReplaceRed:0.0 green:1.0 blue:0.0];
-        }; break;*/
-/*        case GPUIMAGE_MULTIPLY:
-        {
-            inputFilter = [[GPUImageMultiplyBlendFilter alloc] init];
-        }; break;*/
-/*        case GPUIMAGE_OVERLAY:
-        {
-            inputFilter = [[GPUImageOverlayBlendFilter alloc] init];
-        }; break;*/
-/*        case GPUIMAGE_LIGHTEN:
-        {
-            inputFilter = [[GPUImageLightenBlendFilter alloc] init];
-        }; break;
-        case GPUIMAGE_DARKEN:
-        {
-            inputFilter = [[GPUImageDarkenBlendFilter alloc] init];
-        }; break;*/
-/*        case GPUIMAGE_DISSOLVE:
-        {
-            inputFilter = [[GPUImageDissolveBlendFilter alloc] init];
-        }; break;*/
-/*        case GPUIMAGE_SCREENBLEND:
-        {
-            inputFilter = [[GPUImageScreenBlendFilter alloc] init];
-        }; break;
-        case GPUIMAGE_COLORBURN:
-        {
-            inputFilter = [[GPUImageColorBurnBlendFilter alloc] init];
-        }; break;
-        case GPUIMAGE_COLORDODGE:
-        {
-            inputFilter = [[GPUImageColorDodgeBlendFilter alloc] init];
-        }; break;*/
-/*        case GPUIMAGE_EXCLUSIONBLEND:
-        {
-            inputFilter = [[GPUImageExclusionBlendFilter alloc] init];
-        }; break;*/
-/*        case GPUIMAGE_DIFFERENCEBLEND:
-        {
-            inputFilter = [[GPUImageDifferenceBlendFilter alloc] init];
-        }; break;
-		case GPUIMAGE_SUBTRACTBLEND:
-        {
-            inputFilter = [[GPUImageSubtractBlendFilter alloc] init];
-        }; break;
-        case GPUIMAGE_HARDLIGHTBLEND:
-        {
-            inputFilter = [[GPUImageHardLightBlendFilter alloc] init];
-        }; break;
-        case GPUIMAGE_SOFTLIGHTBLEND:
-        {
-            inputFilter = [[GPUImageSoftLightBlendFilter alloc] init];
-        }; break;*/
-/*        case GPUIMAGE_CUSTOM:
-        {
-            inputFilter = [[GPUImageFilter alloc] initWithFragmentShaderFromFile:@"CustomFilter"];
-        }; break;*/
-/*        case GPUIMAGE_KUWAHARA:
-        {
-            inputFilter = [[GPUImageKuwaharaFilter alloc] init];
-        }; break;*/
+            /*        case GPUIMAGE_CHROMAKEY:
+             {
+             inputFilter = [[GPUImageChromaKeyBlendFilter alloc] init];
+             [(GPUImageChromaKeyBlendFilter *)inputFilter setColorToReplaceRed:0.0 green:1.0 blue:0.0];
+             }; break;*/
+            /*        case GPUIMAGE_MULTIPLY:
+             {
+             inputFilter = [[GPUImageMultiplyBlendFilter alloc] init];
+             }; break;*/
+            /*        case GPUIMAGE_OVERLAY:
+             {
+             inputFilter = [[GPUImageOverlayBlendFilter alloc] init];
+             }; break;*/
+            /*        case GPUIMAGE_LIGHTEN:
+             {
+             inputFilter = [[GPUImageLightenBlendFilter alloc] init];
+             }; break;
+             case GPUIMAGE_DARKEN:
+             {
+             inputFilter = [[GPUImageDarkenBlendFilter alloc] init];
+             }; break;*/
+            /*        case GPUIMAGE_DISSOLVE:
+             {
+             inputFilter = [[GPUImageDissolveBlendFilter alloc] init];
+             }; break;*/
+            /*        case GPUIMAGE_SCREENBLEND:
+             {
+             inputFilter = [[GPUImageScreenBlendFilter alloc] init];
+             }; break;
+             case GPUIMAGE_COLORBURN:
+             {
+             inputFilter = [[GPUImageColorBurnBlendFilter alloc] init];
+             }; break;
+             case GPUIMAGE_COLORDODGE:
+             {
+             inputFilter = [[GPUImageColorDodgeBlendFilter alloc] init];
+             }; break;*/
+            /*        case GPUIMAGE_EXCLUSIONBLEND:
+             {
+             inputFilter = [[GPUImageExclusionBlendFilter alloc] init];
+             }; break;*/
+            /*        case GPUIMAGE_DIFFERENCEBLEND:
+             {
+             inputFilter = [[GPUImageDifferenceBlendFilter alloc] init];
+             }; break;
+             case GPUIMAGE_SUBTRACTBLEND:
+             {
+             inputFilter = [[GPUImageSubtractBlendFilter alloc] init];
+             }; break;
+             case GPUIMAGE_HARDLIGHTBLEND:
+             {
+             inputFilter = [[GPUImageHardLightBlendFilter alloc] init];
+             }; break;
+             case GPUIMAGE_SOFTLIGHTBLEND:
+             {
+             inputFilter = [[GPUImageSoftLightBlendFilter alloc] init];
+             }; break;*/
+            /*        case GPUIMAGE_CUSTOM:
+             {
+             inputFilter = [[GPUImageFilter alloc] initWithFragmentShaderFromFile:@"CustomFilter"];
+             }; break;*/
+            /*        case GPUIMAGE_KUWAHARA:
+             {
+             inputFilter = [[GPUImageKuwaharaFilter alloc] init];
+             }; break;*/
             
         case GPUIMAGE_VIGNETTE:
         {
@@ -1341,7 +1356,7 @@ void decCameraUseBy(int dec)
         {
             inputFilter = [[GPUImageMonochromeFilter alloc] init];
             [(GPUImageMonochromeFilter *)filter setColor:(GPUVector4){0.0f, 0.0f, 1.0f, 1.f}];
-        }; break;            
+        }; break;
         case GPUIMAGE_HUE:
         {
             inputFilter = [[GPUImageHueFilter alloc] init];
@@ -1350,22 +1365,22 @@ void decCameraUseBy(int dec)
         {
             inputFilter = [[GPUImageWhiteBalanceFilter alloc] init];
         }; break;
-/*        case GPUIMAGE_LOWPASS:
-        {
-            inputFilter = [[GPUImageLowPassFilter alloc] init];
-        }; break;
-        case GPUIMAGE_HIGHPASS:
-        {
-            inputFilter = [[GPUImageHighPassFilter alloc] init];
-        }; break;*/
-/*        case GPUIMAGE_MOTIONDETECTOR:
-        {
-            inputFilter = [[GPUImageMotionDetector alloc] init];
-        }; break;*/
-/*        case GPUIMAGE_THRESHOLDSKETCH:
-        {
-            inputFilter = [[GPUImageThresholdSketchFilter alloc] init];
-        }; break;*/
+            /*        case GPUIMAGE_LOWPASS:
+             {
+             inputFilter = [[GPUImageLowPassFilter alloc] init];
+             }; break;
+             case GPUIMAGE_HIGHPASS:
+             {
+             inputFilter = [[GPUImageHighPassFilter alloc] init];
+             }; break;*/
+            /*        case GPUIMAGE_MOTIONDETECTOR:
+             {
+             inputFilter = [[GPUImageMotionDetector alloc] init];
+             }; break;*/
+            /*        case GPUIMAGE_THRESHOLDSKETCH:
+             {
+             inputFilter = [[GPUImageThresholdSketchFilter alloc] init];
+             }; break;*/
         case GPUIMAGE_SPHEREREFRACTION:
         {
             inputFilter = [[GPUImageSphereRefractionFilter alloc] init];
@@ -1374,10 +1389,10 @@ void decCameraUseBy(int dec)
         {
             inputFilter = [[GPUImageGlassSphereFilter alloc] init];
         }; break;
-/*        case GPUIMAGE_HIGHLIGHTSHADOW:
-        {
-            inputFilter = [[GPUImageHighlightShadowFilter alloc] init];
-        }; break;*/
+            /*        case GPUIMAGE_HIGHLIGHTSHADOW:
+             {
+             inputFilter = [[GPUImageHighlightShadowFilter alloc] init];
+             }; break;*/
         case GPUIMAGE_LOCALBINARYPATTERN:
         {
             inputFilter = [[GPUImageLocalBinaryPatternFilter alloc] init];
@@ -1385,13 +1400,31 @@ void decCameraUseBy(int dec)
             
             
         default: 
-/*            inputFilter = nil; 
-            currentfiltertype = GPUIMAGE_NONE;
-            [videoCamera addTarget:textureOutput];
-            return;*/
+            /*            inputFilter = nil; 
+             currentfiltertype = GPUIMAGE_NONE;
+             [videoCamera addTarget:textureOutput];
+             return;*/
             inputFilter = [[GPUImageSaturationFilter alloc] init];
             break;
     }
+    return inputFilter;
+}
+
+- (void)setCameraFilter:(GPUImageFilterType)filterType
+{
+    if(inputFilter == nil)
+    {
+        [videoCamera removeTarget:textureOutput];
+    }
+    else
+    {
+        [videoCamera removeTarget:inputFilter];
+        [inputFilter removeTarget:textureOutput];
+    }
+
+    currentfiltertype = filterType;
+    
+    inputFilter = [self createFilter:filterType];
     [inputFilter addTarget:textureOutput];
     [videoCamera addTarget:inputFilter];
 //    [videoCamera addTarget:filter];
@@ -2048,6 +2081,11 @@ static EAGLSharegroup* theSharegroup = nil;
 #endif
         animationInterval = 1.0 / 60.0; // We look for 60 FPS
 
+        ExternalKeyboardReaderView *control = [[ExternalKeyboardReaderView alloc] initWithFrame:CGRectZero];
+        [self addSubview:control];
+        control.active = YES;
+        control.delegate = self;
+        [control release];
     }
 	
 	// Set up the ability to track multiple touches.
@@ -2085,6 +2123,11 @@ static EAGLSharegroup* theSharegroup = nil;
 #endif
         animationInterval = 1.0 / 60.0; // We look for 60 FPS
 		
+        ExternalKeyboardReaderView *control = [[ExternalKeyboardReaderView alloc] initWithFrame:CGRectZero];
+        [self addSubview:control];
+        control.active = YES;
+        control.delegate = self;
+        [control release];
     }
 	
 	// Set up the ability to track multiple touches.
@@ -2544,7 +2587,8 @@ void drawPointToTexture(urAPI_Texture_t *texture, float x, float y)
 #endif
     
 	Texture2D *bgtexture = texture->backgroundTex;
-	y = texture->backgroundTex->_height - y;
+//	y = texture->backgroundTex->_height - y;
+	y = SCREEN_HEIGHT - y;
 
 	// allocate frame buffer
 	if(textureFrameBuffer == -1)
@@ -2707,10 +2751,14 @@ void drawQuadToTexture(urAPI_Texture_t *texture, float x1, float y1, float x2, f
 #endif
     
 	Texture2D *bgtexture = texture->backgroundTex;
-	y1 = texture->backgroundTex->_height - y1;
+/*	y1 = texture->backgroundTex->_height - y1;
 	y2 = texture->backgroundTex->_height - y2;
 	y3 = texture->backgroundTex->_height - y3;
-	y4 = texture->backgroundTex->_height - y4;
+	y4 = texture->backgroundTex->_height - y4;*/
+	y1 = SCREEN_HEIGHT - y1;
+	y2 = SCREEN_HEIGHT - y2;
+	y3 = SCREEN_HEIGHT - y3;
+	y4 = SCREEN_HEIGHT - y4;
 	
 	// allocate frame buffer
 	if(textureFrameBuffer == -1)
@@ -2880,7 +2928,8 @@ void drawEllipseToTexture(urAPI_Texture_t *texture, float x, float y, float w, f
 #endif
     
 	Texture2D *bgtexture = texture->backgroundTex;
-	y = texture->backgroundTex->_height - y;
+//	y = texture->backgroundTex->_height - y;
+	y = SCREEN_HEIGHT - y;
 	
 	// allocate frame buffer
 	if(textureFrameBuffer == -1)
@@ -3035,8 +3084,13 @@ void drawLineToTexture(urAPI_Texture_t *texture, float startx, float starty, flo
     
 	Texture2D *bgtexture = texture->backgroundTex;
 	
-	starty = texture->backgroundTex->_height - starty;
-	endy = texture->backgroundTex->_height - endy;
+//    std::cerr << starty << " " << texture->backgroundTex->_height << std::endl;
+//    NSLog(@"%f %d",starty,texture->backgroundTex->_height);
+//	starty = texture->backgroundTex->_height - starty;
+//	endy = texture->backgroundTex->_height - endy;
+    starty = SCREEN_HEIGHT - starty;
+    endy = SCREEN_HEIGHT - endy;
+
 	// allocate frame buffer
 	if(textureFrameBuffer == -1)
 		CreateFrameBuffer();
@@ -3410,10 +3464,85 @@ void freeMovieTexture(urAPI_Region_t* t)
 
 char currentmediapath[PATH_MAX];
 
-char* accessiblePathSystemFirst(char* fn)
+const char* accessiblePathSystemFirst(const char* fn)
 {
-//    if(strlen(fn)<1) return NULL;
+    //if(strlen(fn)<1) return NULL;
+
+    struct stat s;
+    if( stat(fn,&s) == 0 )
+    {
+        if( s.st_mode & S_IFDIR )
+        {
+            return NULL;
+        }
+        else if( s.st_mode & S_IFREG )
+        {
+            return fn;
+        }
+        else
+        {
+            return NULL;
+        }
+    }
+    else
+    {
+        //error
+        const char* syspath = getSystemPath();
+        strcpy(currentmediapath,syspath);
+        int len = strlen(currentmediapath);
+        currentmediapath[len]='/'; // System path does not have a trailing / in iOS
+        currentmediapath[len+1]='\0';
+        strcat(currentmediapath,fn);
+        if( stat(currentmediapath,&s) == 0 )
+        {
+            if( s.st_mode & S_IFDIR )
+            {
+                return NULL;
+            }
+            else if( s.st_mode & S_IFREG )
+            {
+                return currentmediapath;
+            }
+            else
+            {
+                return NULL;
+            }
+        }
+        else
+        {
+            //error
+            const char* docpath = getDocumentPath();
+            strcpy(currentmediapath,docpath);
+            //            int len = strlen(currentmediapath); // Document path DOES have a trailing / in iOS. Consistency ftw.
+            //            currentmediapath[len]='/';
+            //            currentmediapath[len+1]='\0';
+            
+            strcat(currentmediapath,fn);
+            if( stat(currentmediapath,&s) == 0 )
+            {
+                if( s.st_mode & S_IFDIR )
+                {
+                    return NULL;
+                }
+                else if( s.st_mode & S_IFREG )
+                {
+                    return currentmediapath;
+                }
+                else
+                {
+                    return NULL;
+                }
+            }
+            else
+            {
+                //error
+                return NULL; // No path worked.
+            }
+        }
+    }
     
+    
+/*
     if( access( fn, F_OK ) != -1 ) {
         return fn;
         // file exists
@@ -3444,6 +3573,7 @@ char* accessiblePathSystemFirst(char* fn)
             }
         }
     }
+ */
 }
 
 void instantiateTexture(urAPI_Region_t* t)
@@ -3453,7 +3583,7 @@ void instantiateTexture(urAPI_Region_t* t)
 //	NSString *filePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:texturepathstr]; // Leak here, fix.
 //	UIImage* textureimage = [UIImage imageNamed:texturepathstr];
     
-    char* pathstr = accessiblePathSystemFirst(t->texture->texturepath);
+    const char* pathstr = accessiblePathSystemFirst(t->texture->texturepath);
     if(pathstr!=NULL)
     {
     texturepathstr = [[NSString alloc] initWithUTF8String:pathstr];
@@ -3514,10 +3644,30 @@ void instantiateTexture(urAPI_Region_t* t)
     else
         instantiateBlankTexture(t);
     
+    if(t->texture->isTiled)
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        GLenum err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int a = err;
+        }
+    }
+    else {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
+    
 }
 
 void instantiateBlankTexture(urAPI_Region_t* t)
-{	
+{
 	t->texture->backgroundTex = createBlankTexture(t->width, t->height);
 	t->texture->width = t->width;
 	t->texture->height = t->height;
@@ -4040,11 +4190,10 @@ void renderTextLabel(urAPI_Region_t* t)
         int a = err;
     }
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glBindFramebufferOES(GL_FRAMEBUFFER_OES, viewFramebuffer);
     glViewport(0, 0, backingWidth, backingHeight);
-//	glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
 #ifdef RENDERTOTEXTURE
     if(bgtextureFrameBuffer == -1)
@@ -4284,7 +4433,7 @@ void renderTextLabel(urAPI_Region_t* t)
                 {
                     int a = err;
                 }
-
+                
 				switch(t->texture->blendmode)
 				{
 					case BLEND_DISABLED:
@@ -4365,9 +4514,32 @@ void renderTextLabel(urAPI_Region_t* t)
 
 					glTexCoordPointer(2, GL_FLOAT, 0, coordinates);
 #endif
-                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-					if(t->texture->usecamera)
+
+                    if(t->texture->isTiled)
+                    {
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                        err = glGetError();
+                        if(err != GL_NO_ERROR)
+                        {
+                            int a = err;
+                        }
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+                        err = glGetError();
+                        if(err != GL_NO_ERROR)
+                        {
+                            int a = err;
+                        }
+                    }
+                    else {
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                    }
+                    
+					if(t->texture->usecamera
+#ifdef GPUIMAGE
+                       || t->texture->inputFilter
+#endif
+                       )
 					{
 						CGRect rect = CGRectMake(t->left,t->bottom,t->width,t->height);
 						GLfloat vertices[] = {  rect.origin.x,                                                  rect.origin.y,                                                  0.0,
@@ -4375,7 +4547,17 @@ void renderTextLabel(urAPI_Region_t* t)
 							rect.origin.x,                                                  rect.origin.y + rect.size.height,               0.0,
 							rect.origin.x + rect.size.width,                rect.origin.y + rect.size.height,               0.0 };
 						
-						glBindTexture(GL_TEXTURE_2D, cameraTexture);
+#ifdef GPUIMAGE
+                        if(!t->texture->filterHandler)
+#endif
+                            glBindTexture(GL_TEXTURE_2D, cameraTexture);
+#ifdef GPUIMAGE
+                        else
+                        {
+//                            [t->texture->filterInput processTextureWithFrameTime:CMTimeMake(totalelapsedtime*1000,1000)];
+                            glBindTexture(GL_TEXTURE_2D, t->texture->_filterTexture);
+                        }
+#endif
 
 #ifdef DEBUGSHOWFRAMECOUNT
                         char errorstrbuf[16];
@@ -4491,28 +4673,33 @@ void renderTextLabel(urAPI_Region_t* t)
 #endif
                     else
 					{
+//                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                        
 						[t->texture->backgroundTex drawInRect:CGRectMake(t->left,t->bottom,t->width,t->height)];
 					}
-					
-					if(t->texture->isTiled)
-					{
-						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                    
+                    /*
+                    if(t->texture->isTiled)
+                    {
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
                         err = glGetError();
                         if(err != GL_NO_ERROR)
                         {
                             int a = err;
                         }
-						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);					
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
                         err = glGetError();
                         if(err != GL_NO_ERROR)
                         {
                             int a = err;
                         }
-					}
-					else {
-						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);					
-					}
+                    }
+                    else {
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                    }
+                    */
 					glEnable(GL_BLEND);
                     err = glGetError();
                     if(err != GL_NO_ERROR)
@@ -4533,6 +4720,9 @@ void renderTextLabel(urAPI_Region_t* t)
                         int a = err;
                     }
                     glActiveTexture(GL_TEXTURE0);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
                     glUniform1i(_textureUniform,0);
                     glBindTexture(GL_TEXTURE_2D, whiteTexture);
                     
@@ -4579,6 +4769,9 @@ void renderTextLabel(urAPI_Region_t* t)
 #ifdef OPENGLES2
                 glUseProgram(shaderProgram);
                 glActiveTexture(GL_TEXTURE0);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
                 glUniform1i(_textureUniform,0);
 #else
 				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -4858,6 +5051,8 @@ void renderTextLabel(urAPI_Region_t* t)
     glBindFramebufferOES(GL_FRAMEBUFFER_OES, viewFramebuffer);
 
     glBindTexture(GL_TEXTURE_2D, bgname);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     
     if(err != GL_NO_ERROR)
     {
@@ -4866,9 +5061,10 @@ void renderTextLabel(urAPI_Region_t* t)
     
     for(int i=0;i<16;i++) // default regions are white
 		squareColors[i] = 255;
+#ifdef OPENGLES2
     glVertexAttribPointer(ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, squareColors);
     glEnableVertexAttribArray(ATTRIB_COLOR);
-    
+#endif
 	GLfloat         coordinates[] = { 0,              0,
         1.0,  0,
         0,    1.0,
@@ -4881,10 +5077,12 @@ void renderTextLabel(urAPI_Region_t* t)
 		0.0,                        backingHeight,      0.0,
         backingWidth,        backingHeight,      0.0 };
     
+#ifdef OPENGLES2
     glVertexAttribPointer(ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, vertices);
     glEnableVertexAttribArray(ATTRIB_VERTEX);
     glVertexAttribPointer(ATTRIB_TEXTUREPOSITON, 2, GL_FLOAT, 0, 0, coordinates);
     glEnableVertexAttribArray(ATTRIB_TEXTUREPOSITON);
+#endif
     err = glGetError();
     if(err != GL_NO_ERROR)
     {
@@ -4969,9 +5167,55 @@ void renderTextLabel(urAPI_Region_t* t)
         float extScreenWidth = externalWindow.frame.size.width;
         float extScreenHeight = externalWindow.frame.size.height;
         NSArray			*screens;
-        
         screens = [UIScreen screens];
+/*        UIScreen		*aScreen;
+        UIScreenMode	*mode;
+        UIScreenMode *bestmode = NULL;
+        uint32_t  bestwidth=0;
+        uint32_t  bestheight=0;
+        
 
+        
+        uint32_t screenNum = 1;
+        for (aScreen in screens) {
+            NSArray *displayModes;
+            
+            displayModes = [aScreen availableModes];
+            for (mode in displayModes) {
+                    uint32_t width = mode.size.width;
+                    uint32_t height = mode.size.height;
+                    if(abs(height-SCREEN_HEIGHT)<abs(bestheight-SCREEN_HEIGHT))
+                    {
+                        bestmode = mode;
+                    }
+           }
+            
+            extScreen.currentMode
+            
+            screenNum++;
+        }
+        
+        NSUInteger screenCount = [screens count];
+        
+        if (screenCount > 1) {
+            // 2.
+            
+            // Select first external screen
+            self.extScreen = [screens objectAtIndex:1];
+            self.availableModes = [extScreen availableModes];
+            
+            // Update picker with display modes
+            [modePicker reloadAllComponents];
+            
+            // Enable mode set option
+            modeSetButton.enabled = YES;
+            
+            // Set initial display mode to highest resolution
+            [modePicker selectRow:([modePicker numberOfRowsInComponent:0] - 1) inComponent:0 animated:NO];
+            [self buttonAction:modeSetButton];
+        }
+        */
+        
         float deviceScreenRatio = [[screens objectAtIndex:0] bounds].size.width/[[screens objectAtIndex:0] bounds].size.height;
         CGRect finalExtFrame;
         
@@ -5050,15 +5294,38 @@ void renderTextLabel(urAPI_Region_t* t)
     }
     else
     {
-        UIWindow* externalWindow = [self window];
-        
-        float extScreenWidth = externalWindow.frame.size.width;
-        float extScreenHeight = externalWindow.frame.size.height;
         NSArray			*screens;
         
         screens = [UIScreen screens];
+        UIScreen* extScreen = [screens objectAtIndex:1];
+//        extScreen.currentMode = [availableModes objectAtIndex:selectedRow];
+//        UIWindow* externalWindow = [self window];
+        UIScreenMode	*mode;
+        NSArray *displayModes;
+        UIScreenMode *bestmode = NULL;
+        uint32_t  bestwidth=0;
+        uint32_t  bestheight=0;
+        displayModes = [extScreen availableModes];
+        for (mode in displayModes) {
+            uint32_t width = mode.size.width;
+            uint32_t height = mode.size.height;
+            if(abs((int)(height-SCREEN_HEIGHT))<abs((int)(bestheight-SCREEN_HEIGHT)))
+            {
+                bestmode = mode;
+                bestwidth = width;
+                bestheight = height;
+            }
+        }
         
-        float deviceScreenRatio = [[screens objectAtIndex:0] bounds].size.width/[[screens objectAtIndex:0] bounds].size.height;
+        extScreen.currentMode = bestmode;
+        
+        UIWindow* externalWindow;
+        externalWindow = [[UIWindow alloc] initWithFrame:[extScreen bounds]];
+       
+        float extScreenWidth = externalWindow.frame.size.width;
+        float extScreenHeight = externalWindow.frame.size.height;
+        
+        float deviceScreenRatio = [extScreen bounds].size.width/[extScreen bounds].size.height;
         CGRect finalExtFrame;
         
         if (extScreenHeight < extScreenWidth) {
@@ -5089,8 +5356,10 @@ void renderTextLabel(urAPI_Region_t* t)
         
 		glGenRenderbuffers(1, &depthRenderbuffer);
 		glBindRenderbuffer(GL_RENDERBUFFER, depthRenderbuffer);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, backingWidth, backingHeight);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer);				
+
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24_OES, backingWidth, backingHeight);
+
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderbuffer);
         
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
             NSLog(@"Failed to make complete framebuffer object %x", glCheckFramebufferStatus(GL_FRAMEBUFFER));
@@ -5149,6 +5418,7 @@ void renderTextLabel(urAPI_Region_t* t)
         esOrtho(&projection, 0.0f, SCREEN_WIDTH*scalex, 0.0f, SCREEN_HEIGHT*scaley, -1.0f, 1.0f);
         esMatrixLoadIdentity(&modelView);
         glViewport(0, 0, backingWidth, backingHeight);
+//        glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
         /*
         esOrtho(&projection, 0.0f, SCREEN_WIDTH, 0.0f, SCREEN_HEIGHT, -1.0f, 1.0f);
@@ -5271,6 +5541,20 @@ void renderTextLabel(urAPI_Region_t* t)
 - (void)stopAnimation {
     self.animationTimer = nil;
     glFinish();
+}
+
+- (void)stopAudio {
+    // CLean up audio
+#ifdef USEMUMOAUDIO
+    MoAudio::stop();
+#else
+	stopRIOAudioLayer();
+#endif
+}
+
+- (void)stopOSCListener {
+    // Clean up OSC Networking
+    myoscnet.stopListening();
 }
 
 

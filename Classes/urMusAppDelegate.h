@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#include "config.h"
 #include "urAPI.h"
 //#import "ExternalDisplayViewController.h"
 //#import "BLVideoOut.h"

@@ -53,6 +53,8 @@ public:
     
     // clear
     void clear() { thread = 0; }
+    
+    void stop();
 
 protected:
     THREAD_HANDLE thread;

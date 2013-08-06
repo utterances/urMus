@@ -87,7 +87,7 @@ The *SetRotation()* will override any *SetTexCoord()* calls.
 Uploading Images
 ----------
 
-Image files can be added to a project by uploading them through the web interface. Let's upload a file via the editor's "Upload a file" feature. DocumentPath() makes sure we grab the texture from uploaded content and not the provided system defaults. Just for fun, we can rotate the image and also honor and transparency with blending. Please download the image you find [here](http://www.linktothearrow.com/longarrow-white.png) to maintain consistency with the rest of this tutorial.
+Image files can be added to a project by uploading them through the web interface. Let's upload a file via the editor's "Upload a file" feature. DocumentPath() makes sure we grab the texture from uploaded content and not the provided system defaults. Just for fun, we can rotate the image and also honor and transparency with blending. Please download the image you find [here](Images/longarrow-white.png) to maintain consistency with the rest of this tutorial.
 
     FreeAllRegions()
      

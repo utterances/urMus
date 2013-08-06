@@ -21,6 +21,14 @@
 #import <OpenGLES/ES1/glext.h>
 #endif
 
+#ifdef USEMUMOAUDIO
+#import "mo_audio.h"
+#define SRATE 48000
+#define FRAMESIZE 256
+#define NUMCHANNELS 2
+#else
+#include "RIOAudioUnitLayer.h"
+#endif
 
 #import <CoreLocation/CoreLocation.h>
 #import <CoreMotion/CoreMotion.h>
@@ -34,6 +42,8 @@
 #import "SandwichTypes.h"
 #import "SandwichUpdateListener.h"
 #endif
+
+#import "ExternalKeyboardReaderView.h"
 
 /*
 This class wraps the CAEAGLLayer from CoreAnimation into a convenient UIView subclass.
@@ -157,6 +167,14 @@ typedef struct urAPI_Region urAPI_Region_t;
     urAPI_Region_t* region;
 }
 @end
+
+@interface urFilterHandler: NSObject <GPUImageTextureOutputDelegate>
+{
+@public
+    urAPI_Region_t* region;
+}
+@end
+
 #endif
 #endif
 
@@ -176,9 +194,9 @@ enum recordsource { SOURCE_TEXTURE, SOURCE_CAMERA, SOURCE_MOVIE };
 @interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate,SandwichUpdateDelegate, CaptureSessionManagerDelegate, NSNetServiceDelegate, NSNetServiceBrowserDelegate>
 #else
 #ifdef GPUIMAGE
-@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate, CaptureSessionManagerDelegate, NSNetServiceDelegate, NSNetServiceBrowserDelegate, GPUImageTextureOutputDelegate>
+@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate, CaptureSessionManagerDelegate, NSNetServiceDelegate, NSNetServiceBrowserDelegate, GPUImageTextureOutputDelegate, ExternalKeyboardEventDelegate>
 #else
-@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate, CaptureSessionManagerDelegate, NSNetServiceDelegate, NSNetServiceBrowserDelegate>
+@interface EAGLView : UIView <UIAccelerometerDelegate,CLLocationManagerDelegate, CaptureSessionManagerDelegate, NSNetServiceDelegate, NSNetServiceBrowserDelegate, ExternalKeyboardEventDelegate>
 #endif
 #endif
 {
@@ -191,6 +209,8 @@ enum recordsource { SOURCE_TEXTURE, SOURCE_CAMERA, SOURCE_MOVIE };
     /* The pixel dimensions of the backbuffer */
     GLint backingWidth;
     GLint backingHeight;
+    GLint extbackingWidth;
+    GLint extbackingHeight;
     
     EAGLContext *context;
     
@@ -246,6 +266,7 @@ enum recordsource { SOURCE_TEXTURE, SOURCE_CAMERA, SOURCE_MOVIE };
     GPUImageFilterType currentfiltertype;
     CGSize sourcesize;
     GPUImageTextureInput *textureInput;
+    GPUImageTextureInput *textureFilterInput;
     GPUImageCropFilter* cropfilter;
     GPUImageTransformFilter* rotateFilter;
     enum recordsource recordfrom;
@@ -312,6 +333,8 @@ enum recordsource { SOURCE_TEXTURE, SOURCE_CAMERA, SOURCE_MOVIE };
 #ifdef GPUIMAGE
 - (void)setCameraFilterParameter:(double)value;
 - (void)setCameraFilter:(GPUImageFilterType)filterType;
+- (void)setFilterParameter:(double)value forFilter:(GPUImageOutput<GPUImageInput> *)inputFilter withType:(GPUImageFilterType)currentfiltertype;
+- (GPUImageOutput<GPUImageInput> *)createFilter:(GPUImageFilterType)filterType;
 #endif
 
 #ifdef SANDWICH_SUPPORT
@@ -335,6 +358,8 @@ void urLoadIdentity();
 void urPopMatrix();
 void urTranslatef(GLfloat x, GLfloat y, GLfloat z);
 void urPushMatrix();
+
+const char* accessiblePathSystemFirst(const char* fn);
 
 @end
 

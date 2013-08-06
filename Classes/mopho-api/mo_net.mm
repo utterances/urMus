@@ -52,6 +52,8 @@ void MoNet::startListening()
 void MoNet::stopListening()
 {
     // TODO: figure out how to stop it
+    // gessl: Here is a way
+    m_thread.stop();
 }
 
 

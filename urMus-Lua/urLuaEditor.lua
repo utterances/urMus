@@ -238,7 +238,14 @@ function KeyEnter()
     KeyInput('\n')
 end
 
+function ExKeyInput(self,c)
+    DPrint(c)
+    KeyInput(c)
+end
+
 EditRegion.tl:SetLabel("")
+EditRegion:Handle("OnKeyboard", ExKeyInput)
+EditRegion:Handle("OnKeyboardBackspace", KeyBackspace)
 RefreshCursor(EditRegion)
 
 mykb.keyfunc = KeyInput
