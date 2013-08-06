@@ -18,7 +18,7 @@ local ceil = math.ceil
 --urfont2 = "DroidSansMono.ttf"
 urfont2 = "Trebuchet MS"
 --urfont = "arial"
-urfont = "Helvetica"
+urfont = "Helvetica Neue"
 
 patchdir = "Patches"
 
@@ -49,6 +49,7 @@ pagefile = {
 "urColors.lua",
 --"urGEAugRel2.lua",
 "urVen2.lua",
+"urTapper.lua",
 "urTapperware.lua",
 --"urVen2-original.lua",
 "urSpriteAnimationExample.lua",
