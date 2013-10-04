@@ -41,11 +41,11 @@ function TouchUp(self)
 	if x>CREATION_MARGIN and x<ScreenWidth()-CREATION_MARGIN and 
 		y>CREATION_MARGIN and y<ScreenHeight()-CREATION_MARGIN then
 		
-		cmdlist = {{'ok',test,'hello this is ok'},
-					{'yes',test,'yes very good'},
-					{'no',test,'not in the least'},
+		cmdlist = {{'move',test,'hello this is ok'},
+					{'resize',test,'yes very good'},
+					{'increment',test,'not in the least'},
 					{'cancel',dismissMenu,nil}}
-		menu = loadSimpleMenu(cmdlist, 'Choose something like a star')
+		menu = loadSimpleMenu(cmdlist, 'Select an action to evoke')
 		menu:present(x,y)
 		showMenu = true
 	end

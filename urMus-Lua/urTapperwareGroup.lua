@@ -66,9 +66,9 @@ end
 function OpenGroupMenu(menu, x, y, selectedRegions)
 	-- shows the actual menu
 	menu.item:Show()
-	menu.item:EnableInput(true)
-	menu.item:Handle("OnTouchUp", CallGroupFunc)
-	menu.item:MoveToTop()
+  menu.item:EnableInput(true)
+  menu.item:Handle("OnTouchUp", CallGroupFunc)
+  menu.item:MoveToTop()
 	menu.selectedRegions = selectedRegions
 	menu.item:SetAnchor("CENTER", x, y)	   
 end
@@ -157,7 +157,7 @@ function Group:Draw()
 end
 
 function Group:Hide()
-	self.r:Hide()
+	self:Hide()
 end
 
 function Group:Destroy()

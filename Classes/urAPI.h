@@ -68,7 +68,7 @@ enum eventIDs { OnDragStart, OnDragStop, OnHide, OnShow, OnTouchDown, OnTouchUp,
 #ifdef SOAR_SUPPORT
     OnSoarOutput,
 #endif
-    OnAccelerate, OnAttitude, OnRotation, OnHeading, OnLocation, OnMicrophone, OnHorizontalScroll, OnVerticalScroll, OnMove, OnPageEntered, OnPageLeft, OnKeyboard, OnKeyboardBackspace,
+    OnAccelerate, OnAttitude, OnRotation, OnHeading, OnLocation, OnMicrophone, OnHorizontalScroll, OnVerticalScroll, OnMove, OnPageEntered, OnPageLeft, OnDragging, OnKeyboard, OnKeyboardBackspace,
     
     EventsCount
 };

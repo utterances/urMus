@@ -626,6 +626,23 @@ void decCameraUseBy(int dec)
         displayLinkSupported = TRUE;
 }
 
+- (void)viewDidLoad:(BOOL)animated
+{
+    // IOS 7
+    //viewDidload
+    if ([self respondsToSelector:@selector(setNeedsStatusBarAppearanceUpdate)]) {
+    // iOS 7
+    [self prefersStatusBarHidden];
+    [self performSelector:@selector(setNeedsStatusBarAppearanceUpdate)];
+    } else {
+    // iOS 6
+    // Hide top navigation bar
+            [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationNone];
+    //        [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationSlide];
+        }
+
+}
+
 - (void)viewWillAppear:(BOOL)animated
 {
     [self startAnimation];
@@ -1435,6 +1452,12 @@ void decCameraUseBy(int dec)
 }
 #endif
 
+// Post iOS 7.0 to hide statusbar for sure
+- (BOOL)prefersStatusBarHidden
+{
+    return YES;
+}
+
 - (void)awakeFromNib
 {
 	NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
@@ -1447,8 +1470,23 @@ void decCameraUseBy(int dec)
     errorfontPath = "Helvetica";
 #endif
     
-    // Hide top navigation bar
-	[[UIApplication sharedApplication] setStatusBarHidden:YES animated:NO];
+    // IOS 7
+    //viewDidload
+    if ([self respondsToSelector:@selector(setNeedsStatusBarAppearanceUpdate)]) {
+        // iOS 7
+        [self prefersStatusBarHidden];
+        [self performSelector:@selector(setNeedsStatusBarAppearanceUpdate)];
+    } else {
+        // iOS 6
+        // Hide top navigation bar
+        [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationNone];
+        //        [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationSlide];
+    }
+    
+    
+
+    
+//	[[UIApplication sharedApplication] setStatusBarHidden:YES animated:NO];
 	// To notes here: First I also added this to info.plist to make it vanish faster, which just looks nicer.
 	// More importantly there is a bug with the statusbar still intercepting when hidden.
 	// For that purpose I enabled landscapemode in info.plist. This seems to remove the problem and has no negative side-effect I could find.
@@ -1524,28 +1562,35 @@ void decCameraUseBy(int dec)
 	self.locationManager = [[[CLLocationManager alloc] init] autorelease];
 	
 	// check if the hardware has a compass
-	if (locationManager.headingAvailable == NO) {
+	if ([[locationManager class] headingAvailable] == NO) { // Fixed for post ios 4.0
 		// No compass is available. This application cannot function without a compass, 
         // so a dialog will be displayed and no magnetic data will be measured.
-        self.locationManager = nil;
+ //       self.locationManager = nil;
 		// Disable compass flowboxes in this case. TODO
 	} else {
-		// location service configuration
-		locationManager.distanceFilter = kCLDistanceFilterNone; 
-		locationManager.desiredAccuracy = kCLLocationAccuracyBest;
-		// start the GPS
-		[locationManager startUpdatingLocation];
-
         // heading service configuration
         locationManager.headingFilter = kCLHeadingFilterNone;
         
+        
         // setup delegate callbacks
         locationManager.delegate = self;
-        
         // start the compass
         [locationManager startUpdatingHeading];
 		
     }
+    // We got location service?
+    if([[locationManager class] locationServicesEnabled]==YES)
+    {
+        // location service configuration
+        locationManager.distanceFilter = kCLDistanceFilterNone;
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest;
+        // setup delegate callbacks
+        locationManager.delegate = self;
+        // start the GPS
+        [locationManager startUpdatingLocation];
+    }
+    
+
     
     if ([UIImagePickerController isSourceTypeAvailable: UIImagePickerControllerSourceTypeCamera])
         // Has camera
@@ -1655,6 +1700,7 @@ static bool cameraBeingUsedAsBrush = false;
 	callAllCompassSources(heading_x, heading_y, heading_z, heading_north);
 }
 
+// TODO depricated with 6.0 gessl NYI
 - (void)locationManager:(CLLocationManager *)manager didUpdateToLocation:(CLLocation *)newLocation fromLocation:(CLLocation *)oldLocation {
 	CLLocationDegrees  latitude = newLocation.coordinate.latitude;
 	CLLocationDegrees longitude = newLocation.coordinate.longitude;
@@ -4661,12 +4707,12 @@ void renderTextLabel(urAPI_Region_t* t)
                         t->texture->movieTex ture = 0;
 #endif
 #else
-//                        if([t->texture->movieTex playStatus] == GPUMOVIE_FINISHED)
-//                        {
-//                            glDeleteTextures(1,&(t->texture->movieTexture));
-//                            t->texture->movieTexture = 0;
-//                            freeMovieTexture(t);
-//                        }
+               //         if([t->texture->movieTex playStatus] == GPUMOVIE_FINISHED)
+                        {
+                            glDeleteTextures(1,&(t->texture->movieTexture));
+                            t->texture->movieTexture = 0;
+                            freeMovieTexture(t);
+                        }
 #endif
 #endif	
                     }
@@ -5774,6 +5820,7 @@ void onTouchDoubleDragUpdate(int t, int dragidx, float pos1x, float pos1y, float
                 dragregion->ofsy += dy;
                 if(dragregion->isClamped) ClampRegion(dragregion);
                 changeLayout(dragregion);
+                callScriptWith5Args(OnDragging,dragregion->OnEvents[OnDragging], dragregion, dragregion->cx,dragregion->cy, dx, dy,t+1);
             }
             if(dragregion->isResizable)
                 callScriptWith4Args(OnSizeChanged,dragregion->OnEvents[OnSizeChanged], dragregion, pos1x,pos1y,pos2x,pos2y);
@@ -5863,6 +5910,7 @@ void onTouchSingleDragUpdate(int t, int dragidx)
                 dragregion->ofsx += dx;
                 dragregion->ofsy += dy;
                 changeLayout(dragregion);
+                callScriptWith5Args(OnDragging,dragregion->OnEvents[OnDragging], dragregion, dragregion->cx,dragregion->cy, dx, dy,t+1);
             }
 		}
 	}
