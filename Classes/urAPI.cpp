@@ -1004,8 +1004,8 @@ urAPI_Region_t* findRegionHit(float x, float y)
 			if(t->isClipping==false || (x >= t->clipleft && x <= t->clipleft+t->clipwidth &&
 										y >= t->clipbottom && y <= t->clipbottom+t->clipheight))
 			{
-				t->lastinputx = x - t->left;
-				t->lastinputy = y - t->bottom;
+//				t->lastinputx = x - t->left; GESSL: Check reason why removed (Android->iOS new pinching code)
+//				t->lastinputy = y - t->bottom;
 				return t;
 			}
 	}
@@ -1452,6 +1452,116 @@ bool layout(urAPI_Region_t* region)
 	return update;
 	
 }
+
+// Compute the relative anchor coordinate from left/bottom screen coordinates. Allows to reanchor regions to other regions or input positions
+
+void reanchor(urAPI_Region_t* region)
+{
+	if (region == nil)
+		return;
+    
+	/*	if(region->textlabel!=NULL)
+	 region->textlabel->updatestring = true; */
+    
+	float left, right, top, bottom, width, height, cx, cy, x, y;
+    
+	left = right = top = bottom = width = height = cx = cy = x = y = -1000000;
+    
+	const char* point = region->point;
+	if (point == nil)
+		point = DEFAULT_RPOINT;
+    
+	urAPI_Region_t* relativeRegion = region->relativeRegion;
+	if (relativeRegion == nil)
+		relativeRegion = region->parent;
+	if (relativeRegion == nil)
+		relativeRegion = UIParent; // This should be another layer but we don't care for now
+    
+	const char* relativePoint = region->relativePoint;
+	if (relativePoint == nil)
+		relativePoint = DEFAULT_RPOINT;
+    
+	if (!strcmp(relativePoint, "ALL")) {
+		left = relativeRegion->left;
+		bottom = relativeRegion->bottom;
+		width = relativeRegion->width;
+		height = relativeRegion->height;
+	} else if (!strcmp(relativePoint, "TOPLEFT")) {
+		x = relativeRegion->left;
+		y = relativeRegion->top;
+	} else if (!strcmp(relativePoint, "TOPRIGHT")) {
+		x = relativeRegion->right;
+		y = relativeRegion->top;
+	} else if (!strcmp(relativePoint, "TOP")) {
+		x = relativeRegion->cx;
+		y = relativeRegion->top;
+	} else if (!strcmp(relativePoint, "LEFT")) {
+		x = relativeRegion->left;
+		y = relativeRegion->cy;
+	} else if (!strcmp(relativePoint, "RIGHT")) {
+		x = relativeRegion->right;
+		y = relativeRegion->cy;
+	} else if (!strcmp(relativePoint, "CENTER")) {
+		x = relativeRegion->cx;
+		y = relativeRegion->cy;
+	} else if (!strcmp(relativePoint, "BOTTOMLEFT")) {
+		x = relativeRegion->left;
+		y = relativeRegion->bottom;
+	} else if (!strcmp(relativePoint, "BOTTOMRIGHT")) {
+		x = relativeRegion->right;
+		y = relativeRegion->bottom;
+	} else if (!strcmp(relativePoint, "BOTTOM")) {
+		x = relativeRegion->cx;
+		y = relativeRegion->bottom;
+	} else {
+		// Error!!
+		luaL_error(lua, "Unknown relativePoint when layouting regions.");
+		return;
+	}
+    
+	float ofsx = 0.0;
+	float ofsy = 0.0;
+    //	x = x + region->ofsx;
+    //	y = y + region->ofsy;
+    
+	if (!strcmp(point, "TOPLEFT")) {
+		ofsx = region->left - x;
+		ofsy = region->top - y;
+	} else if (!strcmp(point, "TOPRIGHT")) {
+		ofsx = region->right - x;
+		ofsy = region->top - y;
+	} else if (!strcmp(point, "TOP")) {
+		ofsx = region->cx - x;
+		ofsy = region->top - y;
+	} else if (!strcmp(point, "LEFT")) {
+		ofsx = region->left - x;
+		ofsy = region->cy - y; // Another typo here
+	} else if (!strcmp(point, "RIGHT")) {
+		ofsx = region->right - x;
+		ofsy = region->cy - y;
+	} else if (!strcmp(point, "CENTER")) {
+		ofsx = region->cx - x;
+		ofsy = region->cy - y;
+	} else if (!strcmp(point, "BOTTOMLEFT")) {
+		ofsx = region->left - x;
+		ofsy = region->bottom - y;
+	} else if (!strcmp(point, "BOTTOMRIGHT")) {
+		ofsx = region->right - x;
+		ofsy = region->bottom - y;
+	} else if (!strcmp(point, "BOTTOM")) {
+		ofsx = region->cx - x;
+		ofsy = region->bottom - y;
+	} else {
+		// Error!!
+		luaL_error(lua, "Unknown relativePoint when layouting regions.");
+		return;
+	}
+    
+	region->ofsx = ofsx;
+	region->ofsy = ofsy;
+}
+
+
 
 //------------------------------------------------------------------------------
 // Our custom lua API
@@ -4973,6 +5083,8 @@ static int l_Region(lua_State *lua)
 	myregion->isDragged = false;
 	myregion->isClamped = false;
 	myregion->isClipping = false;
+    
+    myregion->numinputs = 0;
 	
 #ifdef SOAR_SUPPORT
     myregion->soarKernel = NULL;

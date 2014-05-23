@@ -33,6 +33,7 @@ pagefile = {
 --"theremin_ipod_light.lua",
 --"theremin_ipod_sound.lua",
 "urTapperware.lua",
+"urTapper.lua",
 --"urFontTest.lua",
 "urTurn.lua",
 --"urTextLabelHighlight.lua",
@@ -49,8 +50,6 @@ pagefile = {
 "urColors.lua",
 --"urGEAugRel2.lua",
 "urVen2.lua",
-"urTapper.lua",
-"urTapperware.lua",
 --"urVen2-original.lua",
 "urSpriteAnimationExample.lua",
 "urLuaEditor.lua",
@@ -2133,18 +2132,18 @@ end
 function FlipPage(self)
 
 	local scrollentries = {}
+	for v in lfs.dir(DocumentPath("")) do
+		if v ~= "." and v ~= ".." and string.find(v,"%.lua$") then
+			local entry = { v, nil, nil, LoadAndActivateInterface, {84,84,84,255}, DocumentPath("")}
+			table.insert(scrollentries, entry)
+		end
+	end
 
 	for k,v in pairs(pagefile) do
 		local entry = { v, nil, nil, LoadAndActivateInterface, {84,84,84,255}}
 		table.insert(scrollentries, entry)
 	end
-	for v in lfs.dir(DocumentPath("")) do
-		if v ~= "." and v ~= ".." and string.find(v,"%.lua$") then
-			local entry = { v, nil, nil, LoadAndActivateInterface, {84,84,84,255}, DocumentPath("")}
-			table.insert(scrollentries, entry)			
-		end
-	end
-	
+
 	urScrollList:OpenScrollListPage(scrollpage, "Interface", nil, nil, scrollentries)
 end
 

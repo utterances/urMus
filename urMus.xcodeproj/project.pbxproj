@@ -12,6 +12,8 @@
 		1D60589B0D05DD56006BFB54 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; };
 		1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
 		1DF5F4E00D08C38300B7A737 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DF5F4DF0D08C38300B7A737 /* UIKit.framework */; };
+		2225204517FFC3FF00F4E7B9 /* Icons.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2225204417FFC3FF00F4E7B9 /* Icons.xcassets */; };
+		22284FD318340F6700B9F2BC /* __urmus_variable_list.lua in Resources */ = {isa = PBXBuildFile; fileRef = 22284FD218340F6700B9F2BC /* __urmus_variable_list.lua */; };
 		2231CCEF171298AA00F4EAD2 /* AvenirNext-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2231CCEC171297FE00F4EAD2 /* AvenirNext-Regular.ttf */; };
 		2231CCF1171299A100F4EAD2 /* AvenirNext-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2231CCF0171299A100F4EAD2 /* AvenirNext-Medium.ttf */; };
 		2234782516DFFD4200E9B741 /* Icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 2234782416DFFD4200E9B741 /* Icon@2x.png */; };
@@ -26,12 +28,10 @@
 		226E03BC16E1432600BB11DA /* Default@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 226E03BB16E1432600BB11DA /* Default@2x.png */; };
 		226E03BF16E1466D00BB11DA /* Default-Portrait.png in Resources */ = {isa = PBXBuildFile; fileRef = 226E03BD16E1466D00BB11DA /* Default-Portrait.png */; };
 		226E03C016E1466D00BB11DA /* Default-Portrait@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 226E03BE16E1466D00BB11DA /* Default-Portrait@2x.png */; };
+		22836CAB182A35D4006BE21D /* tw_arrow.png in Resources */ = {isa = PBXBuildFile; fileRef = 22836CAA182A35D4006BE21D /* tw_arrow.png */; };
 		22A87B8B1709FA8A00DF29BF /* tw_socket1.png in Resources */ = {isa = PBXBuildFile; fileRef = 22A87B891709FA8A00DF29BF /* tw_socket1.png */; };
 		22CA2FE617B0C3DD00ACE20F /* urTapper.lua in Resources */ = {isa = PBXBuildFile; fileRef = 22CA2FE417B0C3DD00ACE20F /* urTapper.lua */; };
 		22CA2FE917B0C4DE00ACE20F /* tw_paperback.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 22CA2FE817B0C4DD00ACE20F /* tw_paperback.jpg */; };
-		22DDA3D217FF37B40026FE7A /* urTWRegion.lua in Resources */ = {isa = PBXBuildFile; fileRef = 22DDA3D017FF37B40026FE7A /* urTWRegion.lua */; };
-		22DDA3D317FF37B40026FE7A /* urTWMenu.lua in Resources */ = {isa = PBXBuildFile; fileRef = 22DDA3D117FF37B40026FE7A /* urTWMenu.lua */; };
-		22DDA3D517FF37C40026FE7A /* urTapperwareLinkLayer.lua in Resources */ = {isa = PBXBuildFile; fileRef = 22DDA3D417FF37C40026FE7A /* urTapperwareLinkLayer.lua */; };
 		23C56097119295D200758BB9 /* html in Resources */ = {isa = PBXBuildFile; fileRef = 23C56095119295D200758BB9 /* html */; };
 		23C5609A119295E200758BB9 /* mongoose.c in Sources */ = {isa = PBXBuildFile; fileRef = 23C56099119295E200758BB9 /* mongoose.c */; };
 		23C5612A1192A56900758BB9 /* httpServer.c in Sources */ = {isa = PBXBuildFile; fileRef = 23C561291192A56900758BB9 /* httpServer.c */; };
@@ -149,11 +149,9 @@
 		772916221729B382008977FC /* urTapperwareTools.lua in Sources */ = {isa = PBXBuildFile; fileRef = 7729161E1729B382008977FC /* urTapperwareTools.lua */; };
 		772916231729B382008977FC /* urTapperwareMenu.lua in Sources */ = {isa = PBXBuildFile; fileRef = 7729161F1729B382008977FC /* urTapperwareMenu.lua */; };
 		772916241729B382008977FC /* urTapperwareLink.lua in Sources */ = {isa = PBXBuildFile; fileRef = 772916201729B382008977FC /* urTapperwareLink.lua */; };
-		772916251729B382008977FC /* urTapperware.lua in Sources */ = {isa = PBXBuildFile; fileRef = 772916211729B382008977FC /* urTapperware.lua */; };
 		772916261729B38F008977FC /* urTapperwareTools.lua in Resources */ = {isa = PBXBuildFile; fileRef = 7729161E1729B382008977FC /* urTapperwareTools.lua */; };
 		772916271729B38F008977FC /* urTapperwareMenu.lua in Resources */ = {isa = PBXBuildFile; fileRef = 7729161F1729B382008977FC /* urTapperwareMenu.lua */; };
 		772916281729B38F008977FC /* urTapperwareLink.lua in Resources */ = {isa = PBXBuildFile; fileRef = 772916201729B382008977FC /* urTapperwareLink.lua */; };
-		772916291729B38F008977FC /* urTapperware.lua in Resources */ = {isa = PBXBuildFile; fileRef = 772916211729B382008977FC /* urTapperware.lua */; };
 		7729163D1729B39A008977FC /* tw_varswitcher.png in Resources */ = {isa = PBXBuildFile; fileRef = 7729162A1729B39A008977FC /* tw_varswitcher.png */; };
 		7729163E1729B39A008977FC /* tw_unlock.png in Resources */ = {isa = PBXBuildFile; fileRef = 7729162B1729B39A008977FC /* tw_unlock.png */; };
 		7729163F1729B39A008977FC /* tw_timer.png in Resources */ = {isa = PBXBuildFile; fileRef = 7729162C1729B39A008977FC /* tw_timer.png */; };
@@ -169,7 +167,6 @@
 		7729164A1729B39A008977FC /* tw_more.png in Resources */ = {isa = PBXBuildFile; fileRef = 772916371729B39A008977FC /* tw_more.png */; };
 		7729164B1729B39A008977FC /* tw_lock.png in Resources */ = {isa = PBXBuildFile; fileRef = 772916381729B39A008977FC /* tw_lock.png */; };
 		7729164C1729B39A008977FC /* tw_link.png in Resources */ = {isa = PBXBuildFile; fileRef = 772916391729B39A008977FC /* tw_link.png */; };
-		7729164D1729B39A008977FC /* tw_gridback.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 7729163A1729B39A008977FC /* tw_gridback.jpg */; };
 		7729164E1729B39A008977FC /* tw_dup.png in Resources */ = {isa = PBXBuildFile; fileRef = 7729163B1729B39A008977FC /* tw_dup.png */; };
 		7729164F1729B39A008977FC /* tw_closebox.png in Resources */ = {isa = PBXBuildFile; fileRef = 7729163C1729B39A008977FC /* tw_closebox.png */; };
 		772CCAD1111F92C700E932EE /* Ornament1.png in Resources */ = {isa = PBXBuildFile; fileRef = 772CCAD0111F92C700E932EE /* Ornament1.png */; };
@@ -306,7 +303,6 @@
 		7773190E161B6BCA00DBB08B /* pngwrite.c in Sources */ = {isa = PBXBuildFile; fileRef = 777318FE161B6BCA00DBB08B /* pngwrite.c */; };
 		7773190F161B6BCA00DBB08B /* pngwtran.c in Sources */ = {isa = PBXBuildFile; fileRef = 777318FF161B6BCA00DBB08B /* pngwtran.c */; };
 		77731910161B6BCA00DBB08B /* pngwutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 77731900161B6BCA00DBB08B /* pngwutil.c */; };
-		77731911161B6BCA00DBB08B /* README in Resources */ = {isa = PBXBuildFile; fileRef = 77731901161B6BCA00DBB08B /* README */; };
 		77731DF0161B711A00DBB08B /* urFont.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 77731DEE161B711A00DBB08B /* urFont.cpp */; };
 		77731DF3161B715800DBB08B /* urTexture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 77731DF1161B715800DBB08B /* urTexture.cpp */; };
 		77731DF6161B717900DBB08B /* urImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 77731DF4161B717900DBB08B /* urImage.cpp */; };
@@ -434,7 +430,6 @@
 		77B3FF8612E63A1D00F119FE /* CaptureSessionManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = 77B3FF8412E63A1D00F119FE /* CaptureSessionManager.mm */; };
 		77B3FFEA12E63B6600F119FE /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 77B3FFE912E63B6600F119FE /* AVFoundation.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		77B56D5D10894E49008931AC /* SKINI-msg.h in Resources */ = {isa = PBXBuildFile; fileRef = 77B56CDD10894E48008931AC /* SKINI-msg.h */; };
-		77B56D5F10894E49008931AC /* README in Resources */ = {isa = PBXBuildFile; fileRef = 77B56CF210894E48008931AC /* README */; };
 		77B56E3B10894FE7008931AC /* ADSR.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 77B56DE510894FE7008931AC /* ADSR.cpp */; };
 		77B56E3C10894FE7008931AC /* Asymp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 77B56DE610894FE7008931AC /* Asymp.cpp */; };
 		77B56E3D10894FE7008931AC /* BandedWG.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 77B56DE710894FE7008931AC /* BandedWG.cpp */; };
@@ -616,6 +611,8 @@
 		1D3623250D0F684500981E51 /* urMusAppDelegate.mm */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; path = urMusAppDelegate.mm; sourceTree = "<group>"; };
 		1D6058910D05DD3D006BFB54 /* urMus.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = urMus.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1DF5F4DF0D08C38300B7A737 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		2225204417FFC3FF00F4E7B9 /* Icons.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Icons.xcassets; sourceTree = "<group>"; };
+		22284FD218340F6700B9F2BC /* __urmus_variable_list.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = __urmus_variable_list.lua; path = "urMus-Lua/__urmus_variable_list.lua"; sourceTree = "<group>"; };
 		2231CCEC171297FE00F4EAD2 /* AvenirNext-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "AvenirNext-Regular.ttf"; path = "Textures/AvenirNext-Regular.ttf"; sourceTree = "<group>"; };
 		2231CCF0171299A100F4EAD2 /* AvenirNext-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "AvenirNext-Medium.ttf"; path = "Textures/AvenirNext-Medium.ttf"; sourceTree = "<group>"; };
 		2234782416DFFD4200E9B741 /* Icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Icon@2x.png"; sourceTree = "<group>"; };
@@ -630,17 +627,13 @@
 		226E03BB16E1432600BB11DA /* Default@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default@2x.png"; sourceTree = "<group>"; };
 		226E03BD16E1466D00BB11DA /* Default-Portrait.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Default-Portrait.png"; path = "Resources-iPad/Default-Portrait.png"; sourceTree = "<group>"; };
 		226E03BE16E1466D00BB11DA /* Default-Portrait@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Default-Portrait@2x.png"; path = "Resources-iPad/Default-Portrait@2x.png"; sourceTree = "<group>"; };
-		228F925217306CA200EA0420 /* urTapperwareGroup.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urTapperwareGroup.lua; path = "urMus-Lua/urTapperwareGroup.lua"; sourceTree = "<group>"; };
+		22836CAA182A35D4006BE21D /* tw_arrow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_arrow.png; path = Textures/tw_arrow.png; sourceTree = "<group>"; };
 		22A87B891709FA8A00DF29BF /* tw_socket1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_socket1.png; path = Textures/tw_socket1.png; sourceTree = "<group>"; };
 		22AB136A170C065E006402CF /* tw_paint.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_paint.png; path = Textures/tw_paint.png; sourceTree = "<group>"; };
 		22AB136B170C065E006402CF /* tw_more.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_more.png; path = Textures/tw_more.png; sourceTree = "<group>"; };
 		22AB1378170C88DA006402CF /* tw_lock.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_lock.png; path = Textures/tw_lock.png; sourceTree = "<group>"; };
-		22C6A7EA171EECEC00F81B21 /* urTapperwareTools.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urTapperwareTools.lua; path = "urMus-Lua/urTapperwareTools.lua"; sourceTree = "<group>"; };
 		22CA2FE417B0C3DD00ACE20F /* urTapper.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urTapper.lua; path = "urMus-Lua/urTapper.lua"; sourceTree = "<group>"; };
 		22CA2FE817B0C4DD00ACE20F /* tw_paperback.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = tw_paperback.jpg; path = Textures/tw_paperback.jpg; sourceTree = "<group>"; };
-		22DDA3D017FF37B40026FE7A /* urTWRegion.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urTWRegion.lua; path = "urMus-Lua/urTWRegion.lua"; sourceTree = "<group>"; };
-		22DDA3D117FF37B40026FE7A /* urTWMenu.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urTWMenu.lua; path = "urMus-Lua/urTWMenu.lua"; sourceTree = "<group>"; };
-		22DDA3D417FF37C40026FE7A /* urTapperwareLinkLayer.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = urTapperwareLinkLayer.lua; path = "urMus-Lua/urTapperwareLinkLayer.lua"; sourceTree = "<group>"; };
 		23C56095119295D200758BB9 /* html */ = {isa = PBXFileReference; lastKnownFileType = folder; path = html; sourceTree = "<group>"; };
 		23C56098119295E200758BB9 /* mongoose.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mongoose.h; sourceTree = "<group>"; };
 		23C56099119295E200758BB9 /* mongoose.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mongoose.c; sourceTree = "<group>"; };
@@ -888,7 +881,6 @@
 		7729161E1729B382008977FC /* urTapperwareTools.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urTapperwareTools.lua; path = "urMus-Lua/urTapperwareTools.lua"; sourceTree = "<group>"; };
 		7729161F1729B382008977FC /* urTapperwareMenu.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urTapperwareMenu.lua; path = "urMus-Lua/urTapperwareMenu.lua"; sourceTree = "<group>"; };
 		772916201729B382008977FC /* urTapperwareLink.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urTapperwareLink.lua; path = "urMus-Lua/urTapperwareLink.lua"; sourceTree = "<group>"; };
-		772916211729B382008977FC /* urTapperware.lua */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lua; name = urTapperware.lua; path = "urMus-Lua/urTapperware.lua"; sourceTree = "<group>"; };
 		7729162A1729B39A008977FC /* tw_varswitcher.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_varswitcher.png; path = Textures/tw_varswitcher.png; sourceTree = "<group>"; };
 		7729162B1729B39A008977FC /* tw_unlock.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_unlock.png; path = Textures/tw_unlock.png; sourceTree = "<group>"; };
 		7729162C1729B39A008977FC /* tw_timer.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_timer.png; path = Textures/tw_timer.png; sourceTree = "<group>"; };
@@ -904,7 +896,6 @@
 		772916371729B39A008977FC /* tw_more.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_more.png; path = Textures/tw_more.png; sourceTree = "<group>"; };
 		772916381729B39A008977FC /* tw_lock.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_lock.png; path = Textures/tw_lock.png; sourceTree = "<group>"; };
 		772916391729B39A008977FC /* tw_link.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_link.png; path = Textures/tw_link.png; sourceTree = "<group>"; };
-		7729163A1729B39A008977FC /* tw_gridback.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = tw_gridback.jpg; path = Textures/tw_gridback.jpg; sourceTree = "<group>"; };
 		7729163B1729B39A008977FC /* tw_dup.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_dup.png; path = Textures/tw_dup.png; sourceTree = "<group>"; };
 		7729163C1729B39A008977FC /* tw_closebox.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = tw_closebox.png; path = Textures/tw_closebox.png; sourceTree = "<group>"; };
 		772CCAD0111F92C700E932EE /* Ornament1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Ornament1.png; path = Textures/Ornament1.png; sourceTree = "<group>"; };
@@ -1551,6 +1542,7 @@
 		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
 			isa = PBXGroup;
 			children = (
+				2225204417FFC3FF00F4E7B9 /* Icons.xcassets */,
 				77D9ED6816C19837008EC083 /* Default-568h@2x.png */,
 				77F043951123BC5100CB8C95 /* Sounds */,
 				77F043941123BC3F00CB8C95 /* Textures */,
@@ -2101,12 +2093,6 @@
 			isa = PBXGroup;
 			children = (
 				22CA2FE417B0C3DD00ACE20F /* urTapper.lua */,
-				22DDA3D017FF37B40026FE7A /* urTWRegion.lua */,
-				22DDA3D117FF37B40026FE7A /* urTWMenu.lua */,
-				228F925217306CA200EA0420 /* urTapperwareGroup.lua */,
-				22C6A7EA171EECEC00F81B21 /* urTapperwareTools.lua */,
-				772916211729B382008977FC /* urTapperware.lua */,
-				22DDA3D417FF37C40026FE7A /* urTapperwareLinkLayer.lua */,
 				773571AB171CDC6100B0FBA6 /* theremin_ipad_light.lua */,
 				773571AC171CDC6100B0FBA6 /* theremin_ipad_sound.lua */,
 				773571AD171CDC6100B0FBA6 /* theremin_ipod_light.lua */,
@@ -2206,6 +2192,7 @@
 				7737230D120A1C9D003AEE57 /* urDistance.lua */,
 				778F14E9128A517F0010253D /* urNetTest.lua */,
 				778A7FC413F468FA00846B59 /* urTopBar.lua */,
+				22284FD218340F6700B9F2BC /* __urmus_variable_list.lua */,
 			);
 			name = "urMus-lua";
 			sourceTree = "<group>";
@@ -2387,6 +2374,7 @@
 		77F043941123BC3F00CB8C95 /* Textures */ = {
 			isa = PBXGroup;
 			children = (
+				22836CAA182A35D4006BE21D /* tw_arrow.png */,
 				22CA2FE817B0C4DD00ACE20F /* tw_paperback.jpg */,
 				7729162A1729B39A008977FC /* tw_varswitcher.png */,
 				7729162B1729B39A008977FC /* tw_unlock.png */,
@@ -2406,7 +2394,6 @@
 				22AB136B170C065E006402CF /* tw_more.png */,
 				22AB1378170C88DA006402CF /* tw_lock.png */,
 				772916391729B39A008977FC /* tw_link.png */,
-				7729163A1729B39A008977FC /* tw_gridback.jpg */,
 				7729163B1729B39A008977FC /* tw_dup.png */,
 				7729163C1729B39A008977FC /* tw_closebox.png */,
 				7790B95916BB14CF008120B7 /* arrow.png */,
@@ -2709,14 +2696,12 @@
 				7729164A1729B39A008977FC /* tw_more.png in Resources */,
 				7729164B1729B39A008977FC /* tw_lock.png in Resources */,
 				7729164C1729B39A008977FC /* tw_link.png in Resources */,
-				7729164D1729B39A008977FC /* tw_gridback.jpg in Resources */,
 				7729164E1729B39A008977FC /* tw_dup.png in Resources */,
 				7729164F1729B39A008977FC /* tw_closebox.png in Resources */,
 				773CFB2A176642930097AAF2 /* urTapperwareGroup.lua in Resources */,
 				772916261729B38F008977FC /* urTapperwareTools.lua in Resources */,
 				772916271729B38F008977FC /* urTapperwareMenu.lua in Resources */,
 				772916281729B38F008977FC /* urTapperwareLink.lua in Resources */,
-				772916291729B38F008977FC /* urTapperware.lua in Resources */,
 				773571BF171CDC8000B0FBA6 /* theremin_ipad_light.lua in Resources */,
 				773571C0171CDC8000B0FBA6 /* theremin_ipad_sound.lua in Resources */,
 				773571C1171CDC8000B0FBA6 /* theremin_ipod_light.lua in Resources */,
@@ -2776,6 +2761,7 @@
 				77DF162413FC829600B00815 /* urStringEditBox.lua in Resources */,
 				77DF162513FC829700B00815 /* urFileBrowser.lua in Resources */,
 				7710B7DF13FB014300E3D710 /* unlock.png in Resources */,
+				2225204517FFC3FF00F4E7B9 /* Icons.xcassets in Resources */,
 				7710B7E013FB014300E3D710 /* lock.png in Resources */,
 				778A7FB613F45EF700846B59 /* color_map.png in Resources */,
 				778A7FB713F45EF700846B59 /* trashbin.png in Resources */,
@@ -2832,7 +2818,6 @@
 				77B9FCA01194AF51006D5007 /* urColors.lua in Resources */,
 				77B9FCA11194AF51006D5007 /* urFlute.lua in Resources */,
 				77B9FCA21194AF51006D5007 /* urHelpers.lua in Resources */,
-				22DDA3D517FF37C40026FE7A /* urTapperwareLinkLayer.lua in Resources */,
 				77B9FCA31194AF51006D5007 /* urMus.lua in Resources */,
 				77B9FCA41194AF51006D5007 /* urPads.lua in Resources */,
 				77B9FCA51194AF51006D5007 /* urPiano.lua in Resources */,
@@ -2856,7 +2841,6 @@
 				7700C06C104B2DA70025D43A /* rightarrow.png in Resources */,
 				77AC7A6D1081C37A0071ECDE /* beatbox-mono.wav in Resources */,
 				77B56D5D10894E49008931AC /* SKINI-msg.h in Resources */,
-				77B56D5F10894E49008931AC /* README in Resources */,
 				772030E1108E479B001BE7A1 /* piano.png in Resources */,
 				77C4791F108E90D400DC9920 /* button2.png in Resources */,
 				77C47928108E938800DC9920 /* button4.png in Resources */,
@@ -2883,7 +2867,6 @@
 				77D61B4B10C80C170091DE81 /* Orange-Mono.wav in Resources */,
 				77D61B4C10C80C170091DE81 /* Red-Mono.wav in Resources */,
 				773D287910CF32A10090E189 /* sleighbells.wav in Resources */,
-				22DDA3D217FF37B40026FE7A /* urTWRegion.lua in Resources */,
 				77B6329610D152C200AACEE4 /* SleighBells.png in Resources */,
 				772CCAD1111F92C700E932EE /* Ornament1.png in Resources */,
 				77F01C10112508CB007FD520 /* paddle.png in Resources */,
@@ -2895,7 +2878,6 @@
 				77B9FCB71194AF8F006D5007 /* o-alpha.png in Resources */,
 				77B9FCB91194AFB8006D5007 /* x-alpha.png in Resources */,
 				77A6CD0E12A71CC900BE5901 /* wE4.aif in Resources */,
-				22DDA3D317FF37B40026FE7A /* urTWMenu.lua in Resources */,
 				77A6CD0F12A71CC900BE5901 /* wEb4.aif in Resources */,
 				77A6CD1012A71CC900BE5901 /* wD4.aif in Resources */,
 				77A6CD1112A71CC900BE5901 /* wDb4.aif in Resources */,
@@ -2917,6 +2899,7 @@
 				77A6CD2D12A71CC900BE5901 /* wC5.aif in Resources */,
 				77A6CD2E12A71CC900BE5901 /* wB4.aif in Resources */,
 				77A6CD2F12A71CC900BE5901 /* wBb4.aif in Resources */,
+				22836CAB182A35D4006BE21D /* tw_arrow.png in Resources */,
 				77A6CD3012A71CC900BE5901 /* wA4.aif in Resources */,
 				77A6CD3112A71CC900BE5901 /* wAb4.aif in Resources */,
 				77A6CD3212A71CC900BE5901 /* wG4.aif in Resources */,
@@ -2940,6 +2923,7 @@
 				7769134E134E15E1003C1643 /* freetboard_2.jpg in Resources */,
 				7769134F134E15E1003C1643 /* freetboard_1.jpg in Resources */,
 				776913AB134E15F0003C1643 /* Scratch.wav in Resources */,
+				22284FD318340F6700B9F2BC /* __urmus_variable_list.lua in Resources */,
 				776913AC134E15F0003C1643 /* Bass.wav in Resources */,
 				776913AD134E15F0003C1643 /* Clap.wav in Resources */,
 				776913AE134E15F0003C1643 /* ClosedHat.wav in Resources */,
@@ -3012,7 +2996,6 @@
 				771F845A15F91223006D8926 /* buttonvar3-64x80-padded.png in Resources */,
 				771F845B15F91223006D8926 /* buttonvar2-64x80-padded.png in Resources */,
 				771F845C15F91223006D8926 /* buttonvar1-64x80-padded.png in Resources */,
-				77731911161B6BCA00DBB08B /* README in Resources */,
 				77019390161FF2FF00FDBD4B /* DroidSansMono.ttf in Resources */,
 				7735D94216397159006AACCF /* ObelixPro.ttf in Resources */,
 				7735D94316397159006AACCF /* VERA-COPYRIGHT in Resources */,
@@ -3261,7 +3244,6 @@
 				772916221729B382008977FC /* urTapperwareTools.lua in Sources */,
 				772916231729B382008977FC /* urTapperwareMenu.lua in Sources */,
 				772916241729B382008977FC /* urTapperwareLink.lua in Sources */,
-				772916251729B382008977FC /* urTapperware.lua in Sources */,
 				772F13FB1731EADE00275C2A /* ExternalKeyboardReaderView.mm in Sources */,
 				773CFB26176642250097AAF2 /* urTapperwareGroup.lua in Sources */,
 			);
@@ -3357,14 +3339,14 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = "./**";
-				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = (
 					"-ObjC",
 					"-fobjc-arc",
 				);
-				PROVISIONING_PROFILE = "1A1E5A9E-CBB5-4972-A7FB-86762A2282AB";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "1A1E5A9E-CBB5-4972-A7FB-86762A2282AB";
+				PROVISIONING_PROFILE = "20C93EDA-70C1-4349-A5CE-5935EDCE0799";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "20C93EDA-70C1-4349-A5CE-5935EDCE0799";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -3379,13 +3361,13 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = "./**";
-				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
 				OTHER_LDFLAGS = (
 					"-ObjC",
 					"-fobjc-arc",
 				);
-				PROVISIONING_PROFILE = "1A1E5A9E-CBB5-4972-A7FB-86762A2282AB";
-				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "1A1E5A9E-CBB5-4972-A7FB-86762A2282AB";
+				PROVISIONING_PROFILE = "20C93EDA-70C1-4349-A5CE-5935EDCE0799";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "20C93EDA-70C1-4349-A5CE-5935EDCE0799";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
